@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>de.servicehealth.epa4all</groupId>
+        <artifactId>epa4all</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>openapi-client</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>openapi-client</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <java.version>21</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+
+        <swagger-core-version>1.5.18</swagger-core-version>
+
+        <junit-version>4.13.2</junit-version>
+        <logback-version>1.4.14</logback-version>
+        <cxf-version>3.5.9</cxf-version>
+        <jackson-jaxrs-version>2.17.1</jackson-jaxrs-version>
+        <jakarta-annotation-version>1.3.5</jakarta-annotation-version>
+
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>quarkus-cxf-bom</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-jaxrs-version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-jaxrs</artifactId>
+            <scope>compile</scope>
+            <version>${swagger-core-version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.validation</groupId>
+                    <artifactId>validation-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback-version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback-version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit-version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-client</artifactId>
+            <version>${cxf-version}</version>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.8.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <inputSpecRootDirectory>${project.basedir}/src/main/resources/openapi</inputSpecRootDirectory>
+                            <generatorName>jaxrs-cxf-client</generatorName>
+                            <cleanupOutput>true</cleanupOutput>
+
+<!--                            <output>${project.basedir}/src/main/java</output>-->
+<!--                            <apiPackage>com.example.api</apiPackage>-->
+<!--                            <modelPackage>com.example.model</modelPackage>-->
+<!--                            <invokerPackage>com.example.invoker</invokerPackage>-->
+<!--                            <configOptions>-->
+<!--                                <sourceFolder>java</sourceFolder>-->
+<!--                            </configOptions>-->
+
+
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${compiler-plugin.version}</version>
+                <configuration>
+                    <parameters>true</parameters>
+                    <compileSourceRoots>
+                        <sourceDirectory>src/main/java</sourceDirectory>
+                        <sourceDirectory>target/generated-sources</sourceDirectory>
+                    </compileSourceRoots>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

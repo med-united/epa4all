@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://ws.gematik.de/fa/phr/v1.1" targetNamespace="http://ws.gematik.de/fa/phr/v1.1" elementFormDefault="qualified">
+	<xs:element name="DischargeLetterContainer" type="tns:DischargeLetterContainerType"/>
+	<xs:complexType name="DischargeLetterContainerType">
+		<xs:sequence>
+			<xs:element name="PDF" type="xs:base64Binary" minOccurs="1" maxOccurs="1"/>
+			<xs:element name="CDA" type="tns:CDAType" minOccurs="1" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>VHitG 1.50 CDA Discharge Letter</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="CDAType">
+		<xs:simpleContent>
+			<xs:extension base="xs:base64Binary">
+				<xs:attribute ref="tns:level" use="optional"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<xs:attribute name="level">
+		<xs:simpleType>
+			<xs:restriction base="xs:string">
+				<xs:enumeration value="1"/>
+				<xs:enumeration value="2"/>
+				<xs:enumeration value="3"/>
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:attribute>
+	<xs:simpleType name="insurantId">
+		<xs:annotation>
+			<xs:documentation>1. Stelle: Alpha-Zeichen (A - Z, ohne Umlaute), 2. bis 9. Stelle: 8-stellige lfd. Zaehlnummer, 10. Stelle: Pruefziffer</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:pattern value="[A-Z][0-9]{8}[0-9]"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>
