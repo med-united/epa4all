@@ -90,6 +90,36 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+            <version>${cxf-version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-service-description</artifactId>
+            <version>${cxf-version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-json-provider</artifactId>
+            <version>${jackson-jaxrs-version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson-jaxrs-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>${jakarta-annotation-version}</version>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -105,25 +135,49 @@
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <inputSpecRootDirectory>${project.basedir}/src/main/resources/openapi</inputSpecRootDirectory>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/I_Information_Service.yaml
+                            </inputSpec>
                             <generatorName>jaxrs-cxf-client</generatorName>
                             <cleanupOutput>true</cleanupOutput>
+                            <output>${project.basedir}/src/main/java</output>
 
-<!--                            <output>${project.basedir}/src/main/java</output>-->
-<!--                            <apiPackage>com.example.api</apiPackage>-->
-<!--                            <modelPackage>com.example.model</modelPackage>-->
-<!--                            <invokerPackage>com.example.invoker</invokerPackage>-->
-<!--                            <configOptions>-->
-<!--                                <sourceFolder>java</sourceFolder>-->
-<!--                            </configOptions>-->
-
-
+                            <apiPackage>de.servicehealth.api</apiPackage>
+                            <modelPackage>de.servicehealth.model</modelPackage>
+                            <invokerPackage>de.servicehealth.handler</invokerPackage>
+                            <configOptions>
+                                <sourceFolder>/</sourceFolder>
+                            </configOptions>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>remove-files-after-generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <target>
+                                <delete file="src/main/java/.openapi-generator-ignore"/>
+                                <delete file="src/main/java/pom.xml"/>
+
+                                <delete dir="src/main/java/.openapi-generator"/>
+                                <delete dir="src/main/java/src"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${compiler-plugin.version}</version>
                 <configuration>
