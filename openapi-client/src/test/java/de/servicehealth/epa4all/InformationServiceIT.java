@@ -1,11 +1,17 @@
 package de.servicehealth.epa4all;
 
-import com.fasterxml.jackson.jakarta.rs.json.JacksonJsonProvider;
 import de.servicehealth.api.AccountInformationApi;
+import de.servicehealth.epa4all.common.DevTestProfile;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
+import jakarta.inject.Inject;
 import org.apache.cxf.jaxrs.client.Client;
 import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.yasson.JsonBindingProvider;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,18 +26,26 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class InformationServiceTest {
+@QuarkusTest
+@TestProfile(DevTestProfile.class)
+public class InformationServiceIT {
 
-    private final static Logger log = LoggerFactory.getLogger(InformationServiceTest.class);
+    private final static Logger log = LoggerFactory.getLogger(InformationServiceIT.class);
+
+    @Inject
+    @ConfigProperty(name = "information-service.url")
+    String informationServiceUrl;
 
     @Test
     public void callInformationServiceWorks() throws Exception {
         if (informationServiceRunning()) {
-            JacksonJsonProvider provider = new JacksonJsonProvider();
-            List<JacksonJsonProvider> providers = new ArrayList<>();
+            JsonBindingProvider provider = new JsonBindingProvider();
+            List<JsonBindingProvider> providers = new ArrayList<>();
             providers.add(provider);
 
-            AccountInformationApi api = JAXRSClientFactory.create("http://localhost:8082", AccountInformationApi.class, providers);
+            AccountInformationApi api = JAXRSClientFactory.create(
+                informationServiceUrl, AccountInformationApi.class, providers
+            );
             Client client = WebClient.client(api);
             ClientConfiguration config = WebClient.getConfig(client);
             assertNotNull(config);

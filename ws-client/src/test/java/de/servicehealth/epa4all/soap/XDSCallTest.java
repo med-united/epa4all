@@ -18,7 +18,7 @@ public class XDSCallTest {
     public void xdsCallWorks() throws Exception {
         QName serviceName = new QName("urn:ihe:iti:xds-b:2007", "XDSDocumentService");
         File wsdlFile = new File("src/main/resources/schema/XDSDocumentService.wsdl");
-        URL wsdlURL = new URL(wsdlFile.getAbsolutePath());
+        URL wsdlURL = new URL("file://" + wsdlFile.getAbsolutePath());
         XDSDocumentService xdsService = new XDSDocumentService(wsdlURL, serviceName);
 
         RetrieveDocumentSetRequestType body = new RetrieveDocumentSetRequestType();

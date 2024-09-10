@@ -28,7 +28,6 @@
 
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-codegen-plugin</artifactId>
@@ -47,35 +46,6 @@
                             <wsdl>src/main/resources/schema/XDSDocumentService.wsdl</wsdl>
                         </wsdlOption>
                     </wsdlOptions>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.basedir}/target/generated-sources</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <parameters>true</parameters>
-                    <source>${maven.compiler.release}</source>
-                    <target>${maven.compiler.release}</target>
                 </configuration>
             </plugin>
         </plugins>
