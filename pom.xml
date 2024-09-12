@@ -14,7 +14,7 @@
         <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <logback-version>1.5.6</logback-version>
+        <logback-version>1.5.8</logback-version>
 
         <quarkus.platform.version>3.14.3</quarkus.platform.version>
         <surefire-plugin.version>3.5.0</surefire-plugin.version>
