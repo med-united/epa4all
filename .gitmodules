@@ -1,3 +1,6 @@
 [submodule "lib-vau"]
 	path = lib-vau
 	url = git@github.com:med-united/lib-vau.git
+[submodule "api-telematik"]
+	path = api-telematik
+	url = git@github.com:med-united/api-telematik.git

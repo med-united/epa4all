@@ -8,7 +8,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>ws-client</artifactId>
+    <artifactId>api-xds</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <dependencies>

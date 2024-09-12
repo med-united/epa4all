@@ -28,6 +28,7 @@
       <module>lib-vau</module>
       <module>cxf-rt-transports-http-vau</module>
       <module>ws-client</module>
+      <module>api-telematik</module>
       <module>information-service</module>
       <module>authorization-service</module>
     </modules>
