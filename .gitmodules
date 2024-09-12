@@ -1,0 +1,3 @@
+[submodule "lib-vau"]
+	path = lib-vau
+	url = git@github.com:med-united/lib-vau.git
