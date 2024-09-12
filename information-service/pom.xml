@@ -9,7 +9,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>openapi-client</artifactId>
+    <artifactId>information-service</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <name>openapi-client</name>
@@ -197,6 +197,5 @@
             </properties>
         </profile>
     </profiles>
-
 
 </project>

@@ -19,9 +19,10 @@
     
     <modules>
       <module>common-test</module>
-      <module>vau</module>
+<!--      <module>lib-vau</module>-->
+      <module>cxf-rt-transports-http-vau</module>
       <module>ws-client</module>
-      <module>openapi-client</module>
+      <module>information-service</module>
     </modules>
 
     <dependencyManagement>
