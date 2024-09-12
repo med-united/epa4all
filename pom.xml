@@ -27,10 +27,11 @@
       <module>common-test</module>
       <module>lib-vau</module>
       <module>cxf-rt-transports-http-vau</module>
-      <module>ws-client</module>
+      <module>api-xds</module>
       <module>api-telematik</module>
       <module>information-service</module>
       <module>authorization-service</module>
+      <module>idp-oidc-flow</module>
     </modules>
 
     <dependencyManagement>
