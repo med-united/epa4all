@@ -29,6 +29,7 @@
       <module>cxf-rt-transports-http-vau</module>
       <module>ws-client</module>
       <module>information-service</module>
+      <module>authorization-service</module>
     </modules>
 
     <dependencyManagement>
