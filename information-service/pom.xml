@@ -9,13 +9,12 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>openapi-client</artifactId>
+    <artifactId>information-service</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <name>openapi-client</name>
 
     <properties>
-        <logback-version>1.4.14</logback-version>
         <cxf-version>4.0.5</cxf-version>
     </properties>
 
@@ -45,18 +44,6 @@
             </exclusions>
         </dependency>
         
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback-version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${logback-version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-rs-client</artifactId>
@@ -197,6 +184,5 @@
             </properties>
         </profile>
     </profiles>
-
 
 </project>

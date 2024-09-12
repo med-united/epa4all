@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
     <modelVersion>4.0.0</modelVersion>
+    
     <groupId>de.servicehealth.epa4all</groupId>
     <artifactId>epa4all</artifactId>
     <version>1.0.0-SNAPSHOT</version>
@@ -9,6 +13,8 @@
         <java.version>17</java.version>
         <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <logback-version>1.5.6</logback-version>
 
         <quarkus.platform.version>3.14.2</quarkus.platform.version>
         <surefire-plugin.version>3.3.1</surefire-plugin.version>
@@ -19,9 +25,10 @@
     
     <modules>
       <module>common-test</module>
-      <module>vau</module>
+      <module>lib-vau</module>
+      <module>cxf-rt-transports-http-vau</module>
       <module>ws-client</module>
-      <module>openapi-client</module>
+      <module>information-service</module>
     </modules>
 
     <dependencyManagement>
@@ -63,6 +70,20 @@
         <dependency>
             <groupId>io.quarkiverse.cxf</groupId>
             <artifactId>quarkus-cxf-rt-ws-security</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.quarkiverse.cxf</groupId>
+                    <artifactId>quarkus-cxf-bc-stub</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
         </dependency>
         <dependency>
             <groupId>org.citrusframework</groupId>
@@ -76,6 +97,21 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback-version}</version>
         </dependency>
 
         <dependency>
