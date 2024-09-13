@@ -116,6 +116,7 @@
                             <configOptions>
                                 <sourceFolder>/</sourceFolder>
                                 <useJakartaEe>true</useJakartaEe>
+                                <!-- <useGenericResponse>true</useGenericResponse> -->
                             </configOptions>
                         </configuration>
                     </execution>

@@ -30,6 +30,13 @@
 
     <dependencies>
 
+        <!-- https://mvnrepository.com/artifact/de.gematik.idp/idp-client -->
+        <dependency>
+            <groupId>de.gematik.idp</groupId>
+            <artifactId>idp-client</artifactId>
+            <version>29.0.1</version>
+        </dependency>
+
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>authorization-service</artifactId>
