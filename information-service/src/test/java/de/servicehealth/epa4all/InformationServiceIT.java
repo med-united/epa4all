@@ -3,15 +3,16 @@ package de.servicehealth.epa4all;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.common.DevTestProfile;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
+import org.apache.cxf.common.classloader.ClassLoaderUtils;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.jaxrs.client.Client;
 import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
+import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.yasson.JsonBindingProvider;
 import org.junit.jupiter.api.Test;
@@ -19,15 +20,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.KeyStore;
 import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -61,9 +59,12 @@ public class InformationServiceIT {
             HTTPConduit conduit = (HTTPConduit) config.getConduit();
             TLSClientParameters tlsParams = new TLSClientParameters();
             tlsParams.setSslContext(createSSLContext());
-            // tlsParams.setUseHttpsURLConnectionDefaultSslSocketFactory(true);
             tlsParams.setDisableCNCheck(true);
             conduit.setTlsClientParameters(tlsParams);
+
+            HTTPClientPolicy httpClientPolicy = new HTTPClientPolicy();
+            httpClientPolicy.setVersion("1.1");
+            conduit.setClient(httpClientPolicy);
 
             assertDoesNotThrow(() -> api.getRecordStatus("Z1234567890", "PSSIM123456789012345/1.2.4"));
         } else {
@@ -73,17 +74,18 @@ public class InformationServiceIT {
 
     private static SSLContext createSSLContext() throws Exception {
         SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, new TrustManager[]{new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return null;
-            }
 
-            public void checkClientTrusted(X509Certificate[] certs, String authType) {
-            }
+        KeyStore ts = KeyStore.getInstance("JKS");
 
-            public void checkServerTrusted(X509Certificate[] certs, String authType) {
-            }
-        }}, new SecureRandom());
+        // cfx.jks made with:
+        // keytool -importkeystore -deststorepass changeit -destkeystore cfx2.jks -srckeystore root.p12 -srcstoretype PKCS12
+        try (InputStream trustStore = ClassLoaderUtils.getResourceAsStream("cfx.jks", InformationServiceIT.class)) {
+            ts.load(trustStore, "changeit".toCharArray());
+        }
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(ts);
+
+        sslContext.init(null, tmf.getTrustManagers(), new SecureRandom());
         return sslContext;
     }
 
