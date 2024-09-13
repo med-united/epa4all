@@ -60,6 +60,7 @@ public class IdpClientIT {
             @Override
             public void onRequest(HttpRequest<?> request, Config config) {
                 System.out.println("Request: " + request);
+
             }
             
             @Override
@@ -76,7 +77,6 @@ public class IdpClientIT {
         // Set KeyManagers and TrustManagers
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         keyManagerFactory.init(keyStore, "N4rouwibGRhne2Fa".toCharArray());
-
         // Initialize SSLContext
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(keyManagerFactory.getKeyManagers(), FakeTrustManager.getTrustManagers(), null);
@@ -133,6 +133,7 @@ public class IdpClientIT {
         idpClient.contextType = contextType;
         idpClient.smcbHandle = smcbHandle;
         idpClient.getVauNp((String np) -> {
+            System.out.println("NP: " + np);
             assertNotNull(np);
         });
     }
