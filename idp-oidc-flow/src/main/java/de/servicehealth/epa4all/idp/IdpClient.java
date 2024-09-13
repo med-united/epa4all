@@ -66,6 +66,10 @@ public class IdpClient {
 
     private static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
+    static {
+        java.security.Security.addProvider(BOUNCY_CASTLE_PROVIDER);
+    }
+
     private String userAgent = "ServiceHealth/1.0";
 
     @Inject
@@ -87,9 +91,6 @@ public class IdpClient {
     String smcbHandle;
 
     @Inject
-    String idpAuthorizationEndpointURI;
-
-    @Inject
     AuthenticatorClient authenticatorClient;
 
     @Inject
@@ -105,6 +106,7 @@ public class IdpClient {
         certRefList.getCertRef().add(CertRefEnum.C_AUT);
         readCardCertificateRequest.setCertRefList(certRefList);
         readCardCertificateRequest.setCardHandle(smcbHandle);
+        readCardCertificateRequest.setContext(contextType);
         ReadCardCertificateResponse readCardCertificateResponse = null;
         // A_24883-02 - clientAttest als ECDSA-Signatur
         String signatureType = URN_BSI_TR_03111_ECDSA;
@@ -139,7 +141,7 @@ public class IdpClient {
         X509Certificate  smcbAuthCert = getCertificateFromAsn1DERCertBytes(readCardCertificateResponse.getX509DataInfoList().getX509DataInfo().get(0).getX509Data().getX509Certificate());
 
         // A_24882-01 - Signatur clientAttest
-        String clientAttest = signServerChallenge(nonce, smcbAuthCert, signatureType);
+        String clientAttest = signServerChallengeAndEncrypt(nonce, smcbAuthCert, signatureType, false);
 
         // A_24760 - Start der Nutzerauthentifizierung
         Response response = authorizationService.sendAuthorizationRequestSCWithResponse(userAgent);
@@ -159,13 +161,13 @@ public class IdpClient {
     // A_24944-01 - Anfrage des "AUTHORIZATION_CODE" für ein "ID_TOKEN"
     private void sendAuthorizationRequest(Map<String, String> queryMap, X509Certificate smcbAuthCert, String clientAttest, String signatureType, Consumer<String> vauNPConsumer) {
         AuthorizationRequest authorizationRequest = AuthorizationRequest.builder()
-            .link(idpAuthorizationEndpointURI.toString())
+            .link(discoveryDocumentResponse.getAuthorizationEndpoint())
             .clientId(queryMap.get("client_id"))
             .codeChallenge(queryMap.get("code_challenge"))
             .codeChallengeMethod(CodeChallengeMethod.valueOf(queryMap.get("code_challenge_method")))
             .redirectUri(queryMap.get("redirect_uri"))
             .state(queryMap.get("state"))
-            .scopes(Set.of(queryMap.get("scopes").split(" ")))
+            .scopes(Set.of(queryMap.get("scope").split(" ")))
             .nonce(queryMap.get("nonce"))
             .build();
             
@@ -288,6 +290,7 @@ public class IdpClient {
         BinaryDocumentType binaryDocumentType = new BinaryDocumentType();
         Base64Data base64Data = new Base64Data();
         base64Data.setValue(encodedhash);
+        base64Data.setMimeType("application/octet-stream");
         binaryDocumentType.setBase64Data(base64Data);
         externalAuthenticate.setBinaryString(binaryDocumentType);
         externalAuthenticate.setContext(contextType);
