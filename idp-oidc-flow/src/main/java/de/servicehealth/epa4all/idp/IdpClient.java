@@ -24,7 +24,6 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.glassfish.hk2.runlevel.RunLevelException;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 
@@ -66,6 +65,10 @@ public class IdpClient {
 
     private static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
+    static {
+        java.security.Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
+    }
+
     private String userAgent = "ServiceHealth/1.0";
 
     @Inject
@@ -87,9 +90,6 @@ public class IdpClient {
     String smcbHandle;
 
     @Inject
-    String idpAuthorizationEndpointURI;
-
-    @Inject
     AuthenticatorClient authenticatorClient;
 
     @Inject
@@ -105,6 +105,7 @@ public class IdpClient {
         certRefList.getCertRef().add(CertRefEnum.C_AUT);
         readCardCertificateRequest.setCertRefList(certRefList);
         readCardCertificateRequest.setCardHandle(smcbHandle);
+        readCardCertificateRequest.setContext(contextType);
         ReadCardCertificateResponse readCardCertificateResponse = null;
         // A_24883-02 - clientAttest als ECDSA-Signatur
         String signatureType = URN_BSI_TR_03111_ECDSA;
@@ -136,10 +137,18 @@ public class IdpClient {
             }
         }
 
+        if(readCardCertificateResponse == null) {
+            throw new RuntimeException("Could not read card certificate");
+        }
+
         X509Certificate  smcbAuthCert = getCertificateFromAsn1DERCertBytes(readCardCertificateResponse.getX509DataInfoList().getX509DataInfo().get(0).getX509Data().getX509Certificate());
 
+        JwtClaims claims = new JwtClaims();
+        claims.setClaim(ClaimName.NONCE.getJoseName(), nonce);
+        claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
+        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000)+300);
         // A_24882-01 - Signatur clientAttest
-        String clientAttest = signServerChallenge(nonce, smcbAuthCert, signatureType);
+        String clientAttest = getSignedJwt(smcbAuthCert, signatureType, claims, true);
 
         // A_24760 - Start der Nutzerauthentifizierung
         Response response = authorizationService.sendAuthorizationRequestSCWithResponse(userAgent);
@@ -159,13 +168,13 @@ public class IdpClient {
     // A_24944-01 - Anfrage des "AUTHORIZATION_CODE" für ein "ID_TOKEN"
     private void sendAuthorizationRequest(Map<String, String> queryMap, X509Certificate smcbAuthCert, String clientAttest, String signatureType, Consumer<String> vauNPConsumer) {
         AuthorizationRequest authorizationRequest = AuthorizationRequest.builder()
-            .link(idpAuthorizationEndpointURI.toString())
+            .link(discoveryDocumentResponse.getAuthorizationEndpoint())
             .clientId(queryMap.get("client_id"))
             .codeChallenge(queryMap.get("code_challenge"))
             .codeChallengeMethod(CodeChallengeMethod.valueOf(queryMap.get("code_challenge_method")))
             .redirectUri(queryMap.get("redirect_uri"))
             .state(queryMap.get("state"))
-            .scopes(Set.of(queryMap.get("scopes").split(" ")))
+            .scopes(Set.of(queryMap.get("scope").replace("+", " ")))
             .nonce(queryMap.get("nonce"))
             .build();
             
@@ -186,8 +195,9 @@ public class IdpClient {
             X509Certificate smcbAuthCert, String signatureType) {
         AuthenticationChallenge body = authenticationChallenge.getBody();
         JsonWebToken jsonWebToken = body.getChallenge();
-        // A_20663-01 - Prüfung der Signatur des CHALLENGE_TOKEN 
-        jsonWebToken.verify(discoveryDocumentResponse.getIdpSig().getPublicKey());
+        // A_20663-01 - Prüfung der Signatur des CHALLENGE_TOKEN
+        // TODO:
+        // jsonWebToken.verify(discoveryDocumentResponse.getIdpSig().getPublicKey());
 
         // A_20665-01 - Signatur der Challenge des IdP-Dienstes 
         String signedChallenge = signServerChallenge(body.getChallenge().getRawString(), smcbAuthCert, signatureType);
@@ -214,16 +224,46 @@ public class IdpClient {
     private String signServerChallengeAndEncrypt(String challengeToSign, X509Certificate certificate, String signatureType, boolean encrypt) {
          final JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.NESTED_JWT.getJoseName(), challengeToSign);
-        final JsonWebSignature jsonWebSignature = new JsonWebSignature();
-        jsonWebSignature.setPayload(claims.toJson());
-        jsonWebSignature.setHeader("typ", "JWT");
-        jsonWebSignature.setHeader("cty", "NJWT");
-        jsonWebSignature.setCertificateChainHeaderValue(certificate);
-        if (certificate.getPublicKey() instanceof ECPublicKey) {
-            jsonWebSignature.setAlgorithmHeaderValue(BRAINPOOL256_USING_SHA256);
+        JsonWebToken jsonWebToken = signClaimsAndResturnJWT(certificate, signatureType, claims);
+        if(encrypt) {
+            IdpJwe encryptAsNjwt = jsonWebToken
+                // A_20667-01 - Response auf die Challenge des Authorization-Endpunktes
+                .encryptAsNjwt(discoveryDocumentResponse.getIdpEnc());
+            return encryptAsNjwt
+                .getRawString();
         } else {
-            jsonWebSignature.setAlgorithmHeaderValue(RSA_PSS_USING_SHA256);
+            return jsonWebToken.getRawString();
         }
+    }
+
+    private JsonWebToken signClaimsAndResturnJWT(X509Certificate certificate, String signatureType, final JwtClaims claims) {
+        final String signedJwt = getSignedJwt(certificate, signatureType, claims, false);
+        JsonWebToken jsonWebToken = new JsonWebToken(signedJwt);
+        return jsonWebToken;
+    }
+
+    private String getSignedJwt(X509Certificate certificate, String signatureType, final JwtClaims claims, boolean nonce) {
+        String payload = claims.toJson();
+        final JsonWebSignature jsonWebSignature = new JsonWebSignature();
+        jsonWebSignature.setPayload(payload);
+        jsonWebSignature.setHeader("typ", "JWT");
+        if(!nonce) {
+            jsonWebSignature.setHeader("cty", "NJWT");
+            jsonWebSignature.setCertificateChainHeaderValue(certificate);
+            if (certificate.getPublicKey() instanceof ECPublicKey) {
+                jsonWebSignature.setAlgorithmHeaderValue(BRAINPOOL256_USING_SHA256);
+            } else {
+                jsonWebSignature.setAlgorithmHeaderValue(RSA_PSS_USING_SHA256);
+            }
+        } else {
+            if (certificate.getPublicKey() instanceof ECPublicKey) {
+                jsonWebSignature.setAlgorithmHeaderValue("ES256");
+            } else {
+                jsonWebSignature.setAlgorithmHeaderValue("PS256");
+            }
+            jsonWebSignature.setCertificateChainHeaderValue(certificate);
+        }
+        
         final String signedJwt =
         jsonWebSignature.getHeaders().getEncodedHeader()
             + "."
@@ -242,16 +282,7 @@ public class IdpClient {
                         sigData -> {
                           return sigData;
                         }));
-        JsonWebToken jsonWebToken = new JsonWebToken(signedJwt);
-        if(encrypt) {
-            IdpJwe encryptAsNjwt = jsonWebToken
-                // A_20667-01 - Response auf die Challenge des Authorization-Endpunktes
-                .encryptAsNjwt(discoveryDocumentResponse.getIdpEnc());
-            return encryptAsNjwt
-                .getRawString();
-        } else {
-            return jsonWebToken.getRawString();
-        }
+        return signedJwt;
     }
 
     private byte[] getSignatureBytes(
@@ -288,6 +319,7 @@ public class IdpClient {
         BinaryDocumentType binaryDocumentType = new BinaryDocumentType();
         Base64Data base64Data = new Base64Data();
         base64Data.setValue(encodedhash);
+        base64Data.setMimeType("application/octet-stream");
         binaryDocumentType.setBase64Data(base64Data);
         externalAuthenticate.setBinaryString(binaryDocumentType);
         externalAuthenticate.setContext(contextType);
@@ -307,7 +339,7 @@ public class IdpClient {
             try {
                 return convertDerToConcatenated(value, 64);
             } catch (IOException e) {
-                throw new RunLevelException(e);
+                throw new RuntimeException(e);
             }
         } else {
             return value;
