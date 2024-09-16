@@ -1,46 +1,44 @@
 package de.servicehealth.epa4all;
 
-import de.servicehealth.api.AccountInformationApi;
-import de.servicehealth.epa4all.common.DevTestProfile;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
-import jakarta.inject.Inject;
-import org.apache.cxf.common.classloader.ClassLoaderUtils;
-import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.configuration.security.CertificateConstraintsType;
-import org.apache.cxf.ext.logging.LoggingInInterceptor;
-import org.apache.cxf.ext.logging.LoggingOutInterceptor;
-import org.apache.cxf.jaxrs.client.Client;
-import org.apache.cxf.jaxrs.client.ClientConfiguration;
-import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
-import org.apache.cxf.jaxrs.client.WebClient;
-import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.yasson.JsonBindingProvider;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.KeyStore;
 import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import javax.net.ssl.SSLContext;
+
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
+import org.apache.cxf.bus.managers.DestinationFactoryManagerImpl;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
+import org.apache.cxf.ext.logging.LoggingInInterceptor;
+import org.apache.cxf.ext.logging.LoggingOutInterceptor;
+import org.apache.cxf.jaxrs.client.Client;
+import org.apache.cxf.jaxrs.client.ClientConfiguration;
+import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
+import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.transport.ConduitInitiatorManager;
+import org.apache.cxf.transport.http.HTTPConduit;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.yasson.JsonBindingProvider;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import de.servicehealth.api.AccountInformationApi;
+import de.servicehealth.epa4all.common.DevTestProfile;
+import de.servicehealth.epa4all.cxf.transport.HTTPVAUTransportFactory;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
+import jakarta.inject.Inject;
 
 @QuarkusTest
 @TestProfile(DevTestProfile.class)
@@ -59,7 +57,17 @@ public class InformationServiceIT {
             List<JsonBindingProvider> providers = new ArrayList<>();
             providers.add(provider);
 
-            AccountInformationApi api = JAXRSClientFactory.create(
+
+                Bus bus = BusFactory.getThreadDefaultBus();
+                DestinationFactoryManagerImpl dfm = bus.getExtension(DestinationFactoryManagerImpl.class);
+                HTTPVAUTransportFactory customTransport = new HTTPVAUTransportFactory();
+                dfm.registerDestinationFactory(HTTPVAUTransportFactory.TRANSPORT_IDENTIFIER, customTransport);
+                
+                ConduitInitiatorManager extension = bus.getExtension(ConduitInitiatorManager.class);
+                extension.registerConduitInitiator(HTTPVAUTransportFactory.TRANSPORT_IDENTIFIER, customTransport);
+
+
+                AccountInformationApi api = JAXRSClientFactory.create(
                 informationServiceUrl, AccountInformationApi.class, providers
             );
             Client client = WebClient.client(api);
@@ -99,11 +107,8 @@ public class InformationServiceIT {
         System.setProperty("javax.net.ssl.trustStore", "/Users/bona/Work/ere.health/epa4all/information-service/src/main/resources/keystore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
 
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustManagerFactory.init(trustStore);
-
         SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, trustManagerFactory.getTrustManagers(), new SecureRandom());
+        sslContext.init(null, FakeTrustManager.getTrustManagers(), new SecureRandom());
         return sslContext;
     }
 

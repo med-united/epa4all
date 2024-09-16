@@ -59,7 +59,11 @@
             <artifactId>cxf-rt-rs-service-description</artifactId>
             <version>${cxf-version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>cxf-rt-transports-http-vau</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
             <artifactId>jakarta.ws.rs-api</artifactId>
@@ -86,7 +90,6 @@
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>common-test</artifactId>
             <version>1.0.0-SNAPSHOT</version>
-            <scope>test</scope>
         </dependency>
 
     </dependencies>
