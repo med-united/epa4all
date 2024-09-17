@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.common;
 
 import java.security.cert.X509Certificate;
 

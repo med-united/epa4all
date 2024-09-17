@@ -30,6 +30,7 @@
       <module>api-xds</module>
       <module>api-telematik</module>
       <module>information-service</module>
+      <module>entitlement-service</module>
       <module>authorization-service</module>
       <module>idp-oidc-flow</module>
     </modules>
@@ -88,11 +89,11 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.citrusframework</groupId>
-            <artifactId>citrus-quarkus</artifactId>
-            <version>4.3.2</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.citrusframework</groupId>-->
+<!--            <artifactId>citrus-quarkus</artifactId>-->
+<!--            <version>4.3.2</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>io.quarkiverse.cxf</groupId>
             <artifactId>quarkus-cxf-rt-transports-http-hc5</artifactId>
@@ -101,6 +102,31 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.jakarta.rs</groupId>-->
+<!--            <artifactId>jackson-jakarta-rs-json-provider</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.jakarta.rs</groupId>-->
+<!--            <artifactId>jackson-jakarta-rs-base</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.jakarta.rs</groupId>-->
+<!--            <artifactId>jackson-jakarta-rs-xml-provider</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.jaxrs</groupId>-->
+<!--            <artifactId>jackson-jaxrs-base</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.jaxrs</groupId>-->
+<!--            <artifactId>jackson-jaxrs-json-provider</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.datatype</groupId>-->
+<!--            <artifactId>jackson-datatype-jsr310</artifactId>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>org.slf4j</groupId>
