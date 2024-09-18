@@ -109,14 +109,7 @@
                             <configOptions>
                                 <sourceFolder>/</sourceFolder>
                                 <useJakartaEe>true</useJakartaEe>
-                                <!-- jackson>false</jackson -->
-                                <!-- library>microprofile</library -->
-                                <!-- microprofileRestClientVersion>3.0</microprofileRestClientVersion -->
-                                <!-- serializationLibrary>jsonb</serializationLibrary -->
                             </configOptions>
-                            <typeMappings>
-                                <ActorIdType>java.lang.String</ActorIdType>
-                            </typeMappings>
                         </configuration>
                     </execution>
                 </executions>

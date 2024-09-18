@@ -127,7 +127,6 @@
                             <configOptions>
                                 <sourceFolder>/</sourceFolder>
                                 <useJakartaEe>true</useJakartaEe>
-                                <!-- serializationLibrary>jsonb</serializationLibrary -->
                             </configOptions>
                         </configuration>
                     </execution>

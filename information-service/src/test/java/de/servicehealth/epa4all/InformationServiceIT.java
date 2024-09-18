@@ -1,12 +1,10 @@
 package de.servicehealth.epa4all;
 
-import static de.servicehealth.epa4all.common.Utils.createFakeSSLContext;
-import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-
-import java.util.ArrayList;
-import java.util.List;
-
+import de.servicehealth.api.AccountInformationApi;
+import de.servicehealth.epa4all.common.DevTestProfile;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
+import jakarta.inject.Inject;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
 import org.apache.cxf.ext.logging.LoggingOutInterceptor;
@@ -21,17 +19,18 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.servicehealth.api.AccountInformationApi;
-import de.servicehealth.epa4all.common.DevTestProfile;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
-import jakarta.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
+
+import static de.servicehealth.epa4all.common.Utils.createFakeSSLContext;
+import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @QuarkusTest
 @TestProfile(DevTestProfile.class)
 public class InformationServiceIT {
 
-    private final static Logger log = LoggerFactory.getLogger(InformationServiceIT.class);
+    private static final Logger log = LoggerFactory.getLogger(InformationServiceIT.class);
 
     @Inject
     @ConfigProperty(name = "information-service.url")

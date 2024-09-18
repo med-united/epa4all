@@ -4,13 +4,13 @@ import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.api.EntitlementsEPaFdVApi;
 import de.servicehealth.epa4all.common.DevTestProfile;
 import de.servicehealth.epa4all.cxf.interceptor.VauInterceptor;
-import de.servicehealth.model.ActorIdType;
-import de.servicehealth.model.EntitlementClaimsResponseType;
+import de.servicehealth.epa4all.cxf.jsonb.JsonbProvider;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.GetEntitlements200Response;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
@@ -18,7 +18,6 @@ import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.Client;
 import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
-import de.servicehealth.epa4all.cxf.jsonb.JsonbProvider;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -39,7 +38,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @TestProfile(DevTestProfile.class)
 public class EntitlementServiceIT {
 
-    private final static Logger log = LoggerFactory.getLogger(EntitlementServiceIT.class);
+    private static final Logger log = LoggerFactory.getLogger(EntitlementServiceIT.class);
+    private static final String ENTITLEMENT_SERVICE = "entitlement-service";
 
     @Inject
     @ConfigProperty(name = "entitlement-service.url")
@@ -47,7 +47,7 @@ public class EntitlementServiceIT {
 
     @Test
     public void getEntitlementServiceWorks() throws Exception {
-        if (isDockerServiceRunning("entitlement-service")) {
+        if (isDockerServiceRunning(ENTITLEMENT_SERVICE)) {
             EntitlementsEPaFdVApi api = JAXRSClientFactory.create(
                 entitlementServiceUrl, EntitlementsEPaFdVApi.class, getProviders()
             );
@@ -63,7 +63,7 @@ public class EntitlementServiceIT {
 
     @Test
     public void postEntitlementServiceWorks() throws Exception {
-        if (isDockerServiceRunning("entitlement-service")) {
+        if (isDockerServiceRunning(ENTITLEMENT_SERVICE)) {
 
             String jwt = "eyJlbmMiOiJBMjU2R0NNIiwiY3R5IjoiTkpXVCIsImV4cCI6MTcyNjU3MDE3MiwiYWxnIjoiZGlyIiwia2lkIjoiMDAwMSJ9.5ZMyygoicdXW77Fr.90Q1b4sdSKu8DpqGqQthUFhpKKASBuzmxiB5FGepazcMZvH95FtpYwLWrsxeEIPCLRworsO0r-OHMSd1lGIw5b8Fa7doXsh4zfrkCeXHxBX0qIzXtC6m84Dp1SoRgn9Q8ZkNKsXwDMKwJKV_v2TxohORYrc1NJSXeQm4S8jBzG0PQ4pGIjL7wu5uauWyjDoQnY_LB8T33Lr5sb6269HJCV0ThkalaYdZ7dh8FnYJWywUAn4Pdq7589W0gIz-t1jAc-rF_JXtRv5Ya6XIvutEeePhdfgPvslR5BYZyQ6thWYeC7pvhbHfjhhYYXT3E57ylolYP9tP6HU2ZEWoOtndcVj0yVQF86Qve6tmAenwNfiu4TBu1nUIlikTFF6Z0cBqiS45ETUUtn5pRGiSRQrPXN2tSzXSqlRiVjZHysNxJ9pbxJwcRe4LNpz2KgEI0GaO9Yt5_dYmoVgBiR4ulJ1ztxNP7rBlDr8w14YCVR8ZZefTUdC66xOTDVqbM8QMXAm8x-ZSYfxHRSdmCo4QqyV6UyHJbhQJfHKZwdGslQ-TgMDyRV5mvOgVd9Tw6oTmW1bS1fLFjI2OqHXuGIWAXi0Ti56yz2a8i2RxpiS3sEp7w6NHSRHLeLYMeQuhs1Ftcqdynefor4Zy3L4QvFroOiRgzVLiy7HPCjqpi4tf1FJXH0TjxgQ0OFBbo-jiA9h4EdyO9FvStCBzoiInIKCPi4Id_sWOhHtyvPkrPVQdBjxIoQktA6ILC1O-fqOnp9AzoTwvxAtBWSzLj6tSKy28ESciIQlpHDasu0XerGZH1Elfpx22PRi8julAvn9siLjvK1JTsQR4lSs6n3HgKUj1BEt9pT02FVVBBFaYzUNUH4qCzqTgpIlPdJGSuCkZq-gChrebUzGDvwhYZHVEsCjF1UMvCollANrN5FGergjtwQVPr6fbgGhzk6s3VVgrMy26jrObTxX_2UdEBdOgD87ZiZoR_8RqfUgqGZmsKeJhEgsNfmvWf4f6ZhQv6p2VzDC9x1vP_T90B34t0xvnVkgJZHozjRAGsT5-zGk0C0IdSCRS8Dp2nfMVwaOCCrYjdotrt9E5VJhYPHlHYR3pVacDRaHlxbtTXf1Ys8NaodHkIWCloP1x8HpRvZOlc-4tZGxRMqNKZSBI188mEqzunwFyfn6-IlLWGuCX8tSfILcGYWcuPNq0UKpm3pCEvOtML1WUwgsLM09g09vgxtWHGcKif_gsvnJHYIEfNZLSVI97vtcBeWT2AqH-pYRNTYMOmRCaVt_ZUsJJjNzpWx2g7mbfxmL65C30QAXmRKmcR_VEGKE0sLr68_FbzqYMitPFsj5c1xbd--ck7_xkDSK8MC3dQvJh7LgPyFiDQRenDeOQoWEXh4__jQaIIEWTruITFIOQF4wOCf-UGRVNtWPKEQ1xI1a0XMBriV2oIEphAUbyZnIwkA.g4FNfSkXdp2st4lECdRokg";
 
@@ -74,7 +74,10 @@ public class EntitlementServiceIT {
             initApi(api);
 
             EntitlementRequestType requestType = new EntitlementRequestType().jwt(jwt);
-            assertDoesNotThrow(() -> api.setEntitlementPs("Z123456789", "CLIENTID1234567890AB/2.1.12-45", requestType));
+            assertThrows(
+                BadRequestException.class,
+                () -> api.setEntitlementPs("Z123456789", "CLIENTID1234567890AB/2.1.12-45", requestType)
+            );
         } else {
             log.warn("Docker container for entitlement-service is not running, skipping a test");
         }

@@ -948,9 +948,7 @@ components:
   schemas:
     ActorIdType:
       description: Identifier of an actor (kvnr or telematik-id)
-      oneOf:
-        - $ref: '#/components/schemas/KvnrType'
-        - $ref: '#/components/schemas/TelematikIdType'
+      type: string
     KvnrType:
       type: string
       pattern: '^[A-Z]{1}\d{9}$'
