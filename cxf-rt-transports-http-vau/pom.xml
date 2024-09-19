@@ -10,7 +10,16 @@
     <artifactId>cxf-rt-transports-http-vau</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
+    <properties>
+        <cxf-version>4.0.5</cxf-version>
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-cbor</artifactId>
+            <version>2.17.2</version>
+        </dependency>
         <dependency>
             <groupId>de.servicehealth.epa4all.libvau</groupId>
             <artifactId>lib-vau</artifactId>
@@ -30,6 +39,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-client</artifactId>
+            <version>${cxf-version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.glassfish</groupId>
             <artifactId>jakarta.json</artifactId>
             <version>2.0.1</version>
@@ -45,6 +60,12 @@
         <dependency>
             <groupId>org.eclipse</groupId>
             <artifactId>yasson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+            <version>4.0.5</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

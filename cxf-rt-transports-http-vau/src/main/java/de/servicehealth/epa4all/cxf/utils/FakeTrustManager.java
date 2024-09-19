@@ -1,10 +1,9 @@
-package de.servicehealth.epa4all.common;
+package de.servicehealth.epa4all.cxf.utils;
 
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-
 
 public class FakeTrustManager implements X509TrustManager {
 
