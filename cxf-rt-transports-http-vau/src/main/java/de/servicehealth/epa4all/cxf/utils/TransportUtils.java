@@ -23,7 +23,7 @@ public class TransportUtils {
         return sslContext;
     }
 
-    public static void initApi(Client client, Collection<PhaseInterceptor<Message>> interceptors) throws Exception {
+    public static void initClient(Client client, Collection<PhaseInterceptor<Message>> interceptors) throws Exception {
         ClientConfiguration config = WebClient.getConfig(client);
         config.getOutInterceptors().addAll(interceptors);
 
@@ -41,10 +41,12 @@ public class TransportUtils {
         }
 
         tlsParams.setSslContext(createFakeSSLContext());
+
+        // should not be set to stick to HttpClientHTTPConduit (see HttpClientHTTPConduit.setupConnection)
         // tlsParams.setDisableCNCheck(true);
         // tlsParams.setHostnameVerifier((hostname, session) -> true);
 
         config.getOutInterceptors().add(new LoggingOutInterceptor());
-        // config.getInInterceptors().add(new LoggingInInterceptor());
+        config.getInInterceptors().add(new LoggingInInterceptor());
     }
 }

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
-import static de.servicehealth.epa4all.cxf.utils.TransportUtils.initApi;
+import static de.servicehealth.epa4all.cxf.utils.TransportUtils.initClient;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @QuarkusTest
@@ -41,7 +41,7 @@ public class InformationServiceIT {
                 informationServiceUrl, AccountInformationApi.class, providers
             );
 
-            initApi(WebClient.client(api), List.of());
+            initClient(WebClient.client(api), List.of());
 
             assertDoesNotThrow(() -> api.getRecordStatus("Z1234567890", "PSSIM123456789012345/1.2.4"));
         } else {
