@@ -9,10 +9,10 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>information-service</artifactId>
+    <artifactId>entitlement-service</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <name>information-service</name>
+    <name>entitlement-service</name>
 
     <properties>
         <cxf-version>4.0.5</cxf-version>
@@ -43,7 +43,18 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-extension-providers</artifactId>
+            <version>4.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jettison</groupId>
+            <artifactId>jettison</artifactId>
+            <version>1.5.4</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-rs-client</artifactId>
@@ -63,32 +74,6 @@
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>cxf-rt-transports-http-vau</artifactId>
             <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.ws.rs</groupId>
-            <artifactId>jakarta.ws.rs-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.annotation</groupId>
-            <artifactId>jakarta.annotation-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>jakarta.json</artifactId>
-            <version>2.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.json.bind</groupId>
-            <artifactId>jakarta.json.bind-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.interceptor</groupId>
-            <artifactId>jakarta.interceptor-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse</groupId>
-            <artifactId>yasson</artifactId>
         </dependency>
 
         <dependency>
@@ -112,15 +97,12 @@
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/I_Information_Service.yaml
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/I_Entitlement_Management.yaml
                             </inputSpec>
                             <generatorName>jaxrs-cxf-client</generatorName>
+
                             <cleanupOutput>true</cleanupOutput>
                             <output>target/generated-sources</output>
-                            <additionalProperties>
-                                <jackson>false</jackson>
-                                <serializationLibrary>jsonb</serializationLibrary>
-                            </additionalProperties>
                             <apiPackage>de.servicehealth.api</apiPackage>
                             <modelPackage>de.servicehealth.model</modelPackage>
                             <invokerPackage>de.servicehealth.handler</invokerPackage>
@@ -131,6 +113,39 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <version>1.5.3</version>
+                <executions>
+                    <execution>
+                        <id>remove-microprofile-client</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <basedir>
+                        ${project.build.directory}/generated-sources
+                    </basedir>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                    <regex>false</regex>
+                    <replacements>
+                        <replacement>
+                            <token>import com.fasterxml.jackson.annotation.JsonProperty;</token>
+                            <value>import jakarta.json.bind.annotation.JsonbProperty;</value>
+                        </replacement>
+                        <replacement>
+                            <token>@JsonProperty(</token>
+                            <value>@JsonbProperty(</value>
+                        </replacement>
+                    </replacements>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
