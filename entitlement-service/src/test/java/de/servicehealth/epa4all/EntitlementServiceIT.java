@@ -4,7 +4,7 @@ import de.gematik.vau.lib.VauClientStateMachine;
 import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.api.EntitlementsEPaFdVApi;
 import de.servicehealth.epa4all.common.DevTestProfile;
-import de.servicehealth.epa4all.cxf.interceptor.VAUInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.CXFVAUInterceptor;
 import de.servicehealth.epa4all.cxf.provider.JSONBOctetProvider;
 import de.servicehealth.epa4all.cxf.transport.HTTPVAUTransportFactory;
 import de.servicehealth.model.EntitlementRequestType;
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
-import static de.servicehealth.epa4all.cxf.utils.TransportUtils.initClient;
+import static de.servicehealth.epa4all.cxf.utils.CxfUtils.initClient;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -64,7 +64,7 @@ public class EntitlementServiceIT {
             EntitlementsApi api = JAXRSClientFactory.create(
                 entitlementServiceUrl, EntitlementsApi.class, getProviders(vauClient)
             );
-            initClient(WebClient.client(api), List.of(new VAUInterceptor(vauClient)));
+            initClient(WebClient.client(api), List.of(new CXFVAUInterceptor(vauClient)));
 
             String jwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6WyJNSUlEeXpDQ0EzS2dBd0lCQWdJSEFRMnAvOXp2SXpBS0JnZ3Foa2pPUFFRREFqQ0JtVEVMTUFrR0ExVUVCaE1DUkVVeEh6QWRCZ05WQkFvTUZtZGxiV0YwYVdzZ1IyMWlTQ0JPVDFRdFZrRk1TVVF4U0RCR0JnTlZCQXNNUDBsdWMzUnBkSFYwYVc5dUlHUmxjeUJIWlhOMWJtUm9aV2wwYzNkbGMyVnVjeTFEUVNCa1pYSWdWR1ZzWlcxaGRHbHJhVzVtY21GemRISjFhM1IxY2pFZk1CMEdBMVVFQXd3V1IwVk5MbE5OUTBJdFEwRTVJRlJGVTFRdFQwNU1XVEFlRncweU1EQXhNalF3TURBd01EQmFGdzB5TkRFeU1URXlNelU1TlRsYU1JSGZNUXN3Q1FZRFZRUUdFd0pFUlRFVE1CRUdBMVVFQnd3S1I4TzJkSFJwYm1kbGJqRU9NQXdHQTFVRUVRd0ZNemN3T0RNeEhEQWFCZ05WQkFrTUUwUmhibnBwWjJWeUlGTjBjbUhEbjJVZ01UTXhLakFvQmdOVkJBb01JVE10VTAxRExVSXRWR1Z6ZEd0aGNuUmxMVGc0TXpFeE1EQXdNREV4TmpNMU1qRWRNQnNHQTFVRUJSTVVPREF5TnpZNE9ETXhNVEF3TURBeE1UWXpOVEl4RVRBUEJnTlZCQVFNQ0U1MWJHeHRZWGx5TVE4d0RRWURWUVFxREFaS2RXeHBZVzR4SGpBY0JnTlZCQU1NRlVKaFpDQkJjRzkwYUdWclpWUkZVMVF0VDA1TVdUQmFNQlFHQnlxR1NNNDlBZ0VHQ1Nza0F3TUNDQUVCQndOQ0FBUWU5bmE1VDEyOGNmOGI4VTVkVlYzdGpBQk1QdkttZHIzYVRjRTZwU1ZGdUtGTXJIM3RnYVhoN2pNVHhiOEg3ZVZ5bUtyc2lLUGlJZ2xCK0F2UEFTaXVvNElCV2pDQ0FWWXdEQVlEVlIwVEFRSC9CQUl3QURBNEJnZ3JCZ0VGQlFjQkFRUXNNQ293S0FZSUt3WUJCUVVITUFHR0hHaDBkSEE2THk5bGFHTmhMbWRsYldGMGFXc3VaR1V2YjJOemNDOHdFd1lEVlIwbEJBd3dDZ1lJS3dZQkJRVUhBd0l3SHdZRFZSMGpCQmd3Rm9BVVlvaWF4Tjc4by9PVE9jdWZrT2NUbWoySnpIVXdIUVlEVlIwT0JCWUVGQTJZR1B4RTJYcUhlYUZSSURRRDRleXR6d0xGTUE0R0ExVWREd0VCL3dRRUF3SUhnREFnQmdOVkhTQUVHVEFYTUFvR0NDcUNGQUJNQklFak1Ba0dCeXFDRkFCTUJFMHdnWVFHQlNza0NBTURCSHN3ZWFRb01DWXhDekFKQmdOVkJBWVRBa1JGTVJjd0ZRWURWUVFLREE1blpXMWhkR2xySUVKbGNteHBiakJOTUVzd1NUQkhNQmNNRmNPV1ptWmxiblJzYVdOb1pTQkJjRzkwYUdWclpUQUpCZ2NxZ2hRQVRBUTJFeUV6TFZOTlF5MUNMVlJsYzNScllYSjBaUzA0T0RNeE1UQXdNREF4TVRZek5USXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdBMStLWERpWXkyWTBXdkFjUk5URzRmNkNaaVBQSndiWlBrTmJnNUU3ekVVQ0lBYVU0MEFLMmxpVGZMSGkrSjZERCtIVWVLUEdaVGh4OUhwbVFybHJtbjhqIl19.eyJub25jZSI6IjFiYmNhZjkzMWQ2YWU3Y2Y3ODlmYmE0NWI2ZDVhZGViZWFlYTFjYTQ5OTA3NGMyNDAwZGM4Yzc0NjBjMDVkZGUiLCJpYXQiOjE3MjY1NzAxMTEsImV4cCI6MTcyNjU3MDQxMX0.P1z0s8PPUZK_mSVcJ3Sl2bTSzUAEc701DH4R0Vm6YLCP5hs7aDUtgwojDyY3LV0NoziGPgZVQzsOnPRED9qxLw";
             EntitlementRequestType requestType = new EntitlementRequestType().jwt(jwt);
@@ -93,7 +93,7 @@ public class EntitlementServiceIT {
             EntitlementsEPaFdVApi api = JAXRSClientFactory.create(
                 entitlementServiceUrl, EntitlementsEPaFdVApi.class, getProviders(vauClient)
             );
-            initClient(WebClient.client(api), List.of(new VAUInterceptor(vauClient)));
+            initClient(WebClient.client(api), List.of(new CXFVAUInterceptor(vauClient)));
 
             // TODO check endpoint
             

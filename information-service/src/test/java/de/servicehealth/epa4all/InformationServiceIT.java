@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
-import static de.servicehealth.epa4all.cxf.utils.TransportUtils.initClient;
+import static de.servicehealth.epa4all.cxf.utils.CxfUtils.initClient;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @QuarkusTest
