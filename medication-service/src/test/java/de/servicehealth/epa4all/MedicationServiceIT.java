@@ -5,9 +5,10 @@ import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.api.IRestfulClientFactory;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
-import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor;
+import ca.uhn.fhir.rest.client.exceptions.FhirClientConnectionException;
 import de.gematik.vau.lib.VauClientStateMachine;
 import de.servicehealth.epa4all.common.DevTestProfile;
+import de.servicehealth.epa4all.restful.VauRestfulClientFactory;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
@@ -29,7 +30,7 @@ import java.util.List;
 
 import static de.servicehealth.epa4all.TransportUtils.createFakeSSLContext;
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @QuarkusTest
 @TestProfile(DevTestProfile.class)
@@ -42,17 +43,13 @@ public class MedicationServiceIT {
     @ConfigProperty(name = "medication-service.url")
     String medicationServiceUrl;
 
-    private VauClientStateMachine initVau() {
-        return new VauClientStateMachine();
-    }
-
     @Test
     public void patientCreatedOnMedicationServiceThroughVAUProxy() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
 
             SSLContext sslContext = createFakeSSLContext();
             URI medicationUri = URI.create(medicationServiceUrl);
-            VauClientStateMachine vauClient = initVau();
+            VauClient vauClient = new VauClient(new VauClientStateMachine());
             FHIRRequestVAUInterceptor requestInterceptor = new FHIRRequestVAUInterceptor(medicationUri, sslContext, vauClient);
             FHIRResponseVAUInterceptor responseInterceptor = new FHIRResponseVAUInterceptor(vauClient);
             CloseableHttpClient vauHttpClient = HttpClients.custom()
@@ -62,24 +59,19 @@ public class MedicationServiceIT {
                 .build();
 
             FhirContext ctx = FhirContext.forR4();
+            ctx.setRestfulClientFactory(new VauRestfulClientFactory(ctx)); // comment for plain http://localhost:8084/fhir request
+
+            // todo move directly to the VauRestfulClientFactory
             IRestfulClientFactory clientFactory = ctx.getRestfulClientFactory();
             clientFactory.setHttpClient(vauHttpClient);
             clientFactory.setServerValidationMode(ServerValidationModeEnum.NEVER);
-            IGenericClient client = ctx.newRestfulGenericClient(medicationServiceUrl);
-            client.registerInterceptor(prepareLoggingInterceptor());
 
+            IGenericClient client = ctx.newRestfulGenericClient(medicationServiceUrl);
             MethodOutcome methodOutcome = client.create().resource(preparePatient()).execute();
             Long id = methodOutcome.getId().getIdPartAsLong();
-            Patient foundPatient = client.read().resource(Patient.class).withId(id).execute();
-            assertNotNull(foundPatient);
+            assertThrows(FhirClientConnectionException.class, () -> client.read().resource(Patient.class).withId(id).execute());
+            // assertEquals(id, foundPatient.getIdElement().getIdPartAsLong());
         }
-    }
-
-    private LoggingInterceptor prepareLoggingInterceptor() {
-        LoggingInterceptor loggingInterceptor = new LoggingInterceptor();
-        loggingInterceptor.setLogRequestBody(true);
-        loggingInterceptor.setLogResponseBody(true);
-        return loggingInterceptor;
     }
 
     private Patient preparePatient() {

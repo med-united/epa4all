@@ -1,8 +1,8 @@
 package de.servicehealth.epa4all;
 
-import de.gematik.vau.lib.VauClientStateMachine;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
@@ -51,9 +51,9 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
     private final URI medicationUri;
     private final SSLContext sslContext;
-    private final VauClientStateMachine vauClient;
+    private final VauClient vauClient;
 
-    public FHIRRequestVAUInterceptor(URI medicationUri, SSLContext sslContext, VauClientStateMachine vauClient) {
+    public FHIRRequestVAUInterceptor(URI medicationUri, SSLContext sslContext, VauClient vauClient) {
         this.medicationUri = medicationUri;
         this.sslContext = sslContext;
         this.vauClient = vauClient;
@@ -86,11 +86,22 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
     private byte[] prepareVauMessage(HttpEntityEnclosingRequest request) throws IOException {
         Header[] headers = request.getAllHeaders();
-        byte[] body = request.getEntity().getContent().readAllBytes();
+        HttpEntity entity = request.getEntity();
+        byte[] body = entity == null ? new byte[0] : entity.getContent().readAllBytes();
 
-        // TODO understand contextPath by entity
+        String accept = body.length == 0
+            ? "Accept: application/fhir+xml;q=1.0, application/fhir+json;q=1.0, application/xml+fhir;q=0.9, application/json+fhir;q=0.9\r\n"
+            : "Accept: application/fhir+json;q=1.0, application/json+fhir;q=0.9\r\n";
 
-        String path = medicationUri.getPath() + "/Patient";
+        String contentType = body.length == 0
+            ?  ""
+            :  "Content-Type: application/fhir+json; charset=UTF-8\r\nContent-Length: " + body.length + "\r\n\r\n";
+
+        String method = body.length == 0 ? "GET" : "POST"; // TODO enhance
+
+        String uri = request.getRequestLine().getUri();
+        String fhirPath = uri.split("fhir")[1];
+        String path = medicationUri.getPath() + fhirPath;
 
         String additionalHeaders = Stream.of(headers)
             .filter(h -> !h.getName().equals(HttpHeaders.CONTENT_TYPE))
@@ -102,20 +113,22 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
             additionalHeaders += "\r\n";
         }
 
-        byte[] httpRequest = ("POST " + path + " HTTP/1.1\r\n"
-            + "Host: localhost:443\r\n"
+        byte[] httpRequest = (method + " " + path + " HTTP/1.1\r\n"
+            + "Host: medication-service:8080\r\n" // TODO
             + additionalHeaders
-            + "Content-Type: application/json\r\n"
-            + "Accept: application/json\r\n"
-            + "Content-Length: " + body.length + "\r\n\r\n").getBytes();
+            + accept
+            + contentType).getBytes();
 
         byte[] content = ArrayUtils.addAll(httpRequest, body);
 
-        return vauClient.encryptVauMessage(content);
+        return vauClient.getVauStateMachine().encryptVauMessage(content);
     }
 
     private String initVau(Executor executor) throws Exception {
-        byte[] message1 = vauClient.generateMessage1();
+        if (vauClient.getVauCid() != null) {
+            return vauClient.getVauCid();
+        }
+        byte[] message1 = vauClient.getVauStateMachine().generateMessage1();
         String port = medicationUri.getPort() < 0 ? "" : ":" + medicationUri.getPort();
         Request request1 = Request
             .Post(medicationUri.getScheme() + "://" + medicationUri.getHost() + port + "/VAU")
@@ -132,7 +145,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
 
-        byte[] message3 = vauClient.receiveMessage2(message2);
+        byte[] message3 = vauClient.getVauStateMachine().receiveMessage2(message2);
 
         Request request2 = Request
             .Post(medicationUri.getScheme() + "://" + medicationUri.getHost() + port + vauCid)
@@ -148,7 +161,8 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
 
-        vauClient.receiveMessage4(message4);
+        vauClient.getVauStateMachine().receiveMessage4(message4);
+        vauClient.setVauCid(vauCid);
 
         return vauCid;
     }
