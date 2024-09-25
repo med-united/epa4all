@@ -94,7 +94,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
             : "Accept: application/fhir+json;q=1.0, application/json+fhir;q=0.9\r\n";
 
         String contentType = body.length == 0
-            ?  ""
+            ?  "\r\n" // extra blank line
             :  "Content-Type: application/fhir+json; charset=UTF-8\r\nContent-Length: " + body.length + "\r\n\r\n";
 
         String method = body.length == 0 ? "GET" : "POST"; // TODO enhance
