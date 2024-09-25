@@ -15,13 +15,9 @@ import javax.net.ssl.SSLContext;
 import java.security.SecureRandom;
 import java.util.Collection;
 
-public class TransportUtils {
+import static de.servicehealth.epa4all.TransportUtils.createFakeSSLContext;
 
-    public static SSLContext createFakeSSLContext() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, FakeTrustManager.getTrustManagers(), new SecureRandom());
-        return sslContext;
-    }
+public class CxfUtils {
 
     public static void initClient(Client client, Collection<PhaseInterceptor<Message>> interceptors) throws Exception {
         ClientConfiguration config = WebClient.getConfig(client);

@@ -13,9 +13,9 @@ import org.apache.cxf.ws.addressing.EndpointReferenceType;
 import java.io.IOException;
 import java.net.URI;
 
-import static de.servicehealth.epa4all.cxf.interceptor.VAUInterceptor.VAU_CID;
-import static de.servicehealth.epa4all.cxf.interceptor.VAUInterceptor.VAU_DEBUG_SK1_C2S;
-import static de.servicehealth.epa4all.cxf.interceptor.VAUInterceptor.VAU_DEBUG_SK1_S2C;
+import static de.servicehealth.epa4all.cxf.interceptor.CXFVAUInterceptor.VAU_CID;
+import static de.servicehealth.epa4all.cxf.interceptor.CXFVAUInterceptor.VAU_DEBUG_SK1_C2S;
+import static de.servicehealth.epa4all.cxf.interceptor.CXFVAUInterceptor.VAU_DEBUG_SK1_S2C;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 
 public class HTTPClientVAUConduit extends HttpClientHTTPConduit {

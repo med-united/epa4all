@@ -1,6 +1,10 @@
 package de.servicehealth.epa4all.common;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.codec.binary.Base64;
+
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
