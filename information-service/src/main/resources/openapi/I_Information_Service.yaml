@@ -288,7 +288,6 @@ components:
           $ref: '#/components/schemas/FunctionIdType'
         decision:
           type: string
-          enum: ["permit", "deny"]
           description: "Decision"
       required:
         - functionId
@@ -317,14 +316,6 @@ components:
         useCase:
           description: Use case identifier
           type: string
-          enum:
-            - UX_Login_PS
-            - UX_Doc_Upload_PS
-            - UX_Doc_Download_PS
-            - UX_Login_V
-            - UX_Doc_Upload_V
-            - UX_Doc_Download_V
-            - UX_LEI_search
         measurement:
           description: Use case execution time in milliseconds
           type: integer

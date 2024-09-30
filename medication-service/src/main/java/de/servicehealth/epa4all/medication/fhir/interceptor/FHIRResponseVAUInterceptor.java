@@ -1,17 +1,21 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.medication.fhir.interceptor;
 
+import de.servicehealth.epa4all.VauClient;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.entity.AbstractHttpEntity;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
@@ -55,19 +59,45 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
         response.setHeaders(headers);
 
         if (vauBytes.length - 4 > i) {
-            byte[] gzipBytes = new byte[vauBytes.length - i - 4];
-            System.arraycopy(vauBytes, i + 4, gzipBytes, 0, vauBytes.length - i - 4);
-            try (GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(gzipBytes))) {
-                String fhirPayload = new String(gzipInputStream.readAllBytes());
-                StringEntity entity = new StringEntity(fhirPayload);
-                String contentType = Arrays.stream(headers)
-                    .filter(h -> h.getName().equals(HttpHeaders.CONTENT_TYPE))
-                    .findFirst()
-                    .get()
-                    .getValue();
-                entity.setContentType(contentType);
-                response.setEntity(entity);
+            byte[] payload = new byte[vauBytes.length - i - 4];
+            System.arraycopy(vauBytes, i + 4, payload, 0, vauBytes.length - i - 4);
+
+            Optional<Header> contentEncodingOpt = Stream.of(headers)
+                .filter(h -> h.getName().equals(HttpHeaders.CONTENT_ENCODING))
+                .findFirst();
+
+            Optional<Header> contentTypeOpt = Stream.of(headers)
+                .filter(h -> h.getName().equals(HttpHeaders.CONTENT_TYPE))
+                .findFirst();
+
+            AbstractHttpEntity entity = createEntity(contentEncodingOpt, contentTypeOpt, payload);
+            contentTypeOpt.ifPresent(header -> entity.setContentType(header.getValue()));
+            response.setEntity(entity);
+        }
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private AbstractHttpEntity createEntity(
+        Optional<Header> contentEncodingOpt,
+        Optional<Header> contentTypeOpt,
+        byte[] payload
+    ) throws IOException {
+        byte[] bytes = payload;
+        if (contentEncodingOpt.isPresent()) {
+            String contentEncoding = contentEncodingOpt.get().getValue();
+            if (contentEncoding.contains("gzip")) {
+                try (GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(payload))) {
+                    bytes = gzipInputStream.readAllBytes();
+                }
+            }
+            // TODO - compress, deflate, br, zstd
+        }
+        if (contentTypeOpt.isPresent()) {
+            String contentType = contentTypeOpt.get().getValue();
+            if (contentType.contains("pdf")) {
+                return new ByteArrayEntity(bytes);
             }
         }
+        return new StringEntity(new String(bytes, StandardCharsets.UTF_8));
     }
 }

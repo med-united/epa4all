@@ -1,7 +1,10 @@
 package de.servicehealth.epa4all;
 
 import de.servicehealth.api.AccountInformationApi;
+import de.servicehealth.api.ConsentDecisionsApi;
 import de.servicehealth.epa4all.common.DevTestProfile;
+import de.servicehealth.epa4all.cxf.provider.JSONBReaderProvider;
+import de.servicehealth.model.GetConsentDecisionInformation200Response;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
@@ -19,6 +22,7 @@ import java.util.List;
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
 import static de.servicehealth.epa4all.cxf.utils.CxfUtils.initClient;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @QuarkusTest
 @TestProfile(DevTestProfile.class)
@@ -31,7 +35,7 @@ public class InformationServiceIT {
     String informationServiceUrl;
 
     @Test
-    public void callInformationServiceWorks() throws Exception {
+    public void getRecordStatusWorks() throws Exception {
         if (isDockerServiceRunning("information-service")) {
             JsonBindingProvider provider = new JsonBindingProvider();
             List<JsonBindingProvider> providers = new ArrayList<>();
@@ -44,6 +48,21 @@ public class InformationServiceIT {
             initClient(WebClient.client(api), List.of());
 
             assertDoesNotThrow(() -> api.getRecordStatus("Z1234567890", "PSSIM123456789012345/1.2.4"));
+        } else {
+            log.warn("Docker container for information-service is not running, skipping a test");
+        }
+    }
+    @Test
+    public void getConsentDecisionWorks() throws Exception {
+        if (isDockerServiceRunning("information-service")) {
+            ConsentDecisionsApi api = JAXRSClientFactory.create(
+                informationServiceUrl, ConsentDecisionsApi.class, List.of(new JSONBReaderProvider())
+            );
+
+            initClient(WebClient.client(api), List.of());
+
+            GetConsentDecisionInformation200Response response = api.getConsentDecisionInformation("Z1234567890", "PSSIM123456789012345/1.2.4");
+            assertFalse(response.getData().isEmpty());
         } else {
             log.warn("Docker container for information-service is not running, skipping a test");
         }

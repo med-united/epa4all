@@ -117,10 +117,6 @@
                             <generatorName>jaxrs-cxf-client</generatorName>
                             <cleanupOutput>true</cleanupOutput>
                             <output>target/generated-sources</output>
-                            <additionalProperties>
-                                <jackson>false</jackson>
-                                <serializationLibrary>jsonb</serializationLibrary>
-                            </additionalProperties>
                             <apiPackage>de.servicehealth.api</apiPackage>
                             <modelPackage>de.servicehealth.model</modelPackage>
                             <invokerPackage>de.servicehealth.handler</invokerPackage>
@@ -131,6 +127,43 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <version>1.5.3</version>
+                <executions>
+                    <execution>
+                        <id>remove-microprofile-client</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <basedir>
+                        ${project.build.directory}/generated-sources
+                    </basedir>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                    <regex>false</regex>
+                    <replacements>
+                        <replacement>
+                            <token>import com.fasterxml.jackson.annotation.JsonProperty;</token>
+                            <value>import jakarta.json.bind.annotation.JsonbProperty;</value>
+                        </replacement>
+                        <replacement>
+                            <token>@JsonProperty(</token>
+                            <value>@JsonbProperty(</value>
+                        </replacement>
+                        <!-- replacement>
+                            <token>value.equals(value)</token>
+                            <value>value.equalsIgnoreCase(value)</value>
+                        </replacement -->
+                    </replacements>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
