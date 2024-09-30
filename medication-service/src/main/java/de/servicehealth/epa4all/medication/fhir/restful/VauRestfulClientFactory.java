@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.restful;
+package de.servicehealth.epa4all.medication.fhir.restful;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
