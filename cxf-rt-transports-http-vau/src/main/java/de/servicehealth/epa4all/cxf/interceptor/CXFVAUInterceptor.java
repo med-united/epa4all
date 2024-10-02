@@ -83,6 +83,9 @@ public class CXFVAUInterceptor extends AbstractPhaseInterceptor<Message> {
 
                 byte[] message3 = vauClient.receiveMessage2(message2);
 
+                // TODO path|query params for VAU endpoint as well
+                // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
+
                 client = WebClient.create(uri + vauCid, providers);
                 initClient(client, List.of());
                 client.headers(prepareVauOutboundHeaders(uri, message3.length));
