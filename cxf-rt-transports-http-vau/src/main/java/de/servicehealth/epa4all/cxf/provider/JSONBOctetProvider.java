@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.cxf.provider;
 
 import de.gematik.vau.lib.VauClientStateMachine;
+import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.WebApplicationException;
@@ -16,7 +17,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.stream.Collectors;
+
+import static de.servicehealth.epa4all.cxf.transport.HTTPClientVAUConduit.VAU_METHOD_PATH;
 
 public class JSONBOctetProvider implements MessageBodyWriter {
 
@@ -37,13 +41,16 @@ public class JSONBOctetProvider implements MessageBodyWriter {
     @Override
     public void writeTo(Object o, Class type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         try (Jsonb build = jsonbBuilder.build()) {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            build.toJson(o, type, os);
-            byte[] originPayload = os.toByteArray();
 
-            // TODO config mappings
-            
-            String path = "/epa/basic/api/v1/ps/entitlements";
+            byte[] originPayload = new byte[0];
+            if (!type.isAssignableFrom(EmptyBody.class)) {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                build.toJson(o, type, os);
+                originPayload = os.toByteArray();
+            }
+
+            List<String> vauPathHeaders = (List<String>) httpHeaders.remove(VAU_METHOD_PATH);
+            String path = vauPathHeaders.isEmpty() ? "undefined" : vauPathHeaders.getFirst();
 
             String additionalHeaders = ((MultivaluedMap<String, String>) httpHeaders).entrySet()
                 .stream()
@@ -56,12 +63,11 @@ public class JSONBOctetProvider implements MessageBodyWriter {
                 additionalHeaders += "\r\n";
             }
 
-            byte[] httpRequest = ("POST " + path + " HTTP/1.1\r\n"
+            byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: localhost:443\r\n"
                 + additionalHeaders
-                + "Content-Type: application/json\r\n"
                 + "Accept: application/json\r\n"
-                + "Content-Length: " + originPayload.length + "\r\n\r\n").getBytes();
+                + prepareContentHeaders(originPayload)).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, originPayload);
 
@@ -72,5 +78,10 @@ public class JSONBOctetProvider implements MessageBodyWriter {
         } catch (Exception e) {
             throw new IOException(e);
         }
+    }
+
+    private String prepareContentHeaders(byte[] originPayload) {
+        int length = originPayload == null ? 0 :originPayload.length;
+        return "Content-Type: application/json\r\nContent-Length: " + length + "\r\n\r\n";
     }
 }
