@@ -9,7 +9,7 @@ import org.apache.cxf.ws.addressing.EndpointReferenceType;
 
 import java.io.IOException;
 
-public class HTTPVAUConduitFactory implements HTTPConduitFactory {
+public class HTTPVauConduitFactory implements HTTPConduitFactory {
 
     @Override
     public HTTPConduit createConduit(
@@ -18,6 +18,6 @@ public class HTTPVAUConduitFactory implements HTTPConduitFactory {
         EndpointInfo localInfo,
         EndpointReferenceType target
     ) throws IOException {
-        return new HTTPClientVAUConduit(b, localInfo, target);
+        return new HTTPClientVauConduit(b, localInfo, target);
     }
 }

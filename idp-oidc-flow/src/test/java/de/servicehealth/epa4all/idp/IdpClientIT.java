@@ -18,11 +18,16 @@ import java.util.Optional;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 
+import de.servicehealth.epa4all.common.PlainTestProfile;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
+import jakarta.inject.Inject;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.transport.http.HTTPConduit;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.yasson.JsonBindingProvider;
 import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJsonProvider;
 import org.junit.jupiter.api.Test;
@@ -49,30 +54,48 @@ import kong.unirest.core.HttpResponse;
 import kong.unirest.core.Interceptor;
 import kong.unirest.core.Unirest;
 
+@QuarkusTest
+@TestProfile(PlainTestProfile.class)
 public class IdpClientIT {
+
+    @Inject
+    @ConfigProperty(name = "authorization-service.url")
+    String authorizationServiceUrl;
+
+    @Inject
+    @ConfigProperty(name = "idp-service.url")
+    String idpServiceUrl;
+
+    @Inject
+    @ConfigProperty(name = "konnektor.url")
+    String konnektorUrl;
+
+    @Inject
+    @ConfigProperty(name = "incentergy.pem.path")
+    String incentergyPemPath;
+
+    @Inject
+    @ConfigProperty(name = "incentergy.pem.pass")
+    String incentergyPemPass;
 
     @Test
     public void testGetVauNp() throws NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException, KeyManagementException, UnrecoverableKeyException, FaultMessage {
-
-
         Unirest.config().interceptor(new Interceptor() {
-  
+
             @Override
             public void onRequest(HttpRequest<?> request, Config config) {
                 System.out.println("Request: " + request);
-
             }
             
             @Override
             public void onResponse(HttpResponse<?> response, HttpRequestSummary request, Config config) {
                 System.out.println("Response: " + response);
             }
-        
         });
 
         // Load client keystore
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(new FileInputStream("/home/manuel/Desktop/RU-Connector-Cert/incentergy.p12"), "N4rouwibGRhne2Fa".toCharArray());
+        keyStore.load(new FileInputStream(incentergyPemPath), incentergyPemPass.toCharArray());
 
         // Set KeyManagers and TrustManagers
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -82,13 +105,13 @@ public class IdpClientIT {
         sslContext.init(keyManagerFactory.getKeyManagers(), FakeTrustManager.getTrustManagers(), null);
         
         System.setProperty("javax.xml.accessExternalDTD", "all" );
-        
+        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
+
+
         JsonBindingProvider provider = new JsonBindingProvider();
         List<Object> providers = new ArrayList<>();
         providers.add(provider);
         providers.add(new JacksonJsonProvider());
-        String authorizationServiceUrl = "http://localhost:8083/";
-        // String authorizationServiceUrl = "http://epa-as-1.dev.epa4all.de";
         AuthorizationSmcBApi api = JAXRSClientFactory.create(
             authorizationServiceUrl, AuthorizationSmcBApi.class, providers
         );
@@ -96,17 +119,17 @@ public class IdpClientIT {
         CertificateService certificateService = new CertificateService();
         CertificateServicePortType certificateServicePort = certificateService.getCertificateServicePort();
 
-        setEndpointAddress((BindingProvider) certificateServicePort, "https://192.168.178.42:443/ws/CertificateService", sslContext);
+        setEndpointAddress((BindingProvider) certificateServicePort, konnektorUrl + "/ws/CertificateService", sslContext);
 
         CardService cardService = new CardService();
         CardServicePortType cardServicePort = cardService.getCardServicePort();
 
-        setEndpointAddress((BindingProvider) cardServicePort, "https://192.168.178.42:443/ws/CardService", sslContext);
+        setEndpointAddress((BindingProvider) cardServicePort, konnektorUrl + "/ws/CardService", sslContext);
 
         AuthSignatureService authSignatureService = new AuthSignatureService();
         AuthSignatureServicePortType authSignatureServicePort = authSignatureService.getAuthSignatureServicePort();
 
-        setEndpointAddress((BindingProvider) authSignatureServicePort, "https://192.168.178.42:443/ws/AuthSignatureService", sslContext);
+        setEndpointAddress((BindingProvider) authSignatureServicePort, konnektorUrl + "/ws/AuthSignatureService", sslContext);
 
         ContextType contextType = new ContextType();
         contextType.setMandantId("Incentergy");
@@ -116,7 +139,7 @@ public class IdpClientIT {
         EventService eventService = new EventService();
         EventServicePortType eventServicePort = eventService.getEventServicePort();
 
-        setEndpointAddress((BindingProvider) eventServicePort, "https://192.168.178.42:443/ws/EventService", sslContext);
+        setEndpointAddress((BindingProvider) eventServicePort, konnektorUrl + "/ws/EventService", sslContext);
 
         GetCards getCards = new GetCards();
         getCards.setContext(contextType);
@@ -125,7 +148,11 @@ public class IdpClientIT {
 
         IdpClient idpClient = new IdpClient();
         idpClient.authenticatorClient = new AuthenticatorClient();
-        idpClient.discoveryDocumentResponse = idpClient.authenticatorClient.retrieveDiscoveryDocument("https://idp-ref.zentral.idp.splitdns.ti-dienste.de/.well-known/openid-configuration", Optional.empty());
+
+        String discoveryDocumentUrl = idpServiceUrl + "/.well-known/openid-configuration";
+        idpClient.discoveryDocumentResponse = idpClient.authenticatorClient.retrieveDiscoveryDocument(
+            discoveryDocumentUrl, Optional.empty()
+        );
         idpClient.certificateServicePortType = certificateServicePort;
         idpClient.cardServicePortType = cardServicePort;
         idpClient.authSignatureServicePortType = authSignatureServicePort;
@@ -138,9 +165,8 @@ public class IdpClientIT {
         });
     }
 
-    private void setEndpointAddress(BindingProvider bp, String url, SSLContext sslContext) throws NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, KeyStoreException, KeyManagementException, UnrecoverableKeyException {
+    private void setEndpointAddress(BindingProvider bp, String url, SSLContext sslContext) {
         bp.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, url);
-
 
         // Get the CXF client proxy
         Client client = ClientProxy.getClient(bp);
@@ -155,9 +181,5 @@ public class IdpClientIT {
 
         // Set the TLS parameters on the HTTPConduit
         httpConduit.setTlsClientParameters(tlsParams);
-
     }
-
-    
-
 }

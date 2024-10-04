@@ -16,9 +16,9 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.List;
 
-import static de.servicehealth.epa4all.cxf.interceptor.CXFVAUInterceptor.VAU_CID;
-import static de.servicehealth.epa4all.cxf.interceptor.CXFVAUInterceptor.VAU_DEBUG_SK1_C2S;
-import static de.servicehealth.epa4all.cxf.interceptor.CXFVAUInterceptor.VAU_DEBUG_SK1_S2C;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauInterceptor.VAU_CID;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauInterceptor.VAU_DEBUG_SK1_S2C;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauInterceptor.VAU_DEBUG_SK1_C2S;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -27,11 +27,11 @@ import static org.apache.cxf.message.Message.HTTP_REQUEST_METHOD;
 import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.transport.http.Headers.EMPTY_REQUEST_PROPERTY;
 
-public class HTTPClientVAUConduit extends HttpClientHTTPConduit {
+public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
     public static final String VAU_METHOD_PATH = "VAU-METHOD-PATH";
 
-    public HTTPClientVAUConduit(Bus b, EndpointInfo ei, EndpointReferenceType t) throws IOException {
+    public HTTPClientVauConduit(Bus b, EndpointInfo ei, EndpointReferenceType t) throws IOException {
         super(b, ei, t);
     }
 

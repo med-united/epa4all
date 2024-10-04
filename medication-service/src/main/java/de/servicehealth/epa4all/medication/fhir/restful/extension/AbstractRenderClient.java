@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.medication.fhir.restful;
+package de.servicehealth.epa4all.medication.fhir.restful.extension;
 
 import org.apache.http.Header;
 import org.apache.http.client.fluent.Executor;
@@ -18,7 +18,7 @@ import static org.apache.http.HttpHeaders.CONNECTION;
 import static org.apache.http.HttpHeaders.UPGRADE;
 import static org.apache.http.HttpHeaders.USER_AGENT;
 
-public class RawRequestRenderClient implements IRenderClient {
+public abstract class AbstractRenderClient implements IRenderClient {
 
     public static final String X_INSURANT_ID = "x-insurantid";
     public static final String X_USER_AGENT = "x-useragent";
@@ -29,7 +29,7 @@ public class RawRequestRenderClient implements IRenderClient {
     private final Executor executor;
     private final String medicationServiceRenderUrl;
 
-    public RawRequestRenderClient(Executor executor, String medicationServiceRenderUrl) {
+    public AbstractRenderClient(Executor executor, String medicationServiceRenderUrl) {
         this.executor = executor;
         this.medicationServiceRenderUrl = medicationServiceRenderUrl;
     }
@@ -56,14 +56,11 @@ public class RawRequestRenderClient implements IRenderClient {
         URI renderUri = URI.create(medicationServiceRenderUrl + "/" + ext);
         Header[] headers = prepareHeaders(xInsurantid, xUseragent);
 
-        /*
-         * If we construct Request directly as Request.Get/Request.Post/Etc then it bypasses
-         * ApacheHttpClient.createHttpRequest procedure, so for direct construction it
-         * should be beared in mind that for VAU we always need Request.Post
-         */
-        Response response = executor.execute(Request.Post(renderUri).setHeaders(headers));
+        Response response = executor.execute(buildRequest(renderUri, headers));
         return response.returnResponse().getEntity().getContent();
     }
+
+    protected abstract Request buildRequest(URI renderUri, Header[] headers);
 
     private Header[] prepareHeaders(String xInsurantid, String xUseragent) {
         Header[] headers = new Header[6];

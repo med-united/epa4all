@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class HTTPVAUTransportFactory extends HTTPTransportFactory {
+public class HTTPVauTransportFactory extends HTTPTransportFactory {
 
     public static final String TRANSPORT_IDENTIFIER = "http://cxf.apache.org/transports/httpsvau";
 
@@ -21,9 +21,9 @@ public class HTTPVAUTransportFactory extends HTTPTransportFactory {
 
     private final Set<String> uriPrefixes = new HashSet<>(URI_PREFIXES);
 
-    protected HTTPVAUConduitFactory conduitFactory = new HTTPVAUConduitFactory();
+    protected HTTPVauConduitFactory conduitFactory = new HTTPVauConduitFactory();
 
-    public HTTPVAUTransportFactory() {
+    public HTTPVauTransportFactory() {
         super(DEFAULT_NAMESPACES, new DestinationRegistryImpl());
     }
 

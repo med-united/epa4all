@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.medication.fhir.restful;
+package de.servicehealth.epa4all.medication.fhir.restful.extension;
 
 import java.io.File;
 

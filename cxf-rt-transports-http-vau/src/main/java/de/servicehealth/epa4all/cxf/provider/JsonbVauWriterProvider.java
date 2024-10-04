@@ -20,14 +20,14 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static de.servicehealth.epa4all.cxf.transport.HTTPClientVAUConduit.VAU_METHOD_PATH;
+import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 
-public class JSONBOctetProvider implements MessageBodyWriter {
+public class JsonbVauWriterProvider implements MessageBodyWriter {
 
     private final VauClientStateMachine vauClient;
     private final JsonbBuilder jsonbBuilder;
 
-    public JSONBOctetProvider(VauClientStateMachine vauClient) {
+    public JsonbVauWriterProvider(VauClientStateMachine vauClient) {
         jsonbBuilder = new JsonBindingBuilder();
         this.vauClient = vauClient;
     }

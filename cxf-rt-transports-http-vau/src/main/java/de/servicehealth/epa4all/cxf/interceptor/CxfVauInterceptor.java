@@ -1,7 +1,8 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
 import de.gematik.vau.lib.VauClientStateMachine;
-import de.servicehealth.epa4all.cxf.provider.CBORProvider;
+import de.servicehealth.epa4all.cxf.client.ClientFactory;
+import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -26,11 +27,10 @@ import java.security.Security;
 import java.util.List;
 
 import static de.servicehealth.epa4all.TransportUtils.printCborMessage;
-import static de.servicehealth.epa4all.cxf.utils.CxfUtils.initClient;
 
-public class CXFVAUInterceptor extends AbstractPhaseInterceptor<Message> {
+public class CxfVauInterceptor extends AbstractPhaseInterceptor<Message> {
 
-    private static final Logger log = LoggerFactory.getLogger(CXFVAUInterceptor.class);
+    private static final Logger log = LoggerFactory.getLogger(CxfVauInterceptor.class);
 
     public static final String VAU_CID = "VAU-CID";
     public static final String VAU_DEBUG_SK1_S2C = "VAU-DEBUG-S_K1_s2c";
@@ -45,7 +45,7 @@ public class CXFVAUInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private final VauClientStateMachine vauClient;
 
-    public CXFVAUInterceptor(VauClientStateMachine vauClient) {
+    public CxfVauInterceptor(VauClientStateMachine vauClient) {
         super(Phase.SETUP);
         this.vauClient = vauClient;
     }
@@ -59,9 +59,9 @@ public class CXFVAUInterceptor extends AbstractPhaseInterceptor<Message> {
                 String vauUri = (String) message.get("org.apache.cxf.message.Message.BASE_PATH");
                 String uri = vauUri.replace("+vau", "");
 
-                List<CBORProvider> providers = List.of(new CBORProvider());
+                List<CborWriterProvider> providers = List.of(new CborWriterProvider());
                 WebClient client = WebClient.create(uri + "/VAU", providers);
-                initClient(client, List.of());
+                ClientFactory.initClient(client, List.of());
 
                 byte[] message1 = vauClient.generateMessage1();
 
@@ -87,7 +87,7 @@ public class CXFVAUInterceptor extends AbstractPhaseInterceptor<Message> {
                 // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
 
                 client = WebClient.create(uri + vauCid, providers);
-                initClient(client, List.of());
+                ClientFactory.initClient(client, List.of());
                 client.headers(prepareVauOutboundHeaders(uri, message3.length));
 
                 response = client.post(ByteBuffer.wrap(message3));

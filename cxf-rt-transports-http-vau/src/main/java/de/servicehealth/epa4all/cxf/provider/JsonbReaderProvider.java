@@ -14,17 +14,17 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 
-public class JSONBReaderProvider implements MessageBodyReader {
+public class JsonbReaderProvider implements MessageBodyReader {
 
     private final JsonbBuilder jsonbBuilder;
 
-    public JSONBReaderProvider() {
+    public JsonbReaderProvider() {
         jsonbBuilder = new JsonBindingBuilder();
     }
 
     @Override
     public boolean isReadable(Class type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return mediaType.toString().equals("application/json;charset=utf-8");
+        return mediaType.toString().contains("application/json");
     }
 
     @Override

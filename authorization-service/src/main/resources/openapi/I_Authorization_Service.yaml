@@ -810,7 +810,6 @@ components:
       required: false
       schema:
         type: boolean
-        enum: [true]
         example: true
     authorize_validation:
       name: x-authorize-validation
@@ -819,7 +818,6 @@ components:
       required: false
       schema:
         type: boolean
-        enum: [true]
         example: true
 
   responses:
