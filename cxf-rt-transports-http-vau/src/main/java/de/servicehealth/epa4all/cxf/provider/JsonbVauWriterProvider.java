@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.cxf.provider;
 
-import de.gematik.vau.lib.VauClientStateMachine;
+import de.servicehealth.epa4all.VauClient;
 import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
@@ -24,10 +24,10 @@ import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_ME
 
 public class JsonbVauWriterProvider implements MessageBodyWriter {
 
-    private final VauClientStateMachine vauClient;
+    private final VauClient vauClient;
     private final JsonbBuilder jsonbBuilder;
 
-    public JsonbVauWriterProvider(VauClientStateMachine vauClient) {
+    public JsonbVauWriterProvider(VauClient vauClient) {
         jsonbBuilder = new JsonBindingBuilder();
         this.vauClient = vauClient;
     }
@@ -71,7 +71,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
             byte[] content = ArrayUtils.addAll(httpRequest, originPayload);
 
-            byte[] vauMessage = vauClient.encryptVauMessage(content);
+            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
             entityStream.write(vauMessage);
             entityStream.close();
 

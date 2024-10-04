@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
-import de.gematik.vau.lib.VauClientStateMachine;
+import de.servicehealth.epa4all.VauClient;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -43,9 +43,9 @@ public class CxfVauInterceptor extends AbstractPhaseInterceptor<Message> {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    private final VauClientStateMachine vauClient;
+    private final VauClient vauClient;
 
-    public CxfVauInterceptor(VauClientStateMachine vauClient) {
+    public CxfVauInterceptor(VauClient vauClient) {
         super(Phase.SETUP);
         this.vauClient = vauClient;
     }
@@ -55,50 +55,55 @@ public class CxfVauInterceptor extends AbstractPhaseInterceptor<Message> {
         try {
             Conduit conduit = message.getExchange().getConduit(message);
             if (conduit instanceof HttpClientHTTPConduit) {
+                if (vauClient.getVauCid() != null) {
+                    String vauCid = vauClient.getVauCid();
+                    message.put(VAU_CID, vauCid);
+                } else {
+                    String vauUri = (String) message.get("org.apache.cxf.message.Message.BASE_PATH");
+                    String uri = vauUri.replace("+vau", "");
 
-                String vauUri = (String) message.get("org.apache.cxf.message.Message.BASE_PATH");
-                String uri = vauUri.replace("+vau", "");
+                    List<CborWriterProvider> providers = List.of(new CborWriterProvider());
+                    WebClient client = WebClient.create(uri + "/VAU", providers);
+                    ClientFactory.initClient(client, List.of());
 
-                List<CborWriterProvider> providers = List.of(new CborWriterProvider());
-                WebClient client = WebClient.create(uri + "/VAU", providers);
-                ClientFactory.initClient(client, List.of());
+                    byte[] message1 = vauClient.getVauStateMachine().generateMessage1();
 
-                byte[] message1 = vauClient.generateMessage1();
+                    client.headers(prepareVauOutboundHeaders(uri, message1.length));
 
-                client.headers(prepareVauOutboundHeaders(uri, message1.length));
+                    Response response = client.post(ByteBuffer.wrap(message1));
+                    byte[] message2 = getPayload(response);
 
-                Response response = client.post(ByteBuffer.wrap(message1));
-                byte[] message2 = getPayload(response);
+                    String vauCid = getHeader(response, VAU_CID);
+                    String vauDebugSC = getHeader(response, VAU_DEBUG_SK1_S2C);
+                    String vauDebugCS = getHeader(response, VAU_DEBUG_SK1_C2S);
+                    String contentLength = getHeader(response, HttpHeaders.CONTENT_LENGTH);
 
-                String vauCid = getHeader(response, VAU_CID);
-                String vauDebugSC = getHeader(response, VAU_DEBUG_SK1_S2C);
-                String vauDebugCS = getHeader(response, VAU_DEBUG_SK1_C2S);
-                String contentLength = getHeader(response, HttpHeaders.CONTENT_LENGTH);
+                    printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
 
-                printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
+                    message.put(VAU_CID, vauCid);
+                    message.put(VAU_DEBUG_SK1_S2C, getHeader(response, VAU_DEBUG_SK1_S2C));
+                    message.put(VAU_DEBUG_SK1_C2S, getHeader(response, VAU_DEBUG_SK1_C2S));
 
-                message.put(VAU_CID, vauCid);
-                message.put(VAU_DEBUG_SK1_S2C, getHeader(response, VAU_DEBUG_SK1_S2C));
-                message.put(VAU_DEBUG_SK1_C2S, getHeader(response, VAU_DEBUG_SK1_C2S));
+                    byte[] message3 = vauClient.getVauStateMachine().receiveMessage2(message2);
 
-                byte[] message3 = vauClient.receiveMessage2(message2);
+                    // TODO path|query params for VAU endpoint as well
+                    // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
 
-                // TODO path|query params for VAU endpoint as well
-                // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
+                    client = WebClient.create(uri + vauCid, providers);
+                    ClientFactory.initClient(client, List.of());
+                    client.headers(prepareVauOutboundHeaders(uri, message3.length));
 
-                client = WebClient.create(uri + vauCid, providers);
-                ClientFactory.initClient(client, List.of());
-                client.headers(prepareVauOutboundHeaders(uri, message3.length));
+                    response = client.post(ByteBuffer.wrap(message3));
+                    byte[] message4 = getPayload(response);
+                    vauDebugSC = getHeader(response, VAU_DEBUG_SK2_S2C_INFO);
+                    vauDebugCS = getHeader(response, VAU_DEBUG_SK2_C2S_INFO);
+                    contentLength = getHeader(response, HttpHeaders.CONTENT_LENGTH);
 
-                response = client.post(ByteBuffer.wrap(message3));
-                byte[] message4 = getPayload(response);
-                vauDebugSC = getHeader(response, VAU_DEBUG_SK2_S2C_INFO);
-                vauDebugCS = getHeader(response, VAU_DEBUG_SK2_C2S_INFO);
-                contentLength = getHeader(response, HttpHeaders.CONTENT_LENGTH);
+                    printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
 
-                printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
-
-                vauClient.receiveMessage4(message4);
+                    vauClient.getVauStateMachine().receiveMessage4(message4);
+                    vauClient.setVauCid(vauCid);
+                }
             }
         } catch (Exception e) {
             throw new Fault(e);

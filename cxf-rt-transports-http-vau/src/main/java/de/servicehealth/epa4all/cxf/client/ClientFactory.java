@@ -1,10 +1,12 @@
 package de.servicehealth.epa4all.cxf.client;
 
 import de.gematik.vau.lib.VauClientStateMachine;
+import de.servicehealth.epa4all.VauClient;
 import de.servicehealth.epa4all.cxf.interceptor.CxfHeadersInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauInterceptor;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbReaderProvider;
+import de.servicehealth.epa4all.cxf.provider.JsonbVauReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbWriterProvider;
 import de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory;
@@ -42,12 +44,13 @@ public class ClientFactory {
     }
 
     public static <T> T createProxyClient(Class<T> clazz, String url) throws Exception {
-        VauClientStateMachine vauClient = initVauTransport();
+        VauClient vauClient = new VauClient(initVauTransport());
         
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
         JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauClient);
-
-        T api = JAXRSClientFactory.create(url, clazz, List.of(cborWriterProvider, jsonbVauWriterProvider));
+        JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider(vauClient);
+        List<Object> providers = List.of(cborWriterProvider, jsonbVauWriterProvider, jsonbVauReaderProvider);
+        T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(WebClient.client(api), List.of(new CxfVauInterceptor(vauClient)));
         return api;
     }
@@ -62,7 +65,6 @@ public class ClientFactory {
         ConduitInitiatorManager extension = bus.getExtension(ConduitInitiatorManager.class);
         extension.registerConduitInitiator(HTTPVauTransportFactory.TRANSPORT_IDENTIFIER, customTransport);
 
-        // TODO vau pool
         return new VauClientStateMachine();
     }
 
