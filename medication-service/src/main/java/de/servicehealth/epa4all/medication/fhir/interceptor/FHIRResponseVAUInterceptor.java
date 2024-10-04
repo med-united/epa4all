@@ -29,7 +29,7 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
         this.vauClient = vauClient;
     }
 
-    private boolean gzipCondition(byte[] vauBytes, int i) {
+    private boolean payloadCondition(byte[] vauBytes, int i) {
         return vauBytes[i] == 13 && vauBytes[i + 1] == 10 && vauBytes[i + 2] == 13 && vauBytes[i + 3] == 10;
     }
 
@@ -43,7 +43,7 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
         byte[] vauBytes = vauClient.getVauStateMachine().decryptVauMessage(bytes);
 
         int i = 0;
-        while (!gzipCondition(vauBytes, i) && (i + 4 < vauBytes.length)) {
+        while (!payloadCondition(vauBytes, i) && (i + 4 < vauBytes.length)) {
             i++;
         }
 
