@@ -16,6 +16,7 @@ public class CxfHeadersInterceptor extends AbstractPhaseInterceptor<Message> {
         super(Phase.SETUP);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void handleMessage(Message message) throws Fault {
         MetadataMap<String, String> headers = (MetadataMap<String, String>) message.get(PROTOCOL_HEADERS);

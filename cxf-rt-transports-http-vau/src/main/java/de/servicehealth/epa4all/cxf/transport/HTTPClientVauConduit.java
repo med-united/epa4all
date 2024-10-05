@@ -70,7 +70,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         message.put("org.apache.cxf.message.Message.BASE_PATH", vauUri);
 
         MetadataMap<String, String> headers = (MetadataMap<String, String>) message.get(PROTOCOL_HEADERS);
-        // headers.putSingle(CONNECTION, KEEP_ALIVE);
+        headers.putSingle(CONNECTION, KEEP_ALIVE);
         headers.putSingle(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
         headers.putSingle(ACCEPT, APPLICATION_OCTET_STREAM);
         headers.putSingle(VAU_METHOD_PATH, method + " " + path);

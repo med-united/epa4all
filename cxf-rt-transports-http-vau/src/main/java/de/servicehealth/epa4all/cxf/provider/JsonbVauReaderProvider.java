@@ -37,9 +37,9 @@ public class JsonbVauReaderProvider implements MessageBodyReader {
         MultivaluedMap httpHeaders, InputStream entityStream
     ) throws IOException, WebApplicationException {
         byte[] bytes = entityStream.readAllBytes();
-        List headerList = (List) httpHeaders.remove(VAU_ERROR);
-        if (headerList != null && !headerList.isEmpty()) {
-            throw new IOException((String) headerList.getFirst());
+        List vauErrorList = (List) httpHeaders.get(VAU_ERROR);
+        if (vauErrorList != null && !vauErrorList.isEmpty()) {
+            throw new IOException((String) vauErrorList.getFirst());
         }
         try (Jsonb build = jsonbBuilder.build()) {
             String payload = new String(bytes, StandardCharsets.UTF_8);

@@ -63,9 +63,11 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
                 additionalHeaders += "\r\n";
             }
 
+            String keepAlive = additionalHeaders.contains("Keep-Alive") ? "" : "Connection: Keep-Alive\r\n";
+
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: localhost:443\r\n"
-                + additionalHeaders
+                + additionalHeaders + keepAlive
                 + "Accept: application/json\r\n"
                 + prepareContentHeaders(originPayload)).getBytes();
 

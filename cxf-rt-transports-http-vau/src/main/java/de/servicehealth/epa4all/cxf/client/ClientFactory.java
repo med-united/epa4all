@@ -24,11 +24,12 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.transport.ConduitInitiatorManager;
 import org.apache.cxf.transport.DestinationFactoryManager;
 import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.cxf.transports.http.configuration.ConnectionType;
+import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import java.util.List;
 
 import static de.servicehealth.epa4all.TransportUtils.createFakeSSLContext;
+import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_ALIVE;
 
 public class ClientFactory {
 
@@ -48,7 +49,10 @@ public class ClientFactory {
 
     public static <T> T createProxyClient(Class<T> clazz, String url) throws Exception {
         VauClient vauClient = new VauClient(initVauTransport());
-        
+        return createProxyClient(vauClient, clazz, url);
+    }
+
+    public static <T> T createProxyClient(VauClient vauClient, Class<T> clazz, String url) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
         JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauClient);
         JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
@@ -62,7 +66,7 @@ public class ClientFactory {
         return api;
     }
 
-    private static VauClientStateMachine initVauTransport() {
+    public static VauClientStateMachine initVauTransport() {
         Bus bus = BusFactory.getThreadDefaultBus();
         bus.setProperty("force.urlconnection.http.conduit", false);
         DestinationFactoryManager dfm = bus.getExtension(DestinationFactoryManager.class);
@@ -84,11 +88,11 @@ public class ClientFactory {
         config.getInInterceptors().addAll(inInterceptors);
 
         HTTPConduit conduit = (HTTPConduit) config.getConduit();
-        conduit.getClient().setVersion("1.1");
-
-        conduit.getClient().setAutoRedirect(false);
-        conduit.getClient().setAllowChunking(false);
-        conduit.getClient().setConnection(ConnectionType.KEEP_ALIVE);
+        HTTPClientPolicy client = conduit.getClient();
+        client.setVersion("1.1");
+        client.setAutoRedirect(false);
+        client.setAllowChunking(false);
+        client.setConnection(KEEP_ALIVE);
 
         TLSClientParameters tlsParams = new TLSClientParameters();
         // setDisableCNCheck and setHostnameVerifier should not be set

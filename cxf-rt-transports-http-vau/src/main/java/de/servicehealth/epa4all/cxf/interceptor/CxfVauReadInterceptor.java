@@ -42,7 +42,9 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
                 .findFirst();
 
             locationOpt.ifPresent(p -> addProtocolHeader(message, HttpHeaders.LOCATION, p.getValue()));
-            addProtocolHeader(message, VAU_ERROR, vauResponse.generalError());
+            if (vauResponse.generalError() != null) {
+                addProtocolHeader(message, VAU_ERROR, vauResponse.generalError());
+            }
             byte[] payload = vauResponse.payload();
             if (payload != null) {
                 message.setContent(InputStream.class, new ByteArrayInputStream(payload));
