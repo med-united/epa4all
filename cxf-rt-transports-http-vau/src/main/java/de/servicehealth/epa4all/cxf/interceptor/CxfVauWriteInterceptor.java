@@ -28,9 +28,9 @@ import java.util.List;
 
 import static de.servicehealth.epa4all.TransportUtils.printCborMessage;
 
-public class CxfVauInterceptor extends AbstractPhaseInterceptor<Message> {
+public class CxfVauWriteInterceptor extends AbstractPhaseInterceptor<Message> {
 
-    private static final Logger log = LoggerFactory.getLogger(CxfVauInterceptor.class);
+    private static final Logger log = LoggerFactory.getLogger(CxfVauWriteInterceptor.class);
 
     public static final String VAU_CID = "VAU-CID";
     public static final String VAU_DEBUG_SK1_S2C = "VAU-DEBUG-S_K1_s2c";
@@ -45,7 +45,7 @@ public class CxfVauInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private final VauClient vauClient;
 
-    public CxfVauInterceptor(VauClient vauClient) {
+    public CxfVauWriteInterceptor(VauClient vauClient) {
         super(Phase.SETUP);
         this.vauClient = vauClient;
     }
@@ -64,7 +64,7 @@ public class CxfVauInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
                     WebClient client = WebClient.create(uri + "/VAU", providers);
-                    ClientFactory.initClient(client, List.of());
+                    ClientFactory.initClient(client.getConfiguration(), List.of(), List.of());
 
                     byte[] message1 = vauClient.getVauStateMachine().generateMessage1();
 
@@ -90,7 +90,7 @@ public class CxfVauInterceptor extends AbstractPhaseInterceptor<Message> {
                     // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
 
                     client = WebClient.create(uri + vauCid, providers);
-                    ClientFactory.initClient(client, List.of());
+                    ClientFactory.initClient(client.getConfiguration(), List.of(), List.of());
                     client.headers(prepareVauOutboundHeaders(uri, message3.length));
 
                     response = client.post(ByteBuffer.wrap(message3));

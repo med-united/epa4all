@@ -16,9 +16,9 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.List;
 
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauInterceptor.VAU_CID;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauInterceptor.VAU_DEBUG_SK1_S2C;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauInterceptor.VAU_DEBUG_SK1_C2S;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_CID;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_DEBUG_SK1_S2C;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_DEBUG_SK1_C2S;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -49,6 +49,8 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
         String method = (String) message.get(HTTP_REQUEST_METHOD);
         String endpoint = (String) message.get(ENDPOINT_ADDRESS);
+        endpoint = endpoint.replace(vauCid, "");
+        message.put(ENDPOINT_ADDRESS, endpoint);
         String path = URI.create(endpoint).getPath();
 
         boolean post = method.equals("POST");

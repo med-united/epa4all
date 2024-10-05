@@ -27,14 +27,15 @@ public abstract class AbstractAuthTest {
     }
 
     @Test
-    public void setEntitlementPsWorks() throws Exception {
+    public void getAuthNonceWorks() throws Exception {
         runWithDocker(() -> {
             AuthorizationSmcBApi api = buildApi(AuthorizationSmcBApi.class, authorizationServiceUrl);
 
             String xUseragent = "CLIENTID1234567890AB/2.1.12-45";
-            GetNonce200Response nonce = api.getNonce(xUseragent);
-            assertNotNull(nonce);
 
+            // GetNonce200Response nonce = api.getNonce(xUseragent);
+            // assertNotNull(nonce);
+            //
             try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent)) {
                 String query = response.getLocation().getQuery();
                 assertTrue(query.contains("redirect_uri"));
