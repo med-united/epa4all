@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.medication.fhir.interceptor;
 import de.servicehealth.epa4all.VauClient;
 import de.servicehealth.epa4all.VauResponse;
 import de.servicehealth.epa4all.VauResponseReader;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
@@ -16,6 +17,8 @@ import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -31,7 +34,11 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
     public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
         byte[] bytes = response.getEntity().getContent().readAllBytes();
         try {
-            VauResponse vauResponse = vauResponseReader.read(bytes);
+            List<Pair<String, String>> originHeaders = Arrays.stream(response.getAllHeaders())
+                .map(h -> Pair.of(h.getName(), h.getValue()))
+                .toList();
+            int responseCode = response.getStatusLine().getStatusCode();
+            VauResponse vauResponse = vauResponseReader.read(responseCode, originHeaders, bytes);
             Header[] headers = vauResponse.headers()
                 .stream()
                 .map(p -> (Header) new BasicHeader(p.getKey(), p.getValue()))

@@ -13,6 +13,9 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor.VAU_ERROR;
 
 public class JsonbVauReaderProvider implements MessageBodyReader {
 
@@ -27,13 +30,17 @@ public class JsonbVauReaderProvider implements MessageBodyReader {
         return mediaType.equals(MediaType.APPLICATION_OCTET_STREAM_TYPE);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     public Object readFrom(
         Class type, Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap httpHeaders, InputStream entityStream
     ) throws IOException, WebApplicationException {
         byte[] bytes = entityStream.readAllBytes();
+        List headerList = (List) httpHeaders.remove(VAU_ERROR);
+        if (headerList != null && !headerList.isEmpty()) {
+            throw new IOException((String) headerList.getFirst());
+        }
         try (Jsonb build = jsonbBuilder.build()) {
             String payload = new String(bytes, StandardCharsets.UTF_8);
             if (payload.startsWith("[")) {
@@ -41,7 +48,7 @@ public class JsonbVauReaderProvider implements MessageBodyReader {
             }
             return build.fromJson(payload, type);
         } catch (Exception e) {
-            throw new IllegalArgumentException(e.getMessage());
+            throw new IOException(e.getMessage());
         }
     }
 }

@@ -16,6 +16,8 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.List;
 
+import static com.google.common.net.HttpHeaders.CONNECTION;
+import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
 import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_CID;
 import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_DEBUG_SK1_S2C;
 import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_DEBUG_SK1_C2S;
@@ -49,7 +51,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
         String method = (String) message.get(HTTP_REQUEST_METHOD);
         String endpoint = (String) message.get(ENDPOINT_ADDRESS);
-        endpoint = endpoint.replace(vauCid, "");
+        endpoint = endpoint.replace(vauCid, "").replace("https:", "https+vau:");
         message.put(ENDPOINT_ADDRESS, endpoint);
         String path = URI.create(endpoint).getPath();
 
@@ -68,6 +70,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         message.put("org.apache.cxf.message.Message.BASE_PATH", vauUri);
 
         MetadataMap<String, String> headers = (MetadataMap<String, String>) message.get(PROTOCOL_HEADERS);
+        // headers.putSingle(CONNECTION, KEEP_ALIVE);
         headers.putSingle(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
         headers.putSingle(ACCEPT, APPLICATION_OCTET_STREAM);
         headers.putSingle(VAU_METHOD_PATH, method + " " + path);
