@@ -10,7 +10,7 @@ import io.quarkus.test.junit.TestProfile;
 public class EntitlementServiceProxyIT extends AbstractEntitlementServiceIT {
 
     @Override
-    protected <T> T buildApi(Class<T> clazz, String url) throws Exception {
-        return ClientFactory.createProxyClient(clazz, url);
+    protected <T> T buildApi(VauClient vauClient, Class<T> clazz, String url) throws Exception {
+        return ClientFactory.createProxyClient(vauClient, clazz, url);
     }
 }

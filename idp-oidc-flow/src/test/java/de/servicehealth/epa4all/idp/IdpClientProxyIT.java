@@ -12,7 +12,7 @@ public class IdpClientProxyIT extends IdpClientIT {
 
     @Override
     protected <T> T buildApi(VauClient vauClient, Class<T> clazz, String url) throws Exception {
-        return ClientFactory.createProxyClient(clazz, url);
+        return ClientFactory.createProxyClient(vauClient, clazz, url);
     }
 }
 

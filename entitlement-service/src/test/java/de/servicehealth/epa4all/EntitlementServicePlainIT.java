@@ -10,7 +10,7 @@ import io.quarkus.test.junit.TestProfile;
 public class EntitlementServicePlainIT extends AbstractEntitlementServiceIT {
 
     @Override
-    protected <T> T buildApi(Class<T> clazz, String url) throws Exception {
+    protected <T> T buildApi(VauClient vauClient, Class<T> clazz, String url) throws Exception {
         return ClientFactory.createPlainClient(clazz, url);
     }
 }

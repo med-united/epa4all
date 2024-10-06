@@ -47,11 +47,6 @@ public class ClientFactory {
         return api;
     }
 
-    public static <T> T createProxyClient(Class<T> clazz, String url) throws Exception {
-        VauClient vauClient = new VauClient(initVauTransport());
-        return createProxyClient(vauClient, clazz, url);
-    }
-
     public static <T> T createProxyClient(VauClient vauClient, Class<T> clazz, String url) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
         JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauClient);
