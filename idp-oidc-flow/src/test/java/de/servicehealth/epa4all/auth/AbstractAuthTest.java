@@ -39,8 +39,8 @@ public abstract class AbstractAuthTest {
             GetNonce200Response nonce = api.getNonce(xUseragent);
             assertNotNull(nonce);
 
-            // AuthorizationSmcBApi api2 = buildApi(vauClient, AuthorizationSmcBApi.class, authorizationServiceUrl);
-            try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent)) {
+            AuthorizationSmcBApi api2 = buildApi(vauClient, AuthorizationSmcBApi.class, authorizationServiceUrl);
+            try (Response response = api2.sendAuthorizationRequestSCWithResponse(xUseragent)) {
                 String query = response.getLocation().getQuery();
                 assertTrue(query.contains("redirect_uri"));
             }

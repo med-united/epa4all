@@ -1,32 +1,5 @@
 package de.servicehealth.epa4all.idp;
 
-import static de.gematik.idp.brainPoolExtension.BrainpoolAlgorithmSuiteIdentifiers.BRAINPOOL256_USING_SHA256;
-import static org.jose4j.jws.AlgorithmIdentifiers.RSA_PSS_USING_SHA256;
-import static org.jose4j.jws.EcdsaUsingShaAlgorithm.convertDerToConcatenated;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.ECPublicKey;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.jose4j.jws.JsonWebSignature;
-import org.jose4j.jwt.JwtClaims;
-
 import de.gematik.idp.authentication.AuthenticationChallenge;
 import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.idp.client.data.AuthenticationRequest;
@@ -58,6 +31,32 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
 import oasis.names.tc.dss._1_0.core.schema.Base64Data;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jwt.JwtClaims;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPublicKey;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+
+import static de.gematik.idp.brainPoolExtension.BrainpoolAlgorithmSuiteIdentifiers.BRAINPOOL256_USING_SHA256;
+import static org.jose4j.jws.AlgorithmIdentifiers.RSA_PSS_USING_SHA256;
+import static org.jose4j.jws.EcdsaUsingShaAlgorithm.convertDerToConcatenated;
 
 public class IdpClient {
 
@@ -71,8 +70,14 @@ public class IdpClient {
 
     private String userAgent = "ServiceHealth/1.0";
 
+    // TODO fix connection reset on sequent calls for the same Api
+
     @Inject
-    AuthorizationSmcBApi authorizationService;
+    AuthorizationSmcBApi authorizationService1;
+    @Inject
+    AuthorizationSmcBApi authorizationService2;
+    @Inject
+    AuthorizationSmcBApi authorizationService3;
 
     @Inject
     AuthSignatureServicePortType authSignatureServicePortType;
@@ -97,7 +102,7 @@ public class IdpClient {
 
     public void getVauNp(Consumer<String> vauNPConsumer) {
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
-        String nonce = authorizationService.getNonce(userAgent).getNonce();
+        String nonce = authorizationService1.getNonce(userAgent).getNonce();
 
         // A_20666-02 - Auslesen des Authentisierungszertifikates 
         ReadCardCertificate readCardCertificateRequest = new ReadCardCertificate();
@@ -151,7 +156,7 @@ public class IdpClient {
         String clientAttest = getSignedJwt(smcbAuthCert, signatureType, claims, true);
 
         // A_24760 - Start der Nutzerauthentifizierung
-        Response response = authorizationService.sendAuthorizationRequestSCWithResponse(userAgent);
+        Response response = authorizationService2.sendAuthorizationRequestSCWithResponse(userAgent);
 
         String query = response.getLocation().getQuery();
         
@@ -183,7 +188,7 @@ public class IdpClient {
             SendAuthCodeSCtype sendAuthCodeSC = new SendAuthCodeSCtype();
             sendAuthCodeSC.setAuthorizationCode(authorizationCode);
             sendAuthCodeSC.setClientAttest(clientAttest);
-            SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationService.sendAuthCodeSC(userAgent,sendAuthCodeSC);
+            SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationService3.sendAuthCodeSC(userAgent,sendAuthCodeSC);
             vauNPConsumer.accept(sendAuthCodeSC200Response.getVauNp());
         });
     }

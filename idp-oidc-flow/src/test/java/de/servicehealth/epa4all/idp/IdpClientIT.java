@@ -1,37 +1,5 @@
 package de.servicehealth.epa4all.idp;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-
-import de.servicehealth.epa4all.common.PlainTestProfile;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
-import jakarta.inject.Inject;
-import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.endpoint.Client;
-import org.apache.cxf.frontend.ClientProxy;
-import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
-import org.apache.cxf.transport.http.HTTPConduit;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.yasson.JsonBindingProvider;
-import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJsonProvider;
-import org.junit.jupiter.api.Test;
-
 import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureService;
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureServicePortType;
@@ -45,7 +13,12 @@ import de.gematik.ws.conn.eventservice.v7.GetCards;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventService;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.FaultMessage;
+import de.servicehealth.epa4all.VauClient;
 import de.servicehealth.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.epa4all.common.PlainTestProfile;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
+import jakarta.inject.Inject;
 import jakarta.xml.ws.BindingProvider;
 import kong.unirest.core.Config;
 import kong.unirest.core.HttpRequest;
@@ -53,10 +26,35 @@ import kong.unirest.core.HttpRequestSummary;
 import kong.unirest.core.HttpResponse;
 import kong.unirest.core.Interceptor;
 import kong.unirest.core.Unirest;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
+import org.apache.cxf.endpoint.Client;
+import org.apache.cxf.frontend.ClientProxy;
+import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
+import org.apache.cxf.transport.http.HTTPConduit;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.yasson.JsonBindingProvider;
+import org.glassfish.jersey.jackson.internal.jackson.jaxrs.json.JacksonJsonProvider;
+import org.junit.jupiter.api.Test;
 
-@QuarkusTest
-@TestProfile(PlainTestProfile.class)
-public class IdpClientIT {
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static de.servicehealth.epa4all.cxf.client.ClientFactory.initVauTransport;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+public abstract class IdpClientIT {
 
     @Inject
     @ConfigProperty(name = "authorization-service.url")
@@ -78,15 +76,17 @@ public class IdpClientIT {
     @ConfigProperty(name = "incentergy.pem.pass")
     String incentergyPemPass;
 
+    protected abstract <T> T buildApi(VauClient vauClient, Class<T> clazz, String url) throws Exception;
+
     @Test
-    public void testGetVauNp() throws NoSuchAlgorithmException, CertificateException, FileNotFoundException, KeyStoreException, IOException, KeyManagementException, UnrecoverableKeyException, FaultMessage {
+    public void testGetVauNp() throws Exception {
         Unirest.config().interceptor(new Interceptor() {
 
             @Override
             public void onRequest(HttpRequest<?> request, Config config) {
                 System.out.println("Request: " + request);
             }
-            
+
             @Override
             public void onResponse(HttpResponse<?> response, HttpRequestSummary request, Config config) {
                 System.out.println("Response: " + response);
@@ -103,18 +103,9 @@ public class IdpClientIT {
         // Initialize SSLContext
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(keyManagerFactory.getKeyManagers(), FakeTrustManager.getTrustManagers(), null);
-        
+
         System.setProperty("javax.xml.accessExternalDTD", "all" );
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
-
-
-        JsonBindingProvider provider = new JsonBindingProvider();
-        List<Object> providers = new ArrayList<>();
-        providers.add(provider);
-        providers.add(new JacksonJsonProvider());
-        AuthorizationSmcBApi api = JAXRSClientFactory.create(
-            authorizationServiceUrl, AuthorizationSmcBApi.class, providers
-        );
 
         CertificateService certificateService = new CertificateService();
         CertificateServicePortType certificateServicePort = certificateService.getCertificateServicePort();
@@ -153,10 +144,15 @@ public class IdpClientIT {
         idpClient.discoveryDocumentResponse = idpClient.authenticatorClient.retrieveDiscoveryDocument(
             discoveryDocumentUrl, Optional.empty()
         );
+
+        VauClient vauClient = new VauClient(initVauTransport());
+
         idpClient.certificateServicePortType = certificateServicePort;
         idpClient.cardServicePortType = cardServicePort;
         idpClient.authSignatureServicePortType = authSignatureServicePort;
-        idpClient.authorizationService = api;
+        idpClient.authorizationService1 = buildApi(vauClient, AuthorizationSmcBApi.class, authorizationServiceUrl);
+        idpClient.authorizationService2 = buildApi(vauClient, AuthorizationSmcBApi.class, authorizationServiceUrl);
+        idpClient.authorizationService3 = buildApi(vauClient, AuthorizationSmcBApi.class, authorizationServiceUrl);
         idpClient.contextType = contextType;
         idpClient.smcbHandle = smcbHandle;
         idpClient.getVauNp((String np) -> {
