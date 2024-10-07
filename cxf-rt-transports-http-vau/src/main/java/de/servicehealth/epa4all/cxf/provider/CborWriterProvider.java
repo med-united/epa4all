@@ -11,7 +11,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 
-public class CBORProvider implements MessageBodyWriter<ByteBuffer> {
+public class CborWriterProvider implements MessageBodyWriter<ByteBuffer> {
 
     @Override
     public boolean isWriteable(Class type, Type genericType, Annotation[] annotations, MediaType mediaType) {

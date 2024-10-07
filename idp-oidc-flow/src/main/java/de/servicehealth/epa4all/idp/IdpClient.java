@@ -1,32 +1,5 @@
 package de.servicehealth.epa4all.idp;
 
-import static de.gematik.idp.brainPoolExtension.BrainpoolAlgorithmSuiteIdentifiers.BRAINPOOL256_USING_SHA256;
-import static org.jose4j.jws.AlgorithmIdentifiers.RSA_PSS_USING_SHA256;
-import static org.jose4j.jws.EcdsaUsingShaAlgorithm.convertDerToConcatenated;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.ECPublicKey;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.jose4j.jws.JsonWebSignature;
-import org.jose4j.jwt.JwtClaims;
-
 import de.gematik.idp.authentication.AuthenticationChallenge;
 import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.idp.client.data.AuthenticationRequest;
@@ -58,6 +31,32 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
 import oasis.names.tc.dss._1_0.core.schema.Base64Data;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.jose4j.jws.JsonWebSignature;
+import org.jose4j.jwt.JwtClaims;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPublicKey;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
+
+import static de.gematik.idp.brainPoolExtension.BrainpoolAlgorithmSuiteIdentifiers.BRAINPOOL256_USING_SHA256;
+import static org.jose4j.jws.AlgorithmIdentifiers.RSA_PSS_USING_SHA256;
+import static org.jose4j.jws.EcdsaUsingShaAlgorithm.convertDerToConcatenated;
 
 public class IdpClient {
 

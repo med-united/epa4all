@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.medication.fhir.restful;
+package de.servicehealth.epa4all.medication.fhir.restful.factory;
 
 import ca.uhn.fhir.i18n.Msg;
 import ca.uhn.fhir.rest.api.Constants;

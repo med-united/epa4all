@@ -151,11 +151,6 @@
                                     <goal>integration-test</goal>
                                     <goal>verify</goal>
                                 </goals>
-                                <configuration>
-                                    <systemPropertyVariables>
-                                        <quarkus.test.profile>dev</quarkus.test.profile>
-                                    </systemPropertyVariables>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

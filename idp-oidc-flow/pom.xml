@@ -14,7 +14,9 @@
 
     <name>idp-oidc-flow</name>
 
-
+    <properties>
+        <cxf-version>4.0.5</cxf-version>
+    </properties>
 
     <dependencyManagement>
         <dependencies>
@@ -29,8 +31,69 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-jaxrs</artifactId>
+            <scope>compile</scope>
+            <version>1.6.14</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.validation</groupId>
+                    <artifactId>validation-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-        <!-- https://mvnrepository.com/artifact/de.gematik.idp/idp-client -->
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-extension-providers</artifactId>
+            <version>4.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jettison</groupId>
+            <artifactId>jettison</artifactId>
+            <version>1.5.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-client</artifactId>
+            <version>${cxf-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+            <version>${cxf-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-service-description</artifactId>
+            <version>${cxf-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>cxf-rt-transports-http-vau</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>authorization-service</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>api-telematik</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>common-test</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>de.gematik.idp</groupId>
             <artifactId>idp-client</artifactId>
@@ -48,29 +111,9 @@
         </dependency>
 
         <dependency>
-            <groupId>de.servicehealth.epa4all</groupId>
-            <artifactId>authorization-service</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.bitbucket.b_c/jose4j -->
-        <dependency>
             <groupId>org.bitbucket.b_c</groupId>
             <artifactId>jose4j</artifactId>
             <version>0.9.6</version>
-        </dependency>
-
-        <dependency>
-            <groupId>de.servicehealth.epa4all</groupId>
-            <artifactId>api-telematik</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>de.servicehealth.epa4all</groupId>
-            <artifactId>common-test</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-            <scope>test</scope>
         </dependency>
 
     </dependencies>

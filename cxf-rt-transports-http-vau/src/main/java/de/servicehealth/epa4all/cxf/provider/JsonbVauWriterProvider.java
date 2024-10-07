@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.cxf.provider;
 
-import de.gematik.vau.lib.VauClientStateMachine;
+import de.servicehealth.epa4all.VauClient;
 import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
@@ -20,14 +20,14 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static de.servicehealth.epa4all.cxf.transport.HTTPClientVAUConduit.VAU_METHOD_PATH;
+import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 
-public class JSONBOctetProvider implements MessageBodyWriter {
+public class JsonbVauWriterProvider implements MessageBodyWriter {
 
-    private final VauClientStateMachine vauClient;
+    private final VauClient vauClient;
     private final JsonbBuilder jsonbBuilder;
 
-    public JSONBOctetProvider(VauClientStateMachine vauClient) {
+    public JsonbVauWriterProvider(VauClient vauClient) {
         jsonbBuilder = new JsonBindingBuilder();
         this.vauClient = vauClient;
     }
@@ -63,15 +63,17 @@ public class JSONBOctetProvider implements MessageBodyWriter {
                 additionalHeaders += "\r\n";
             }
 
+            String keepAlive = additionalHeaders.contains("Keep-Alive") ? "" : "Connection: Keep-Alive\r\n";
+
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: localhost:443\r\n"
-                + additionalHeaders
+                + additionalHeaders + keepAlive
                 + "Accept: application/json\r\n"
                 + prepareContentHeaders(originPayload)).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, originPayload);
 
-            byte[] vauMessage = vauClient.encryptVauMessage(content);
+            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
             entityStream.write(vauMessage);
             entityStream.close();
 

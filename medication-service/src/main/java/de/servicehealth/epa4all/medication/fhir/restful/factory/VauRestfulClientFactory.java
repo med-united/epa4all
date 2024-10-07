@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.medication.fhir.restful;
+package de.servicehealth.epa4all.medication.fhir.restful.factory;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
@@ -10,23 +10,25 @@ import de.gematik.vau.lib.VauClientStateMachine;
 import de.servicehealth.epa4all.VauClient;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRRequestVAUInterceptor;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRResponseVAUInterceptor;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 import javax.net.ssl.SSLContext;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static de.servicehealth.epa4all.TransportUtils.createFakeSSLContext;
-import static org.apache.http.client.fluent.Executor.newInstance;
 
 public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
 
     public static Executor applyToFhirContext(FhirContext ctx, String medicationServiceBaseUrl) throws Exception {
         VauRestfulClientFactory vauClientFactory = new VauRestfulClientFactory(ctx);
-        return newInstance(vauClientFactory.initVauHttpClient(ctx, medicationServiceBaseUrl));
+        return Executor.newInstance(vauClientFactory.initVauHttpClient(ctx, medicationServiceBaseUrl));
     }
 
     private VauRestfulClientFactory(FhirContext ctx) {
@@ -42,17 +44,43 @@ public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
         VauClient vauClient = new VauClient(new VauClientStateMachine());
         FHIRRequestVAUInterceptor requestInterceptor = new FHIRRequestVAUInterceptor(medicationBaseUri, sslContext, vauClient);
         FHIRResponseVAUInterceptor responseInterceptor = new FHIRResponseVAUInterceptor(vauClient);
-
-        CloseableHttpClient vauHttpClient = HttpClients.custom()
-            .addInterceptorFirst(requestInterceptor)
-            .addInterceptorLast(responseInterceptor)
-            .setSSLContext(sslContext)
-            .build();
+        CloseableHttpClient vauHttpClient = buildHttpClient(sslContext, requestInterceptor, responseInterceptor);
 
         setHttpClient(vauHttpClient); // used for getNativeHttpClient()
         setServerValidationMode(ServerValidationModeEnum.NEVER);
 
         return vauHttpClient;
+    }
+
+    @SuppressWarnings("deprecation")
+    private CloseableHttpClient buildHttpClient(
+        SSLContext sslContext,
+        FHIRRequestVAUInterceptor requestInterceptor,
+        FHIRResponseVAUInterceptor responseInterceptor
+    ) {
+        // taken from getNativeHttpClient.getNativeHttpClient()
+        RequestConfig defaultRequestConfig = RequestConfig.custom()
+            .setSocketTimeout(getSocketTimeout())
+            .setConnectTimeout(getConnectTimeout())
+            .setConnectionRequestTimeout(getConnectionRequestTimeout())
+            .setStaleConnectionCheckEnabled(true)
+            .build();
+
+        HttpClientBuilder builder = getHttpClientBuilder()
+            .useSystemProperties()
+            .setDefaultRequestConfig(defaultRequestConfig)
+            .addInterceptorFirst(requestInterceptor)
+            .addInterceptorLast(responseInterceptor)
+            .setSSLContext(sslContext)
+            .disableCookieManagement();
+
+        PoolingHttpClientConnectionManager connectionManager =
+            new PoolingHttpClientConnectionManager(5000, TimeUnit.MILLISECONDS);
+        connectionManager.setMaxTotal(getPoolMaxTotal());
+        connectionManager.setDefaultMaxPerRoute(getPoolMaxPerRoute());
+
+        builder.setConnectionManager(connectionManager);
+        return builder.build();
     }
 
     @Override

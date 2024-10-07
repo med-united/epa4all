@@ -70,6 +70,7 @@
             <artifactId>cxf-rt-rs-service-description</artifactId>
             <version>${cxf-version}</version>
         </dependency>
+
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>cxf-rt-transports-http-vau</artifactId>
@@ -80,6 +81,7 @@
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>common-test</artifactId>
             <version>1.0.0-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>
@@ -100,7 +102,6 @@
                             <inputSpec>${project.basedir}/src/main/resources/openapi/I_Entitlement_Management.yaml
                             </inputSpec>
                             <generatorName>jaxrs-cxf-client</generatorName>
-
                             <cleanupOutput>true</cleanupOutput>
                             <output>target/generated-sources</output>
                             <apiPackage>de.servicehealth.api</apiPackage>
@@ -194,11 +195,6 @@
                                     <goal>integration-test</goal>
                                     <goal>verify</goal>
                                 </goals>
-                                <configuration>
-                                    <systemPropertyVariables>
-                                        <quarkus.test.profile>dev</quarkus.test.profile>
-                                    </systemPropertyVariables>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
