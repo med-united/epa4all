@@ -34,13 +34,11 @@ public abstract class AbstractAuthTest {
     public void getAuthNonceWorks() throws Exception {
         runWithDocker(() -> {
             VauClient vauClient = new VauClient(initVauTransport());
-
             AuthorizationSmcBApi api = buildApi(vauClient, AuthorizationSmcBApi.class, authorizationServiceUrl);
+
             GetNonce200Response nonce = api.getNonce(xUseragent);
             assertNotNull(nonce);
-
-            AuthorizationSmcBApi api2 = buildApi(vauClient, AuthorizationSmcBApi.class, authorizationServiceUrl);
-            try (Response response = api2.sendAuthorizationRequestSCWithResponse(xUseragent)) {
+            try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent)) {
                 String query = response.getLocation().getQuery();
                 assertTrue(query.contains("redirect_uri"));
             }

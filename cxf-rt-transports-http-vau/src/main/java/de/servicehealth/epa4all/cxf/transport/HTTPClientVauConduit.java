@@ -19,8 +19,8 @@ import java.util.List;
 import static com.google.common.net.HttpHeaders.CONNECTION;
 import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
 import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_CID;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_DEBUG_SK1_S2C;
 import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_DEBUG_SK1_C2S;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_DEBUG_SK1_S2C;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -37,6 +37,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         super(b, ei, t);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void setupConnection(Message message, Address address, HTTPClientPolicy csPolicy) throws IOException {
         String vauCid = (String) message.get(VAU_CID);
@@ -67,7 +68,6 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         message.put(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
         message.put(ACCEPT, APPLICATION_OCTET_STREAM);
         message.put("org.apache.cxf.request.uri", vauUri);
-        message.put("org.apache.cxf.message.Message.BASE_PATH", vauUri);
 
         MetadataMap<String, String> headers = (MetadataMap<String, String>) message.get(PROTOCOL_HEADERS);
         headers.putSingle(CONNECTION, KEEP_ALIVE);

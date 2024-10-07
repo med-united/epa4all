@@ -25,7 +25,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
     public CxfVauReadInterceptor(VauClient vauClient) {
         super(Phase.PROTOCOL);
-        vauResponseReader = new VauResponseReader(vauClient);;
+        vauResponseReader = new VauResponseReader(vauClient);
     }
 
     @Override
@@ -48,6 +48,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             byte[] payload = vauResponse.payload();
             if (payload != null) {
                 message.setContent(InputStream.class, new ByteArrayInputStream(payload));
+                addProtocolHeader(message, HttpHeaders.CONTENT_LENGTH, payload.length);
             }
         } catch (Exception e) {
             throw new Fault(e);

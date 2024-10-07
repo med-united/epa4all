@@ -70,14 +70,8 @@ public class IdpClient {
 
     private String userAgent = "ServiceHealth/1.0";
 
-    // TODO fix connection reset on sequent calls for the same Api
-
     @Inject
-    AuthorizationSmcBApi authorizationService1;
-    @Inject
-    AuthorizationSmcBApi authorizationService2;
-    @Inject
-    AuthorizationSmcBApi authorizationService3;
+    AuthorizationSmcBApi authorizationService;
 
     @Inject
     AuthSignatureServicePortType authSignatureServicePortType;
@@ -102,7 +96,7 @@ public class IdpClient {
 
     public void getVauNp(Consumer<String> vauNPConsumer) {
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
-        String nonce = authorizationService1.getNonce(userAgent).getNonce();
+        String nonce = authorizationService.getNonce(userAgent).getNonce();
 
         // A_20666-02 - Auslesen des Authentisierungszertifikates 
         ReadCardCertificate readCardCertificateRequest = new ReadCardCertificate();
@@ -156,7 +150,7 @@ public class IdpClient {
         String clientAttest = getSignedJwt(smcbAuthCert, signatureType, claims, true);
 
         // A_24760 - Start der Nutzerauthentifizierung
-        Response response = authorizationService2.sendAuthorizationRequestSCWithResponse(userAgent);
+        Response response = authorizationService.sendAuthorizationRequestSCWithResponse(userAgent);
 
         String query = response.getLocation().getQuery();
         
@@ -188,7 +182,7 @@ public class IdpClient {
             SendAuthCodeSCtype sendAuthCodeSC = new SendAuthCodeSCtype();
             sendAuthCodeSC.setAuthorizationCode(authorizationCode);
             sendAuthCodeSC.setClientAttest(clientAttest);
-            SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationService3.sendAuthCodeSC(userAgent,sendAuthCodeSC);
+            SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationService.sendAuthCodeSC(userAgent,sendAuthCodeSC);
             vauNPConsumer.accept(sendAuthCodeSC200Response.getVauNp());
         });
     }
