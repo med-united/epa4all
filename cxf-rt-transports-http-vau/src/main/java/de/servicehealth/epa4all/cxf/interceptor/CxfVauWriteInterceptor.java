@@ -3,7 +3,6 @@ package de.servicehealth.epa4all.cxf.interceptor;
 import de.servicehealth.epa4all.VauClient;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
-import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import org.apache.cxf.interceptor.Fault;
@@ -27,6 +26,12 @@ import java.security.Security;
 import java.util.List;
 
 import static de.servicehealth.epa4all.TransportUtils.printCborMessage;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT_ENCODING;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.HOST;
+import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
 
 public class CxfVauWriteInterceptor extends AbstractPhaseInterceptor<Message> {
 
@@ -76,7 +81,7 @@ public class CxfVauWriteInterceptor extends AbstractPhaseInterceptor<Message> {
                     String vauCid = getHeader(response, VAU_CID);
                     String vauDebugSC = getHeader(response, VAU_DEBUG_SK1_S2C);
                     String vauDebugCS = getHeader(response, VAU_DEBUG_SK1_C2S);
-                    String contentLength = getHeader(response, HttpHeaders.CONTENT_LENGTH);
+                    String contentLength = getHeader(response, CONTENT_LENGTH);
 
                     printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
 
@@ -97,7 +102,7 @@ public class CxfVauWriteInterceptor extends AbstractPhaseInterceptor<Message> {
                     byte[] message4 = getPayload(response);
                     vauDebugSC = getHeader(response, VAU_DEBUG_SK2_S2C_INFO);
                     vauDebugCS = getHeader(response, VAU_DEBUG_SK2_C2S_INFO);
-                    contentLength = getHeader(response, HttpHeaders.CONTENT_LENGTH);
+                    contentLength = getHeader(response, CONTENT_LENGTH);
 
                     printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
 
@@ -123,12 +128,12 @@ public class CxfVauWriteInterceptor extends AbstractPhaseInterceptor<Message> {
     private MetadataMap<String, String> prepareVauOutboundHeaders(String uri, int length) {
         MetadataMap<String, String> headers = new MetadataMap<>();
         headers.add("Connection", "Keep-Alive");
-        headers.add(HttpHeaders.ACCEPT, "application/octet-stream, application/json, application/cbor, application/*+json, */*");
-        headers.add(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate");
-        headers.add(HttpHeaders.CONTENT_TYPE, "application/cbor");
-        headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(length));
-        headers.add(HttpHeaders.HOST, URI.create(uri).getHost());
-        headers.add(HttpHeaders.USER_AGENT, "Apache-CfxClient/4.0.5");
+        headers.add(ACCEPT, "application/octet-stream, application/json, application/cbor, application/*+json, */*");
+        headers.add(ACCEPT_ENCODING, "gzip, x-gzip, deflate");
+        headers.add(CONTENT_TYPE, "application/cbor");
+        headers.add(CONTENT_LENGTH, String.valueOf(length));
+        headers.add(HOST, URI.create(uri).getHost());
+        headers.add(USER_AGENT, "Apache-CfxClient/4.0.5");
         return headers;
     }
 }

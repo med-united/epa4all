@@ -36,11 +36,13 @@ public abstract class AbstractAuthTest {
             VauClient vauClient = new VauClient(initVauTransport());
             AuthorizationSmcBApi api = buildApi(vauClient, AuthorizationSmcBApi.class, authorizationServiceUrl);
 
-            GetNonce200Response nonce = api.getNonce(xUseragent);
-            assertNotNull(nonce);
-            try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent)) {
-                String query = response.getLocation().getQuery();
-                assertTrue(query.contains("redirect_uri"));
+            for (int i = 0; i < 10; i++) {
+                GetNonce200Response nonce = api.getNonce(xUseragent);
+                assertNotNull(nonce);
+                try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent)) {
+                    String query = response.getLocation().getQuery();
+                    assertTrue(query.contains("redirect_uri"));
+                }
             }
         });
     }

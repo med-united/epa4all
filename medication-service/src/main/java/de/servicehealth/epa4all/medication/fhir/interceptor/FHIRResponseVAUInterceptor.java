@@ -6,7 +6,6 @@ import de.servicehealth.epa4all.VauResponseReader;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.entity.AbstractHttpEntity;
@@ -21,6 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 
 public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
 
@@ -49,7 +50,7 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
             byte[] payload = vauResponse.payload();
             if (payload != null) {
                 Optional<Header> contentTypeOpt = Stream.of(headers)
-                    .filter(h -> h.getName().equals(HttpHeaders.CONTENT_TYPE))
+                    .filter(h -> h.getName().equals(CONTENT_TYPE))
                     .findFirst();
 
                 AbstractHttpEntity entity = createEntity(contentTypeOpt, payload);

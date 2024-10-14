@@ -35,6 +35,7 @@
       <module>medication-service</module>
       <module>authorization-service</module>
       <module>idp-oidc-flow</module>
+      <module>lib-cetp</module>
     </modules>
 
     <dependencyManagement>
