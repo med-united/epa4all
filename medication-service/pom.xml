@@ -114,7 +114,7 @@
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>org.hl7.fhir.dstu2016may</artifactId>
-            <version>6.3.27</version>
+            <version>6.3.32</version>
             <exclusions>
                 <exclusion>
                     <groupId>junit</groupId>
