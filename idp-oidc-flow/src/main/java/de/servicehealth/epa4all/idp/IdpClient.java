@@ -2,10 +2,12 @@ package de.servicehealth.epa4all.idp;
 
 import de.gematik.idp.authentication.AuthenticationChallenge;
 import de.gematik.idp.client.AuthenticatorClient;
+import de.gematik.idp.client.IdpTokenResult;
 import de.gematik.idp.client.data.AuthenticationRequest;
 import de.gematik.idp.client.data.AuthenticationResponse;
 import de.gematik.idp.client.data.AuthorizationRequest;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
+import de.gematik.idp.client.data.TokenRequest;
 import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.field.CodeChallengeMethod;
 import de.gematik.idp.token.IdpJwe;
@@ -31,7 +33,10 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
 import oasis.names.tc.dss._1_0.core.schema.Base64Data;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 
@@ -46,6 +51,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
@@ -69,6 +75,14 @@ public class IdpClient {
     }
 
     private String userAgent = "ServiceHealth/1.0";
+
+    @Inject
+    @ConfigProperty(name = "idp.client.id")
+    String idpClientId;
+
+    @Inject
+    @ConfigProperty(name = "idp.auth.request.redirect.url")
+    String idpAuthRequestRedirectUrl;
 
     @Inject
     AuthorizationSmcBApi authorizationService;
@@ -114,7 +128,8 @@ public class IdpClient {
         } catch (de.gematik.ws.conn.certificateservice.wsdl.v6_0.FaultMessage e) {
             // Zugriffsbedingungen nicht erfüllt
             boolean code4085 = e.getFaultInfo().getTrace().stream().anyMatch(t ->
-                    t.getCode().equals(BigInteger.valueOf(4085L)));
+                t.getCode().equals(BigInteger.valueOf(4085L))
+            );
 
             if (code4085) {
                 try {
@@ -136,36 +151,43 @@ public class IdpClient {
             }
         }
 
-        if(readCardCertificateResponse == null) {
+        if (readCardCertificateResponse == null) {
             throw new RuntimeException("Could not read card certificate");
         }
 
-        X509Certificate  smcbAuthCert = getCertificateFromAsn1DERCertBytes(readCardCertificateResponse.getX509DataInfoList().getX509DataInfo().get(0).getX509Data().getX509Certificate());
+        byte[] x509Certificate = readCardCertificateResponse
+            .getX509DataInfoList()
+            .getX509DataInfo()
+            .get(0)
+            .getX509Data()
+            .getX509Certificate();
+        X509Certificate smcbAuthCert = getCertificateFromAsn1DERCertBytes(x509Certificate);
 
         JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.NONCE.getJoseName(), nonce);
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
-        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000)+300);
+        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 300);
         // A_24882-01 - Signatur clientAttest
         String clientAttest = getSignedJwt(smcbAuthCert, signatureType, claims, true);
 
         // A_24760 - Start der Nutzerauthentifizierung
-        Response response = authorizationService.sendAuthorizationRequestSCWithResponse(userAgent);
-
-        String query = response.getLocation().getQuery();
-        
-        // Parse query string into map
-        Map<String, String> queryMap = new HashMap<>();
-        Arrays.asList(query.split("&")).stream().map(s -> s.split("=")).forEach(s -> {
-            queryMap.put(s[0], s[1]);
-        });
-
-        sendAuthorizationRequest(queryMap, smcbAuthCert, clientAttest, signatureType, vauNPConsumer);
-
+        try (Response response = authorizationService.sendAuthorizationRequestSCWithResponse(userAgent)) {
+            // Parse query string into map
+            Map<String, String> queryMap = new HashMap<>();
+            String query = response.getLocation().getQuery();
+            Arrays.stream(query.split("&")).map(s -> s.split("=")).forEach(s -> queryMap.put(s[0], s[1]));
+            sendAuthorizationRequest(queryMap, smcbAuthCert, clientAttest, signatureType, vauNPConsumer);
+        }
     }
 
     // A_24944-01 - Anfrage des "AUTHORIZATION_CODE" für ein "ID_TOKEN"
-    private void sendAuthorizationRequest(Map<String, String> queryMap, X509Certificate smcbAuthCert, String clientAttest, String signatureType, Consumer<String> vauNPConsumer) {
+    private void sendAuthorizationRequest(
+        Map<String, String> queryMap,
+        X509Certificate smcbAuthCert,
+        String clientAttest,
+        String signatureType,
+        Consumer<String> vauNPConsumer
+    ) {
         AuthorizationRequest authorizationRequest = AuthorizationRequest.builder()
             .link(discoveryDocumentResponse.getAuthorizationEndpoint())
             .clientId(queryMap.get("client_id"))
@@ -176,22 +198,26 @@ public class IdpClient {
             .scopes(Set.of(queryMap.get("scope").replace("+", " ")))
             .nonce(queryMap.get("nonce"))
             .build();
-            
+
         authenticatorClient.doAuthorizationRequest(authorizationRequest, UnaryOperator.identity(), (HttpResponse<AuthenticationChallenge> authenticationChallenge) -> {
-            String authorizationCode = processAuthenticationChallenge(authenticationChallenge, smcbAuthCert, signatureType);
+            AuthenticationResponse authenticationResponse = processAuthenticationChallenge(
+                authenticationChallenge, smcbAuthCert, signatureType
+            );
             SendAuthCodeSCtype sendAuthCodeSC = new SendAuthCodeSCtype();
-            sendAuthCodeSC.setAuthorizationCode(authorizationCode);
+            sendAuthCodeSC.setAuthorizationCode(authenticationResponse.getCode());
             sendAuthCodeSC.setClientAttest(clientAttest);
-            SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationService.sendAuthCodeSC(userAgent,sendAuthCodeSC);
+            SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationService.sendAuthCodeSC(userAgent, sendAuthCodeSC);
             vauNPConsumer.accept(sendAuthCodeSC200Response.getVauNp());
         });
     }
 
     // A_20662 - Annahme des "user_consent" und des "CHALLENGE_TOKEN" 
 
-
-    public String processAuthenticationChallenge(HttpResponse<AuthenticationChallenge> authenticationChallenge,
-            X509Certificate smcbAuthCert, String signatureType) {
+    public AuthenticationResponse processAuthenticationChallenge(
+        HttpResponse<AuthenticationChallenge> authenticationChallenge,
+        X509Certificate smcbAuthCert,
+        String signatureType
+    ) {
         AuthenticationChallenge body = authenticationChallenge.getBody();
         JsonWebToken jsonWebToken = body.getChallenge();
         // A_20663-01 - Prüfung der Signatur des CHALLENGE_TOKEN
@@ -202,18 +228,41 @@ public class IdpClient {
         String signedChallenge = signServerChallenge(body.getChallenge().getRawString(), smcbAuthCert, signatureType);
 
         IdpJwe idpJwe = new IdpJwe(signedChallenge);
+        AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
+            .authenticationEndpointUrl(discoveryDocumentResponse.getAuthorizationEndpoint())
+            .signedChallenge(idpJwe)
+            .build();
 
         AuthenticationResponse authenticationResponse = authenticatorClient.performAuthentication(
-                AuthenticationRequest.builder()
-                    .authenticationEndpointUrl(discoveryDocumentResponse.getAuthorizationEndpoint())
-                    .signedChallenge(
-                        idpJwe)
-                    .build(),
-                    UnaryOperator.identity(),
-                    o -> {});
-        
-        return authenticationResponse.getCode();
-            
+            authenticationRequest, UnaryOperator.identity(), o -> {
+            }
+        );
+
+
+        // TODO use commented code for login
+        // String codeVerifier = Base64.getUrlEncoder().withoutPadding()
+        //     .encodeToString(DigestUtils.sha256(RandomStringUtils.random(123)));
+        //
+        // TokenRequest tokenRequest = TokenRequest.builder()
+        //     .tokenUrl(discoveryDocumentResponse.getTokenEndpoint())
+        //     .clientId(idpClientId)
+        //     .code(authenticationResponse.getCode())
+        //     .ssoToken(authenticationResponse.getSsoToken())
+        //     .redirectUrl(idpAuthRequestRedirectUrl)
+        //     .codeVerifier(codeVerifier)
+        //     .idpEnc(discoveryDocumentResponse.getIdpEnc())
+        //     .build();
+        //
+        // IdpTokenResult idpTokenResult = authenticatorClient.retrieveAccessToken(
+        //     tokenRequest, UnaryOperator.identity(), o -> {
+        //     }
+        // );
+        // LocalDateTime validUntil = idpTokenResult.getValidUntil();
+        // String bearerToken = idpTokenResult.getAccessToken().getRawString();
+
+
+        return authenticationResponse;
+
     }
 
     private String signServerChallenge(String challengeToSign, X509Certificate certificate, String signatureType) {
@@ -221,10 +270,10 @@ public class IdpClient {
     }
 
     private String signServerChallengeAndEncrypt(String challengeToSign, X509Certificate certificate, String signatureType, boolean encrypt) {
-         final JwtClaims claims = new JwtClaims();
+        final JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.NESTED_JWT.getJoseName(), challengeToSign);
         JsonWebToken jsonWebToken = signClaimsAndResturnJWT(certificate, signatureType, claims);
-        if(encrypt) {
+        if (encrypt) {
             IdpJwe encryptAsNjwt = jsonWebToken
                 // A_20667-01 - Response auf die Challenge des Authorization-Endpunktes
                 .encryptAsNjwt(discoveryDocumentResponse.getIdpEnc());
@@ -246,7 +295,7 @@ public class IdpClient {
         final JsonWebSignature jsonWebSignature = new JsonWebSignature();
         jsonWebSignature.setPayload(payload);
         jsonWebSignature.setHeader("typ", "JWT");
-        if(!nonce) {
+        if (!nonce) {
             jsonWebSignature.setHeader("cty", "NJWT");
             jsonWebSignature.setCertificateChainHeaderValue(certificate);
             if (certificate.getPublicKey() instanceof ECPublicKey) {
@@ -262,13 +311,13 @@ public class IdpClient {
             }
             jsonWebSignature.setCertificateChainHeaderValue(certificate);
         }
-        
+
         final String signedJwt =
-        jsonWebSignature.getHeaders().getEncodedHeader()
-            + "."
-            + jsonWebSignature.getEncodedPayload()
-            + "."
-            + Base64.getUrlEncoder()
+            jsonWebSignature.getHeaders().getEncodedHeader()
+                + "."
+                + jsonWebSignature.getEncodedPayload()
+                + "."
+                + Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString(
                     getSignatureBytes(
@@ -279,22 +328,22 @@ public class IdpClient {
                         },
                         jsonWebSignature,
                         sigData -> {
-                          return sigData;
+                            return sigData;
                         }));
         return signedJwt;
     }
 
     private byte[] getSignatureBytes(
-      final UnaryOperator<byte[]> contentSigner,
-      final JsonWebSignature jsonWebSignature,
-      final UnaryOperator<byte[]> signatureStripper) {
-    return signatureStripper.apply(
-        contentSigner.apply(
-            (jsonWebSignature.getHeaders().getEncodedHeader()
+        final UnaryOperator<byte[]> contentSigner,
+        final JsonWebSignature jsonWebSignature,
+        final UnaryOperator<byte[]> signatureStripper) {
+        return signatureStripper.apply(
+            contentSigner.apply(
+                (jsonWebSignature.getHeaders().getEncodedHeader()
                     + "."
                     + jsonWebSignature.getEncodedPayload())
-                .getBytes(StandardCharsets.UTF_8)));
-  }
+                    .getBytes(StandardCharsets.UTF_8)));
+    }
 
     private void verifyPin() throws de.gematik.ws.conn.cardservice.wsdl.v8_1.FaultMessage {
         VerifyPin verifyPin = new VerifyPin();
@@ -334,7 +383,7 @@ public class IdpClient {
             throw new RuntimeException("Could not external authenticate", e);
         }
         byte[] value = externalAuthenticateResponse.getSignatureObject().getBase64Signature().getValue();
-        if(signatureType.equals(URN_BSI_TR_03111_ECDSA)) {
+        if (signatureType.equals(URN_BSI_TR_03111_ECDSA)) {
             try {
                 return convertDerToConcatenated(value, 64);
             } catch (IOException e) {
@@ -351,7 +400,7 @@ public class IdpClient {
 
         try (InputStream in = new ByteArrayInputStream(crt)) {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509",
-                    BOUNCY_CASTLE_PROVIDER);
+                BOUNCY_CASTLE_PROVIDER);
 
             x509Certificate = (X509Certificate) certFactory.generateCertificate(in);
 
