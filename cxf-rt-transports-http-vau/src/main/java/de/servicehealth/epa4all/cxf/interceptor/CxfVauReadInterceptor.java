@@ -1,8 +1,8 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
-import de.servicehealth.epa4all.VauClient;
-import de.servicehealth.epa4all.VauResponse;
-import de.servicehealth.epa4all.VauResponseReader;
+import de.servicehealth.epa4all.vau.VauClient;
+import de.servicehealth.epa4all.vau.VauResponse;
+import de.servicehealth.epa4all.vau.VauResponseReader;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;

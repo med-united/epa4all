@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.vau;
 
 import de.gematik.vau.lib.VauClientStateMachine;
 

@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
-import de.servicehealth.epa4all.VauClient;
+import de.servicehealth.epa4all.vau.VauClient;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 import java.security.Security;
 import java.util.List;
 
-import static de.servicehealth.epa4all.TransportUtils.printCborMessage;
+import static de.servicehealth.epa4all.utils.TransportUtils.printCborMessage;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT_ENCODING;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;

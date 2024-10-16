@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
-import static de.servicehealth.epa4all.TransportUtils.createFakeSSLContext;
+import static de.servicehealth.epa4all.utils.TransportUtils.createFakeSSLContext;
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -36,6 +36,7 @@
       <module>authorization-service</module>
       <module>idp-oidc-flow</module>
       <module>lib-cetp</module>
+      <module>rest-server</module>
     </modules>
 
     <dependencyManagement>

@@ -2,12 +2,10 @@ package de.servicehealth.epa4all.idp;
 
 import de.gematik.idp.authentication.AuthenticationChallenge;
 import de.gematik.idp.client.AuthenticatorClient;
-import de.gematik.idp.client.IdpTokenResult;
 import de.gematik.idp.client.data.AuthenticationRequest;
 import de.gematik.idp.client.data.AuthenticationResponse;
 import de.gematik.idp.client.data.AuthorizationRequest;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
-import de.gematik.idp.client.data.TokenRequest;
 import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.field.CodeChallengeMethod;
 import de.gematik.idp.token.IdpJwe;
@@ -16,6 +14,7 @@ import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureServicePor
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.FaultMessage;
 import de.gematik.ws.conn.cardservice.v8.VerifyPin;
 import de.gematik.ws.conn.cardservice.wsdl.v8_1.CardServicePortType;
+import de.gematik.ws.conn.cardservicecommon.v2.CardTypeType;
 import de.gematik.ws.conn.certificateservice.v6.CryptType;
 import de.gematik.ws.conn.certificateservice.v6.ReadCardCertificate;
 import de.gematik.ws.conn.certificateservice.v6.ReadCardCertificate.CertRefList;
@@ -23,20 +22,24 @@ import de.gematik.ws.conn.certificateservice.v6.ReadCardCertificateResponse;
 import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortType;
 import de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
+import de.gematik.ws.conn.eventservice.v7.GetCards;
+import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.signatureservice.v7.BinaryDocumentType;
 import de.gematik.ws.conn.signatureservice.v7.ExternalAuthenticate;
 import de.gematik.ws.conn.signatureservice.v7.ExternalAuthenticateResponse;
-import de.servicehealth.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.epa4all.config.EpaConfig;
+import de.servicehealth.epa4all.config.KonnektorConfig;
+import de.servicehealth.epa4all.config.KonnektorDefaultConfig;
+import de.servicehealth.epa4all.config.api.IUserConfigurations;
+import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
 import de.servicehealth.model.SendAuthCodeSC200Response;
 import de.servicehealth.model.SendAuthCodeSCtype;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
 import oasis.names.tc.dss._1_0.core.schema.Base64Data;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 
@@ -51,20 +54,24 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.logging.Logger;
 
 import static de.gematik.idp.brainPoolExtension.BrainpoolAlgorithmSuiteIdentifiers.BRAINPOOL256_USING_SHA256;
 import static org.jose4j.jws.AlgorithmIdentifiers.RSA_PSS_USING_SHA256;
 import static org.jose4j.jws.EcdsaUsingShaAlgorithm.convertDerToConcatenated;
 
+@ApplicationScoped
 public class IdpClient {
+
+    private final static Logger log = Logger.getLogger(IdpClient.class.getName());
 
     private static final String URN_BSI_TR_03111_ECDSA = "urn:bsi:tr:03111:ecdsa";
 
@@ -74,41 +81,70 @@ public class IdpClient {
         java.security.Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
     }
 
-    private String userAgent = "ServiceHealth/1.0";
+    private final String userAgent = "ServiceHealth/1.0";
 
-    @Inject
-    @ConfigProperty(name = "idp.client.id")
-    String idpClientId;
-
-    @Inject
-    @ConfigProperty(name = "idp.auth.request.redirect.url")
-    String idpAuthRequestRedirectUrl;
-
-    @Inject
-    AuthorizationSmcBApi authorizationService;
-
-    @Inject
-    AuthSignatureServicePortType authSignatureServicePortType;
-
-    @Inject
-    CertificateServicePortType certificateServicePortType;
-
-    @Inject
-    CardServicePortType cardServicePortType;
-
-    @Inject
-    ContextType contextType;
-
-    @Inject
-    String smcbHandle;
-
-    @Inject
+    IdpConfig idpConfig;
+    EpaConfig epaConfig;
+    ServicePortProvider servicePortProvider;
     AuthenticatorClient authenticatorClient;
+    AuthorizationSmcBApi authorizationService;
+    KonnektorDefaultConfig konnektorDefaultConfig;
+
+    private final DiscoveryDocumentResponse discoveryDocumentResponse;
+
+    private AuthSignatureServicePortType authSignatureServicePortType;
+    private CardServicePortType cardServicePortType;
 
     @Inject
-    DiscoveryDocumentResponse discoveryDocumentResponse;
+    public IdpClient(
+        IdpConfig idpConfig,
+        EpaConfig epaConfig,
+        ServicePortProvider servicePortProvider,
+        AuthenticatorClient authenticatorClient,
+        AuthorizationSmcBApi authorizationService,
+        KonnektorDefaultConfig konnektorDefaultConfig
+    ) {
+        this.idpConfig = idpConfig;
+        this.epaConfig = epaConfig;
+        this.servicePortProvider = servicePortProvider;
+        this.authenticatorClient = authenticatorClient;
+        this.authorizationService = authorizationService;
+        this.konnektorDefaultConfig = konnektorDefaultConfig;
 
-    public void getVauNp(Consumer<String> vauNPConsumer) {
+        discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
+            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+        );
+    }
+
+    private String getOrDefault(String value, String defaultValue) {
+        return value != null ? value : defaultValue;
+    }
+
+    public ContextType getContextType(KonnektorConfig konnektorConfig) {
+        ContextType contextType = new ContextType();
+        IUserConfigurations userConfigurations = konnektorConfig.getUserConfigurations();
+        contextType.setMandantId(getOrDefault(userConfigurations.getMandantId(), konnektorDefaultConfig.getMandantId()));
+        contextType.setClientSystemId(getOrDefault(userConfigurations.getClientSystemId(), konnektorDefaultConfig.getClientSystemId()));
+        contextType.setWorkplaceId(getOrDefault(userConfigurations.getWorkplaceId(), konnektorDefaultConfig.getWorkplaceId()));
+        contextType.setUserId(getOrDefault(userConfigurations.getUserId(), konnektorDefaultConfig.getUserId().orElse(null)));
+        return contextType;
+    }
+
+    public void getVauNp(KonnektorConfig konnektorConfig, Consumer<String> vauNPConsumer) throws Exception {
+        ContextType contextType = getContextType(konnektorConfig);
+
+        // TODO Map<SimpleUserConfig, SingleConnectorServicesProvider> singleConnectorServicesProvider
+
+        cardServicePortType = servicePortProvider.getCardServicePortType(konnektorConfig);
+        authSignatureServicePortType = servicePortProvider.getAuthSignatureServicePortType(konnektorConfig);
+        CertificateServicePortType certificateServicePortType = servicePortProvider.getCertificateServicePort(konnektorConfig);
+        EventServicePortType eventServicePort = servicePortProvider.getEventServicePort(konnektorConfig);
+
+        GetCards getCards = new GetCards();
+        getCards.setContext(contextType);
+        getCards.setCardType(CardTypeType.SMC_B);
+        String smcbHandle = eventServicePort.getCards(getCards).getCards().getCard().get(0).getCardHandle();
+
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
         String nonce = authorizationService.getNonce(userAgent).getNonce();
 
@@ -133,9 +169,9 @@ public class IdpClient {
 
             if (code4085) {
                 try {
-                    verifyPin();
+                    verifyPin(contextType, smcbHandle);
                     // try again
-                    getVauNp(vauNPConsumer);
+                    getVauNp(konnektorConfig, vauNPConsumer);
                 } catch (de.gematik.ws.conn.cardservice.wsdl.v8_1.FaultMessage e2) {
                     throw new RuntimeException("Could not verify pin", e2);
                 }
@@ -168,7 +204,7 @@ public class IdpClient {
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
         claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 300);
         // A_24882-01 - Signatur clientAttest
-        String clientAttest = getSignedJwt(smcbAuthCert, signatureType, claims, true);
+        String clientAttest = getSignedJwt(contextType, smcbHandle, smcbAuthCert, signatureType, claims, true);
 
         // A_24760 - Start der Nutzerauthentifizierung
         try (Response response = authorizationService.sendAuthorizationRequestSCWithResponse(userAgent)) {
@@ -176,12 +212,14 @@ public class IdpClient {
             Map<String, String> queryMap = new HashMap<>();
             String query = response.getLocation().getQuery();
             Arrays.stream(query.split("&")).map(s -> s.split("=")).forEach(s -> queryMap.put(s[0], s[1]));
-            sendAuthorizationRequest(queryMap, smcbAuthCert, clientAttest, signatureType, vauNPConsumer);
+            sendAuthorizationRequest(contextType, smcbHandle, queryMap, smcbAuthCert, clientAttest, signatureType, vauNPConsumer);
         }
     }
 
     // A_24944-01 - Anfrage des "AUTHORIZATION_CODE" für ein "ID_TOKEN"
     private void sendAuthorizationRequest(
+        ContextType contextType,
+        String smcbHandle,
         Map<String, String> queryMap,
         X509Certificate smcbAuthCert,
         String clientAttest,
@@ -201,7 +239,7 @@ public class IdpClient {
 
         authenticatorClient.doAuthorizationRequest(authorizationRequest, UnaryOperator.identity(), (HttpResponse<AuthenticationChallenge> authenticationChallenge) -> {
             AuthenticationResponse authenticationResponse = processAuthenticationChallenge(
-                authenticationChallenge, smcbAuthCert, signatureType
+                contextType, smcbHandle, authenticationChallenge, smcbAuthCert, signatureType
             );
             SendAuthCodeSCtype sendAuthCodeSC = new SendAuthCodeSCtype();
             sendAuthCodeSC.setAuthorizationCode(authenticationResponse.getCode());
@@ -213,7 +251,9 @@ public class IdpClient {
 
     // A_20662 - Annahme des "user_consent" und des "CHALLENGE_TOKEN" 
 
-    public AuthenticationResponse processAuthenticationChallenge(
+    private AuthenticationResponse processAuthenticationChallenge(
+        ContextType contextType,
+        String smcbHandle,
         HttpResponse<AuthenticationChallenge> authenticationChallenge,
         X509Certificate smcbAuthCert,
         String signatureType
@@ -225,7 +265,9 @@ public class IdpClient {
         // jsonWebToken.verify(discoveryDocumentResponse.getIdpSig().getPublicKey());
 
         // A_20665-01 - Signatur der Challenge des IdP-Dienstes 
-        String signedChallenge = signServerChallenge(body.getChallenge().getRawString(), smcbAuthCert, signatureType);
+        String signedChallenge = signServerChallenge(
+            contextType, smcbHandle, body.getChallenge().getRawString(), smcbAuthCert, signatureType
+        );
 
         IdpJwe idpJwe = new IdpJwe(signedChallenge);
         AuthenticationRequest authenticationRequest = AuthenticationRequest.builder()
@@ -265,32 +307,56 @@ public class IdpClient {
 
     }
 
-    private String signServerChallenge(String challengeToSign, X509Certificate certificate, String signatureType) {
-        return signServerChallengeAndEncrypt(challengeToSign, certificate, signatureType, true);
+    private String signServerChallenge(
+        ContextType contextType,
+        String smcbHandle,
+        String challengeToSign,
+        X509Certificate certificate,
+        String signatureType
+    ) {
+        return signServerChallengeAndEncrypt(contextType, smcbHandle, challengeToSign, certificate, signatureType, true);
     }
 
-    private String signServerChallengeAndEncrypt(String challengeToSign, X509Certificate certificate, String signatureType, boolean encrypt) {
+    private String signServerChallengeAndEncrypt(
+        ContextType contextType,
+        String smcbHandle,
+        String challengeToSign,
+        X509Certificate certificate,
+        String signatureType,
+        boolean encrypt
+    ) {
         final JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.NESTED_JWT.getJoseName(), challengeToSign);
-        JsonWebToken jsonWebToken = signClaimsAndResturnJWT(certificate, signatureType, claims);
+        JsonWebToken jsonWebToken = signClaimsAndReturnJWT(contextType, smcbHandle, certificate, signatureType, claims);
         if (encrypt) {
             IdpJwe encryptAsNjwt = jsonWebToken
                 // A_20667-01 - Response auf die Challenge des Authorization-Endpunktes
                 .encryptAsNjwt(discoveryDocumentResponse.getIdpEnc());
-            return encryptAsNjwt
-                .getRawString();
+            return encryptAsNjwt.getRawString();
         } else {
             return jsonWebToken.getRawString();
         }
     }
 
-    private JsonWebToken signClaimsAndResturnJWT(X509Certificate certificate, String signatureType, final JwtClaims claims) {
-        final String signedJwt = getSignedJwt(certificate, signatureType, claims, false);
-        JsonWebToken jsonWebToken = new JsonWebToken(signedJwt);
-        return jsonWebToken;
+    private JsonWebToken signClaimsAndReturnJWT(
+        ContextType contextType,
+        String smcbHandle,
+        X509Certificate certificate,
+        String signatureType,
+        final JwtClaims claims
+    ) {
+        final String signedJwt = getSignedJwt(contextType, smcbHandle, certificate, signatureType, claims, false);
+        return new JsonWebToken(signedJwt);
     }
 
-    private String getSignedJwt(X509Certificate certificate, String signatureType, final JwtClaims claims, boolean nonce) {
+    private String getSignedJwt(
+        ContextType contextType,
+        String smcbHandle,
+        X509Certificate certificate,
+        String signatureType,
+        final JwtClaims claims,
+        boolean nonce
+    ) {
         String payload = claims.toJson();
         final JsonWebSignature jsonWebSignature = new JsonWebSignature();
         jsonWebSignature.setPayload(payload);
@@ -312,25 +378,24 @@ public class IdpClient {
             jsonWebSignature.setCertificateChainHeaderValue(certificate);
         }
 
-        final String signedJwt =
-            jsonWebSignature.getHeaders().getEncodedHeader()
-                + "."
-                + jsonWebSignature.getEncodedPayload()
-                + "."
-                + Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(
-                    getSignatureBytes(
-                        (byte[] challengeBytes) -> {
-                            // A_24751 - Challenge signieren als ECDSA-Signatur
-                            // A_24752 - Challenge signieren als PKCS#1-Signatur 
-                            return hashAndSignBytesWithExternalAuthenticateWithSMCB(challengeBytes, signatureType);
-                        },
-                        jsonWebSignature,
-                        sigData -> {
-                            return sigData;
-                        }));
-        return signedJwt;
+        return jsonWebSignature.getHeaders().getEncodedHeader()
+            + "."
+            + jsonWebSignature.getEncodedPayload()
+            + "."
+            + Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(
+                getSignatureBytes(
+                    (byte[] challengeBytes) -> {
+                        // A_24751 - Challenge signieren als ECDSA-Signatur
+                        // A_24752 - Challenge signieren als PKCS#1-Signatur
+                        return hashAndSignBytesWithExternalAuthenticateWithSMCB(
+                            challengeBytes, signatureType, contextType, smcbHandle
+                        );
+                    },
+                    jsonWebSignature,
+                    sigData -> sigData));
+
     }
 
     private byte[] getSignatureBytes(
@@ -345,7 +410,7 @@ public class IdpClient {
                     .getBytes(StandardCharsets.UTF_8)));
     }
 
-    private void verifyPin() throws de.gematik.ws.conn.cardservice.wsdl.v8_1.FaultMessage {
+    private void verifyPin(ContextType contextType, String smcbHandle) throws de.gematik.ws.conn.cardservice.wsdl.v8_1.FaultMessage {
         VerifyPin verifyPin = new VerifyPin();
         verifyPin.setContext(contextType);
         verifyPin.setCardHandle(smcbHandle);
@@ -353,7 +418,12 @@ public class IdpClient {
         cardServicePortType.verifyPin(verifyPin);
     }
 
-    public byte[] hashAndSignBytesWithExternalAuthenticateWithSMCB(byte[] inputBytes, String signatureType) {
+    private byte[] hashAndSignBytesWithExternalAuthenticateWithSMCB(
+        byte[] inputBytes,
+        String signatureType,
+        ContextType contextType,
+        String smcbHandle
+    ) {
 
         MessageDigest digest;
         try {
@@ -392,22 +462,14 @@ public class IdpClient {
         } else {
             return value;
         }
-
     }
 
-    public static X509Certificate getCertificateFromAsn1DERCertBytes(final byte[] crt) {
-        X509Certificate x509Certificate;
-
+    private static X509Certificate getCertificateFromAsn1DERCertBytes(final byte[] crt) {
         try (InputStream in = new ByteArrayInputStream(crt)) {
-            CertificateFactory certFactory = CertificateFactory.getInstance("X.509",
-                BOUNCY_CASTLE_PROVIDER);
-
-            x509Certificate = (X509Certificate) certFactory.generateCertificate(in);
-
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509", BOUNCY_CASTLE_PROVIDER);
+            return (X509Certificate) certFactory.generateCertificate(in);
         } catch (IOException | CertificateException e) {
             throw new RuntimeException(e);
         }
-
-        return x509Certificate;
     }
 }

@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.vau;
 
 import org.apache.commons.lang3.tuple.Pair;
 
