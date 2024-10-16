@@ -4,3 +4,7 @@
 [submodule "api-telematik"]
 	path = api-telematik
 	url = git@github.com:med-united/api-telematik.git
+[submodule "lib-cetp"]
+	path = lib-cetp
+	url = git@github.com:med-united/lib-cetp.git
+
