@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.utils;
+package de.servicehealth.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;

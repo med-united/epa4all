@@ -1,24 +1,22 @@
-package de.servicehealth.epa4all.config;
+package de.servicehealth.config;
 
-import de.servicehealth.epa4all.config.api.IUserConfigurations;
-import lombok.Getter;
-import lombok.Setter;
+import de.servicehealth.config.api.IUserConfigurations;
+import lombok.Data;
 
 import java.io.File;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.concurrent.Semaphore;
 
-@Getter
-@Setter
+@Data
 public class KonnektorConfig {
 
     File folder;
     Integer cetpPort;
     URI cardlinkEndpoint;
-    IUserConfigurations userConfigurations;
     String subscriptionId;
     OffsetDateTime subscriptionTime;
+    IUserConfigurations userConfigurations;
 
     private final Semaphore semaphore = new Semaphore(1);
 
@@ -28,13 +26,13 @@ public class KonnektorConfig {
     public KonnektorConfig(
         File folder,
         Integer cetpPort,
-        IUserConfigurations userConfigurations,
-        URI cardlinkEndpoint
+        URI cardlinkEndpoint,
+        IUserConfigurations userConfigurations
     ) {
         this.folder = folder;
         this.cetpPort = cetpPort;
-        this.userConfigurations = userConfigurations;
         this.cardlinkEndpoint = cardlinkEndpoint;
+        this.userConfigurations = userConfigurations;
 
         subscriptionId = null;
         subscriptionTime = OffsetDateTime.now().minusDays(30);

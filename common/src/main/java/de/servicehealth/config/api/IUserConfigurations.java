@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.config.api;
+package de.servicehealth.config.api;
 
 import jakarta.servlet.http.HttpServletRequest;
 

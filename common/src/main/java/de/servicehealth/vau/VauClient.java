@@ -1,26 +1,18 @@
-package de.servicehealth.epa4all.vau;
+package de.servicehealth.vau;
 
 import de.gematik.vau.lib.VauClientStateMachine;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
 public class VauClient {
 
     private final VauClientStateMachine vauStateMachine;
 
+    @Setter
     private String vauCid;
 
     public VauClient(VauClientStateMachine vauStateMachine) {
         this.vauStateMachine = vauStateMachine;
-    }
-
-    public VauClientStateMachine getVauStateMachine() {
-        return vauStateMachine;
-    }
-
-    public String getVauCid() {
-        return vauCid;
-    }
-
-    public void setVauCid(String vauCid) {
-        this.vauCid = vauCid;
     }
 }
