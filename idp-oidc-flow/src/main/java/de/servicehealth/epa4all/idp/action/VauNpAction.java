@@ -31,6 +31,7 @@ public class VauNpAction extends AbstractAuthAction {
     public void execute(
         AuthenticationChallenge authChallenge,
         X509Certificate smcbAuthCert,
+        String codeChallenge,
         String smcbHandle,
         String clientAttest,
         String signatureType

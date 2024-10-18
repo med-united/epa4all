@@ -225,10 +225,11 @@ public class IdpClient {
         String signatureType,
         AuthAction authAction
     ) {
+        String codeChallenge = queryMap.get("code_challenge");
         AuthorizationRequest authorizationRequest = AuthorizationRequest.builder()
             .link(discoveryDocumentResponse.getAuthorizationEndpoint())
             .clientId(queryMap.get("client_id"))
-            .codeChallenge(queryMap.get("code_challenge"))
+            .codeChallenge(codeChallenge)
             .codeChallengeMethod(CodeChallengeMethod.valueOf(queryMap.get("code_challenge_method")))
             .redirectUri(queryMap.get("redirect_uri"))
             .state(queryMap.get("state"))
@@ -243,6 +244,7 @@ public class IdpClient {
                 authAction.execute(
                     authenticationChallenge.getBody(),
                     smcbAuthCert,
+                    codeChallenge,
                     smcbHandle,
                     clientAttest,
                     signatureType

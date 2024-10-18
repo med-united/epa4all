@@ -9,7 +9,6 @@ import de.gematik.idp.client.data.TokenRequest;
 import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
@@ -43,6 +42,7 @@ public class LoginAction extends AbstractAuthAction {
     public void execute(
         AuthenticationChallenge authChallenge,
         X509Certificate smcbAuthCert,
+        String codeChallenge,
         String smcbHandle,
         String clientAttest,
         String signatureType
@@ -52,7 +52,7 @@ public class LoginAction extends AbstractAuthAction {
         );
 
         String codeVerifier = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(DigestUtils.sha256(authChallenge.getChallenge().getRawString()));
+            .encodeToString(DigestUtils.sha256(codeChallenge));
 
         TokenRequest tokenRequest = TokenRequest.builder()
             .tokenUrl(discoveryDocumentResponse.getTokenEndpoint())
