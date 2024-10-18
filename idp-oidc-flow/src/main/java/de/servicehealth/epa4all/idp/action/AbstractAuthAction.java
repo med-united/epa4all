@@ -7,8 +7,6 @@ import de.gematik.idp.client.data.AuthenticationResponse;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.token.IdpJwe;
 import de.gematik.idp.token.JsonWebToken;
-import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureServicePortType;
-import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
 
@@ -38,7 +36,6 @@ public abstract class AbstractAuthAction implements AuthAction {
 
     // A_20662 - Annahme des "user_consent" und des "CHALLENGE_TOKEN"
     protected AuthenticationResponse processAuthenticationChallenge(
-        ContextType contextType,
         String smcbHandle,
         AuthenticationChallenge challengeBody,
         X509Certificate smcbAuthCert,

@@ -196,8 +196,6 @@ public class IdpClient {
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
         claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 300);
 
-        ContextType contextType = servicePorts.getContextType();
-
         // A_24882-01 - Signatur clientAttest
         String clientAttest = getSignedJwt(servicePorts, smcbAuthCert, claims, signatureType, smcbHandle, true);
 
@@ -208,7 +206,6 @@ public class IdpClient {
             String query = response.getLocation().getQuery();
             Arrays.stream(query.split("&")).map(s -> s.split("=")).forEach(s -> queryMap.put(s[0], s[1]));
             sendAuthorizationRequest(
-                contextType,
                 smcbHandle,
                 queryMap,
                 smcbAuthCert,
@@ -221,7 +218,6 @@ public class IdpClient {
 
     // A_24944-01 - Anfrage des "AUTHORIZATION_CODE" für ein "ID_TOKEN"
     private void sendAuthorizationRequest(
-        ContextType contextType,
         String smcbHandle,
         Map<String, String> queryMap,
         X509Certificate smcbAuthCert,
@@ -246,23 +242,11 @@ public class IdpClient {
             (HttpResponse<AuthenticationChallenge> authenticationChallenge) -> {
                 authAction.execute(
                     authenticationChallenge.getBody(),
-                    contextType,
-                    smcbHandle,
                     smcbAuthCert,
+                    smcbHandle,
                     clientAttest,
                     signatureType
                 );
-
-            // AuthenticationResponse authenticationResponse = processAuthenticationChallenge(
-            //     contextType, smcbHandle, authenticationChallenge, smcbAuthCert, signatureType
-            // );
-            //
-            //
-            // SendAuthCodeSCtype sendAuthCodeSC = new SendAuthCodeSCtype();
-            // sendAuthCodeSC.setAuthorizationCode(authenticationResponse.getCode());
-            // sendAuthCodeSC.setClientAttest(clientAttest);
-            // SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationService.sendAuthCodeSC(userAgent, sendAuthCodeSC);
-            // vauNPConsumer.accept(sendAuthCodeSC200Response.getVauNp());
             }
         );
     }

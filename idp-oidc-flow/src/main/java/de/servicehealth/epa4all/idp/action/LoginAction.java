@@ -6,7 +6,6 @@ import de.gematik.idp.client.IdpTokenResult;
 import de.gematik.idp.client.data.AuthenticationResponse;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.client.data.TokenRequest;
-import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -37,25 +36,23 @@ public class LoginAction extends AbstractAuthAction {
 
         this.idpClientId = idpClientId;
         this.idpAuthRequestRedirectUrl = idpAuthRequestRedirectUrl;
-        this.servicePorts = servicePorts;
         this.authConsumer = authConsumer;
     }
 
     @Override
     public void execute(
-        AuthenticationChallenge challengeBody,
-        ContextType contextType,
-        String smcbHandle,
+        AuthenticationChallenge authChallenge,
         X509Certificate smcbAuthCert,
+        String smcbHandle,
         String clientAttest,
         String signatureType
     ) {
         AuthenticationResponse authenticationResponse = processAuthenticationChallenge(
-            contextType, smcbHandle, challengeBody, smcbAuthCert, signatureType
+            smcbHandle, authChallenge, smcbAuthCert, signatureType
         );
 
         String codeVerifier = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(DigestUtils.sha256(RandomStringUtils.random(123)));
+            .encodeToString(DigestUtils.sha256(authChallenge.getChallenge().getRawString()));
 
         TokenRequest tokenRequest = TokenRequest.builder()
             .tokenUrl(discoveryDocumentResponse.getTokenEndpoint())
