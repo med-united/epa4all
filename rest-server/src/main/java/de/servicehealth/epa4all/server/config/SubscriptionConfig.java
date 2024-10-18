@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.server.config;
 
 import de.health.service.cetp.CETPServer;
-import de.servicehealth.epa4all.config.api.ISubscriptionConfig;
+import de.servicehealth.config.api.ISubscriptionConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -24,14 +24,14 @@ public class SubscriptionConfig implements ISubscriptionConfig {
     @ConfigProperty(name = "cetp.subscriptions.maintenance.interval.sec")
     Optional<String> cetpSubscriptionsMaintenanceIntervalSec; // 3s
 
-    @ConfigProperty(name = "cetp.subscriptions.event-to-host")
-    Optional<String> eventToHost;
+    @ConfigProperty(name = "cetp.subscriptions.default.event-to-host")
+    String defaultEventToHost;
 
     @ConfigProperty(name = "cetp.subscriptions.default.cardlink.server.url")
-    Optional<String> cardLinkServer;
+    Optional<String> defaultCardLinkServer;
 
-    @ConfigProperty(name = "cetp.subscriptions.cetp.server.default.port")
-    Optional<Integer> cetpServerDefaultPort;
+    @ConfigProperty(name = "cetp.subscriptions.default.cetp.server.port")
+    Optional<Integer> defaultCetpServerPort;
 
     public int getCetpSubscriptionsRenewalSafePeriodMs() {
         return cetpSubscriptionsRenewalSafePeriodSeconds.orElse(600) * 1000;
@@ -45,7 +45,13 @@ public class SubscriptionConfig implements ISubscriptionConfig {
         return forceResubscribePeriodSeconds.orElse(43200);
     }
 
-    public int getCetpServerDefaultPort() {
-        return cetpServerDefaultPort.orElse(CETPServer.DEFAULT_PORT);
+    public int getDefaultCetpServerPort() {
+        return defaultCetpServerPort.orElse(CETPServer.DEFAULT_PORT);
+    }
+
+    public String getDefaultCardLinkServer() {
+        return defaultCardLinkServer.orElse(
+            "wss://cardlink.service-health.de:8444/websocket/80276003650110006580-20230112"
+        );
     }
 }

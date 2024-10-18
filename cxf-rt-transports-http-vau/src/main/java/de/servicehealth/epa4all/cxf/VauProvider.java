@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.cxf;
 
-import de.servicehealth.epa4all.vau.VauClient;
+import de.servicehealth.vau.VauClient;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Produces;

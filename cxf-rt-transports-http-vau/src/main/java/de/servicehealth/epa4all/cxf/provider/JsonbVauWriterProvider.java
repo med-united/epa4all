@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.cxf.provider;
 
-import de.servicehealth.epa4all.vau.VauClient;
+import de.servicehealth.vau.VauClient;
 import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;

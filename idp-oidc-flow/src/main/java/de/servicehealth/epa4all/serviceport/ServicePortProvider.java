@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.idp;
+package de.servicehealth.epa4all.serviceport;
 
 import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureService;
@@ -9,11 +9,8 @@ import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateService;
 import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventService;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
-import de.servicehealth.epa4all.config.EpaConfig;
-import de.servicehealth.epa4all.config.KonnektorConfig;
-import de.servicehealth.epa4all.config.KonnektorDefaultConfig;
-import de.servicehealth.epa4all.config.api.IUserConfigurations;
-import de.servicehealth.epa4all.vau.VauClient;
+import de.servicehealth.config.KonnektorDefaultConfig;
+import de.servicehealth.config.api.UserRuntimeConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -29,35 +26,19 @@ import javax.net.ssl.SSLContext;
 import java.io.FileInputStream;
 import java.security.KeyStore;
 
-import static de.servicehealth.epa4all.utils.TransportUtils.getFakeTrustManagers;
+import static de.servicehealth.utils.TransportUtils.getFakeTrustManagers;
 
 @ApplicationScoped
 public class ServicePortProvider {
 
-    VauClient vauClient;
-    EpaConfig epaConfig;
-    IdpConfig idpConfig;
-    KonnektorDefaultConfig konnektorDefaultConfig;
+    private final KonnektorDefaultConfig konnektorDefaultConfig;
 
     private final SSLContext sslContext;
 
     @Inject
-    public ServicePortProvider(
-        VauClient vauClient,
-        EpaConfig epaConfig,
-        IdpConfig idpConfig,
-        KonnektorDefaultConfig konnektorDefaultConfig
-    ) throws Exception {
-        this.vauClient = vauClient;
-        this.epaConfig = epaConfig;
-        this.idpConfig = idpConfig;
+    public ServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) throws Exception {
         this.konnektorDefaultConfig = konnektorDefaultConfig;
-
         sslContext = prepareSslContext();
-    }
-
-    private String getOrDefault(String value, String defaultValue) {
-        return value != null ? value : defaultValue;
     }
 
     @Produces
@@ -68,8 +49,8 @@ public class ServicePortProvider {
 
     private SSLContext prepareSslContext() throws Exception {
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        char[] passCharArray = idpConfig.getIncentergyPemPass().toCharArray();
-        FileInputStream pemInputStream = new FileInputStream(idpConfig.getIncentergyPemPath());
+        char[] passCharArray = konnektorDefaultConfig.getCertAuthStoreFilePassword().toCharArray();
+        FileInputStream pemInputStream = new FileInputStream(konnektorDefaultConfig.getCertAuthStoreFile());
         keyStore.load(pemInputStream, passCharArray);
 
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -83,10 +64,8 @@ public class ServicePortProvider {
         return sslContext;
     }
 
-    public CertificateServicePortType getCertificateServicePort(KonnektorConfig konnektorConfig) {
-        IUserConfigurations userConfigurations = konnektorConfig.getUserConfigurations();
-        String konnektorUrl = getOrDefault(userConfigurations.getConnectorBaseURL(), konnektorDefaultConfig.getUrl());
-
+    public CertificateServicePortType getCertificateServicePort(UserRuntimeConfig userRuntimeConfig) {
+        String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         CertificateService certificateService = new CertificateService();
         CertificateServicePortType certificateServicePort = certificateService.getCertificateServicePort();
         setEndpointAddress((BindingProvider) certificateServicePort, konnektorUrl + "/ws/CertificateService", sslContext);
@@ -94,10 +73,8 @@ public class ServicePortProvider {
         return certificateServicePort;
     }
 
-    public CardServicePortType getCardServicePortType(KonnektorConfig konnektorConfig) {
-        IUserConfigurations userConfigurations = konnektorConfig.getUserConfigurations();
-        String konnektorUrl = getOrDefault(userConfigurations.getConnectorBaseURL(), konnektorDefaultConfig.getUrl());
-
+    public CardServicePortType getCardServicePortType(UserRuntimeConfig userRuntimeConfig) {
+        String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         CardService cardService = new CardService();
         CardServicePortType cardServicePort = cardService.getCardServicePort();
 
@@ -106,10 +83,8 @@ public class ServicePortProvider {
         return cardServicePort;
     }
 
-    public AuthSignatureServicePortType getAuthSignatureServicePortType(KonnektorConfig konnektorConfig) {
-        IUserConfigurations userConfigurations = konnektorConfig.getUserConfigurations();
-        String konnektorUrl = getOrDefault(userConfigurations.getConnectorBaseURL(), konnektorDefaultConfig.getUrl());
-
+    public AuthSignatureServicePortType getAuthSignatureServicePortType(UserRuntimeConfig userRuntimeConfig) {
+        String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         AuthSignatureService authSignatureService = new AuthSignatureService();
         AuthSignatureServicePortType authSignatureServicePort = authSignatureService.getAuthSignatureServicePort();
 
@@ -118,10 +93,8 @@ public class ServicePortProvider {
         return authSignatureServicePort;
     }
 
-    public EventServicePortType getEventServicePort(KonnektorConfig konnektorConfig) {
-        IUserConfigurations userConfigurations = konnektorConfig.getUserConfigurations();
-        String konnektorUrl = getOrDefault(userConfigurations.getConnectorBaseURL(), konnektorDefaultConfig.getUrl());
-
+    public EventServicePortType getEventServicePort(UserRuntimeConfig userRuntimeConfig) {
+        String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         EventService eventService = new EventService();
         EventServicePortType eventServicePort = eventService.getEventServicePort();
         setEndpointAddress((BindingProvider) eventServicePort, konnektorUrl + "/ws/EventService", sslContext);

@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.auth;
 
-import de.servicehealth.epa4all.vau.VauClient;
+import de.servicehealth.vau.VauClient;
 import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.common.DockerAction;
 import de.servicehealth.epa4all.common.Utils;

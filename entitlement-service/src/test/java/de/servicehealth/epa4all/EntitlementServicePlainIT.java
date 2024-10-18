@@ -2,7 +2,7 @@ package de.servicehealth.epa4all;
 
 import de.servicehealth.epa4all.common.PlainTestProfile;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
-import de.servicehealth.epa4all.vau.VauClient;
+import de.servicehealth.vau.VauClient;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 

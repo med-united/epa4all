@@ -32,8 +32,8 @@ public class KonnektorDefaultConfig {
     String tvMode;
 
     @ConfigProperty(name = "konnektor.default.cert.auth.store.file")
-    Optional<String> certAuthStoreFile;
+    String certAuthStoreFile;
 
     @ConfigProperty(name = "konnektor.default.cert.auth.store.file.password")
-    Optional<String> certAuthStoreFilePassword;
+    String certAuthStoreFilePassword;
 }

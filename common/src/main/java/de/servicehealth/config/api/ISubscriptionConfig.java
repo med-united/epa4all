@@ -1,7 +1,5 @@
 package de.servicehealth.config.api;
 
-import java.util.Optional;
-
 public interface ISubscriptionConfig {
 
     int getCetpSubscriptionsMaintenanceRetryIntervalMs();
@@ -10,9 +8,9 @@ public interface ISubscriptionConfig {
 
     int getForceResubscribePeriodSeconds();
 
-    Optional<String> getCardLinkServer(); // default -> used when no config/konnektoren/{port} is absent
+    String getDefaultCardLinkServer();
 
-    Optional<String> getEventToHost();
+    String getDefaultEventToHost();
 
-    int getCetpServerDefaultPort(); // default -> used when no config/konnektoren/{port} is absent
+    int getDefaultCetpServerPort();
 }

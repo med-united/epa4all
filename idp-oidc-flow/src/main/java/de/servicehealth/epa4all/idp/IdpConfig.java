@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.idp;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import lombok.Getter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -20,14 +19,6 @@ public class IdpConfig {
 
     @ConfigProperty(name = "idp.auth.request.redirect.url")
     String authRequestRedirectUrl;
-
-    @Inject
-    @ConfigProperty(name = "idp.incentergy.pem.path")
-    String incentergyPemPath;
-
-    @Inject
-    @ConfigProperty(name = "idp.incentergy.pem.pass")
-    String incentergyPemPass;
 
     public String getDiscoveryDocumentUrl() {
         return serviceUrl + "/.well-known/openid-configuration";

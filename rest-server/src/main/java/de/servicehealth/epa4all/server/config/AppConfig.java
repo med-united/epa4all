@@ -1,20 +1,71 @@
 package de.servicehealth.epa4all.server.config;
 
-import de.health.service.cetp.CETPServer;
-import jakarta.enterprise.context.ApplicationScoped;
-import lombok.Getter;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import de.servicehealth.config.KonnektorDefaultConfig;
+import de.servicehealth.config.api.IRuntimeConfig;
+import de.servicehealth.config.api.IUserConfigurations;
+import de.servicehealth.config.api.UserRuntimeConfig;
 
-import java.util.Optional;
+public class AppConfig implements UserRuntimeConfig {
 
-@ApplicationScoped
-@Getter
-public class AppConfig  {
+    private final KonnektorDefaultConfig konnektorDefaultConfig;
+    private final IUserConfigurations userConfigurations;
 
-    @ConfigProperty(name = "connector.cetp.port")
-    Optional<Integer> cetpPort;
+    public AppConfig(KonnektorDefaultConfig konnektorDefaultConfig, IUserConfigurations configurations) {
+        this.konnektorDefaultConfig = konnektorDefaultConfig;
+        this.userConfigurations = configurations;
+    }
 
-    public int getCetpPort() {
-        return cetpPort.orElse(CETPServer.DEFAULT_PORT);
+    @Override
+    public String getConnectorBaseURL() {
+        return getOrDefault(userConfigurations.getConnectorBaseURL(), konnektorDefaultConfig.getUrl());
+    }
+
+    @Override
+    public String getConnectorVersion() {
+        return getOrDefault(userConfigurations.getVersion(), konnektorDefaultConfig.getVersion());
+    }
+
+    @Override
+    public String getMandantId() {
+        return getOrDefault(userConfigurations.getMandantId(), konnektorDefaultConfig.getMandantId());
+    }
+
+    @Override
+    public String getWorkplaceId() {
+        return getOrDefault(userConfigurations.getWorkplaceId(), konnektorDefaultConfig.getWorkplaceId());
+    }
+
+    @Override
+    public String getClientSystemId() {
+        return getOrDefault(userConfigurations.getClientSystemId(), konnektorDefaultConfig.getClientSystemId());
+    }
+
+    @Override
+    public String getUserId() {
+        return getOrDefault(userConfigurations.getUserId(), konnektorDefaultConfig.getUserId().orElse(null));
+    }
+
+    @Override
+    public IUserConfigurations getUserConfigurations() {
+        return userConfigurations;
+    }
+
+    @Override
+    public IRuntimeConfig getRuntimeConfig() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public UserRuntimeConfig copy() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void updateProperties(IUserConfigurations userConfigurations) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    private String getOrDefault(String value, String defaultValue) {
+        return value != null ? value : defaultValue;
     }
 }
