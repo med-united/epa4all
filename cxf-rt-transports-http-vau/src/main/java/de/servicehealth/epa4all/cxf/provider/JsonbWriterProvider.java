@@ -13,6 +13,8 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+
 public class JsonbWriterProvider implements MessageBodyWriter {
 
     private final JsonbBuilder jsonbBuilder;
@@ -23,7 +25,7 @@ public class JsonbWriterProvider implements MessageBodyWriter {
 
     @Override
     public boolean isWriteable(Class type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return mediaType.equals(MediaType.APPLICATION_JSON_TYPE);
+        return mediaType.equals(APPLICATION_JSON_TYPE);
     }
 
     @Override

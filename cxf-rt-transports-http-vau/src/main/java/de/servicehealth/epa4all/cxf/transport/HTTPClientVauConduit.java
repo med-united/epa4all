@@ -19,14 +19,13 @@ import java.util.List;
 import static com.google.common.net.HttpHeaders.CONNECTION;
 import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
 import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_CID;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_DEBUG_SK1_C2S;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_DEBUG_SK1_S2C;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.cxf.message.Message.ENDPOINT_ADDRESS;
 import static org.apache.cxf.message.Message.HTTP_REQUEST_METHOD;
 import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
+import static org.apache.cxf.message.Message.REQUEST_URI;
 import static org.apache.cxf.transport.http.Headers.EMPTY_REQUEST_PROPERTY;
 
 public class HTTPClientVauConduit extends HttpClientHTTPConduit {
@@ -41,8 +40,8 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
     @Override
     protected void setupConnection(Message message, Address address, HTTPClientPolicy csPolicy) throws IOException {
         String vauCid = (String) message.get(VAU_CID);
-        String s2c = (String) message.get(VAU_DEBUG_SK1_S2C);
-        String c2s = (String) message.get(VAU_DEBUG_SK1_C2S);
+        // String s2c = (String) message.get(VAU_DEBUG_SK1_S2C);
+        // String c2s = (String) message.get(VAU_DEBUG_SK1_C2S);
 
         String str = address.getString().replace("+vau", "");
         URI uri = URI.create(str);
@@ -67,7 +66,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
         message.put(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
         message.put(ACCEPT, APPLICATION_OCTET_STREAM);
-        message.put("org.apache.cxf.request.uri", vauUri);
+        message.put(REQUEST_URI, vauUri);
 
         MetadataMap<String, String> headers = (MetadataMap<String, String>) message.get(PROTOCOL_HEADERS);
         headers.putSingle(CONNECTION, KEEP_ALIVE);

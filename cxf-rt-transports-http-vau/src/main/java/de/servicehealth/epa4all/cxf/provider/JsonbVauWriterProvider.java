@@ -1,11 +1,10 @@
 package de.servicehealth.epa4all.cxf.provider;
 
-import de.servicehealth.epa4all.VauClient;
+import de.servicehealth.vau.VauClient;
 import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.MessageBodyWriter;
@@ -21,6 +20,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 
 public class JsonbVauWriterProvider implements MessageBodyWriter {
 
@@ -34,7 +36,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
     @Override
     public boolean isWriteable(Class type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return mediaType.equals(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        return mediaType.equals(APPLICATION_OCTET_STREAM_TYPE);
     }
 
     @SuppressWarnings("unchecked")
@@ -54,8 +56,8 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
             String additionalHeaders = ((MultivaluedMap<String, String>) httpHeaders).entrySet()
                 .stream()
-                .filter(p -> !p.getKey().equals(HttpHeaders.CONTENT_TYPE))
-                .filter(p -> !p.getKey().equals(HttpHeaders.ACCEPT))
+                .filter(p -> !p.getKey().equals(CONTENT_TYPE))
+                .filter(p -> !p.getKey().equals(ACCEPT))
                 .map(p -> p.getKey() + ": " + p.getValue().getFirst())
                 .collect(Collectors.joining("\r\n"));
 

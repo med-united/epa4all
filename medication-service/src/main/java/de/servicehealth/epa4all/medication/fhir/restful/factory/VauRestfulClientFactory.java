@@ -7,7 +7,7 @@ import ca.uhn.fhir.rest.client.api.Header;
 import ca.uhn.fhir.rest.client.api.IHttpClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import de.gematik.vau.lib.VauClientStateMachine;
-import de.servicehealth.epa4all.VauClient;
+import de.servicehealth.vau.VauClient;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRRequestVAUInterceptor;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRResponseVAUInterceptor;
 import org.apache.http.client.config.RequestConfig;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static de.servicehealth.epa4all.TransportUtils.createFakeSSLContext;
+import static de.servicehealth.utils.TransportUtils.createFakeSSLContext;
 
 public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
 

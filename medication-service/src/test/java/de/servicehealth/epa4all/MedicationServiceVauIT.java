@@ -6,9 +6,9 @@ import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.exceptions.FhirClientConnectionException;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
 import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
-import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
+import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.http.client.fluent.Executor;
@@ -59,10 +59,10 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
     public void documentsDownloadedThroughVAUProxy() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
-            Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, getBaseUrl(medicationServiceApiUrl));
+            Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, getBaseUrl(medicationServiceRenderUrl));
             IRenderClient renderClient = new VauRenderClient(executor, medicationServiceRenderUrl);
             
-            File file = renderClient.getPdfDocument("Z123456789", "CLIENTID1234567890AB/2.1.12-45");
+            File file = renderClient.getPdfFile("Z123456789", "CLIENTID1234567890AB/2.1.12-45");
             assertTrue(file.exists());
 
             String xhtmlDocument = renderClient.getXhtmlDocument("Z123456789", "CLIENTID1234567890AB/2.1.12-45");

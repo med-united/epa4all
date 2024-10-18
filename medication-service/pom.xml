@@ -50,7 +50,7 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>de.servicehealth.epa4all</groupId>
+            <groupId>de.servicehealth</groupId>
             <artifactId>common</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>

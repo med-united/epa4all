@@ -4,7 +4,9 @@ import java.io.File;
 
 public interface IRenderClient {
 
-    File getPdfDocument(String xInsurantid, String xUseragent) throws Exception;
+    byte[] getPdfBytes(String xInsurantid, String xUseragent) throws Exception;
+
+    File getPdfFile(String xInsurantid, String xUseragent) throws Exception;
 
     String getXhtmlDocument(String xInsurantid, String xUseragent) throws Exception;
 }

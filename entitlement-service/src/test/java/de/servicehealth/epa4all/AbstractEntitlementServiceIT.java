@@ -5,6 +5,7 @@ import de.servicehealth.api.EntitlementsEPaFdVApi;
 import de.servicehealth.api.UserBlockingApi;
 import de.servicehealth.epa4all.common.DockerAction;
 import de.servicehealth.epa4all.common.Utils;
+import de.servicehealth.vau.VauClient;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.GetEntitlements200Response;
 import jakarta.inject.Inject;
