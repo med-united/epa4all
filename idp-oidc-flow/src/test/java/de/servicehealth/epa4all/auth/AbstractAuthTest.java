@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.auth;
 
-import de.servicehealth.epa4all.VauClient;
-import de.servicehealth.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.vau.VauClient;
+import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.common.DockerAction;
 import de.servicehealth.epa4all.common.Utils;
 import de.servicehealth.model.GetNonce200Response;
@@ -36,11 +36,13 @@ public abstract class AbstractAuthTest {
             VauClient vauClient = new VauClient(initVauTransport());
             AuthorizationSmcBApi api = buildApi(vauClient, AuthorizationSmcBApi.class, authorizationServiceUrl);
 
-            GetNonce200Response nonce = api.getNonce(xUseragent);
-            assertNotNull(nonce);
-            try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent)) {
-                String query = response.getLocation().getQuery();
-                assertTrue(query.contains("redirect_uri"));
+            for (int i = 0; i < 10; i++) {
+                GetNonce200Response nonce = api.getNonce(xUseragent);
+                assertNotNull(nonce);
+                try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent)) {
+                    String query = response.getLocation().getQuery();
+                    assertTrue(query.contains("redirect_uri"));
+                }
             }
         });
     }

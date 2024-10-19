@@ -1,12 +1,11 @@
 package de.servicehealth.epa4all.medication.fhir.interceptor;
 
-import de.servicehealth.epa4all.VauClient;
+import de.servicehealth.vau.VauClient;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
@@ -25,14 +24,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URI;
 import java.security.Security;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static de.servicehealth.epa4all.TransportUtils.printCborMessage;
+import static de.servicehealth.utils.TransportUtils.printCborMessage;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
+import static org.apache.http.HttpHeaders.ACCEPT;
+import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
+import static org.apache.http.HttpHeaders.CONNECTION;
+import static org.apache.http.HttpHeaders.CONTENT_LENGTH;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.apache.http.HttpHeaders.HOST;
+import static org.apache.http.HttpHeaders.USER_AGENT;
 import static org.apache.http.client.fluent.Executor.newInstance;
 
 public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
@@ -67,8 +73,8 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
                 String vauCid = initVau();
                 byte[] vauMessage = prepareVauMessage(entityRequest);
                 entityRequest.setEntity(new ByteArrayEntity(vauMessage));
-                entityRequest.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM);
-                entityRequest.setHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_OCTET_STREAM);
+                entityRequest.setHeader(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
+                entityRequest.setHeader(ACCEPT, APPLICATION_OCTET_STREAM);
 
                 String port = getMedicationPort();
                 String vauUri = medicationBaseUri.getScheme() + "://" + medicationBaseUri.getHost() + port + vauCid;
@@ -98,8 +104,8 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         boolean api = path.contains("api");
         String additionalHeaders = Stream.of(headers)
-            .filter(h -> !h.getName().equals(HttpHeaders.CONTENT_TYPE))
-            .filter(h -> !h.getName().equals(api ? HttpHeaders.ACCEPT : ""))
+            .filter(h -> !h.getName().equals(CONTENT_TYPE))
+            .filter(h -> !h.getName().equals(api ? ACCEPT : ""))
             .map(h -> h.getName() + ": " + h.getValue())
             .collect(Collectors.joining("\r\n"));
 
@@ -152,7 +158,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         String vauCid = httpResponse.getFirstHeader(VAU_CID).getValue();
         String vauDebugSC = httpResponse.getFirstHeader(VAU_DEBUG_SK1_S2C).getValue();
         String vauDebugCS = httpResponse.getFirstHeader(VAU_DEBUG_SK1_C2S).getValue();
-        String contentLength = httpResponse.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue();
+        String contentLength = httpResponse.getFirstHeader(CONTENT_LENGTH).getValue();
         byte[] message2 = httpResponse.getEntity().getContent().readAllBytes();
 
         printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
@@ -168,7 +174,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         httpResponse = response.returnResponse();
         String vauDebugSCInfo = httpResponse.getFirstHeader(VAU_DEBUG_SK2_S2C_INFO).getValue();
         String vauDebugCSInfo = httpResponse.getFirstHeader(VAU_DEBUG_SK2_C2S_INFO).getValue();
-        contentLength = httpResponse.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue();
+        contentLength = httpResponse.getFirstHeader(CONTENT_LENGTH).getValue();
         byte[] message4 = httpResponse.getEntity().getContent().readAllBytes();
 
         printCborMessage(message4, null, vauDebugSCInfo, vauDebugCSInfo, contentLength);
@@ -180,12 +186,12 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
     private Header[] prepareHeaders(String host) {
         Header[] headers = new Header[6];
-        headers[0] = new BasicHeader(HttpHeaders.CONNECTION, "Keep-Alive");
-        headers[1] = new BasicHeader(HttpHeaders.ACCEPT, "application/octet-stream, application/json, application/cbor, application/*+json, */*");
-        headers[2] = new BasicHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, x-gzip, deflate");
-        headers[3] = new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/cbor");
-        headers[4] = new BasicHeader(HttpHeaders.HOST, host);
-        headers[5] = new BasicHeader(HttpHeaders.USER_AGENT, "Apache-CfxClient/4.0.5");
+        headers[0] = new BasicHeader(CONNECTION, "Keep-Alive");
+        headers[1] = new BasicHeader(ACCEPT, "application/octet-stream, application/json, application/cbor, application/*+json, */*");
+        headers[2] = new BasicHeader(ACCEPT_ENCODING, "gzip, x-gzip, deflate");
+        headers[3] = new BasicHeader(CONTENT_TYPE, "application/cbor");
+        headers[4] = new BasicHeader(HOST, host);
+        headers[5] = new BasicHeader(USER_AGENT, "Apache-CfxClient/4.0.5");
         return headers;
     }
 }

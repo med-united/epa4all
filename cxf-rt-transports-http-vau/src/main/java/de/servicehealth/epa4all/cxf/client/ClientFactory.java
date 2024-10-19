@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.cxf.client;
 
 import de.gematik.vau.lib.VauClientStateMachine;
-import de.servicehealth.epa4all.VauClient;
+import de.servicehealth.vau.VauClient;
 import de.servicehealth.epa4all.cxf.interceptor.CxfHeadersInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor;
@@ -28,7 +28,7 @@ import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import java.util.List;
 
-import static de.servicehealth.epa4all.TransportUtils.createFakeSSLContext;
+import static de.servicehealth.utils.TransportUtils.createFakeSSLContext;
 import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_ALIVE;
 
 public class ClientFactory {

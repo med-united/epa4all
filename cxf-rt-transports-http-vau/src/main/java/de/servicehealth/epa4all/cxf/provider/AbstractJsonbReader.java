@@ -13,11 +13,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.LOWER_HYPHEN;
 import static com.google.common.base.CaseFormat.LOWER_UNDERSCORE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @SuppressWarnings("rawtypes")
 public abstract class AbstractJsonbReader implements MessageBodyReader {
@@ -48,7 +48,7 @@ public abstract class AbstractJsonbReader implements MessageBodyReader {
     ) throws IOException, WebApplicationException {
         try (Jsonb build = jsonbBuilder.withConfig(config).build()) {
             byte[] bytes = getBytes(entityStream, httpHeaders);
-            String payload = new String(bytes, StandardCharsets.UTF_8);
+            String payload = new String(bytes, UTF_8);
             if (payload.startsWith("[")) {
                 payload = String.format("{\"data\": %s }", payload);
             }

@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
-import static de.servicehealth.epa4all.TransportUtils.createFakeSSLContext;
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
+import static de.servicehealth.utils.TransportUtils.createFakeSSLContext;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -53,7 +53,7 @@ public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
             Executor executor = Executor.newInstance(HttpClients.custom().setSSLContext(createFakeSSLContext()).build());
             IRenderClient renderClient = new PlainRenderClient(executor, medicationServiceRenderUrl);
 
-            File file = renderClient.getPdfDocument("Z123456789", "CLIENTID1234567890AB/2.1.12-45");
+            File file = renderClient.getPdfFile("Z123456789", "CLIENTID1234567890AB/2.1.12-45");
             assertTrue(file.exists());
 
             String xhtmlDocument = renderClient.getXhtmlDocument("Z123456789", "CLIENTID1234567890AB/2.1.12-45");

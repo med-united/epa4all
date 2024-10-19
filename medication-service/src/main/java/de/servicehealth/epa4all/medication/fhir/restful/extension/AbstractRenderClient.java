@@ -35,14 +35,19 @@ public abstract class AbstractRenderClient implements IRenderClient {
     }
 
     @Override
-    public File getPdfDocument(String xInsurantid, String xUseragent) throws Exception {
+    public byte[] getPdfBytes(String xInsurantid, String xUseragent) throws Exception {
         try (InputStream content = execute(PDF_EXT, xInsurantid, xUseragent)) {
-            File tempFile = File.createTempFile(UUID.randomUUID().toString(), "." + PDF_EXT, new File("."));
-            try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
-                outputStream.write(content.readAllBytes());
-            }
-            return tempFile;
+            return content.readAllBytes();
         }
+    }
+
+    @Override
+    public File getPdfFile(String xInsurantid, String xUseragent) throws Exception {
+        File tempFile = File.createTempFile(UUID.randomUUID().toString(), "." + PDF_EXT, new File("."));
+        try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+            outputStream.write(getPdfBytes(xInsurantid, xUseragent));
+        }
+        return tempFile;
     }
 
     @Override
