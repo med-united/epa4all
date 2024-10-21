@@ -9,6 +9,8 @@ import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateService;
 import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventService;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
+import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDService;
+import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
 import de.servicehealth.config.KonnektorDefaultConfig;
 import de.servicehealth.config.api.UserRuntimeConfig;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -79,6 +81,16 @@ public class ServicePortProvider {
         CardServicePortType cardServicePort = cardService.getCardServicePort();
 
         setEndpointAddress((BindingProvider) cardServicePort, konnektorUrl + "/ws/CardService", sslContext);
+
+        return cardServicePort;
+    }
+
+    public VSDServicePortType getVSDServicePortType(UserRuntimeConfig userRuntimeConfig) {
+        String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
+        VSDService vsdService = new VSDService();
+        VSDServicePortType cardServicePort = vsdService.getVSDServicePort();
+
+        setEndpointAddress((BindingProvider) cardServicePort, konnektorUrl + "/ws/VSDService", sslContext);
 
         return cardServicePort;
     }

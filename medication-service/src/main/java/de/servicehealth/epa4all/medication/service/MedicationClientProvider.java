@@ -11,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import org.apache.http.client.fluent.Executor;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
 import java.net.URI;
@@ -26,13 +27,13 @@ public class MedicationClientProvider {
     @Produces
     public IRenderClient getRenderClient() throws Exception {
         String medicationServiceRenderUrl = epaMedicationConfig.getMedicationServiceRenderUrl();
-        boolean proxy = epaMedicationConfig.isProxy();
-        if (proxy) {
+        if (epaMedicationConfig.isProxy()) {
             FhirContext ctx = FhirContext.forR4();
             Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, getBaseUrl(medicationServiceRenderUrl));
             return new VauRenderClient(executor, medicationServiceRenderUrl);
         } else {
-            Executor executor = Executor.newInstance(HttpClients.custom().setSSLContext(createFakeSSLContext()).build());
+            CloseableHttpClient httpclient = HttpClients.custom().setSSLContext(createFakeSSLContext()).build();
+            Executor executor = Executor.newInstance(httpclient);
             return new PlainRenderClient(executor, medicationServiceRenderUrl);
         }
     }
@@ -41,13 +42,10 @@ public class MedicationClientProvider {
     public IMedicationClient getMedicationClient() throws Exception {
         FhirContext ctx = FhirContext.forR4();
         String medicationServiceApiUrl = epaMedicationConfig.getMedicationServiceApiUrl();
-        boolean proxy = epaMedicationConfig.isProxy();
-        if (proxy) {
+        if (epaMedicationConfig.isProxy()) {
             VauRestfulClientFactory.applyToFhirContext(ctx, getBaseUrl(medicationServiceApiUrl));
-            return ctx.newRestfulClient(IMedicationClient.class, medicationServiceApiUrl);
-        } else {
-            return ctx.newRestfulClient(IMedicationClient.class, medicationServiceApiUrl);
         }
+        return ctx.newRestfulClient(IMedicationClient.class, medicationServiceApiUrl);
     }
 
     private String getBaseUrl(String url) {

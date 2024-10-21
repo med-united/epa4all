@@ -5,15 +5,17 @@ import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.idp.client.data.AuthenticationRequest;
 import de.gematik.idp.client.data.AuthenticationResponse;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
+import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.token.IdpJwe;
 import de.gematik.idp.token.JsonWebToken;
 import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
+import org.jose4j.jwt.JwtClaims;
 
 import java.security.cert.X509Certificate;
 import java.util.function.UnaryOperator;
 
-import static de.servicehealth.epa4all.idp.utils.IdpUtils.signServerChallengeAndEncrypt;
+import static de.servicehealth.epa4all.idp.utils.IdpUtils.getSignedJwt;
 
 public abstract class AbstractAuthAction implements AuthAction {
 
@@ -67,5 +69,38 @@ public abstract class AbstractAuthAction implements AuthAction {
             authenticationRequest, UnaryOperator.identity(), o -> {
             }
         );
+    }
+
+    private String signServerChallengeAndEncrypt(
+        IServicePortAggregator servicePorts,
+        DiscoveryDocumentResponse discoveryDocumentResponse,
+        String smcbHandle,
+        String challengeToSign,
+        X509Certificate certificate,
+        String signatureType,
+        boolean encrypt
+    ) {
+        final JwtClaims claims = new JwtClaims();
+        claims.setClaim(ClaimName.NESTED_JWT.getJoseName(), challengeToSign);
+        JsonWebToken jsonWebToken = signClaimsAndReturnJWT(servicePorts, certificate, claims, signatureType, smcbHandle);
+        if (encrypt) {
+            IdpJwe encryptAsNjwt = jsonWebToken
+                // A_20667-01 - Response auf die Challenge des Authorization-Endpunktes
+                .encryptAsNjwt(discoveryDocumentResponse.getIdpEnc());
+            return encryptAsNjwt.getRawString();
+        } else {
+            return jsonWebToken.getRawString();
+        }
+    }
+
+    private JsonWebToken signClaimsAndReturnJWT(
+        IServicePortAggregator servicePorts,
+        X509Certificate certificate,
+        final JwtClaims claims,
+        String signatureType,
+        String smcbHandle
+    ) {
+        final String signedJwt = getSignedJwt(servicePorts, certificate, claims, signatureType, smcbHandle, false);
+        return new JsonWebToken(signedJwt);
     }
 }
