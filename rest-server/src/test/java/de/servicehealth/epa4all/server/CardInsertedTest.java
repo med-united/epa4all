@@ -9,6 +9,8 @@ import de.servicehealth.epa4all.common.ProxyTestProfile;
 import de.servicehealth.epa4all.medication.service.DocService;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
+import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.pharmacy.PharmacyService;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -33,15 +35,22 @@ import static org.mockito.Mockito.when;
 public class CardInsertedTest {
 
     @Inject
+    DefaultUserConfig defaultUserConfig;
+
+    @Inject
     EventMapper eventMapper;
 
     @Inject
     DocService docService;
 
     @Test
-    public void epaPdfDocumentIsSentToCardlink() {
+    public void epaPdfDocumentIsSentToCardlink() throws Exception {
         CardlinkWebsocketClient cardlinkWebsocketClient = mock(CardlinkWebsocketClient.class);
-        CETPEventHandler cetpServerHandler = new CETPEventHandler(cardlinkWebsocketClient, docService);
+        PharmacyService pharmacyService = mock(PharmacyService.class);
+        when(pharmacyService.getKVNR(any(), any(), any(), any())).thenReturn("Z123456789");
+        CETPEventHandler cetpServerHandler = new CETPEventHandler(
+            cardlinkWebsocketClient, defaultUserConfig, pharmacyService, docService
+        );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 
         String slotIdValue = "3";
@@ -66,6 +75,7 @@ public class CardInsertedTest {
 
         String bas64EncodedPdfContent = (String) payloadData.get("bundles");
         assertFalse(bas64EncodedPdfContent.isEmpty());
+        assertTrue(bas64EncodedPdfContent.startsWith("PDF:"));
     }
 
     private DecodeResult decode(

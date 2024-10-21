@@ -5,6 +5,7 @@ import de.gematik.ws.conn.cardservice.wsdl.v8_1.CardServicePortType;
 import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortType;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
+import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
 import de.servicehealth.config.KonnektorConfig;
 import de.servicehealth.config.KonnektorDefaultConfig;
 import de.servicehealth.config.api.IUserConfigurations;
@@ -30,12 +31,14 @@ public class MultiKonnektorService {
         return portMap.computeIfAbsent(new KonnektorKey(userRuntimeConfig), kk -> {
             CardServicePortType cardServicePortType = servicePortProvider.getCardServicePortType(userRuntimeConfig);
             EventServicePortType eventServicePort = servicePortProvider.getEventServicePort(userRuntimeConfig);
+            VSDServicePortType vsdServicePortType = servicePortProvider.getVSDServicePortType(userRuntimeConfig);
             CertificateServicePortType certificateService = servicePortProvider.getCertificateServicePort(userRuntimeConfig);
             AuthSignatureServicePortType authSignatureService = servicePortProvider.getAuthSignatureServicePortType(userRuntimeConfig);
             return new ServicePortAggregator(
                 buildContextType(userRuntimeConfig),
                 cardServicePortType,
                 eventServicePort,
+                vsdServicePortType,
                 certificateService,
                 authSignatureService
             );

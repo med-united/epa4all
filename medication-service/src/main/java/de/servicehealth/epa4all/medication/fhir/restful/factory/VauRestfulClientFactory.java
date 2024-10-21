@@ -28,7 +28,8 @@ public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
 
     public static Executor applyToFhirContext(FhirContext ctx, String medicationServiceBaseUrl) throws Exception {
         VauRestfulClientFactory vauClientFactory = new VauRestfulClientFactory(ctx);
-        return Executor.newInstance(vauClientFactory.initVauHttpClient(ctx, medicationServiceBaseUrl));
+        CloseableHttpClient httpclient = vauClientFactory.initVauHttpClient(ctx, medicationServiceBaseUrl);
+        return Executor.newInstance(httpclient);
     }
 
     private VauRestfulClientFactory(FhirContext ctx) {

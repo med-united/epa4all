@@ -120,12 +120,11 @@ public class IdpClient {
         GetCards getCards = new GetCards();
         getCards.setContext(servicePorts.getContextType());
         getCards.setCardType(CardTypeType.SMC_B);
-        return servicePorts.getEventService().getCards(getCards).getCards().getCard().get(0).getCardHandle();
+        return servicePorts.getEventService().getCards(getCards).getCards().getCard().getFirst().getCardHandle();
     }
 
     private ReadCardCertificateResponse readCardCertificateResponse(
         String smcbHandle,
-        AuthAction authAction,
         IServicePortAggregator servicePorts
     ) throws Exception {
         // A_20666-02 - Auslesen des Authentisierungszertifikates
@@ -150,7 +149,7 @@ public class IdpClient {
                 try {
                     verifyPin(servicePorts, smcbHandle);
                     // try again
-                    readCardCertificateResponse(smcbHandle, authAction, servicePorts);
+                    readCardCertificateResponse(smcbHandle, servicePorts);
                 } catch (de.gematik.ws.conn.cardservice.wsdl.v8_1.FaultMessage e2) {
                     throw new RuntimeException("Could not verify pin", e2);
                 }
@@ -178,7 +177,7 @@ public class IdpClient {
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
         String nonce = authorizationService.getNonce(USER_AGENT).getNonce();
 
-        ReadCardCertificateResponse certificateResponse = readCardCertificateResponse(smcbHandle, authAction, servicePorts);
+        ReadCardCertificateResponse certificateResponse = readCardCertificateResponse(smcbHandle, servicePorts);
         if (certificateResponse == null) {
             throw new RuntimeException("Could not read card certificate");
         }
