@@ -1,10 +1,13 @@
 [submodule "lib-vau"]
 	path = lib-vau
 	url = git@github.com:med-united/lib-vau.git
+	branch = main
 [submodule "api-telematik"]
 	path = api-telematik
 	url = git@github.com:med-united/api-telematik.git
+	branch = OPB5
 [submodule "lib-cetp"]
 	path = lib-cetp
 	url = git@github.com:med-united/lib-cetp.git
+	branch = main
 
