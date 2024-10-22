@@ -95,13 +95,24 @@ public class PharmacyService {
             "[%s] readVSD for cardHandle=%s, smcbHandle=%s, subscriptions: %s", correlationId, egkHandle, smcbHandle, subsInfo
         ));
 
+        // TODO readEPrescriptionsMXBean.increaseVSDRead();
+
+        ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle, smcbHandle);
+        return servicePorts.getVSDServicePortType().readVSD(readVSD);
+    }
+
+    private ReadVSD prepareReadVSDRequest(
+        ContextType context,
+        String egkHandle,
+        String smcbHandle
+    ) {
         ReadVSD readVSD = new ReadVSD();
         readVSD.setContext(context);
         readVSD.setEhcHandle(egkHandle);
         readVSD.setHpcHandle(smcbHandle);
         readVSD.setReadOnlineReceipt(true);
         readVSD.setPerformOnlineCheck(true);
-        return servicePorts.getVSDServicePortType().readVSD(readVSD);
+        return readVSD;
     }
 
     private String getSubscriptionsInfo(
