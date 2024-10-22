@@ -1,10 +1,10 @@
 #!/bin/bash
 mkdir /opt/epa4all/
 git pull
-mvn clean package -Dquarkus.package.type=uber-jar -DskipTests
-cp rest-server/target/rest-server-1.0-SNAPSHOT-runner.jar /opt/epa4all/
-mkdir -p /opt/epa4all/config/konnektoren/8588
-cp rest-server/src/main/resources/application.properties /opt/epa4all/config
+mvn clean package -Dquarkus.package.type=fast-jar -DskipTests
+sudo cp -r rest-server/target/quarkus-app/* /opt/epa4all/
+sudo mkdir -p /opt/epa4all/config/konnektoren/8588
+sudo cp rest-server/src/main/resources/application.properties /opt/epa4all/config
 cp rest-server/config/konnektoren/8588/* /opt/epa4all/config/konnektoren/8588
 cp run.sh /opt/epa4all/
 cp epa4all.service /etc/systemd/system/
