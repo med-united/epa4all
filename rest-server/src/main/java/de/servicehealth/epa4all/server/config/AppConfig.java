@@ -8,7 +8,7 @@ import de.servicehealth.config.api.UserRuntimeConfig;
 public class AppConfig implements UserRuntimeConfig {
 
     private final KonnektorDefaultConfig konnektorDefaultConfig;
-    private final IUserConfigurations userConfigurations;
+    private IUserConfigurations userConfigurations;
 
     public AppConfig(KonnektorDefaultConfig konnektorDefaultConfig, IUserConfigurations configurations) {
         this.konnektorDefaultConfig = konnektorDefaultConfig;
@@ -62,7 +62,7 @@ public class AppConfig implements UserRuntimeConfig {
 
     @Override
     public void updateProperties(IUserConfigurations userConfigurations) {
-        throw new UnsupportedOperationException("Not implemented");
+        this.userConfigurations = userConfigurations;
     }
 
     private String getOrDefault(String value, String defaultValue) {

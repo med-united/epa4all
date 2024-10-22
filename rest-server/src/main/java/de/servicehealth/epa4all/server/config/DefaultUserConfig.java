@@ -197,7 +197,7 @@ public class DefaultUserConfig implements UserRuntimeConfig {
 
     @Override
     public UserRuntimeConfig copy() {
-        throw new UnsupportedOperationException("Not implemented");
+        return new AppConfig(konnektorDefaultConfig, userConfigurations);
     }
 
     @Override
