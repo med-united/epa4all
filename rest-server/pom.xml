@@ -10,12 +10,14 @@
     </parent>
 
     <artifactId>rest-server</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <name>rest-server</name>
 
     <properties>
         <cxf-version>4.0.5</cxf-version>
+        <!-- automatically run annotation processors within the incremental compilation -->
+  		<m2e.apt.activation>jdt_apt</m2e.apt.activation>
     </properties>
 
     <dependencyManagement>
