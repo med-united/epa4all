@@ -4,8 +4,9 @@ import de.gematik.idp.authentication.AuthenticationChallenge;
 import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.idp.client.data.AuthenticationResponse;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
-import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
-import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
+import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.service.health.api.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.model.SendAuthCodeSC200Response;
 import de.servicehealth.model.SendAuthCodeSCtype;
 
@@ -17,13 +18,13 @@ public class VauNpAction extends AbstractAuthAction {
     private final Consumer<String> authConsumer;
 
     public VauNpAction(
-        IServicePortAggregator servicePorts,
+        MultiEpaService multiEpaService,
+        IKonnektorServicePortsAPI servicePorts,
         AuthenticatorClient authenticatorClient,
-        AuthorizationSmcBApi authorizationService,
         DiscoveryDocumentResponse discoveryDocumentResponse,
         Consumer<String> authConsumer
         ) {
-        super(servicePorts, authenticatorClient, authorizationService, discoveryDocumentResponse);
+        super(multiEpaService, servicePorts, authenticatorClient, discoveryDocumentResponse);
         this.authConsumer = authConsumer;
     }
 
@@ -43,7 +44,8 @@ public class VauNpAction extends AbstractAuthAction {
         SendAuthCodeSCtype sendAuthCodeSC = new SendAuthCodeSCtype();
         sendAuthCodeSC.setAuthorizationCode(authenticationResponse.getCode());
         sendAuthCodeSC.setClientAttest(clientAttest);
-        SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationService.sendAuthCodeSC(USER_AGENT, sendAuthCodeSC);
+        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI("").getAuthorizationSmcBApi();
+        SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationSmcBApi.sendAuthCodeSC(USER_AGENT, sendAuthCodeSC);
         authConsumer.accept(sendAuthCodeSC200Response.getVauNp());
     }
 }

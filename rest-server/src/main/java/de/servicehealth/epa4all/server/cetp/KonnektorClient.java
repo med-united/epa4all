@@ -22,14 +22,14 @@ import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.cetp.domain.eventservice.card.CardsResponse;
 import de.health.service.cetp.domain.fault.CetpFault;
+import de.service.health.api.serviceport.IKonnektorServicePortsAPI;
+import de.service.health.api.serviceport.MultiKonnektorService;
 import de.servicehealth.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardTypeMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardsResponseMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.status.StatusMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionResultMapper;
-import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
-import de.servicehealth.epa4all.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
 
@@ -70,7 +70,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public List<Subscription> getSubscriptions(UserRuntimeConfig runtimeConfig) throws CetpFault {
-        IServicePortAggregator servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         EventServicePortType eventService = servicePorts.getEventService();
         GetSubscription getSubscriptionRequest = new GetSubscription();
         getSubscriptionRequest.setContext(servicePorts.getContextType());
@@ -89,7 +89,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public SubscriptionResult renewSubscription(UserRuntimeConfig runtimeConfig, String subscriptionId) throws CetpFault {
-        IServicePortAggregator servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         EventServicePortType eventService = servicePorts.getEventService();
 
         Holder<Status> statusHolder = new Holder<>();
@@ -109,7 +109,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public SubscriptionResult subscribe(UserRuntimeConfig runtimeConfig, String cetpHost) throws CetpFault {
-        IServicePortAggregator servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         EventServicePortType eventService = servicePorts.getEventService();
 
         Subscribe subscribe = new Subscribe();
@@ -132,7 +132,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public CetpStatus unsubscribe(UserRuntimeConfig runtimeConfig, String subscriptionId, String cetpHost, boolean forceCetp) throws CetpFault {
-        IServicePortAggregator servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         EventServicePortType eventService = servicePorts.getEventService();
         try {
             Unsubscribe unsubscribe = new Unsubscribe();
@@ -158,7 +158,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public List<Card> getCards(UserRuntimeConfig runtimeConfig, CardType cardType) throws CetpFault {
-        IServicePortAggregator servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         EventServicePortType eventService = servicePorts.getEventService();
         GetCards getCards = new GetCards();
         getCards.setContext(servicePorts.getContextType());

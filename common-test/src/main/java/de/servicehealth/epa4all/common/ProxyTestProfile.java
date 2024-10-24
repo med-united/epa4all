@@ -6,6 +6,6 @@ public class ProxyTestProfile implements QuarkusTestProfile {
 
     @Override
     public String getConfigProfile() {
-        return "proxy";
+        return "proxy-test";
     }
 }

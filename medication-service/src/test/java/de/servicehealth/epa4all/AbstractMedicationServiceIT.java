@@ -1,5 +1,7 @@
 package de.servicehealth.epa4all;
 
+import de.gematik.vau.lib.VauClientStateMachine;
+import de.servicehealth.vau.VauClient;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -13,7 +15,6 @@ import org.hl7.fhir.r4.model.Reference;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
-import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -32,20 +33,14 @@ public abstract class AbstractMedicationServiceIT {
     @ConfigProperty(name = "medication-service.render.url")
     String medicationServiceRenderUrl;
 
+    protected VauClient vauClient = new VauClient(new VauClientStateMachine());
+
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @BeforeEach
     public void before() {
         Stream.of(Objects.requireNonNull(
             new File(".").listFiles((dir, name) -> name.endsWith(PDF_EXT)))
         ).forEach(File::delete);
-    }
-
-    protected String getBaseUrl(String url) {
-        URI uri = URI.create(url);
-        String scheme = uri.getScheme() == null ? "" : uri.getScheme() + "://";
-        String host = uri.getHost();
-        String port = uri.getPort() == -1 ? "" : ":" + uri.getPort();
-        return scheme + host + port;
     }
 
     protected Medication prepareMedication() {

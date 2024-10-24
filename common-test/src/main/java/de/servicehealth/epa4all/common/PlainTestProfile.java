@@ -6,6 +6,6 @@ public class PlainTestProfile implements QuarkusTestProfile {
 
     @Override
     public String getConfigProfile() {
-        return "plain";
+        return "plain-test";
     }
 }

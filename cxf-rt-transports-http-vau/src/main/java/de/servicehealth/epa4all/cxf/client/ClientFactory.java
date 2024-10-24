@@ -1,7 +1,5 @@
 package de.servicehealth.epa4all.cxf.client;
 
-import de.gematik.vau.lib.VauClientStateMachine;
-import de.servicehealth.vau.VauClient;
 import de.servicehealth.epa4all.cxf.interceptor.CxfHeadersInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor;
@@ -11,6 +9,7 @@ import de.servicehealth.epa4all.cxf.provider.JsonbVauReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbWriterProvider;
 import de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory;
+import de.servicehealth.vau.VauClient;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
@@ -28,12 +27,24 @@ import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import java.util.List;
 
-import static de.servicehealth.utils.TransportUtils.createFakeSSLContext;
+import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_ALIVE;
 
 public class ClientFactory {
 
-    private ClientFactory() {
+    static {
+        initGlobalBus();
+    }
+
+    private static void initGlobalBus() {
+        Bus globalBus = BusFactory.getDefaultBus();
+        globalBus.setProperty("force.urlconnection.http.conduit", false);
+        DestinationFactoryManager dfm = globalBus.getExtension(DestinationFactoryManager.class);
+        HTTPVauTransportFactory customTransport = new HTTPVauTransportFactory();
+        dfm.registerDestinationFactory(HTTPVauTransportFactory.TRANSPORT_IDENTIFIER, customTransport);
+
+        ConduitInitiatorManager extension = globalBus.getExtension(ConduitInitiatorManager.class);
+        extension.registerConduitInitiator(HTTPVauTransportFactory.TRANSPORT_IDENTIFIER, customTransport);
     }
 
     public static <T> T createPlainClient(Class<T> clazz, String url) throws Exception {
@@ -61,19 +72,6 @@ public class ClientFactory {
         return api;
     }
 
-    public static VauClientStateMachine initVauTransport() {
-        Bus bus = BusFactory.getThreadDefaultBus();
-        bus.setProperty("force.urlconnection.http.conduit", false);
-        DestinationFactoryManager dfm = bus.getExtension(DestinationFactoryManager.class);
-        HTTPVauTransportFactory customTransport = new HTTPVauTransportFactory();
-        dfm.registerDestinationFactory(HTTPVauTransportFactory.TRANSPORT_IDENTIFIER, customTransport);
-
-        ConduitInitiatorManager extension = bus.getExtension(ConduitInitiatorManager.class);
-        extension.registerConduitInitiator(HTTPVauTransportFactory.TRANSPORT_IDENTIFIER, customTransport);
-
-        return new VauClientStateMachine();
-    }
-
     public static void initClient(
         ClientConfiguration config,
         List<Interceptor<? extends Message>> outInterceptors,
@@ -94,5 +92,8 @@ public class ClientFactory {
         // to stick to HttpClientHTTPConduit (see HttpClientHTTPConduit.setupConnection)
         tlsParams.setSslContext(createFakeSSLContext());
         conduit.setTlsClientParameters(tlsParams);
+    }
+
+    private ClientFactory() {
     }
 }

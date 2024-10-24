@@ -2,8 +2,9 @@ package de.servicehealth.epa4all.server.cetp;
 
 import de.health.service.cetp.AbstractCETPEventHandler;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
+import de.service.health.api.epa4all.EpaAPI;
+import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.config.api.IUserConfigurations;
-import de.servicehealth.epa4all.medication.service.DocService;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.pharmacy.PharmacyService;
 import org.jboss.logging.MDC;
@@ -23,19 +24,19 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
     private final DefaultUserConfig defaultUserConfig;
     private final PharmacyService pharmacyService;
-    private final DocService docService;
+    private final MultiEpaService multiEpaService;
 
     public CETPEventHandler(
         CardlinkWebsocketClient cardlinkWebsocketClient,
         DefaultUserConfig defaultUserConfig,
         PharmacyService pharmacyService,
-        DocService docService
+        MultiEpaService multiEpaService
     ) {
         super(cardlinkWebsocketClient);
 
         this.defaultUserConfig = defaultUserConfig;
         this.pharmacyService = pharmacyService;
-        this.docService = docService;
+        this.multiEpaService = multiEpaService;
     }
 
     @Override
@@ -75,7 +76,12 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             try {
                 String cardHandle = paramsMap.get("CardHandle");
                 String xInsurantid = pharmacyService.getKVNR(correlationId, cardHandle, null, defaultUserConfig);
-                byte[] bytes = docService.getPdfBytes(xInsurantid);
+                EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantid);
+                if (epaAPI == null) {
+                    throw new IllegalStateException(String.format("Insurant [%s] ePA record is not found", xInsurantid));
+                }
+                String userAgent = "CLIENTID1234567890AB/2.1.12-45";
+                byte[] bytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, userAgent);
                 String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                 Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
                 cardlinkWebsocketClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);

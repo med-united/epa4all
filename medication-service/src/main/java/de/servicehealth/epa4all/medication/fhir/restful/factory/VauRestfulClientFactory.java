@@ -6,10 +6,9 @@ import ca.uhn.fhir.rest.client.apache.ApacheRestfulClientFactory;
 import ca.uhn.fhir.rest.client.api.Header;
 import ca.uhn.fhir.rest.client.api.IHttpClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
-import de.gematik.vau.lib.VauClientStateMachine;
-import de.servicehealth.vau.VauClient;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRRequestVAUInterceptor;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRResponseVAUInterceptor;
+import de.servicehealth.vau.VauClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -22,13 +21,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static de.servicehealth.utils.TransportUtils.createFakeSSLContext;
+import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 
 public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
 
-    public static Executor applyToFhirContext(FhirContext ctx, String medicationServiceBaseUrl) throws Exception {
+    public static Executor applyToFhirContext(
+        FhirContext ctx,
+        VauClient vauClient,
+        String medicationServiceBaseUrl
+    ) throws Exception {
         VauRestfulClientFactory vauClientFactory = new VauRestfulClientFactory(ctx);
-        CloseableHttpClient httpclient = vauClientFactory.initVauHttpClient(ctx, medicationServiceBaseUrl);
+        CloseableHttpClient httpclient = vauClientFactory.initVauHttpClient(ctx, vauClient, medicationServiceBaseUrl);
         return Executor.newInstance(httpclient);
     }
 
@@ -36,13 +39,16 @@ public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
         super(ctx);
     }
 
-    private CloseableHttpClient initVauHttpClient(FhirContext ctx, String medicationServiceBaseUrl) throws Exception {
+    private CloseableHttpClient initVauHttpClient(
+        FhirContext ctx,
+        VauClient vauClient,
+        String medicationServiceBaseUrl
+    ) throws Exception {
         ctx.setRestfulClientFactory(this);
 
         SSLContext sslContext = createFakeSSLContext();
         URI medicationBaseUri = URI.create(medicationServiceBaseUrl);
 
-        VauClient vauClient = new VauClient(new VauClientStateMachine());
         FHIRRequestVAUInterceptor requestInterceptor = new FHIRRequestVAUInterceptor(medicationBaseUri, sslContext, vauClient);
         FHIRResponseVAUInterceptor responseInterceptor = new FHIRResponseVAUInterceptor(vauClient);
         CloseableHttpClient vauHttpClient = buildHttpClient(sslContext, requestInterceptor, responseInterceptor);

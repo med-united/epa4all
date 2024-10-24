@@ -8,8 +8,8 @@ import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.token.IdpJwe;
 import de.gematik.idp.token.JsonWebToken;
-import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
-import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
+import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.serviceport.IKonnektorServicePortsAPI;
 import org.jose4j.jwt.JwtClaims;
 
 import java.security.cert.X509Certificate;
@@ -19,20 +19,20 @@ import static de.servicehealth.epa4all.idp.utils.IdpUtils.getSignedJwt;
 
 public abstract class AbstractAuthAction implements AuthAction {
 
-    protected IServicePortAggregator servicePorts;
+    protected MultiEpaService multiEpaService;
+    protected IKonnektorServicePortsAPI servicePorts;
     protected AuthenticatorClient authenticatorClient;
-    protected AuthorizationSmcBApi authorizationService;
     protected DiscoveryDocumentResponse discoveryDocumentResponse;
 
     public AbstractAuthAction(
-        IServicePortAggregator servicePorts,
+        MultiEpaService multiEpaService,
+        IKonnektorServicePortsAPI servicePorts,
         AuthenticatorClient authenticatorClient,
-        AuthorizationSmcBApi authorizationService,
         DiscoveryDocumentResponse discoveryDocumentResponse
     ) {
         this.servicePorts = servicePorts;
+        this.multiEpaService = multiEpaService;
         this.authenticatorClient = authenticatorClient;
-        this.authorizationService = authorizationService;
         this.discoveryDocumentResponse = discoveryDocumentResponse;
     }
 
@@ -72,7 +72,7 @@ public abstract class AbstractAuthAction implements AuthAction {
     }
 
     private String signServerChallengeAndEncrypt(
-        IServicePortAggregator servicePorts,
+        IKonnektorServicePortsAPI servicePorts,
         DiscoveryDocumentResponse discoveryDocumentResponse,
         String smcbHandle,
         String challengeToSign,
@@ -94,7 +94,7 @@ public abstract class AbstractAuthAction implements AuthAction {
     }
 
     private JsonWebToken signClaimsAndReturnJWT(
-        IServicePortAggregator servicePorts,
+        IKonnektorServicePortsAPI servicePorts,
         X509Certificate certificate,
         final JwtClaims claims,
         String signatureType,

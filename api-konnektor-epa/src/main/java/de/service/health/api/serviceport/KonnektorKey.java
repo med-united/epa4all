@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.serviceport;
+package de.service.health.api.serviceport;
 
 import de.servicehealth.config.api.UserRuntimeConfig;
 import lombok.EqualsAndHashCode;

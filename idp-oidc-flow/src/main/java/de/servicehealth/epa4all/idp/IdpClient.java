@@ -17,13 +17,14 @@ import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortTyp
 import de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.eventservice.v7.GetCards;
+import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.service.health.api.serviceport.IKonnektorServicePortsAPI;
+import de.service.health.api.serviceport.MultiKonnektorService;
 import de.servicehealth.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.idp.action.AuthAction;
 import de.servicehealth.epa4all.idp.action.LoginAction;
 import de.servicehealth.epa4all.idp.action.VauNpAction;
-import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
-import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
-import de.servicehealth.epa4all.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
@@ -64,8 +65,8 @@ public class IdpClient {
     }
 
     IdpConfig idpConfig;
+    MultiEpaService multiEpaService;
     AuthenticatorClient authenticatorClient;
-    AuthorizationSmcBApi authorizationService;
     MultiKonnektorService multiKonnektorService;
 
     private final DiscoveryDocumentResponse discoveryDocumentResponse;
@@ -76,13 +77,13 @@ public class IdpClient {
     @Inject
     public IdpClient(
         IdpConfig idpConfig,
+        MultiEpaService multiEpaService,
         AuthenticatorClient authenticatorClient,
-        AuthorizationSmcBApi authorizationService,
         MultiKonnektorService multiKonnektorService
     ) {
         this.idpConfig = idpConfig;
+        this.multiEpaService = multiEpaService;
         this.authenticatorClient = authenticatorClient;
-        this.authorizationService = authorizationService;
         this.multiKonnektorService = multiKonnektorService;
 
         discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
@@ -91,11 +92,11 @@ public class IdpClient {
     }
 
     public void getVauNp(UserRuntimeConfig userRuntimeConfig, Consumer<String> vauNPConsumer) throws Exception {
-        IServicePortAggregator servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         VauNpAction authAction = new VauNpAction(
+            multiEpaService,
             servicePorts,
             authenticatorClient,
-            authorizationService,
             discoveryDocumentResponse,
             vauNPConsumer
         );
@@ -103,20 +104,20 @@ public class IdpClient {
     }
 
     public void getBearerToken(UserRuntimeConfig userRuntimeConfig, Consumer<String> bearerConsumer) throws Exception {
-        IServicePortAggregator servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         LoginAction authAction = new LoginAction(
             idpConfig.getClientId(),
             idpConfig.getAuthRequestRedirectUrl(),
+            multiEpaService,
             servicePorts,
             authenticatorClient,
-            authorizationService,
             discoveryDocumentResponse,
             bearerConsumer
         );
         processAction(servicePorts, authAction);
     }
 
-    private String getSmcbHandle(IServicePortAggregator servicePorts) throws Exception {
+    private String getSmcbHandle(IKonnektorServicePortsAPI servicePorts) throws Exception {
         GetCards getCards = new GetCards();
         getCards.setContext(servicePorts.getContextType());
         getCards.setCardType(CardTypeType.SMC_B);
@@ -125,7 +126,7 @@ public class IdpClient {
 
     private ReadCardCertificateResponse readCardCertificateResponse(
         String smcbHandle,
-        IServicePortAggregator servicePorts
+        IKonnektorServicePortsAPI servicePorts
     ) throws Exception {
         // A_20666-02 - Auslesen des Authentisierungszertifikates
         ReadCardCertificate readCardCertificateRequest = new ReadCardCertificate();
@@ -169,13 +170,14 @@ public class IdpClient {
     }
 
     public void processAction(
-        IServicePortAggregator servicePorts,
+        IKonnektorServicePortsAPI servicePorts,
         AuthAction authAction
     ) throws Exception {
         String smcbHandle = getSmcbHandle(servicePorts);
 
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
-        String nonce = authorizationService.getNonce(USER_AGENT).getNonce();
+        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI("").getAuthorizationSmcBApi();
+        String nonce = authorizationSmcBApi.getNonce(USER_AGENT).getNonce();
 
         ReadCardCertificateResponse certificateResponse = readCardCertificateResponse(smcbHandle, servicePorts);
         if (certificateResponse == null) {
@@ -199,7 +201,7 @@ public class IdpClient {
         String clientAttest = getSignedJwt(servicePorts, smcbAuthCert, claims, signatureType, smcbHandle, true);
 
         // A_24760 - Start der Nutzerauthentifizierung
-        try (Response response = authorizationService.sendAuthorizationRequestSCWithResponse(USER_AGENT)) {
+        try (Response response = authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(USER_AGENT)) {
             // Parse query string into map
             Map<String, String> queryMap = new HashMap<>();
             String query = response.getLocation().getQuery();
@@ -252,7 +254,7 @@ public class IdpClient {
         );
     }
 
-    private void verifyPin(IServicePortAggregator servicePorts, String smcbHandle) throws FaultMessage {
+    private void verifyPin(IKonnektorServicePortsAPI servicePorts, String smcbHandle) throws FaultMessage {
         VerifyPin verifyPin = new VerifyPin();
         verifyPin.setContext(servicePorts.getContextType());
         verifyPin.setCardHandle(smcbHandle);

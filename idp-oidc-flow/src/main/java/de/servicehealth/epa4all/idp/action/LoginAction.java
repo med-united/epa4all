@@ -6,8 +6,9 @@ import de.gematik.idp.client.IdpTokenResult;
 import de.gematik.idp.client.data.AuthenticationResponse;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.client.data.TokenRequest;
-import de.servicehealth.epa4all.idp.authorization.AuthorizationSmcBApi;
-import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
+import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.service.health.api.serviceport.IKonnektorServicePortsAPI;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.security.cert.X509Certificate;
@@ -25,13 +26,13 @@ public class LoginAction extends AbstractAuthAction {
     public LoginAction(
         String idpClientId,
         String idpAuthRequestRedirectUrl,
-        IServicePortAggregator servicePorts,
+        MultiEpaService multiEpaService,
+        IKonnektorServicePortsAPI servicePorts,
         AuthenticatorClient authenticatorClient,
-        AuthorizationSmcBApi authorizationService,
         DiscoveryDocumentResponse discoveryDocumentResponse,
         Consumer<String> authConsumer
     ) {
-        super(servicePorts, authenticatorClient, authorizationService, discoveryDocumentResponse);
+        super(multiEpaService, servicePorts, authenticatorClient, discoveryDocumentResponse);
 
         this.idpClientId = idpClientId;
         this.idpAuthRequestRedirectUrl = idpAuthRequestRedirectUrl;
