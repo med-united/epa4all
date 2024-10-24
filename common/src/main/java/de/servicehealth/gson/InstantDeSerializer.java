@@ -1,4 +1,4 @@
-package de.servicehealth.utils;
+package de.servicehealth.gson;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;

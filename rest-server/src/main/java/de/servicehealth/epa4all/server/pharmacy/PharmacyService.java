@@ -8,9 +8,9 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.eventservice.Subscription;
 import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
+import de.service.health.api.serviceport.IKonnektorServicePortsAPI;
+import de.service.health.api.serviceport.MultiKonnektorService;
 import de.servicehealth.config.api.UserRuntimeConfig;
-import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
-import de.servicehealth.epa4all.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.xml.bind.DatatypeConverter;
@@ -74,7 +74,7 @@ public class PharmacyService {
         String smcbHandle,
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
-        IServicePortAggregator servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         if (egkHandle == null) {
             List<Card> cards = konnektorClient.getCards(runtimeConfig, CardType.EGK);
             egkHandle = cards.getFirst().getCardHandle();

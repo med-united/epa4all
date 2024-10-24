@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.cxf.transport;
 
+import lombok.Getter;
 import org.apache.cxf.Bus;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.http.DestinationRegistryImpl;
@@ -19,16 +20,13 @@ public class HTTPVauTransportFactory extends HTTPTransportFactory {
 
     private static final Set<String> URI_PREFIXES = Collections.singleton("https+vau://");
 
+    @Getter
     private final Set<String> uriPrefixes = new HashSet<>(URI_PREFIXES);
 
     protected HTTPVauConduitFactory conduitFactory = new HTTPVauConduitFactory();
 
     public HTTPVauTransportFactory() {
         super(DEFAULT_NAMESPACES, new DestinationRegistryImpl());
-    }
-
-    public Set<String> getUriPrefixes() {
-        return uriPrefixes;
     }
 
     @Override

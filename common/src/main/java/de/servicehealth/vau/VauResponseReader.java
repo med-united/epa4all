@@ -5,7 +5,7 @@ import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import de.servicehealth.utils.InstantDeSerializer;
+import de.servicehealth.gson.InstantDeSerializer;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.ByteArrayInputStream;

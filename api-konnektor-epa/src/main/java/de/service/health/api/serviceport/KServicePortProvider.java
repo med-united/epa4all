@@ -1,6 +1,5 @@
-package de.servicehealth.epa4all.serviceport;
+package de.service.health.api.serviceport;
 
-import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureService;
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureServicePortType;
 import de.gematik.ws.conn.cardservice.wsdl.v8_1.CardService;
@@ -14,59 +13,33 @@ import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
 import de.servicehealth.config.KonnektorDefaultConfig;
 import de.servicehealth.config.api.UserRuntimeConfig;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import jakarta.xml.ws.BindingProvider;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
 
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import java.io.FileInputStream;
-import java.security.KeyStore;
 
-import static de.servicehealth.utils.TransportUtils.getFakeTrustManagers;
+import static de.servicehealth.utils.SSLUtils.createSSLContext;
 
 @ApplicationScoped
-public class ServicePortProvider {
+public class KServicePortProvider {
 
-    private final KonnektorDefaultConfig konnektorDefaultConfig;
-
-    private final SSLContext sslContext;
+    private final SSLContext defaultSSLContext;
 
     @Inject
-    public ServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) throws Exception {
-        this.konnektorDefaultConfig = konnektorDefaultConfig;
-        sslContext = prepareSslContext();
-    }
-
-    @Produces
-    @Singleton
-    AuthenticatorClient getAuthenticatorClient() {
-        return new AuthenticatorClient();
-    }
-
-    private SSLContext prepareSslContext() throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        char[] passCharArray = konnektorDefaultConfig.getCertAuthStoreFilePassword().toCharArray();
-        FileInputStream pemInputStream = new FileInputStream(konnektorDefaultConfig.getCertAuthStoreFile());
-        keyStore.load(pemInputStream, passCharArray);
-
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(keyStore, passCharArray);
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(keyManagerFactory.getKeyManagers(), getFakeTrustManagers(), null);
-
-        System.setProperty("javax.xml.accessExternalDTD", "all" );
-        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
-
-        return sslContext;
+    public KServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) throws Exception {
+        String certPass = konnektorDefaultConfig.getCertAuthStoreFilePassword();
+        try (FileInputStream certInputStream = new FileInputStream(konnektorDefaultConfig.getCertAuthStoreFile())) {
+            defaultSSLContext = createSSLContext(certInputStream, certPass);
+        }
     }
 
     public CertificateServicePortType getCertificateServicePort(UserRuntimeConfig userRuntimeConfig) {
+        SSLContext sslContext = createSSLContext(userRuntimeConfig.getUserConfigurations(), defaultSSLContext);
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         CertificateService certificateService = new CertificateService();
         CertificateServicePortType certificateServicePort = certificateService.getCertificateServicePort();
@@ -76,6 +49,7 @@ public class ServicePortProvider {
     }
 
     public CardServicePortType getCardServicePortType(UserRuntimeConfig userRuntimeConfig) {
+        SSLContext sslContext = createSSLContext(userRuntimeConfig.getUserConfigurations(), defaultSSLContext);
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         CardService cardService = new CardService();
         CardServicePortType cardServicePort = cardService.getCardServicePort();
@@ -86,6 +60,7 @@ public class ServicePortProvider {
     }
 
     public VSDServicePortType getVSDServicePortType(UserRuntimeConfig userRuntimeConfig) {
+        SSLContext sslContext = createSSLContext(userRuntimeConfig.getUserConfigurations(), defaultSSLContext);
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         VSDService vsdService = new VSDService();
         VSDServicePortType cardServicePort = vsdService.getVSDServicePort();
@@ -96,6 +71,7 @@ public class ServicePortProvider {
     }
 
     public AuthSignatureServicePortType getAuthSignatureServicePortType(UserRuntimeConfig userRuntimeConfig) {
+        SSLContext sslContext = createSSLContext(userRuntimeConfig.getUserConfigurations(), defaultSSLContext);
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         AuthSignatureService authSignatureService = new AuthSignatureService();
         AuthSignatureServicePortType authSignatureServicePort = authSignatureService.getAuthSignatureServicePort();
@@ -106,6 +82,7 @@ public class ServicePortProvider {
     }
 
     public EventServicePortType getEventServicePort(UserRuntimeConfig userRuntimeConfig) {
+        SSLContext sslContext = createSSLContext(userRuntimeConfig.getUserConfigurations(), defaultSSLContext);
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         EventService eventService = new EventService();
         EventServicePortType eventServicePort = eventService.getEventServicePort();

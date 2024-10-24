@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>de.servicehealth.epa4all</groupId>
+        <artifactId>epa4all</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>api-konnektor-epa</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>api-konnektor-epa</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>de.servicehealth</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>cxf-rt-transports-http-vau</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>information-service</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>authorization-service</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>entitlement-service</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>medication-service</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>api-xds</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth</groupId>
+            <artifactId>api-telematik</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+</project>

@@ -30,7 +30,7 @@ import java.security.Security;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static de.servicehealth.utils.TransportUtils.printCborMessage;
+import static de.servicehealth.utils.CborUtils.printCborMessage;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;

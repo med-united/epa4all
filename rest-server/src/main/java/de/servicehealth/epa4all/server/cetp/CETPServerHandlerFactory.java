@@ -2,13 +2,10 @@ package de.servicehealth.epa4all.server.cetp;
 
 import de.health.service.cetp.CETPEventHandlerFactory;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
+import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.config.KonnektorConfig;
 import de.servicehealth.config.KonnektorDefaultConfig;
-import de.servicehealth.config.api.IRuntimeConfig;
-import de.servicehealth.config.api.IUserConfigurations;
-import de.servicehealth.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.idp.IdpClient;
-import de.servicehealth.epa4all.medication.service.DocService;
 import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.pharmacy.PharmacyService;
@@ -20,7 +17,7 @@ import jakarta.inject.Inject;
 public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
     private final IdpClient idpClient;
-    private final DocService docService;
+    private final MultiEpaService multiEpaService;
     private final PharmacyService pharmacyService;
     private final DefaultUserConfig defaultUserConfig;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
@@ -28,13 +25,13 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     @Inject
     public CETPServerHandlerFactory(
         IdpClient idpClient,
-        DocService docService,
+        MultiEpaService multiEpaService,
         PharmacyService pharmacyService,
         DefaultUserConfig defaultUserConfig,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
         this.idpClient = idpClient;
-        this.docService = docService;
+        this.multiEpaService = multiEpaService;
         this.pharmacyService = pharmacyService;
         this.defaultUserConfig = defaultUserConfig;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
@@ -48,7 +45,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
             new EpaJwtConfigurator(userRuntimeConfig, idpClient)
         );
         return new ChannelInboundHandler[] {
-            new CETPEventHandler(cardlinkWebsocketClient, defaultUserConfig, pharmacyService, docService)
+            new CETPEventHandler(cardlinkWebsocketClient, defaultUserConfig, pharmacyService, multiEpaService)
         };
     }
 }

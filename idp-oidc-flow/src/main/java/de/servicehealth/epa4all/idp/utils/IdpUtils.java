@@ -4,7 +4,7 @@ import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.FaultMessage;
 import de.gematik.ws.conn.signatureservice.v7.BinaryDocumentType;
 import de.gematik.ws.conn.signatureservice.v7.ExternalAuthenticate;
 import de.gematik.ws.conn.signatureservice.v7.ExternalAuthenticateResponse;
-import de.servicehealth.epa4all.serviceport.IServicePortAggregator;
+import de.service.health.api.serviceport.IKonnektorServicePortsAPI;
 import oasis.names.tc.dss._1_0.core.schema.Base64Data;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
@@ -26,7 +26,7 @@ import static org.jose4j.jws.EcdsaUsingShaAlgorithm.convertDerToConcatenated;
 public class IdpUtils {
 
     public static String getSignedJwt(
-        IServicePortAggregator servicePorts,
+        IKonnektorServicePortsAPI servicePorts,
         X509Certificate certificate,
         final JwtClaims claims,
         String signatureType,
@@ -75,7 +75,7 @@ public class IdpUtils {
     }
 
     private static byte[] hashAndSignBytesWithExternalAuthenticateWithSMCB(
-        IServicePortAggregator servicePorts,
+        IKonnektorServicePortsAPI servicePorts,
         byte[] inputBytes,
         String signatureType,
         String smcbHandle

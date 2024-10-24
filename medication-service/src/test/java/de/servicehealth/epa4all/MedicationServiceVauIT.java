@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
+import static de.servicehealth.utils.URLUtils.getBaseUrl;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,7 +35,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
     public void medicationCreatedAndObtainedThroughVAUProxy() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
-            VauRestfulClientFactory.applyToFhirContext(ctx, getBaseUrl(medicationServiceApiUrl));
+            VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(medicationServiceApiUrl));
 
             IMedicationClient medicationClient = ctx.newRestfulClient(IMedicationClient.class, medicationServiceApiUrl);
             IGenericClient genericClient = ctx.newRestfulGenericClient(medicationServiceApiUrl);
@@ -59,7 +60,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
     public void documentsDownloadedThroughVAUProxy() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
-            Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, getBaseUrl(medicationServiceRenderUrl));
+            Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(medicationServiceRenderUrl));
             IRenderClient renderClient = new VauRenderClient(executor, medicationServiceRenderUrl);
             
             File file = renderClient.getPdfFile("Z123456789", "CLIENTID1234567890AB/2.1.12-45");

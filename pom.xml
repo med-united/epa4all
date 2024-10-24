@@ -29,6 +29,7 @@
       <module>lib-vau</module>
       <module>cxf-rt-transports-http-vau</module>
       <module>api-xds</module>
+      <module>api-konnektor-epa</module>
       <module>api-telematik</module>
       <module>information-service</module>
       <module>entitlement-service</module>

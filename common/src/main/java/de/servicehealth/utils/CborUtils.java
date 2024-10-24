@@ -5,41 +5,12 @@ import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Base64;
 
-public class TransportUtils {
+public class CborUtils {
 
-    private static final Logger log = LoggerFactory.getLogger(TransportUtils.class);
-
-    public static TrustManager[] getFakeTrustManagers() {
-        return new TrustManager[] { new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-            }
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[0];
-            }
-        }};
-    }
-
-    public static SSLContext createFakeSSLContext() throws Exception {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        TrustManager[] trustManagers = getFakeTrustManagers();
-        sslContext.init(null, trustManagers, new SecureRandom());
-        return sslContext;
-    }
+    private static final Logger log = LoggerFactory.getLogger(CborUtils.class);
 
     public static void printCborMessage(
         byte[] message,

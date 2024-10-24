@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.idp.authorization;
+package de.service.health.api.epa4all.authorization;
 
 import de.servicehealth.model.ErrorType;
 import io.swagger.annotations.Api;

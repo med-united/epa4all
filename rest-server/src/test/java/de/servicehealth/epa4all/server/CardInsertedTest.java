@@ -3,10 +3,10 @@ package de.servicehealth.epa4all.server;
 import de.gematik.ws.conn.eventservice.v7.Event;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
+import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.config.KonnektorConfig;
 import de.servicehealth.config.api.IUserConfigurations;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
-import de.servicehealth.epa4all.medication.service.DocService;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
@@ -21,7 +21,6 @@ import org.mockito.ArgumentCaptor;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,7 +40,7 @@ public class CardInsertedTest {
     EventMapper eventMapper;
 
     @Inject
-    DocService docService;
+    MultiEpaService multiEpaService;
 
     @Test
     public void epaPdfDocumentIsSentToCardlink() throws Exception {
@@ -49,7 +48,7 @@ public class CardInsertedTest {
         PharmacyService pharmacyService = mock(PharmacyService.class);
         when(pharmacyService.getKVNR(any(), any(), any(), any())).thenReturn("Z123456789");
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
-            cardlinkWebsocketClient, defaultUserConfig, pharmacyService, docService
+            cardlinkWebsocketClient, defaultUserConfig, pharmacyService, multiEpaService
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 
