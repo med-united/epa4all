@@ -27,12 +27,12 @@ public abstract class IdpClientIT {
         Unirest.config().interceptor(new Interceptor() {
             @Override
             public void onRequest(HttpRequest<?> request, Config config) {
-                System.out.println("Request: " + request);
+                System.out.println("Request: " + request.getBody());
             }
 
             @Override
             public void onResponse(HttpResponse<?> response, HttpRequestSummary request, Config config) {
-                System.out.println("Response: " + response);
+                System.out.println("Response: " + response.getBody());
             }
         });
     }

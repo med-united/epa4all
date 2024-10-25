@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.idp;
 
 import de.gematik.idp.authentication.AuthenticationChallenge;
+import de.gematik.idp.brainPoolExtension.BrainpoolCurves;
 import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.idp.client.data.AuthorizationRequest;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
@@ -61,6 +62,7 @@ public class IdpClient {
     private static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
     static {
+    	Security.removeProvider(BOUNCY_CASTLE_PROVIDER.getName());
         Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
     }
 
