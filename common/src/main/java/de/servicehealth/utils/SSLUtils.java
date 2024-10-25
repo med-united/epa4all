@@ -28,6 +28,9 @@ public class SSLUtils {
     }
 
     public static SSLContext createSSLContext(IUserConfigurations userConfigurations, SSLContext defaultSSLContext) {
+        if (userConfigurations == null || userConfigurations.getClientCertificate() == null) {
+            return defaultSSLContext;
+        }
         byte[] clientCertificateBytes = getClientCertificateBytes(userConfigurations);
         try (ByteArrayInputStream certInputStream = new ByteArrayInputStream(clientCertificateBytes)) {
             SSLResult sslResult = initSSLContext(certInputStream, userConfigurations.getClientCertificatePassword());

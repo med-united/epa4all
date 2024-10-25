@@ -70,12 +70,12 @@ public class DefaultUserConfig implements UserRuntimeConfig {
 
             @Override
             public String getClientCertificate() {
-                throw new UnsupportedOperationException("Not implemented");
+                return null;
             }
 
             @Override
             public String getClientCertificatePassword() {
-                throw new UnsupportedOperationException("Not implemented");
+                return null;
             }
 
             @Override
