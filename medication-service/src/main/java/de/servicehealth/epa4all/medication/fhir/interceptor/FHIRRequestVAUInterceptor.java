@@ -156,9 +156,12 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         Response response = executor.execute(request1);
         HttpResponse httpResponse = response.returnResponse();
         String vauCid = httpResponse.getFirstHeader(VAU_CID).getValue();
-        String vauDebugSC = httpResponse.getFirstHeader(VAU_DEBUG_SK1_S2C).getValue();
-        String vauDebugCS = httpResponse.getFirstHeader(VAU_DEBUG_SK1_C2S).getValue();
-        String contentLength = httpResponse.getFirstHeader(CONTENT_LENGTH).getValue();
+        Header firstHeader = httpResponse.getFirstHeader(VAU_DEBUG_SK1_S2C);
+		String vauDebugSC = firstHeader != null ? firstHeader.getValue() : null;
+        Header firstHeader2 = httpResponse.getFirstHeader(VAU_DEBUG_SK1_C2S);
+		String vauDebugCS = firstHeader2 != null ? firstHeader2.getValue() : null;
+        Header firstHeader3 = httpResponse.getFirstHeader(CONTENT_LENGTH);
+		String contentLength = firstHeader3 != null ? firstHeader3.getValue() : null;
         byte[] message2 = httpResponse.getEntity().getContent().readAllBytes();
 
         printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
@@ -172,9 +175,12 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         response = executor.execute(request2);
         httpResponse = response.returnResponse();
-        String vauDebugSCInfo = httpResponse.getFirstHeader(VAU_DEBUG_SK2_S2C_INFO).getValue();
-        String vauDebugCSInfo = httpResponse.getFirstHeader(VAU_DEBUG_SK2_C2S_INFO).getValue();
-        contentLength = httpResponse.getFirstHeader(CONTENT_LENGTH).getValue();
+        Header firstHeader4 = httpResponse.getFirstHeader(VAU_DEBUG_SK2_S2C_INFO);
+		String vauDebugSCInfo = firstHeader4 != null ? firstHeader4.getValue() : null;
+        Header firstHeader5 = httpResponse.getFirstHeader(VAU_DEBUG_SK2_C2S_INFO);
+		String vauDebugCSInfo = firstHeader5 != null ? firstHeader5.getValue() : null;
+        Header firstHeader32 = httpResponse.getFirstHeader(CONTENT_LENGTH);
+		contentLength = firstHeader32 != null ? firstHeader32.getValue() : null;
         byte[] message4 = httpResponse.getEntity().getContent().readAllBytes();
 
         printCborMessage(message4, null, vauDebugSCInfo, vauDebugCSInfo, contentLength);

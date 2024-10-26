@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.logging.Logger;
@@ -103,6 +104,25 @@ public class IdpClient {
             vauNPConsumer
         );
         processAction(servicePorts, authAction);
+    }
+    
+    public String getVauNpSync(UserRuntimeConfig userRuntimeConfig) throws Exception {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        ThreadLocal<String> threadLocalString = new ThreadLocal<String>();
+    	IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+        VauNpAction authAction = new VauNpAction(
+            multiEpaService,
+            servicePorts,
+            authenticatorClient,
+            discoveryDocumentResponse,
+            (s) -> {
+            	threadLocalString.set(s);
+            	countDownLatch.countDown();
+            }
+        );
+        processAction(servicePorts, authAction);
+        countDownLatch.await();
+        return threadLocalString.get();
     }
 
     public void getBearerToken(UserRuntimeConfig userRuntimeConfig, Consumer<String> bearerConsumer) throws Exception {

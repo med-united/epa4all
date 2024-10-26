@@ -75,12 +75,12 @@ public class PharmacyService {
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
-        if (egkHandle == null) {
+        if (egkHandle == null || "".equals(egkHandle)) {
             List<Card> cards = konnektorClient.getCards(runtimeConfig, CardType.EGK);
             egkHandle = cards.getFirst().getCardHandle();
 
         }
-        if (smcbHandle == null) {
+        if (smcbHandle == null || "".equals(smcbHandle)) {
             List<Card> cards = konnektorClient.getCards(runtimeConfig, CardType.SMC_B);
             smcbHandle = cards.getFirst().getCardHandle();
         }

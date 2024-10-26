@@ -1,0 +1,4 @@
+1. Find certificate in: http://download-testref.crl.ti-dienste.de/TSL-ECC-ref/ECC-RSA_TSL-ref.xml
+2. Save base64 encoded data in CA55.dat
+3. base64 -w0 -d CA55.dat > CA55.der
+4. sudo keytool -import -cacerts -file CA55.der -alias "GEM.KOMP-CA55 TEST-ONLY"

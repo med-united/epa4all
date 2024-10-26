@@ -65,7 +65,13 @@ public class CxfVauWriteInterceptor extends AbstractPhaseInterceptor<Message> {
                     message.put(VAU_CID, vauCid);
                 } else {
                     String vauUri = (String) message.get("org.apache.cxf.message.Message.BASE_PATH");
+                    if(vauUri == null) {
+                    	vauUri =(String)  message.get("org.apache.cxf.message.Message.ENDPOINT_ADDRESS");
+                    }
                     String uri = vauUri.replace("+vau", "");
+                    URI uriObject = new URI(uri);
+                    // Construct the base URI
+                    uri = uriObject.getScheme()+"://"+uriObject.getHost()+(uriObject.getPort() == -1 ? "" : ":"+uriObject.getPort());
 
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
                     WebClient client = WebClient.create(uri + "/VAU", providers);
