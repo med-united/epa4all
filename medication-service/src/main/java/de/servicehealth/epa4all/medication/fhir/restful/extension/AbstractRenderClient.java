@@ -76,7 +76,7 @@ public abstract class AbstractRenderClient implements IRenderClient {
     protected abstract Request buildRequest(URI renderUri, Header[] headers);
 
     private Header[] prepareHeaders(String xInsurantid, String xUseragent) {
-        Header[] headers = new Header[6];
+        Header[] headers = new Header[7];
         headers[0] = new BasicHeader(CONNECTION, "Upgrade, HTTP2-Settings");
         headers[1] = new BasicHeader(ACCEPT, "*/*");
         headers[2] = new BasicHeader(UPGRADE, "h2c");

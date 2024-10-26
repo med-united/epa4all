@@ -198,7 +198,8 @@ public class IdpClient {
         String smcbHandle = getSmcbHandle(servicePorts);
 
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
-        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI("").getAuthorizationSmcBApi();
+        // TODO remove hard coded value
+        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI("X110486750").getAuthorizationSmcBApi();
         String nonce = authorizationSmcBApi.getNonce(USER_AGENT).getNonce();
 
         ReadCardCertificateResponse certificateResponse = readCardCertificateResponse(smcbHandle, servicePorts);
