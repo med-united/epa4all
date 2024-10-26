@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
+import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.pharmacy.PharmacyService;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
@@ -29,6 +30,9 @@ public class Fhir {
 	
 	@Inject
     MultiEpaService multiEpaService;
+	
+	@Inject
+	IdpClient idpClient;
 
 	@GET
 	@Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
@@ -39,7 +43,9 @@ public class Fhir {
 			if(epaAPI == null) {
 				return Response.serverError().entity("No epa found for: "+xInsurantid).build();
 			}
-			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, "ClientID");
+			String np = idpClient.getVauNpSync(defaultUserConfig);
+			
+			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, "ClientID", np);
 			return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
 		} catch (Exception e) {
 			throw new WebApplicationException(e);
