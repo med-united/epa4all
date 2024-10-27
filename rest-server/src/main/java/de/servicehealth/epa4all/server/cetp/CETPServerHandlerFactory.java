@@ -8,7 +8,7 @@ import de.servicehealth.config.KonnektorDefaultConfig;
 import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.pharmacy.PharmacyService;
+import de.servicehealth.epa4all.server.vsds.VSDService;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -18,7 +18,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
     private final IdpClient idpClient;
     private final MultiEpaService multiEpaService;
-    private final PharmacyService pharmacyService;
+    private final VSDService pharmacyService;
     private final DefaultUserConfig defaultUserConfig;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
 
@@ -26,7 +26,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     public CETPServerHandlerFactory(
         IdpClient idpClient,
         MultiEpaService multiEpaService,
-        PharmacyService pharmacyService,
+        VSDService pharmacyService,
         DefaultUserConfig defaultUserConfig,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {

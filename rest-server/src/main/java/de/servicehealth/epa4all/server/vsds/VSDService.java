@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.pharmacy;
+package de.servicehealth.epa4all.server.vsds;
 
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSD;
@@ -16,6 +16,9 @@ import jakarta.inject.Inject;
 import jakarta.xml.bind.DatatypeConverter;
 import org.w3c.dom.Document;
 
+import static de.servicehealth.epa4all.server.vsds.PersoenlicheVersichertendateXmlUtils.documentBuilder;
+import static de.servicehealth.epa4all.server.vsds.PersoenlicheVersichertendateXmlUtils.getPatient;
+
 import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.UUID;
@@ -24,19 +27,16 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
-import static de.servicehealth.epa4all.server.pharmacy.PersoenlicheVersichertendateXmlUtils.documentBuilder;
-import static de.servicehealth.epa4all.server.pharmacy.PersoenlicheVersichertendateXmlUtils.getPatient;
-
 @ApplicationScoped
-public class PharmacyService {
+public class VSDService {
 
-    private static final Logger log = Logger.getLogger(PharmacyService.class.getName());
+    private static final Logger log = Logger.getLogger(VSDService.class.getName());
 
     private final MultiKonnektorService multiKonnektorService;
     private final IKonnektorClient konnektorClient;
 
     @Inject
-    public PharmacyService(
+    public VSDService(
         MultiKonnektorService multiKonnektorService,
         IKonnektorClient konnektorClient
     ) {

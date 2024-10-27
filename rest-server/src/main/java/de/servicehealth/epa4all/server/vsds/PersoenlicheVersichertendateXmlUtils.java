@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.pharmacy;
+package de.servicehealth.epa4all.server.vsds;
 
 import de.gematik.ws.fa.vsdm.vsd.v5.UCAllgemeineVersicherungsdatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCGeschuetzteVersichertendatenXML;

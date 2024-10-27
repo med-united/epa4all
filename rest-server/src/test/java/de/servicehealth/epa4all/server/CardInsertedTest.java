@@ -10,7 +10,7 @@ import de.servicehealth.epa4all.common.ProxyTestProfile;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.pharmacy.PharmacyService;
+import de.servicehealth.epa4all.server.vsds.VSDService;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -45,7 +45,7 @@ public class CardInsertedTest {
     @Test
     public void epaPdfDocumentIsSentToCardlink() throws Exception {
         CardlinkWebsocketClient cardlinkWebsocketClient = mock(CardlinkWebsocketClient.class);
-        PharmacyService pharmacyService = mock(PharmacyService.class);
+        VSDService pharmacyService = mock(VSDService.class);
         when(pharmacyService.getKVNR(any(), any(), any(), any())).thenReturn("Z123456789");
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
             cardlinkWebsocketClient, defaultUserConfig, pharmacyService, multiEpaService

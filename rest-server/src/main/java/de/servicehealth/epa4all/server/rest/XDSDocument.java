@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.pharmacy.PharmacyService;
+import de.servicehealth.epa4all.server.vsds.VSDService;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.DocumentRequest;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -20,7 +20,7 @@ import jakarta.ws.rs.WebApplicationException;
 public class XDSDocument {
 	
 	@Inject
-	PharmacyService pharmacyService;
+	VSDService pharmacyService;
 	
 	@Inject
 	DefaultUserConfig defaultUserConfig;

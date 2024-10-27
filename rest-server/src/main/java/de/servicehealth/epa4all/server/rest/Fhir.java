@@ -7,7 +7,7 @@ import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.pharmacy.PharmacyService;
+import de.servicehealth.epa4all.server.vsds.VSDService;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.DocumentRequest;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -23,7 +23,7 @@ import jakarta.ws.rs.core.Response;
 public class Fhir {
 	
 	@Inject
-	PharmacyService pharmacyService;
+	VSDService vsdService;
 	
 	@Inject
 	DefaultUserConfig defaultUserConfig;
@@ -38,7 +38,7 @@ public class Fhir {
 	@Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
 	public Response get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
 		try {
-			String xInsurantid = pharmacyService.getKVNR(konnektor, egkHandle, null, defaultUserConfig);
+			String xInsurantid = vsdService.getKVNR(konnektor, egkHandle, null, defaultUserConfig);
 			EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantid);
 			if(epaAPI == null) {
 				return Response.serverError().entity("No epa found for: "+xInsurantid).build();

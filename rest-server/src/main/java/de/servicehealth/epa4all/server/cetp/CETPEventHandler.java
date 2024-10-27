@@ -6,7 +6,8 @@ import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.config.api.IUserConfigurations;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.pharmacy.PharmacyService;
+import de.servicehealth.epa4all.server.vsds.VSDService;
+
 import org.jboss.logging.MDC;
 
 import java.util.Base64;
@@ -23,13 +24,13 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private static final Logger log = Logger.getLogger(CETPEventHandler.class.getName());
 
     private final DefaultUserConfig defaultUserConfig;
-    private final PharmacyService pharmacyService;
+    private final VSDService pharmacyService;
     private final MultiEpaService multiEpaService;
 
     public CETPEventHandler(
         CardlinkWebsocketClient cardlinkWebsocketClient,
         DefaultUserConfig defaultUserConfig,
-        PharmacyService pharmacyService,
+        VSDService pharmacyService,
         MultiEpaService multiEpaService
     ) {
         super(cardlinkWebsocketClient);
