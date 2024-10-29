@@ -1,16 +1,10 @@
 package de.servicehealth.epa4all.server.rest;
 
-import java.io.ByteArrayInputStream;
-import java.util.stream.Collectors;
-
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.vsds.VSDService;
-import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
-import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.DocumentRequest;
-import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -18,6 +12,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+import java.io.ByteArrayInputStream;
 
 @Path("fhir")
 public class Fhir {
