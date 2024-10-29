@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.idp;
 
 import de.gematik.idp.authentication.AuthenticationChallenge;
-import de.gematik.idp.brainPoolExtension.BrainpoolCurves;
 import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.idp.client.data.AuthorizationRequest;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
@@ -26,7 +25,9 @@ import de.servicehealth.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.idp.action.AuthAction;
 import de.servicehealth.epa4all.idp.action.LoginAction;
 import de.servicehealth.epa4all.idp.action.VauNpAction;
+import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
@@ -72,7 +73,7 @@ public class IdpClient {
     AuthenticatorClient authenticatorClient;
     MultiKonnektorService multiKonnektorService;
 
-    private final DiscoveryDocumentResponse discoveryDocumentResponse;
+    private DiscoveryDocumentResponse discoveryDocumentResponse;
 
     // A_24883-02 - clientAttest als ECDSA-Signatur
     private String signatureType = URN_BSI_TR_03111_ECDSA;
@@ -88,7 +89,9 @@ public class IdpClient {
         this.multiEpaService = multiEpaService;
         this.authenticatorClient = authenticatorClient;
         this.multiKonnektorService = multiKonnektorService;
+    }
 
+    void onStart(@Observes StartupEvent ev) {
         discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
             idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
         );
