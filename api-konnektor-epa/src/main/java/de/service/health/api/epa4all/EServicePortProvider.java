@@ -3,6 +3,7 @@ package de.service.health.api.epa4all;
 import de.servicehealth.epa4all.cxf.VauClientFactory;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteSoapInterceptor;
 import de.servicehealth.vau.VauClient;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
@@ -21,6 +22,7 @@ import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import javax.xml.namespace.QName;
 import java.util.List;
 
+import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_ALIVE;
 
@@ -54,10 +56,17 @@ public class EServicePortProvider {
 
     private <T> T createXDSDocumentPortType(String address, Class<T> clazz) {
         JaxWsProxyFactoryBean jaxWsProxyFactory = new JaxWsProxyFactoryBean();
+        jaxWsProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
         jaxWsProxyFactory.setServiceClass(XDSDocumentService.class);
         jaxWsProxyFactory.setServiceName(new QName("urn:ihe:iti:xds-b:2007", "XDSDocumentService"));
         jaxWsProxyFactory.setAddress(address);
-        jaxWsProxyFactory.getOutInterceptors().addAll(List.of(new LoggingOutInterceptor(), new CxfVauWriteInterceptor(vauClient)));
+        jaxWsProxyFactory.getOutInterceptors().addAll(
+            List.of(
+                new LoggingOutInterceptor(),
+                new CxfVauWriteInterceptor(vauClient),
+                new CxfVauWriteSoapInterceptor(vauClient)
+            )
+        );
         jaxWsProxyFactory.getInInterceptors().addAll(List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauClient)));
         return jaxWsProxyFactory.create(clazz);
     }

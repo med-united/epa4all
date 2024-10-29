@@ -14,7 +14,10 @@ import de.servicehealth.vau.VauClient;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import io.quarkus.runtime.Startup;
+import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import org.apache.http.client.fluent.Executor;
@@ -35,16 +38,30 @@ public class MultiEpaService {
     @Getter
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
 
+    private final EpaConfig epaConfig;
     private final VauClient vauClient;
+    private final ClientFactory clientFactory;
+    private final EServicePortProvider eServicePortProvider;
 
     @Inject
     public MultiEpaService(
         EpaConfig epaConfig,
+        ClientFactory clientFactory,
         VauClientFactory vauClientFactory,
         EServicePortProvider eServicePortProvider
     ) {
+        this.eServicePortProvider = eServicePortProvider;
         this.vauClient = vauClientFactory.getVauClient();
-        
+        this.clientFactory = clientFactory;
+        this.epaConfig = epaConfig;
+    }
+
+    // this must be started after ClientFactory
+    void onStart(@Observes @Priority(5200) StartupEvent ev) {
+        initBackends();
+    }
+
+    private void initBackends() {
         epaConfig.getEpaBackends().forEach(backend ->
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
@@ -54,7 +71,7 @@ public class MultiEpaService {
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
                     IDocumentManagementInsurantPortType documentManagementInsurantPortType = eServicePortProvider.getDocumentManagementInsurantPortType(documentManagementInsurantUrl);
 
-                    AccountInformationApi accountInformationApi = ClientFactory.createPlainClient(
+                    AccountInformationApi accountInformationApi = clientFactory.createPlainClient(
                         AccountInformationApi.class, getBackendUrl(backend, epaConfig.getInformationServiceUrl())
                     );
                     AuthorizationSmcBApi authorizationSmcBApi = createProxyClient(
@@ -93,7 +110,7 @@ public class MultiEpaService {
     }
 
     private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl) throws Exception {
-        return ClientFactory.createProxyClient(vauClient, clazz, getBackendUrl(backend, serviceUrl));
+        return clientFactory.createProxyClient(vauClient, clazz, getBackendUrl(backend, serviceUrl));
     }
 
     private String getBackendUrl(String backend, String serviceUrl) {

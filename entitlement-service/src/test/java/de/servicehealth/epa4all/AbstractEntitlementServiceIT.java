@@ -6,6 +6,7 @@ import de.servicehealth.api.EntitlementsEPaFdVApi;
 import de.servicehealth.api.UserBlockingApi;
 import de.servicehealth.epa4all.common.DockerAction;
 import de.servicehealth.epa4all.common.Utils;
+import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.GetEntitlements200Response;
 import de.servicehealth.vau.VauClient;
@@ -32,6 +33,9 @@ public abstract class AbstractEntitlementServiceIT {
     @Inject
     @ConfigProperty(name = "entitlement-service.url")
     String entitlementServiceUrl;
+
+    @Inject
+    ClientFactory clientFactory;
 
     protected abstract <T> T buildApi(VauClient vauClient, Class<T> clazz, String url) throws Exception;
 
