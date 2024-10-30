@@ -15,7 +15,7 @@
 | XDS Service | IBM | X110486750 | 400 Bad Request |
 | XDS Service | RISE | X110485291 | (When connecting without VAU-NP) session ThreadLocal Variable not initialized |
 | Fhir PDF | IBM | X110486750 | Works (but empty page) |
-| Fhir PDF | RISE | Depends on OIDC Flow |
+| Fhir PDF | RISE | X110486750 | Depends on OIDC Flow |
 
 
 
