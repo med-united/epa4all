@@ -94,7 +94,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             CachedOutputStream csNew = (CachedOutputStream) message.getContent(OutputStream.class);
             message.setContent(OutputStream.class, os);
             String payload = new String(csNew.getBytes(), UTF_8);
-            payload = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + payload;
+            // payload = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + payload;
             byte[] full = payload.getBytes();
 
             Address address = (Address) message.get("http.connection.address");

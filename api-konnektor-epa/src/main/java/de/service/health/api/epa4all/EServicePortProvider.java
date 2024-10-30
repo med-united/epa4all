@@ -19,6 +19,7 @@ import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.apache.cxf.ws.addressing.WSAddressingFeature;
 
 import javax.xml.namespace.QName;
 import java.util.List;
@@ -60,6 +61,8 @@ public class EServicePortProvider {
         jaxWsProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
         jaxWsProxyFactory.setServiceClass(XDSDocumentService.class);
         jaxWsProxyFactory.setServiceName(new QName("urn:ihe:iti:xds-b:2007", "XDSDocumentService"));
+        // https://gemspec.gematik.de/docs/gemSpec/gemSpec_Aktensystem_ePAfueralle/latest/#A_15186
+        jaxWsProxyFactory.getFeatures().add(new WSAddressingFeature());
         jaxWsProxyFactory.setAddress(address);
         jaxWsProxyFactory.getOutInterceptors().addAll(
             List.of(
