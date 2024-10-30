@@ -10,6 +10,8 @@ import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.XDSDocumentService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import lombok.Getter;
+
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
@@ -29,6 +31,7 @@ import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_A
 @ApplicationScoped
 public class EServicePortProvider {
 
+	@Getter
     private final VauClient vauClient;
 
     @Inject

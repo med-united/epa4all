@@ -8,6 +8,8 @@ import lombok.Setter;
 public class VauClient {
 
     private final VauClientStateMachine vauStateMachine;
+    @Setter
+    private String np;
 
     @Setter
     private String vauCid;

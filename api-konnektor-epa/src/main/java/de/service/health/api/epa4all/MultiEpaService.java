@@ -33,13 +33,13 @@ public class MultiEpaService {
 
     private static final Logger log = Logger.getLogger(MultiEpaService.class.getName());
 
-    private final static String USER_AGENT = "CLIENTID1234567890AB/2.1.12-45";
+    private final static String USER_AGENT = "epa.health/1.0.0 ServiceHealthErxGmbH/GEMIncenereSud1PErUR";
 
     @Getter
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
 
     private final EpaConfig epaConfig;
-    private final VauClient vauClient;
+
     private final ClientFactory clientFactory;
     private final EServicePortProvider eServicePortProvider;
 
@@ -47,11 +47,9 @@ public class MultiEpaService {
     public MultiEpaService(
         EpaConfig epaConfig,
         ClientFactory clientFactory,
-        VauClientFactory vauClientFactory,
         EServicePortProvider eServicePortProvider
     ) {
         this.eServicePortProvider = eServicePortProvider;
-        this.vauClient = vauClientFactory.getVauClient();
         this.clientFactory = clientFactory;
         this.epaConfig = epaConfig;
     }
@@ -66,6 +64,7 @@ public class MultiEpaService {
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
+                    
                     IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl);
 
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
@@ -84,13 +83,13 @@ public class MultiEpaService {
                     FhirContext ctx = FhirContext.forR4();
                     String medicationServiceApiUrl = epaConfig.getMedicationServiceApiUrl();
                     String backendUrl = getBackendUrl(backend, medicationServiceApiUrl);
-                    VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(backendUrl));
+                    VauRestfulClientFactory.applyToFhirContext(ctx, eServicePortProvider.getVauClient(), getBaseUrl(backendUrl));
                     IMedicationClient medicationClient = ctx.newRestfulClient(IMedicationClient.class, backendUrl);
 
                     ctx = FhirContext.forR4();
                     String medicationServiceRenderUrl = epaConfig.getMedicationServiceRenderUrl();
                     backendUrl = getBackendUrl(backend, medicationServiceRenderUrl);
-                    Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(backendUrl));
+                    Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, eServicePortProvider.getVauClient(), getBaseUrl(backendUrl));
                     IRenderClient renderClient = new VauRenderClient(executor, backendUrl);
 
                     return new EpaAPIAggregator(
@@ -101,7 +100,8 @@ public class MultiEpaService {
                         authorizationSmcBApi,
                         entitlementsApi,
                         medicationClient,
-                        renderClient
+                        renderClient,
+                        eServicePortProvider.getVauClient()
                     );
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -110,7 +110,7 @@ public class MultiEpaService {
     }
 
     private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl) throws Exception {
-        return clientFactory.createProxyClient(vauClient, clazz, getBackendUrl(backend, serviceUrl));
+        return clientFactory.createProxyClient(eServicePortProvider.getVauClient(), clazz, getBackendUrl(backend, serviceUrl));
     }
 
     private String getBackendUrl(String backend, String serviceUrl) {

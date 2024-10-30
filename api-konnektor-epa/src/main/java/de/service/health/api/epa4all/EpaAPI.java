@@ -5,6 +5,7 @@ import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
+import de.servicehealth.vau.VauClient;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 
@@ -25,4 +26,6 @@ public interface EpaAPI {
     EntitlementsApi getEntitlementsApi();
 
     IRenderClient getRenderClient();
+    
+    VauClient getVauClient();
 }
