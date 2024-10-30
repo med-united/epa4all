@@ -1,26 +1,8 @@
-package org.apache.cxf.transport.http;
-
-import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
-import org.apache.cxf.Bus;
-import org.apache.cxf.message.Message;
-import org.apache.cxf.message.MessageContentsList;
-import org.apache.cxf.service.model.EndpointInfo;
-import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
-import org.apache.cxf.ws.addressing.EndpointReferenceType;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+package de.servicehealth.epa4all.cxf.transport;
 
 import static com.google.common.net.HttpHeaders.CONNECTION;
 import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor.VAU_CID;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor.VAU_CID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -29,6 +11,26 @@ import static org.apache.cxf.message.Message.HTTP_REQUEST_METHOD;
 import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.message.Message.REQUEST_URI;
 import static org.apache.cxf.transport.http.Headers.EMPTY_REQUEST_PROPERTY;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.cxf.Bus;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.message.MessageContentsList;
+import org.apache.cxf.service.model.EndpointInfo;
+import org.apache.cxf.transport.http.Address;
+import org.apache.cxf.transport.http.HttpClientHTTPConduit;
+import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.apache.cxf.ws.addressing.EndpointReferenceType;
+
+import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 
 public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
@@ -100,7 +102,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         }
     }
 
-    public class VauHttpClientWrappedOutputStream extends HttpClientHTTPConduit.HttpClientWrappedOutputStream {
+    /*public class VauHttpClientWrappedOutputStream extends HttpClientHTTPConduit.HttpClientWrappedOutputStream {
 
         public VauHttpClientWrappedOutputStream(
             Message message, boolean needToCacheRequest, boolean isChunking, int chunkThreshold, String conduitName
@@ -121,7 +123,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
             isChunking,
             chunkThreshold,
             getConduitName());
-    }
+    }*/
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static Set<String> getRestrictedSet(Class clazz, String fieldName) throws Exception {

@@ -2,7 +2,8 @@ package de.service.health.api.epa4all;
 
 import de.servicehealth.epa4all.cxf.VauClientFactory;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
-import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadSoapInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteSoapInterceptor;
 import de.servicehealth.vau.VauClient;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
@@ -63,11 +64,11 @@ public class EServicePortProvider {
         jaxWsProxyFactory.getOutInterceptors().addAll(
             List.of(
                 new LoggingOutInterceptor(),
-                new CxfVauWriteInterceptor(vauClient),
+                new CxfVauSetupInterceptor(vauClient),
                 new CxfVauWriteSoapInterceptor(vauClient)
             )
         );
-        jaxWsProxyFactory.getInInterceptors().addAll(List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauClient)));
+        jaxWsProxyFactory.getInInterceptors().addAll(List.of(new LoggingInInterceptor(), new CxfVauReadSoapInterceptor(vauClient)));
         return jaxWsProxyFactory.create(clazz);
     }
 

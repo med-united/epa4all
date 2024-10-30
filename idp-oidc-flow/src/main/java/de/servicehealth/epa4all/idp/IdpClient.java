@@ -92,9 +92,9 @@ public class IdpClient {
     }
 
     void onStart(@Observes StartupEvent ev) {
-        discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
-            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-        );
+        // discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
+        //    idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+        //);
     }
 
     public void getVauNp(UserRuntimeConfig userRuntimeConfig, Consumer<String> vauNPConsumer) throws Exception {

@@ -2,7 +2,7 @@ package de.servicehealth.epa4all.cxf.client;
 
 import de.servicehealth.epa4all.cxf.interceptor.CxfHeadersInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
-import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauReaderProvider;
@@ -71,7 +71,7 @@ public class ClientFactory {
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
             WebClient.getConfig(api),
-            List.of(new LoggingOutInterceptor(), new CxfVauWriteInterceptor(vauClient)),
+            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauClient)),
             List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauClient))
         );
         return api;

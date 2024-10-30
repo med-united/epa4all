@@ -1,39 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-				  xmlns:rmd="urn:ihe:iti:rmd:2017" xmlns:rs="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0"
-				  xmlns:query="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0"
-				  xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"
-				  xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:ihe="urn:ihe:iti:xds-b:2007"
-				  xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0"
-				  name="XDSDocumentService"
-				  xmlns:euAccess="http://ws.gematik.de/epa-xds-document/I_Document_Management/v1.0"
-				  targetNamespace="urn:ihe:iti:xds-b:2007">
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:rmd="urn:ihe:iti:rmd:2017" xmlns:rs="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" xmlns:query="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:ihe="urn:ihe:iti:xds-b:2007" xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0" xmlns:ns="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" name="XDSDocumentService" targetNamespace="urn:ihe:iti:xds-b:2007">
 	<wsdl:types>
 		<xsd:schema elementFormDefault="qualified" targetNamespace="urn:ihe:iti:xds-b:2007" xmlns:ihe="urn:ihe:iti:xds-b:2007">
-			<xsd:include schemaLocation="ext/IHE/XDS.b_DocumentRepository.xsd"/>
+			<xsd:include schemaLocation="./ext/IHE/XDS.b_DocumentRepository.xsd"/>
 		</xsd:schema>
 		<xsd:schema elementFormDefault="qualified" targetNamespace="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" xmlns:rs="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0">
-			<xsd:include schemaLocation="ext/ebRS/rs.xsd"/>
+			<xsd:include schemaLocation="./ext/ebRS/rs.xsd"/>
 		</xsd:schema>
 		<xsd:schema elementFormDefault="qualified" targetNamespace="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0" xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0">
-			<xsd:include schemaLocation="ext/ebRS/lcm.xsd"/>
+			<xsd:include schemaLocation="./ext/ebRS/lcm.xsd"/>
 		</xsd:schema>
 		<xsd:schema elementFormDefault="qualified" targetNamespace="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0" xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0">
-			<xsd:include schemaLocation="ext/ebRS/rim.xsd"/>
+			<xsd:include schemaLocation="./ext/ebRS/rim.xsd"/>
 		</xsd:schema>
 		<xsd:schema elementFormDefault="qualified" targetNamespace="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0" xmlns:query="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0">
-			<xsd:include schemaLocation="ext/ebRS/query.xsd"/>
+			<xsd:include schemaLocation="./ext/ebRS/query.xsd"/>
 		</xsd:schema>
 		<xsd:schema elementFormDefault="qualified" targetNamespace="urn:ihe:iti:rmd:2017" xmlns:rmd="urn:ihe:iti:rmd:2017">
-			<xsd:include schemaLocation="ext/IHE/RMD.xsd"/>
-		</xsd:schema>
-		<xsd:schema>
-			<xsd:import schemaLocation="XDSDocumentService.xsd" namespace="http://ws.gematik.de/epa-xds-document/I_Document_Management/v1.0"/>
+			<xsd:include schemaLocation="./ext/IHE/RMD.xsd"/>
 		</xsd:schema>
 	</wsdl:types>
-	<wsdl:message name="Header_Message">
-		<wsdl:part name="headerPart" element="euAccess:headerContent"/>
-	</wsdl:message>
 	<wsdl:message name="ProvideAndRegisterDocumentSet-b_Message">
 		<wsdl:part name="body" element="ihe:ProvideAndRegisterDocumentSetRequest"/>
 	</wsdl:message>
@@ -109,12 +95,11 @@
 		</wsdl:operation>
 	</wsdl:portType>
 	<wsdl:binding name="I_Document_Management_Binding_Soap12" type="ihe:I_Document_Management_PortType">
-		<soap12:binding style="document" transport="http://cxf.apache.org/transports/httpsvau"/>
+		<soap12:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
 		<wsaw:UsingAddressing wsdl:required="true"/>
 		<wsdl:operation name="DocumentRegistry_RegistryStoredQuery">
 			<soap12:operation soapAction="urn:ihe:iti:2007:RegistryStoredQuery" soapActionRequired="false"/>
 			<wsdl:input>
-				<soap12:header message="ihe:Header_Message" part="headerPart" use="literal" minOccurs="0"/>
 				<soap12:body use="literal"/>
 			</wsdl:input>
 			<wsdl:output>
@@ -133,7 +118,6 @@
 		<wsdl:operation name="DocumentRepository_RetrieveDocumentSet">
 			<soap12:operation soapAction="urn:ihe:iti:2007:RetrieveDocumentSet" soapActionRequired="false"/>
 			<wsdl:input>
-				<soap12:header message="ihe:Header_Message" part="headerPart" use="literal" minOccurs="0"/>
 				<soap12:body use="literal"/>
 			</wsdl:input>
 			<wsdl:output>
@@ -160,7 +144,7 @@
 		</wsdl:operation>
 	</wsdl:binding>
 	<wsdl:binding name="I_Document_Management_Insurant_Binding_Soap12" type="ihe:I_Document_Management_Insurant_PortType">
-		<soap12:binding style="document" transport="http://cxf.apache.org/transports/httpsvau"/>
+		<soap12:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
 		<wsaw:UsingAddressing wsdl:required="true"/>
 		<wsdl:operation name="DocumentRegistry_RegistryStoredQuery">
 			<soap12:operation soapAction="urn:ihe:iti:2007:RegistryStoredQuery" soapActionRequired="false"/>
@@ -210,10 +194,10 @@
 	</wsdl:binding>
 	<wsdl:service name="XDSDocumentService">
 		<wsdl:port name="I_Document_Management" binding="ihe:I_Document_Management_Binding_Soap12">
-			<soap12:address location="https://FQDN-from-DNS-lookup:443/epa/xds-document/api/I_Document_Management"/>
+			<soap12:address location="/epa/xds-document/api/I_Document_Management"/>
 		</wsdl:port>
 		<wsdl:port name="I_Document_Management_Insurant" binding="ihe:I_Document_Management_Insurant_Binding_Soap12">
-			<soap12:address location="https://FQDN-from-DNS-lookup:443/epa/xds-document/api/I_Document_Management_Insurant"/>
+			<soap12:address location="/epa/xds-document/api/I_Document_Management_Insurant"/>
 		</wsdl:port>
 	</wsdl:service>
 </wsdl:definitions>
