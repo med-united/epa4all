@@ -14,7 +14,6 @@ import org.apache.cxf.interceptor.StaxOutInterceptor;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
-import org.apache.cxf.transport.http.HTTPClientVauConduit;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -25,13 +24,13 @@ import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.instanceOf;
+import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.phase.Phase.PRE_STREAM;
-import static org.apache.cxf.transport.http.HTTPClientVauConduit.VAU_METHOD_PATH;
 
 public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message> {
 
@@ -114,9 +113,6 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             message.put("org.apache.cxf.message.Message.ENCODING", null);
 
-            if (os instanceof HTTPClientVauConduit.VauHttpClientWrappedOutputStream vwos) {
-                vwos.setFixedLengthStreamingMode(vauMessage.length);
-            }
             try {
                 os.write(vauMessage, 0, vauMessage.length);
             } finally {
