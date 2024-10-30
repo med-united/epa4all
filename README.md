@@ -4,7 +4,8 @@
 
 ## Testing Status
 
-|| Test Case || System || KVNR || Status   ||
+| Test Case  | System | KVNR | Status |
+|------------|--------|------|--------|
 | Lookup Record | IBM  | X110486750 | Works |
 | Lookup Record | RISE | X110485291 | Works |
 | VAU | IBM  | X110486750 | Works |
