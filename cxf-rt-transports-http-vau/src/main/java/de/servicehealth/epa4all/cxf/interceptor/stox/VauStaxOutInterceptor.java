@@ -1,6 +1,5 @@
-package de.servicehealth.epa4all.cxf.interceptor;
+package de.servicehealth.epa4all.cxf.interceptor.stox;
 
-import de.servicehealth.epa4all.cxf.stox.VauWstxOutputFactory;
 import org.apache.cxf.common.i18n.BundleUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.StaxOutInterceptor;

@@ -1,21 +1,22 @@
-package de.servicehealth.epa4all.cxf.transport;
+package org.apache.cxf.transport.http;
 
 import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import org.apache.cxf.Bus;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageContentsList;
 import org.apache.cxf.service.model.EndpointInfo;
-import org.apache.cxf.transport.http.Address;
-import org.apache.cxf.transport.http.HttpClientHTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.apache.cxf.ws.addressing.EndpointReferenceType;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.net.HttpHeaders.CONNECTION;
 import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
@@ -97,5 +98,35 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         } else {
             super.close(msg);
         }
+    }
+
+    public class VauHttpClientWrappedOutputStream extends HttpClientHTTPConduit.HttpClientWrappedOutputStream {
+
+        public VauHttpClientWrappedOutputStream(
+            Message message, boolean needToCacheRequest, boolean isChunking, int chunkThreshold, String conduitName
+        ) {
+            super(message, needToCacheRequest, isChunking, chunkThreshold, conduitName);
+        }
+
+        @Override
+        public void setFixedLengthStreamingMode(int i) {
+            super.setFixedLengthStreamingMode(i);
+        }
+    }
+
+    @Override
+    protected OutputStream createOutputStream(Message message, boolean needToCacheRequest, boolean isChunking, int chunkThreshold) throws IOException {
+        return new VauHttpClientWrappedOutputStream(message,
+            needToCacheRequest,
+            isChunking,
+            chunkThreshold,
+            getConduitName());
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static Set<String> getRestrictedSet(Class clazz, String fieldName) throws Exception {
+        Field field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return (Set<String>) field.get(null);
     }
 }

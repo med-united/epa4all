@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.cxf.stox;
+package de.servicehealth.epa4all.cxf.interceptor.stox;
 
 import com.ctc.wstx.api.WriterConfig;
 import com.ctc.wstx.sw.SimpleNsStreamWriter;

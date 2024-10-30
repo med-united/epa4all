@@ -71,6 +71,10 @@ public class VauResponseReader {
             return new VauResponse(responseCode, generalError, generalError.getBytes(UTF_8), originHeaders);
         } else {
             byte[] vauBytes = vauClient.getVauStateMachine().decryptVauMessage(bytes);
+            if (responseCode >= 400 && contentTypeOpt.isPresent() && contentTypeOpt.get().contains("text/plain")) {
+                generalError = new String(vauBytes);
+                return new VauResponse(responseCode, generalError, generalError.getBytes(UTF_8), originHeaders);
+            }
 
             int i = 0;
             while (!payloadCondition(vauBytes, i) && (i + 4 < vauBytes.length)) {

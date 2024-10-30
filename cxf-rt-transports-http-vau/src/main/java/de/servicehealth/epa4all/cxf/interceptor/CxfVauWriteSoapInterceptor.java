@@ -1,28 +1,37 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
+import de.servicehealth.epa4all.cxf.interceptor.stox.VauStaxInInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.stox.VauStaxOutInterceptor;
 import de.servicehealth.vau.VauClient;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.cxf.binding.soap.interceptor.SoapOutInterceptor;
+import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.interceptor.InterceptorChain;
+import org.apache.cxf.interceptor.StaxInInterceptor;
 import org.apache.cxf.interceptor.StaxOutInterceptor;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
+import org.apache.cxf.transport.http.HTTPClientVauConduit;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
-import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
+import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.instanceOf;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.phase.Phase.PRE_STREAM;
+import static org.apache.cxf.transport.http.HTTPClientVauConduit.VAU_METHOD_PATH;
 
 public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message> {
 
@@ -64,11 +73,25 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             CachedStream cs = new CachedStream();
             message.setContent(OutputStream.class, cs);
 
+            Endpoint endpoint = message.getExchange().getEndpoint();
+            List<Interceptor<? extends Message>> inInterceptors = endpoint.getBinding().getInInterceptors();
+            Optional<Interceptor<? extends Message>> staxInInterceptorOpt = inInterceptors
+                .stream()
+                .filter(i -> instanceOf(i, StaxInInterceptor.class))
+                .findFirst();
+            staxInInterceptorOpt.ifPresent(inInterceptors::remove);
+
+            VauStaxInInterceptor vauStaxInInterceptor = new VauStaxInInterceptor(vauClient);
+
+            inInterceptors.add(vauStaxInInterceptor);
+
             InterceptorChain interceptorChain = excludeInterceptors(
-                message, SoapOutInterceptor.class, StaxOutInterceptor.class
+                message, SoapOutInterceptor.class, StaxOutInterceptor.class, StaxInInterceptor.class
             );
             interceptorChain.add(new VauStaxOutInterceptor());
             interceptorChain.add(new VauSoapOutInterceptor());
+
+            interceptorChain.add(vauStaxInInterceptor);
             interceptorChain.doIntercept(message);
 
             cs.flush();
@@ -82,12 +105,18 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: epa-as-1.dev.epa4all.de:443\r\n"
                 + additionalHeaders + keepAlive
-                + prepareContentHeaders(full)).getBytes();
+                + prepareContentHeaders(full.length)).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, full);
 
             byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
+            httpHeaders.put(CONTENT_LENGTH, List.of(String.valueOf(vauMessage.length)));
 
+            message.put("org.apache.cxf.message.Message.ENCODING", null);
+
+            if (os instanceof HTTPClientVauConduit.VauHttpClientWrappedOutputStream vwos) {
+                vwos.setFixedLengthStreamingMode(vauMessage.length);
+            }
             try {
                 os.write(vauMessage, 0, vauMessage.length);
             } finally {
@@ -100,9 +129,8 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
         }
     }
 
-    private String prepareContentHeaders(byte[] originPayload) {
-        int length = originPayload == null ? 0 :originPayload.length;
-        return "Content-Type: text/xml; charset=utf-8\r\nContent-Length: " + length + "\r\n\r\n";
+    private String prepareContentHeaders(int length) {
+        return "Content-Type: application/soap+xml; charset=utf-8\r\nContent-Length: " + length + "\r\n\r\n";
     }
 
     private class CachedStream extends CachedOutputStream {
