@@ -44,7 +44,7 @@ public class VauNpAction extends AbstractAuthAction {
         SendAuthCodeSCtype sendAuthCodeSC = new SendAuthCodeSCtype();
         sendAuthCodeSC.setAuthorizationCode(authenticationResponse.getCode());
         sendAuthCodeSC.setClientAttest(clientAttest);
-        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI("X110486750").getAuthorizationSmcBApi();
+        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI().getAuthorizationSmcBApi();
         SendAuthCodeSC200Response sendAuthCodeSC200Response = authorizationSmcBApi.sendAuthCodeSC(USER_AGENT, sendAuthCodeSC);
         authConsumer.accept(sendAuthCodeSC200Response.getVauNp());
     }

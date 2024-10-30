@@ -31,32 +31,30 @@ import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_A
 @ApplicationScoped
 public class EServicePortProvider {
 
-    private final VauClient vauClient;
 
     @Inject
-    public EServicePortProvider(VauClientFactory vauClientFactory) {
-        this.vauClient = vauClientFactory.getVauClient();
+    public EServicePortProvider() {
     }
 
     // TODO Feature
 
-    public IDocumentManagementPortType getDocumentManagementPortType(String documentManagementUrl) throws Exception {
+    public IDocumentManagementPortType getDocumentManagementPortType(String documentManagementUrl, VauClient vauClient) throws Exception {
         IDocumentManagementPortType documentManagement = createXDSDocumentPortType(
-            documentManagementUrl, IDocumentManagementPortType.class
+            documentManagementUrl, IDocumentManagementPortType.class, vauClient
         );
         initPortType(documentManagement);
         return documentManagement;
     }
 
-    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(String documentManagementUrl) throws Exception {
+    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(String documentManagementUrl, VauClient vauClient) throws Exception {
         IDocumentManagementInsurantPortType documentManagementInsurant = createXDSDocumentPortType(
-            documentManagementUrl, IDocumentManagementInsurantPortType.class
+            documentManagementUrl, IDocumentManagementInsurantPortType.class, vauClient
         );
         initPortType(documentManagementInsurant);
         return documentManagementInsurant;
     }
 
-    private <T> T createXDSDocumentPortType(String address, Class<T> clazz) {
+    private <T> T createXDSDocumentPortType(String address, Class<T> clazz, VauClient vauClient) {
         JaxWsProxyFactoryBean jaxWsProxyFactory = new JaxWsProxyFactoryBean();
         jaxWsProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
         jaxWsProxyFactory.setServiceClass(XDSDocumentService.class);

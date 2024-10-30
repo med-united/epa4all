@@ -1,6 +1,7 @@
 package de.service.health.api.epa4all;
 
 import ca.uhn.fhir.context.FhirContext;
+import de.gematik.vau.lib.VauClientStateMachine;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.EntitlementsApi;
@@ -20,6 +21,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.Getter;
+import lombok.Setter;
+
 import org.apache.http.client.fluent.Executor;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,19 +42,20 @@ public class MultiEpaService {
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
 
     private final EpaConfig epaConfig;
-    private final VauClient vauClient;
     private final ClientFactory clientFactory;
     private final EServicePortProvider eServicePortProvider;
+    
+    @Setter
+    @Getter
+    private String xInsurantid;
 
     @Inject
     public MultiEpaService(
         EpaConfig epaConfig,
         ClientFactory clientFactory,
-        VauClientFactory vauClientFactory,
         EServicePortProvider eServicePortProvider
     ) {
         this.eServicePortProvider = eServicePortProvider;
-        this.vauClient = vauClientFactory.getVauClient();
         this.clientFactory = clientFactory;
         this.epaConfig = epaConfig;
     }
@@ -65,20 +69,22 @@ public class MultiEpaService {
         epaConfig.getEpaBackends().forEach(backend ->
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
+                    VauClient vauClient = new VauClient(new VauClientStateMachine());
+                    
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
-                    IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl);
+                    IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl, vauClient);
 
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
-                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = eServicePortProvider.getDocumentManagementInsurantPortType(documentManagementInsurantUrl);
+                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = eServicePortProvider.getDocumentManagementInsurantPortType(documentManagementInsurantUrl, vauClient);
 
                     AccountInformationApi accountInformationApi = clientFactory.createPlainClient(
                         AccountInformationApi.class, getBackendUrl(backend, epaConfig.getInformationServiceUrl())
                     );
                     AuthorizationSmcBApi authorizationSmcBApi = createProxyClient(
-                        AuthorizationSmcBApi.class, backend, epaConfig.getAuthorizationServiceUrl()
+                        AuthorizationSmcBApi.class, backend, epaConfig.getAuthorizationServiceUrl(), vauClient
                     );
                     EntitlementsApi entitlementsApi = createProxyClient(
-                        EntitlementsApi.class, backend, epaConfig.getEntitlementServiceUrl()
+                        EntitlementsApi.class, backend, epaConfig.getEntitlementServiceUrl(), vauClient
                     );
 
                     FhirContext ctx = FhirContext.forR4();
@@ -101,7 +107,8 @@ public class MultiEpaService {
                         authorizationSmcBApi,
                         entitlementsApi,
                         medicationClient,
-                        renderClient
+                        renderClient,
+                        vauClient
                     );
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -109,7 +116,7 @@ public class MultiEpaService {
             }));
     }
 
-    private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl) throws Exception {
+    private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl, VauClient vauClient) throws Exception {
         return clientFactory.createProxyClient(vauClient, clazz, getBackendUrl(backend, serviceUrl));
     }
 
@@ -117,7 +124,7 @@ public class MultiEpaService {
         return serviceUrl.replace("[epa-backend]", backend);
     }
 
-    public EpaAPI getEpaAPI(String xInsurantid) {
+    public EpaAPI getEpaAPI() {
         for (EpaAPI api : epaBackendMap.values()) {
             if (hasEpaRecord(api, xInsurantid)) {
                 return api;

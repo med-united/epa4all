@@ -25,4 +25,6 @@ public interface EpaAPI {
     EntitlementsApi getEntitlementsApi();
 
     IRenderClient getRenderClient();
+    
+    void setNp(String np);
 }

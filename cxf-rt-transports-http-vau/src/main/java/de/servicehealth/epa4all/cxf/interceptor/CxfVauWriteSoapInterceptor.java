@@ -132,7 +132,12 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
     }
 
     private String prepareContentHeaders(int length) {
-        return "Content-Type: application/soap+xml;charset=UTF-8;\r\nContent-Length: " + length + "\r\n\r\n";
+        String headers = "Content-Type: application/soap+xml;charset=UTF-8;\r\nContent-Length: " + length ;
+        if(vauClient.getNp() != null) {
+        	headers += "\r\nVAU-NP: "+vauClient.getNp();
+        }
+        headers += "\r\n\r\n";
+        return headers;
     }
 
     private class CachedStream extends CachedOutputStream {

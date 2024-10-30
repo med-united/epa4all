@@ -5,6 +5,7 @@ import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
+import de.servicehealth.vau.VauClient;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 
@@ -18,6 +19,7 @@ public class EpaAPIAggregator implements EpaAPI {
     private final EntitlementsApi entitlementsApi;
     private final IMedicationClient medicationClient;
     private final IRenderClient renderClient;
+    private final VauClient vauClient;
 
     public EpaAPIAggregator(
         String backend,
@@ -27,7 +29,8 @@ public class EpaAPIAggregator implements EpaAPI {
         AuthorizationSmcBApi authorizationSmcBApi,
         EntitlementsApi entitlementsApi,
         IMedicationClient medicationClient,
-        IRenderClient renderClient
+        IRenderClient renderClient,
+        VauClient vauClient
     ) {
         this.backend = backend;
         this.documentManagementPortType = documentManagementPortType;
@@ -37,6 +40,7 @@ public class EpaAPIAggregator implements EpaAPI {
         this.entitlementsApi = entitlementsApi;
         this.medicationClient = medicationClient;
         this.renderClient = renderClient;
+        this.vauClient = vauClient;
     }
 
     @Override
@@ -78,4 +82,9 @@ public class EpaAPIAggregator implements EpaAPI {
     public IRenderClient getRenderClient() {
         return renderClient;
     }
+
+	@Override
+	public void setNp(String np) {
+		vauClient.setNp(np);
+	}
 }

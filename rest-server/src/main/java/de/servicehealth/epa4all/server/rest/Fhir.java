@@ -34,7 +34,8 @@ public class Fhir {
 	public Response get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
 		try {
 			String xInsurantid = vsdService.getKVNR(konnektor, egkHandle, null, defaultUserConfig);
-			EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantid);
+			multiEpaService.setXInsurantid(xInsurantid);
+			EpaAPI epaAPI = multiEpaService.getEpaAPI();
 			if(epaAPI == null) {
 				return Response.serverError().entity("No epa found for: "+xInsurantid).build();
 			}

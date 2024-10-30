@@ -92,9 +92,10 @@ public class IdpClient {
     }
 
     void onStart(@Observes StartupEvent ev) {
-        // discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
-        //    idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-        //);
+    	log.info("Downloading: "+idpConfig.getDiscoveryDocumentUrl());
+    	discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
+            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+        );
     }
 
     public void getVauNp(UserRuntimeConfig userRuntimeConfig, Consumer<String> vauNPConsumer) throws Exception {
@@ -202,7 +203,7 @@ public class IdpClient {
 
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
         // TODO remove hard coded value
-        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI("X110486750").getAuthorizationSmcBApi();
+        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI().getAuthorizationSmcBApi();
         String nonce = authorizationSmcBApi.getNonce(USER_AGENT).getNonce();
 
         ReadCardCertificateResponse certificateResponse = readCardCertificateResponse(smcbHandle, servicePorts);
@@ -230,7 +231,13 @@ public class IdpClient {
         try (Response response = authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(USER_AGENT)) {
             // Parse query string into map
             Map<String, String> queryMap = new HashMap<>();
-            String query = response.getLocation().getQuery();
+            String query;
+            if(response.getLocation() == null && response.getEntity() instanceof ByteArrayInputStream) {
+            	query = new String(((ByteArrayInputStream)response.getEntity()).readAllBytes());
+            	throw new RuntimeException("Should find an Location header not found. Body: "+query);
+            } else {
+            	query = response.getLocation().getQuery();
+            }
             Arrays.stream(query.split("&")).map(s -> s.split("=")).forEach(s -> queryMap.put(s[0], s[1]));
             sendAuthorizationRequest(
                 smcbHandle,

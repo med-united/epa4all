@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.rest;
 
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
+import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
@@ -28,13 +29,19 @@ public class XDSDocument {
 
     @Inject
     MultiEpaService multiEpaService;
+    
+    @Inject
+    IdpClient idpClient;
 
     @GET
     @Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
     public String get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
         try {
             String xInsurantid = pharmacyService.getKVNR(konnektor, egkHandle, null, defaultUserConfig);
-            EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantid);
+            multiEpaService.setXInsurantid(xInsurantid);
+            EpaAPI epaAPI = multiEpaService.getEpaAPI();
+            String np = idpClient.getVauNpSync(defaultUserConfig);
+            epaAPI.setNp(np);
             RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
             DocumentRequest documentRequest = new DocumentRequest();
             documentRequest.setDocumentUniqueId(UUID.randomUUID().toString());

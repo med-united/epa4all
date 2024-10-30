@@ -77,7 +77,8 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             try {
                 String cardHandle = paramsMap.get("CardHandle");
                 String xInsurantid = pharmacyService.getKVNR(correlationId, cardHandle, null, defaultUserConfig);
-                EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantid);
+                multiEpaService.setXInsurantid(xInsurantid);
+                EpaAPI epaAPI = multiEpaService.getEpaAPI();
                 if (epaAPI == null) {
                     throw new IllegalStateException(String.format("Insurant [%s] ePA record is not found", xInsurantid));
                 }
