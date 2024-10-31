@@ -56,6 +56,10 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
     @Override
     public void handleMessage(Message message) throws Fault {
         try {
+        	if(!message.get(Message.RESPONSE_CODE).equals("200")) {
+        		String body = new String(message.getContent(InputStream.class).readAllBytes());
+				throw new Fault(body, log);
+        	}
             System.out.println(message);
             byte[] encryptedVauData = readContentFromMessage(message);
             byte[] decryptedBytes = vauClient.getVauStateMachine().decryptVauMessage(encryptedVauData);
@@ -63,10 +67,12 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
 			log.info("Inner Response: "+fullRequest);
             message.put("org.apache.cxf.message.Message.ENCODING", Charset.defaultCharset().toString());
             Map<String, String> headerMap = new HashMap<>();
-            String header = fullRequest.substring(0, fullRequest.lastIndexOf("\r\n\r\n"));
-            Arrays.stream(header.split("\r\n")).map(s -> s.split(":")).forEach(s -> headerMap.put(s[0], s[1].trim()));
+            String header = fullRequest.substring(0, fullRequest.indexOf("\r\n\r\n"));
+            Arrays.stream(header.split("\r\n"))
+            	.filter(s -> s.indexOf(":") != -1)
+            	.map(s -> s.split(":")).forEach(s -> headerMap.put(s[0], s[1].trim()));
             message.put("Content-Type", headerMap.get("Content-Type"));
-            String body = fullRequest.substring(fullRequest.lastIndexOf("\r\n\r\n")+1);
+            String body = fullRequest.substring(fullRequest.indexOf("\r\n\r\n")+1);
             InputStream myInputStream = new ByteArrayInputStream(body.getBytes());
             message.setContent(InputStream.class, myInputStream);
         } catch (Exception e) {

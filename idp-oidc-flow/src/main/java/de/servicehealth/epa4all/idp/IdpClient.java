@@ -35,6 +35,8 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jose4j.jwt.JwtClaims;
 
+import com.ibm.icu.impl.duration.TimeUnit;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.idp.action.AuthAction.URN_BSI_TR_03111_ECDSA;
@@ -97,10 +100,23 @@ public class IdpClient {
     void onStart(@Observes StartupEvent ev) {
     	// Do this async
     	managedExecutor.submit(() -> {
-	    	log.info("Downloading: "+idpConfig.getDiscoveryDocumentUrl());
-	    	discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
-	            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-	        );
+    		boolean worked = false;
+    		while(!worked) {    			
+    			try {
+    				log.info("Downloading: "+idpConfig.getDiscoveryDocumentUrl());
+    				discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
+    						idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+    						);
+    				worked = true;
+    			} catch(Exception ex) {
+    				log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
+    				try {
+						Thread.sleep(10000);
+					} catch (InterruptedException e) {
+						log.log(Level.SEVERE, "Could not wait.", e);
+					}
+    			}
+    		}
     	});
     }
 

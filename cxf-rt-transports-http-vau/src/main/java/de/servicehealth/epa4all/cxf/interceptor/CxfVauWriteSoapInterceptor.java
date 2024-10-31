@@ -52,7 +52,12 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             TreeMap<String, List<String>> httpHeaders = (TreeMap<String, List<String>>) message.get(PROTOCOL_HEADERS);
             List<String> vauPathHeaders = httpHeaders.remove(VAU_METHOD_PATH);
-            String path = vauPathHeaders.isEmpty() ? "undefined" : vauPathHeaders.getFirst();
+            
+            // inbound message
+            // if(vauPathHeaders == null) {
+            //	return;
+            // }
+            String path = (vauPathHeaders == null || vauPathHeaders.isEmpty()) ? "undefined" : vauPathHeaders.getFirst();
 
             String additionalHeaders = httpHeaders.entrySet()
                 .stream()
@@ -99,7 +104,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             byte[] full = payload.getBytes();
 
             Address address = (Address) message.get("http.connection.address");
-            String fullString = new String(full).replaceAll("http://schemas.xmlsoap.org/soap/envelope/", "http://www.w3.org/2003/05/soap-envelope");
+            String fullString = new String(full);
             
 			byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: "+address.getURL().getHost()+"\r\n"

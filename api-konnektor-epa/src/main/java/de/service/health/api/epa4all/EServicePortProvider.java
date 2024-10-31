@@ -11,6 +11,8 @@ import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.XDSDocumentService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.xml.ws.soap.SOAPBinding;
+
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
@@ -62,6 +64,10 @@ public class EServicePortProvider {
         // https://gemspec.gematik.de/docs/gemSpec/gemSpec_Aktensystem_ePAfueralle/latest/#A_15186
         jaxWsProxyFactory.getFeatures().add(new WSAddressingFeature());
         jaxWsProxyFactory.setAddress(address);
+        jaxWsProxyFactory.setBindingId(SOAPBinding.SOAP12HTTP_BINDING);
+
+        
+        
         jaxWsProxyFactory.getOutInterceptors().addAll(
             List.of(
                 new LoggingOutInterceptor(),
