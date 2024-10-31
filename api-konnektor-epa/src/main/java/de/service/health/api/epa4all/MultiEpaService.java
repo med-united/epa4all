@@ -5,6 +5,7 @@ import de.gematik.vau.lib.VauClientStateMachine;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.EntitlementsApi;
+import de.servicehealth.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.cxf.VauClientFactory;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
@@ -39,8 +40,6 @@ import static de.servicehealth.utils.URLUtils.getBaseUrl;
 public class MultiEpaService {
 
     private static final Logger log = Logger.getLogger(MultiEpaService.class.getName());
-
-    private final static String USER_AGENT = "CLIENTID1234567890AB/2.1.12-45";
 
     @Getter
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
@@ -134,7 +133,10 @@ public class MultiEpaService {
     
     public void setXInsurantid(String xInsurantid) {
     	this.xInsurantid = xInsurantid;
-    	getEpaAPI().setXInsurantid(xInsurantid);
+    	EpaAPI epaAPI = getEpaAPI();
+    	if(epaAPI != null) {    		
+    		epaAPI.setXInsurantid(xInsurantid);
+    	}
     }
 
     public EpaAPI getEpaAPI() {
@@ -156,7 +158,7 @@ public class MultiEpaService {
     private boolean hasEpaRecord(EpaAPI api, String xInsurantid) {
         boolean result = false;
         try {
-            api.getAccountInformationApi().getRecordStatus(xInsurantid, USER_AGENT);
+            api.getAccountInformationApi().getRecordStatus(xInsurantid, UserRuntimeConfig.getUserAgent());
             result = true;
         } catch (Exception e) {
             log.info(String.format(

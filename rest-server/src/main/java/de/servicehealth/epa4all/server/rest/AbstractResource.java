@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -12,10 +13,13 @@ import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import de.servicehealth.model.EntitlementRequestType;
+import de.servicehealth.model.ValidToResponseType;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
 public abstract class AbstractResource {
+	
+	private static final Logger log = Logger.getLogger(AbstractResource.class.getName());
 	
 	@Inject
 	VSDService vsdService;
@@ -43,8 +47,10 @@ public abstract class AbstractResource {
 		
 		EntitlementRequestType entitlementRequest = new EntitlementRequestType();
 		String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
-		entitlementRequest.setJwt(idpClient.createEntitilementPSJWT(pz, defaultUserConfig));
-		epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, "CLIENTID", entitlementRequest);
+		String entitilementPSJWT = idpClient.createEntitilementPSJWT(pz, defaultUserConfig);
+		entitlementRequest.setJwt(entitilementPSJWT);
+		ValidToResponseType response = epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, "CLIENTID", entitlementRequest);
+		log.info(response.toString());
 		return epaAPI;
 	}
 

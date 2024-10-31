@@ -29,6 +29,7 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.transport.http.Address;
 
+import de.servicehealth.config.api.UserRuntimeConfig;
 import de.servicehealth.vau.VauClient;
 import jakarta.ws.rs.core.HttpHeaders;
 
@@ -133,6 +134,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
     private String prepareContentHeaders(int length) {
         String headers = "Content-Type: application/soap+xml;charset=UTF-8;\r\nContent-Length: " + length ;
+        headers += "\r\nx-useragent: "+UserRuntimeConfig.getUserAgent();
         if(vauClient.getXInsurantId() != null) {
         	headers += "\r\nx-insurantid: "+vauClient.getXInsurantId();
         }
