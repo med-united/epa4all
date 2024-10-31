@@ -63,8 +63,10 @@ public class VSDService {
             return versichertenID;
         } else {
             String pn = doc.getElementsByTagName("PZ").item(0).getTextContent();
-            String base64PN = new String(DatatypeConverter.parseBase64Binary(pn));
-            return base64PN.substring(0, 10);
+            byte[] base64Binary = DatatypeConverter.parseBase64Binary(pn);
+			String base64PN = new String(base64Binary);
+            String kvnr = base64PN.substring(0, 10);
+			return kvnr;
         }
     }
 

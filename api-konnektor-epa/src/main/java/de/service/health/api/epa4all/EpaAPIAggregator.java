@@ -87,4 +87,9 @@ public class EpaAPIAggregator implements EpaAPI {
 	public void setNp(String np) {
 		vauClient.setNp(np);
 	}
+
+	@Override
+	public void setXInsurantid(String insurantId) {
+		vauClient.setXInsurantId(insurantId);
+	}
 }

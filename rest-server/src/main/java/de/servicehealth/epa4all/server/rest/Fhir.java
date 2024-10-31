@@ -5,6 +5,7 @@ import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.vsds.VSDService;
+import de.servicehealth.model.EntitlementRequestType;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -40,6 +41,10 @@ public class Fhir {
 				return Response.serverError().entity("No epa found for: "+xInsurantid).build();
 			}
 			String np = idpClient.getVauNpSync(defaultUserConfig);
+			
+			EntitlementRequestType entitlementRequest = new EntitlementRequestType();
+			entitlementRequest.setJwt(idpClient.createEntitilementPSJWT(np, defaultUserConfig));
+			epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, "CLIENTID", entitlementRequest);
 			
 			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, "ClientID", np);
 			return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();

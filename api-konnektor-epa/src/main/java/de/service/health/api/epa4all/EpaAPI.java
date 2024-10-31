@@ -27,4 +27,5 @@ public interface EpaAPI {
     IRenderClient getRenderClient();
     
     void setNp(String np);
+    void setXInsurantid(String insurantId);
 }

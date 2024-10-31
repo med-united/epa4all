@@ -133,6 +133,9 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
     private String prepareContentHeaders(int length) {
         String headers = "Content-Type: application/soap+xml;charset=UTF-8;\r\nContent-Length: " + length ;
+        if(vauClient.getXInsurantId() != null) {
+        	headers += "\r\nx-insurantid: "+vauClient.getXInsurantId();
+        }
         if(vauClient.getNp() != null) {
         	headers += "\r\nVAU-NP: "+vauClient.getNp();
         }

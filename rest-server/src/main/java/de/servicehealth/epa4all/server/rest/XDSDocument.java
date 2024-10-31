@@ -5,6 +5,7 @@ import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.vsds.VSDService;
+import de.servicehealth.model.EntitlementRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.DocumentRequest;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -42,6 +43,11 @@ public class XDSDocument {
             EpaAPI epaAPI = multiEpaService.getEpaAPI();
             String np = idpClient.getVauNpSync(defaultUserConfig);
             epaAPI.setNp(np);
+            
+            EntitlementRequestType entitlementRequest = new EntitlementRequestType();
+			entitlementRequest.setJwt(idpClient.createEntitilementPSJWT(np, defaultUserConfig));
+			epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, "CLIENTID", entitlementRequest);
+            
             RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
             DocumentRequest documentRequest = new DocumentRequest();
             documentRequest.setDocumentUniqueId(UUID.randomUUID().toString());

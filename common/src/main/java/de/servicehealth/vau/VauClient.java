@@ -14,6 +14,9 @@ public class VauClient {
     
     @Setter
     private String np;
+    
+    @Setter
+    private String xInsurantId;
 
     public VauClient(VauClientStateMachine vauStateMachine) {
         this.vauStateMachine = vauStateMachine;

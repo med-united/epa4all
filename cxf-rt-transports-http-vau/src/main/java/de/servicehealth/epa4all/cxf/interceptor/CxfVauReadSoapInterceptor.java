@@ -15,7 +15,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -58,9 +61,12 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
             byte[] decryptedBytes = vauClient.getVauStateMachine().decryptVauMessage(encryptedVauData);
             String fullRequest = new String(decryptedBytes);
 			log.info("Inner Response: "+fullRequest);
-            message.put("Content-Type", "application/xop+xml; charset=UTF-8; type=\"application/soap+xml\"");
             message.put("org.apache.cxf.message.Message.ENCODING", Charset.defaultCharset().toString());
-            String body = fullRequest.substring(fullRequest.lastIndexOf("\r\n\"\\r\\n")+1);
+            Map<String, String> headerMap = new HashMap<>();
+            String header = fullRequest.substring(0, fullRequest.lastIndexOf("\r\n\r\n"));
+            Arrays.stream(header.split("\r\n")).map(s -> s.split(":")).forEach(s -> headerMap.put(s[0], s[1].trim()));
+            message.put("Content-Type", headerMap.get("Content-Type"));
+            String body = fullRequest.substring(fullRequest.lastIndexOf("\r\n\r\n")+1);
             InputStream myInputStream = new ByteArrayInputStream(body.getBytes());
             message.setContent(InputStream.class, myInputStream);
         } catch (Exception e) {

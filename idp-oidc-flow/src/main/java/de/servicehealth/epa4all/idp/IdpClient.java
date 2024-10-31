@@ -199,25 +199,14 @@ public class IdpClient {
         IKonnektorServicePortsAPI servicePorts,
         AuthAction authAction
     ) throws Exception {
-        String smcbHandle = getSmcbHandle(servicePorts);
 
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
         // TODO remove hard coded value
         AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI().getAuthorizationSmcBApi();
         String nonce = authorizationSmcBApi.getNonce(USER_AGENT).getNonce();
 
-        ReadCardCertificateResponse certificateResponse = readCardCertificateResponse(smcbHandle, servicePorts);
-        if (certificateResponse == null) {
-            throw new RuntimeException("Could not read card certificate");
-        }
-
-        byte[] x509Certificate = certificateResponse
-            .getX509DataInfoList()
-            .getX509DataInfo()
-            .get(0)
-            .getX509Data()
-            .getX509Certificate();
-        X509Certificate smcbAuthCert = getCertificateFromAsn1DERCertBytes(x509Certificate);
+        String smcbHandle = getSmcbHandle(servicePorts);
+        X509Certificate smcbAuthCert = getX09Certificate(servicePorts, smcbHandle);
 
         JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.NONCE.getJoseName(), nonce);
@@ -249,6 +238,23 @@ public class IdpClient {
             );
         }
     }
+
+	private X509Certificate getX09Certificate(IKonnektorServicePortsAPI servicePorts, String smcbHandle)
+			throws Exception {
+		ReadCardCertificateResponse certificateResponse = readCardCertificateResponse(smcbHandle, servicePorts);
+        if (certificateResponse == null) {
+            throw new RuntimeException("Could not read card certificate");
+        }
+
+        byte[] x509Certificate = certificateResponse
+            .getX509DataInfoList()
+            .getX509DataInfo()
+            .get(0)
+            .getX509Data()
+            .getX509Certificate();
+        X509Certificate smcbAuthCert = getCertificateFromAsn1DERCertBytes(x509Certificate);
+		return smcbAuthCert;
+	}
 
     // A_24944-01 - Anfrage des "AUTHORIZATION_CODE" für ein "ID_TOKEN"
     private void sendAuthorizationRequest(
@@ -302,5 +308,38 @@ public class IdpClient {
         } catch (IOException | CertificateException e) {
             throw new RuntimeException(e);
         }
+    }
+    
+    /**
+     * Content for PS originated entitlements:</br>
+     *   - protected_header contains:
+     *     - "typ": "JWT"
+     *     - "alg": "ES256" or "PS256"
+     *     - "x5c": signature certificate (C.HCI.AUT from smc-b of requestor)
+     *   - payload claims:
+     *     - "iat": issued at timestamp
+     *     - "exp": expiry timestamp (always iat + 20min)
+     *     - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
+     *   - signature contains token signature
+     *   example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6ImNlcnRpZmljYXRlIn0=.eyJpYXQiOjE3NjQ1NzYwMDAsImluc3VyYW50aWQiOiJBMTIzNDU2Nzg5IiwiYWN0b3JpZCI6IjEtODgzMTEwMDAwMDkyNDA0Iiwib2lkIjoiMS4yLjI3Ni4wLjc2LjQuNTMiLCJkaXNwbGF5TmFtZSI6IktyYW5rZW5oYXVzIFN0LiBKb2hhbm5lcyIsInZhbGlkVG8iOiIyMDI1LTEyLTA3In0=.e3NpZ25hdHVyZU92ZXJIZWFkZXJBbmRQYXlsb2FkfQ=="
+     * @param auditEvidence
+     * @return
+     * @throws Exception 
+     */
+    public String createEntitilementPSJWT(String auditEvidence, UserRuntimeConfig userRuntimeConfig) throws Exception {
+    	
+    	IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+    	
+    	JwtClaims claims = new JwtClaims();
+        claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
+        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 300);
+        claims.setClaim("auditEvidence", auditEvidence);
+
+        String smcbHandle = getSmcbHandle(servicePorts);
+        X509Certificate smcbAuthCert = getX09Certificate(servicePorts, smcbHandle);
+
+        String entitilementPSJWT = getSignedJwt(servicePorts, smcbAuthCert, claims, signatureType, smcbHandle, true);
+    	
+    	return entitilementPSJWT;
     }
 }

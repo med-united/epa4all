@@ -25,7 +25,11 @@ import lombok.Setter;
 
 import org.apache.http.client.fluent.Executor;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import static de.servicehealth.utils.URLUtils.getBaseUrl;
@@ -45,9 +49,13 @@ public class MultiEpaService {
     private final ClientFactory clientFactory;
     private final EServicePortProvider eServicePortProvider;
     
-    @Setter
     @Getter
     private String xInsurantid;
+    
+    private Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
+    	    .maximumSize(1000)
+    	    .expireAfterWrite(10, TimeUnit.MINUTES)
+    	    .build();
 
     @Inject
     public MultiEpaService(
@@ -123,14 +131,26 @@ public class MultiEpaService {
     private String getBackendUrl(String backend, String serviceUrl) {
         return serviceUrl.replace("[epa-backend]", backend);
     }
+    
+    public void setXInsurantid(String xInsurantid) {
+    	this.xInsurantid = xInsurantid;
+    	getEpaAPI().setXInsurantid(xInsurantid);
+    }
 
     public EpaAPI getEpaAPI() {
-        for (EpaAPI api : epaBackendMap.values()) {
-            if (hasEpaRecord(api, xInsurantid)) {
-                return api;
-            }
-        }
-        return null;
+    	
+    	EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(xInsurantid);
+    	if(epaAPI != null) {
+    		return epaAPI;
+    	} else {
+	        for (EpaAPI api : epaBackendMap.values()) {
+	            if (hasEpaRecord(api, xInsurantid)) {
+	            	xInsurantid2ePAApi.put(xInsurantid, epaAPI);
+	                return api;
+	            }
+	        }
+	        return null;
+    	}
     }
 
     private boolean hasEpaRecord(EpaAPI api, String xInsurantid) {
