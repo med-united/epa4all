@@ -145,7 +145,7 @@ public class MultiEpaService {
     	} else {
 	        for (EpaAPI api : epaBackendMap.values()) {
 	            if (hasEpaRecord(api, xInsurantid)) {
-	            	xInsurantid2ePAApi.put(xInsurantid, epaAPI);
+	            	xInsurantid2ePAApi.put(xInsurantid, api);
 	                return api;
 	            }
 	        }

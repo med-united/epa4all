@@ -1,52 +1,25 @@
 package de.servicehealth.epa4all.server.rest;
 
+import java.io.ByteArrayInputStream;
+
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.epa4all.idp.IdpClient;
-import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.vsds.VSDService;
-import de.servicehealth.model.EntitlementRequestType;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
-import java.io.ByteArrayInputStream;
-
 @Path("fhir")
-public class Fhir {
+public class Fhir extends AbstractResource {
 	
-	@Inject
-	VSDService vsdService;
-	
-	@Inject
-	DefaultUserConfig defaultUserConfig;
-	
-	@Inject
-    MultiEpaService multiEpaService;
-	
-	@Inject
-	IdpClient idpClient;
 
 	@GET
 	@Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
 	public Response get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
 		try {
-			String xInsurantid = vsdService.getKVNR(konnektor, egkHandle, null, defaultUserConfig);
-			multiEpaService.setXInsurantid(xInsurantid);
-			EpaAPI epaAPI = multiEpaService.getEpaAPI();
-			if(epaAPI == null) {
-				return Response.serverError().entity("No epa found for: "+xInsurantid).build();
-			}
-			String np = idpClient.getVauNpSync(defaultUserConfig);
+			EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
 			
-			EntitlementRequestType entitlementRequest = new EntitlementRequestType();
-			entitlementRequest.setJwt(idpClient.createEntitilementPSJWT(np, defaultUserConfig));
-			epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, "CLIENTID", entitlementRequest);
-			
-			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, "ClientID", np);
+			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaAPI.getXInsurantid(), "ClientID", epaAPI.getNp());
 			return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
 		} catch (Exception e) {
 			throw new WebApplicationException(e);

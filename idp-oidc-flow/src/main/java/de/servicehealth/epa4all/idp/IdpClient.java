@@ -32,6 +32,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jose4j.jwt.JwtClaims;
 
 import java.io.ByteArrayInputStream;
@@ -77,6 +78,8 @@ public class IdpClient {
 
     // A_24883-02 - clientAttest als ECDSA-Signatur
     private String signatureType = URN_BSI_TR_03111_ECDSA;
+    
+    @Inject ManagedExecutor managedExecutor;
 
     @Inject
     public IdpClient(
@@ -92,10 +95,13 @@ public class IdpClient {
     }
 
     void onStart(@Observes StartupEvent ev) {
-    	log.info("Downloading: "+idpConfig.getDiscoveryDocumentUrl());
-    	discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
-            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-        );
+    	// Do this async
+    	managedExecutor.submit(() -> {
+	    	log.info("Downloading: "+idpConfig.getDiscoveryDocumentUrl());
+	    	discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
+	            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+	        );
+    	});
     }
 
     public void getVauNp(UserRuntimeConfig userRuntimeConfig, Consumer<String> vauNPConsumer) throws Exception {

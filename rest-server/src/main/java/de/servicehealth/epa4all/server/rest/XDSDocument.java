@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.rest;
 
+import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.idp.IdpClient;
@@ -15,12 +16,16 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.WebApplicationException;
 
+import java.io.IOException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
 
 @Path("xds-document")
-public class XDSDocument {
+public class XDSDocument extends AbstractResource {
 
     @Inject
     VSDService pharmacyService;
@@ -38,15 +43,7 @@ public class XDSDocument {
     @Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
     public String get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
         try {
-            String xInsurantid = pharmacyService.getKVNR(konnektor, egkHandle, null, defaultUserConfig);
-            multiEpaService.setXInsurantid(xInsurantid);
-            EpaAPI epaAPI = multiEpaService.getEpaAPI();
-            String np = idpClient.getVauNpSync(defaultUserConfig);
-            epaAPI.setNp(np);
-            
-            EntitlementRequestType entitlementRequest = new EntitlementRequestType();
-			entitlementRequest.setJwt(idpClient.createEntitilementPSJWT(np, defaultUserConfig));
-			epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, "CLIENTID", entitlementRequest);
+            EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
             
             RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
             DocumentRequest documentRequest = new DocumentRequest();
@@ -54,9 +51,6 @@ public class XDSDocument {
             documentRequest.setHomeCommunityId("CommunityId");
             documentRequest.setRepositoryUniqueId("UniqueId");
             retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
-            if (epaAPI == null) {
-                return "No epa found for: " + xInsurantid;
-            }
             RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = epaAPI.getDocumentManagementPortType().documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequestType);
             return retrieveDocumentSetResponseType.getDocumentResponse().stream()
 				.map(RetrieveDocumentSetResponseType.DocumentResponse::getDocumentUniqueId)
