@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -75,11 +76,19 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
             Arrays.stream(header.split("\r\n"))
             	.filter(s -> s.indexOf(":") != -1)
             	.map(s -> s.split(":")).forEach(s -> headerMap.put(s[0], s[1].trim()));
-            message.put("Content-Type", headerMap.get("Content-Type"));
-            String body = fullRequest.substring(fullRequest.indexOf("\r\n\r\n")+4);
+            Object headers = message.get(org.apache.cxf.message.Message.PROTOCOL_HEADERS);
+            if(headers instanceof Map) {
+            	Map<String, List<String>> headersMap = (Map<String, List<String>>) headers;
+            	for(Entry<String,String> entry : headerMap.entrySet()) {
+            		if(entry.getKey().equals("Content-Type")) {
+            			message.put(Message.CONTENT_TYPE, entry.getValue());
+            		}
+            		headersMap.put(entry.getKey().toLowerCase(), List.of(entry.getValue()));
+            	}
+            }
+            String body = fullRequest.substring(fullRequest.indexOf("\r\n\r\n")+1);
             InputStream myInputStream = new ByteArrayInputStream(body.getBytes());
             message.setContent(InputStream.class, myInputStream);
-            message.setContent(XMLStreamReader.class, factory.createXMLEventReader(new ByteArrayInputStream(body.getBytes())));
         } catch (Exception e) {
             throw new Fault(e);
         }
@@ -98,22 +107,5 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
         return rawRequest;
       }
 
-    private String prepareContentHeaders(int length) {
-        return "Content-Type: application/soap+xml; charset=utf-8\r\nContent-Length: " + length + "\r\n\r\n";
-    }
 
-    private class CachedStream extends CachedOutputStream {
-        public CachedStream() {
-            // forces CachedOutputStream to keep the whole content in-memory.
-            super(1024 * 1024 * (long) 1024);
-        }
-
-        protected void doFlush() throws IOException {
-            currentStream.flush();
-        }
-
-        protected void doClose() throws IOException {}
-
-        protected void onWrite() throws IOException {}
-    }
 }

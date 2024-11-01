@@ -81,11 +81,11 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             Endpoint endpoint = message.getExchange().getEndpoint();
             List<Interceptor<? extends Message>> inInterceptors = endpoint.getBinding().getInInterceptors();
-            Optional<Interceptor<? extends Message>> staxInInterceptorOpt = inInterceptors
-                .stream()
-                .filter(i -> instanceOf(i, StaxInInterceptor.class))
-                .findFirst();
-            staxInInterceptorOpt.ifPresent(inInterceptors::remove);
+            //Optional<Interceptor<? extends Message>> staxInInterceptorOpt = inInterceptors
+            //    .stream()
+            //    .filter(i -> instanceOf(i, StaxInInterceptor.class))
+            //   .findFirst();
+            // staxInInterceptorOpt.ifPresent(inInterceptors::remove);
 
             
             InterceptorChain interceptorChain = excludeInterceptors(
