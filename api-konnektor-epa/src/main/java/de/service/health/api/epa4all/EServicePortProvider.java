@@ -24,7 +24,10 @@ import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.apache.cxf.ws.addressing.WSAddressingFeature;
 
 import javax.xml.namespace.QName;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
@@ -64,6 +67,10 @@ public class EServicePortProvider {
         // https://gemspec.gematik.de/docs/gemSpec/gemSpec_Aktensystem_ePAfueralle/latest/#A_15186
         jaxWsProxyFactory.getFeatures().add(new WSAddressingFeature());
         jaxWsProxyFactory.setAddress(address);
+        Map<String,Object> props = new HashMap<String, Object>();
+	    // Boolean.TRUE or "true" will work as the property value below
+	    props.put("mtom-enabled", Boolean.TRUE); 
+        jaxWsProxyFactory.setProperties(props);
 //         jaxWsProxyFactory.setBindingId(SOAPBinding.SOAP12HTTP_BINDING);
 
         
@@ -80,6 +87,7 @@ public class EServicePortProvider {
     }
 
     private void initPortType(Object portType) throws Exception {
+    	
         Client client = ClientProxy.getClient(portType);
 
         // TODO ClientFactory.initClient()
