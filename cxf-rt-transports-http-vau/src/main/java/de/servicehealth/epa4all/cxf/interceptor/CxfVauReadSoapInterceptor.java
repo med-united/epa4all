@@ -56,11 +56,10 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
     @Override
     public void handleMessage(Message message) throws Fault {
         try {
-        	if(!message.get(Message.RESPONSE_CODE).equals("200")) {
+        	if(!message.get(Message.RESPONSE_CODE).equals(200)) {
         		String body = new String(message.getContent(InputStream.class).readAllBytes());
 				throw new Fault(body, log);
         	}
-            System.out.println(message);
             byte[] encryptedVauData = readContentFromMessage(message);
             byte[] decryptedBytes = vauClient.getVauStateMachine().decryptVauMessage(encryptedVauData);
             String fullRequest = new String(decryptedBytes);

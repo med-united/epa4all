@@ -64,7 +64,7 @@ public class EServicePortProvider {
         // https://gemspec.gematik.de/docs/gemSpec/gemSpec_Aktensystem_ePAfueralle/latest/#A_15186
         jaxWsProxyFactory.getFeatures().add(new WSAddressingFeature());
         jaxWsProxyFactory.setAddress(address);
-        jaxWsProxyFactory.setBindingId(SOAPBinding.SOAP12HTTP_BINDING);
+//         jaxWsProxyFactory.setBindingId(SOAPBinding.SOAP12HTTP_BINDING);
 
         
         
