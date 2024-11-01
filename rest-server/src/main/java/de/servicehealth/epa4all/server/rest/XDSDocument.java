@@ -1,19 +1,20 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import javax.xml.namespace.QName;
+
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.epa4all.idp.IdpClient;
-import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.vsds.VSDService;
-import de.servicehealth.model.EntitlementRequestType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.Document;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.DocumentRequest;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -28,25 +29,11 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExtrinsicObjectType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.InternationalStringType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.LocalizedStringType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.RegistryObjectListType;
-import oasis.names.tc.ebxml_regrep.xsd.rim._3.RegistryObjectType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.RegistryPackageType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotListType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ValueListType;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Random;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import javax.xml.namespace.QName;
-
-import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
-import org.xml.sax.SAXException;
 
 
 @Path("xds-document")
@@ -107,6 +94,12 @@ public class XDSDocument extends AbstractResource {
             
             
             RegistryPackageType registryPackageType = new RegistryPackageType();
+            
+            JAXBElement<RegistryPackageType> jaxbElement2 = new JAXBElement<>(
+                new QName("RegistryPackageType"), RegistryPackageType.class, registryPackageType
+            );
+			registryObjectListType.getIdentifiable().add(jaxbElement2);
+            
             SlotType1 submissionTime = new SlotType1();
             submissionTime.setValueList(new ValueListType());
             submissionTime.getValueList().getValue().add(getNumericISO8601Timestamp());

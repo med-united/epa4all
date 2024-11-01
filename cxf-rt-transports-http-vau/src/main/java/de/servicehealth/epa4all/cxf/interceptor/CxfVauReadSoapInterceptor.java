@@ -25,6 +25,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.cxf.endpoint.Endpoint;
 import org.apache.cxf.interceptor.AttachmentInInterceptor;
@@ -45,6 +48,8 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
 
     private final VauClient vauClient;
     private static final Logger log = Logger.getLogger(CxfVauReadSoapInterceptor.class.getName());
+    
+    XMLInputFactory factory = XMLInputFactory.newInstance();
 
     public CxfVauReadSoapInterceptor(VauClient vauClient) {
         super(RECEIVE);
@@ -71,9 +76,10 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
             	.filter(s -> s.indexOf(":") != -1)
             	.map(s -> s.split(":")).forEach(s -> headerMap.put(s[0], s[1].trim()));
             message.put("Content-Type", headerMap.get("Content-Type"));
-            String body = fullRequest.substring(fullRequest.indexOf("\r\n\r\n")+1);
+            String body = fullRequest.substring(fullRequest.indexOf("\r\n\r\n")+4);
             InputStream myInputStream = new ByteArrayInputStream(body.getBytes());
             message.setContent(InputStream.class, myInputStream);
+            message.setContent(XMLStreamReader.class, factory.createXMLEventReader(new ByteArrayInputStream(body.getBytes())));
         } catch (Exception e) {
             throw new Fault(e);
         }
