@@ -9,6 +9,7 @@ import org.xml.sax.SAXException;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
+import de.servicehealth.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.vsds.VSDService;
@@ -49,7 +50,7 @@ public abstract class AbstractResource {
 		String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
 		String entitilementPSJWT = idpClient.createEntitilementPSJWT(pz, defaultUserConfig);
 		entitlementRequest.setJwt(entitilementPSJWT);
-		ValidToResponseType response = epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, "CLIENTID", entitlementRequest);
+		ValidToResponseType response = epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, UserRuntimeConfig.getUserAgent(), entitlementRequest);
 		log.info(response.toString());
 		return epaAPI;
 	}

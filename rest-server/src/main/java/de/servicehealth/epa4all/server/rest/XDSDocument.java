@@ -40,9 +40,12 @@ public class XDSDocument extends AbstractResource {
     IdpClient idpClient;
 
     @GET
-    @Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
+    @Path("{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}")
     public String get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
         try {
+        	if(egkHandle != null) {
+        		egkHandle = egkHandle.replaceAll("/", "");
+        	}
             EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
             
             RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();

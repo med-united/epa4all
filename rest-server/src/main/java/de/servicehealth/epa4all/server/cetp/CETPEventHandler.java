@@ -5,6 +5,7 @@ import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.config.api.IUserConfigurations;
+import de.servicehealth.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 
@@ -82,7 +83,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 if (epaAPI == null) {
                     throw new IllegalStateException(String.format("Insurant [%s] ePA record is not found", xInsurantid));
                 }
-                String userAgent = "CLIENTID1234567890AB/2.1.12-45";
+                String userAgent = UserRuntimeConfig.getUserAgent();
                 byte[] bytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, userAgent);
                 String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                 Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
