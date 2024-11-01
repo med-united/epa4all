@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.cxf.provider;
 
 import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import de.servicehealth.vau.VauClient;
+import io.quarkus.logging.Log;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.WebApplicationException;
@@ -17,6 +18,7 @@ import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
@@ -28,6 +30,8 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
     private final VauClient vauClient;
     private final JsonbBuilder jsonbBuilder;
+    
+    private static Logger log = Logger.getLogger(JsonbVauWriterProvider.class.getName());
 
     public JsonbVauWriterProvider(VauClient vauClient) {
         jsonbBuilder = new JsonBindingBuilder();
@@ -61,6 +65,10 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
                 .map(p -> p.getKey() + ": " + p.getValue().getFirst())
                 .collect(Collectors.joining("\r\n"));
 
+
+            if(vauClient.getNp() != null) {
+            	additionalHeaders += "\r\nVAU-NP: "+vauClient.getNp();
+            }
             if (!additionalHeaders.isBlank()) {
                 additionalHeaders += "\r\n";
             }
@@ -68,12 +76,14 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
             String keepAlive = additionalHeaders.contains("Keep-Alive") ? "" : "Connection: Keep-Alive\r\n";
 
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
-                + "Host: localhost:443\r\n"
+                + "Host: epa-as-2.dev.epa4all.de\r\n"
                 + additionalHeaders + keepAlive
                 + "Accept: application/json\r\n"
                 + prepareContentHeaders(originPayload)).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, originPayload);
+            
+            log.info("REST Inner Request: "+new String(content));
 
             byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
             entityStream.write(vauMessage);

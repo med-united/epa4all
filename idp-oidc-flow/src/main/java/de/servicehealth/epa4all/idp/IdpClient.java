@@ -233,7 +233,7 @@ public class IdpClient {
         JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.NONCE.getJoseName(), nonce);
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
-        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 300);
+        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
 
         // A_24882-01 - Signatur clientAttest
         String clientAttest = getSignedJwt(servicePorts, smcbAuthCert, claims, signatureType, smcbHandle, true);
@@ -354,7 +354,7 @@ public class IdpClient {
     	
     	JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
-        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 300);
+        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
         claims.setClaim("auditEvidence", auditEvidence);
 
         String smcbHandle = getSmcbHandle(servicePorts);
