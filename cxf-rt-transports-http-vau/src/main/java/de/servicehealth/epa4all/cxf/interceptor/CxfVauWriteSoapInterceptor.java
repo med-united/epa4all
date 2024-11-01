@@ -73,7 +73,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             String keepAlive = additionalHeaders.contains("Keep-Alive") ? "" : "Connection: Keep-Alive\r\n";
 
             // hack for BareOutInterceptor not sending http request by xmlWriter.flush();
-            message.put("org.apache.cxf.message.Message.ENCODING", "ISO 8859-1");
+            // message.put("org.apache.cxf.message.Message.ENCODING", "UTF-8");
 
             OutputStream os = message.getContent(OutputStream.class);
             CachedStream cs = new CachedStream();
