@@ -72,26 +72,13 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             String keepAlive = additionalHeaders.contains("Keep-Alive") ? "" : "Connection: Keep-Alive\r\n";
 
-            // hack for BareOutInterceptor not sending http request by xmlWriter.flush();
-            // message.put("org.apache.cxf.message.Message.ENCODING", "UTF-8");
-
             OutputStream os = message.getContent(OutputStream.class);
             CachedStream cs = new CachedStream();
             message.setContent(OutputStream.class, cs);
 
-            Endpoint endpoint = message.getExchange().getEndpoint();
-            List<Interceptor<? extends Message>> inInterceptors = endpoint.getBinding().getInInterceptors();
-            //Optional<Interceptor<? extends Message>> staxInInterceptorOpt = inInterceptors
-            //    .stream()
-            //    .filter(i -> instanceOf(i, StaxInInterceptor.class))
-            //   .findFirst();
-            // staxInInterceptorOpt.ifPresent(inInterceptors::remove);
-
-            
             InterceptorChain interceptorChain = excludeInterceptors(
-                message/*, SoapOutInterceptor.class, StaxOutInterceptor.class, StaxInInterceptor.class*/
+                message
             );
-
 
             interceptorChain.doIntercept(message);
 
@@ -100,7 +87,6 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             CachedOutputStream csNew = (CachedOutputStream) message.getContent(OutputStream.class);
             message.setContent(OutputStream.class, os);
             String payload = new String(csNew.getBytes(), UTF_8);
-            // payload = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + payload;
             byte[] full = payload.getBytes();
 
             Address address = (Address) message.get("http.connection.address");
@@ -109,7 +95,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 			byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: "+address.getURL().getHost()+"\r\n"
                 + additionalHeaders + keepAlive
-                + prepareContentHeaders(fullString.getBytes().length)).getBytes();
+                + prepareContentHeaders(message.get(CONTENT_TYPE).toString(), fullString.getBytes().length)).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, fullString.getBytes());
 
@@ -137,8 +123,9 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
         }
     }
 
-    private String prepareContentHeaders(int length) {
-        String headers = "Content-Type: application/soap+xml;charset=UTF-8;\r\nContent-Length: " + length ;
+    private String prepareContentHeaders(String contentType, int length) {
+        String headers = "Content-Type: "+contentType;
+   		headers += "\r\nContent-Length: " + length ;
         headers += "\r\nx-useragent: "+UserRuntimeConfig.getUserAgent();
         if(vauClient.getXInsurantId() != null) {
         	headers += "\r\nx-insurantid: "+vauClient.getXInsurantId();
