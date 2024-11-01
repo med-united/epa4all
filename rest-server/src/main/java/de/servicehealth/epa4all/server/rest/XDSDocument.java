@@ -1,11 +1,12 @@
 package de.servicehealth.epa4all.server.rest;
 
-import java.util.stream.Collectors;
-
+import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
+import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.vsds.VSDService;
+import de.servicehealth.model.EntitlementRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.DocumentRequest;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -15,40 +16,50 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.WebApplicationException;
 
+import java.io.IOException;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
 
 @Path("xds-document")
-public class XDSDocument {
-	
-	@Inject
-	VSDService pharmacyService;
-	
-	@Inject
-	DefaultUserConfig defaultUserConfig;
-	
-	@Inject
-    MultiEpaService multiEpaService;
+public class XDSDocument extends AbstractResource {
 
-	@GET
-	@Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
-	public String get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
-		try {
-			String xInsurantid = pharmacyService.getKVNR(konnektor, egkHandle, null, defaultUserConfig);
-			EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantid);
-			RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
-			DocumentRequest documentRequest = new DocumentRequest();
-			// documentRequest.setDocumentUniqueId("");
-			// documentRequest.setHomeCommunityId("");
-			// documentRequest.setRepositoryUniqueId("");
-			retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
-			if(epaAPI == null) {
-				return "No epa found for: "+xInsurantid;
-			}
-			RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = epaAPI.getDocumentManagementPortType().documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequestType);
-			String documentIds = retrieveDocumentSetResponseType.getDocumentResponse().stream().map(d -> d.getDocumentUniqueId()).collect(Collectors.joining(", "));
-			return documentIds;
-		} catch (Exception e) {
-			throw new WebApplicationException(e);
-		}
-		
-	}
+    @Inject
+    VSDService pharmacyService;
+
+    @Inject
+    DefaultUserConfig defaultUserConfig;
+
+    @Inject
+    MultiEpaService multiEpaService;
+    
+    @Inject
+    IdpClient idpClient;
+
+    @GET
+    @Path("{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}")
+    public String get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
+        try {
+        	if(egkHandle != null) {
+        		egkHandle = egkHandle.replaceAll("/", "");
+        	}
+            EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
+            
+            RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
+            DocumentRequest documentRequest = new DocumentRequest();
+            documentRequest.setDocumentUniqueId("2.25.62396952547397177119830569025634648826.332997229402574034029349705675377385445");
+            documentRequest.setRepositoryUniqueId("1.2.276.0.76.3.1.315.3.6.1.1");
+            retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
+            RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = epaAPI.getDocumentManagementPortType().documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequestType);
+            return retrieveDocumentSetResponseType.getDocumentResponse().stream()
+				.map(RetrieveDocumentSetResponseType.DocumentResponse::getDocumentUniqueId)
+				.collect(Collectors.joining(", "));
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
+
+    }
 }

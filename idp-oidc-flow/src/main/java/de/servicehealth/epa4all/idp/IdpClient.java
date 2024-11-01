@@ -32,7 +32,10 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jose4j.jwt.JwtClaims;
+
+import com.ibm.icu.impl.duration.TimeUnit;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -50,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.idp.action.AuthAction.URN_BSI_TR_03111_ECDSA;
@@ -77,6 +81,8 @@ public class IdpClient {
 
     // A_24883-02 - clientAttest als ECDSA-Signatur
     private String signatureType = URN_BSI_TR_03111_ECDSA;
+    
+    @Inject ManagedExecutor managedExecutor;
 
     @Inject
     public IdpClient(
@@ -92,9 +98,26 @@ public class IdpClient {
     }
 
     void onStart(@Observes StartupEvent ev) {
-        discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
-            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-        );
+    	// Do this async
+    	managedExecutor.submit(() -> {
+    		boolean worked = false;
+    		while(!worked) {    			
+    			try {
+    				log.info("Downloading: "+idpConfig.getDiscoveryDocumentUrl());
+    				discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
+    						idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+    						);
+    				worked = true;
+    			} catch(Exception ex) {
+    				log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
+    				try {
+						Thread.sleep(10000);
+					} catch (InterruptedException e) {
+						log.log(Level.SEVERE, "Could not wait.", e);
+					}
+    			}
+    		}
+    	});
     }
 
     public void getVauNp(UserRuntimeConfig userRuntimeConfig, Consumer<String> vauNPConsumer) throws Exception {
@@ -198,25 +221,14 @@ public class IdpClient {
         IKonnektorServicePortsAPI servicePorts,
         AuthAction authAction
     ) throws Exception {
-        String smcbHandle = getSmcbHandle(servicePorts);
 
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
         // TODO remove hard coded value
-        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI("X110486750").getAuthorizationSmcBApi();
+        AuthorizationSmcBApi authorizationSmcBApi = multiEpaService.getEpaAPI().getAuthorizationSmcBApi();
         String nonce = authorizationSmcBApi.getNonce(USER_AGENT).getNonce();
 
-        ReadCardCertificateResponse certificateResponse = readCardCertificateResponse(smcbHandle, servicePorts);
-        if (certificateResponse == null) {
-            throw new RuntimeException("Could not read card certificate");
-        }
-
-        byte[] x509Certificate = certificateResponse
-            .getX509DataInfoList()
-            .getX509DataInfo()
-            .get(0)
-            .getX509Data()
-            .getX509Certificate();
-        X509Certificate smcbAuthCert = getCertificateFromAsn1DERCertBytes(x509Certificate);
+        String smcbHandle = getSmcbHandle(servicePorts);
+        X509Certificate smcbAuthCert = getX09Certificate(servicePorts, smcbHandle);
 
         JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.NONCE.getJoseName(), nonce);
@@ -230,7 +242,13 @@ public class IdpClient {
         try (Response response = authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(USER_AGENT)) {
             // Parse query string into map
             Map<String, String> queryMap = new HashMap<>();
-            String query = response.getLocation().getQuery();
+            String query;
+            if(response.getLocation() == null && response.getEntity() instanceof ByteArrayInputStream) {
+            	query = new String(((ByteArrayInputStream)response.getEntity()).readAllBytes());
+            	throw new RuntimeException("Should find an Location header not found. Body: "+query);
+            } else {
+            	query = response.getLocation().getQuery();
+            }
             Arrays.stream(query.split("&")).map(s -> s.split("=")).forEach(s -> queryMap.put(s[0], s[1]));
             sendAuthorizationRequest(
                 smcbHandle,
@@ -242,6 +260,23 @@ public class IdpClient {
             );
         }
     }
+
+	private X509Certificate getX09Certificate(IKonnektorServicePortsAPI servicePorts, String smcbHandle)
+			throws Exception {
+		ReadCardCertificateResponse certificateResponse = readCardCertificateResponse(smcbHandle, servicePorts);
+        if (certificateResponse == null) {
+            throw new RuntimeException("Could not read card certificate");
+        }
+
+        byte[] x509Certificate = certificateResponse
+            .getX509DataInfoList()
+            .getX509DataInfo()
+            .get(0)
+            .getX509Data()
+            .getX509Certificate();
+        X509Certificate smcbAuthCert = getCertificateFromAsn1DERCertBytes(x509Certificate);
+		return smcbAuthCert;
+	}
 
     // A_24944-01 - Anfrage des "AUTHORIZATION_CODE" für ein "ID_TOKEN"
     private void sendAuthorizationRequest(
@@ -295,5 +330,38 @@ public class IdpClient {
         } catch (IOException | CertificateException e) {
             throw new RuntimeException(e);
         }
+    }
+    
+    /**
+     * Content for PS originated entitlements:</br>
+     *   - protected_header contains:
+     *     - "typ": "JWT"
+     *     - "alg": "ES256" or "PS256"
+     *     - "x5c": signature certificate (C.HCI.AUT from smc-b of requestor)
+     *   - payload claims:
+     *     - "iat": issued at timestamp
+     *     - "exp": expiry timestamp (always iat + 20min)
+     *     - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
+     *   - signature contains token signature
+     *   example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6WyJNSUlEeXpDQ0EzS2dBd0lCQWdJSEFRMnAvOXp2SXpBS0JnZ3Foa2pPUFFRREFqQ0JtVEVMTUFrR0ExVUVCaE1DUkVVeEh6QWRCZ05WQkFvTUZtZGxiV0YwYVdzZ1IyMWlTQ0JPVDFRdFZrRk1TVVF4U0RCR0JnTlZCQXNNUDBsdWMzUnBkSFYwYVc5dUlHUmxjeUJIWlhOMWJtUm9aV2wwYzNkbGMyVnVjeTFEUVNCa1pYSWdWR1ZzWlcxaGRHbHJhVzVtY21GemRISjFhM1IxY2pFZk1CMEdBMVVFQXd3V1IwVk5MbE5OUTBJdFEwRTVJRlJGVTFRdFQwNU1XVEFlRncweU1EQXhNalF3TURBd01EQmFGdzB5TkRFeU1URXlNelU1TlRsYU1JSGZNUXN3Q1FZRFZRUUdFd0pFUlRFVE1CRUdBMVVFQnd3S1I4TzJkSFJwYm1kbGJqRU9NQXdHQTFVRUVRd0ZNemN3T0RNeEhEQWFCZ05WQkFrTUUwUmhibnBwWjJWeUlGTjBjbUhEbjJVZ01UTXhLakFvQmdOVkJBb01JVE10VTAxRExVSXRWR1Z6ZEd0aGNuUmxMVGc0TXpFeE1EQXdNREV4TmpNMU1qRWRNQnNHQTFVRUJSTVVPREF5TnpZNE9ETXhNVEF3TURBeE1UWXpOVEl4RVRBUEJnTlZCQVFNQ0U1MWJHeHRZWGx5TVE4d0RRWURWUVFxREFaS2RXeHBZVzR4SGpBY0JnTlZCQU1NRlVKaFpDQkJjRzkwYUdWclpWUkZVMVF0VDA1TVdUQmFNQlFHQnlxR1NNNDlBZ0VHQ1Nza0F3TUNDQUVCQndOQ0FBUWU5bmE1VDEyOGNmOGI4VTVkVlYzdGpBQk1QdkttZHIzYVRjRTZwU1ZGdUtGTXJIM3RnYVhoN2pNVHhiOEg3ZVZ5bUtyc2lLUGlJZ2xCK0F2UEFTaXVvNElCV2pDQ0FWWXdEQVlEVlIwVEFRSC9CQUl3QURBNEJnZ3JCZ0VGQlFjQkFRUXNNQ293S0FZSUt3WUJCUVVITUFHR0hHaDBkSEE2THk5bGFHTmhMbWRsYldGMGFXc3VaR1V2YjJOemNDOHdFd1lEVlIwbEJBd3dDZ1lJS3dZQkJRVUhBd0l3SHdZRFZSMGpCQmd3Rm9BVVlvaWF4Tjc4by9PVE9jdWZrT2NUbWoySnpIVXdIUVlEVlIwT0JCWUVGQTJZR1B4RTJYcUhlYUZSSURRRDRleXR6d0xGTUE0R0ExVWREd0VCL3dRRUF3SUhnREFnQmdOVkhTQUVHVEFYTUFvR0NDcUNGQUJNQklFak1Ba0dCeXFDRkFCTUJFMHdnWVFHQlNza0NBTURCSHN3ZWFRb01DWXhDekFKQmdOVkJBWVRBa1JGTVJjd0ZRWURWUVFLREE1blpXMWhkR2xySUVKbGNteHBiakJOTUVzd1NUQkhNQmNNRmNPV1ptWmxiblJzYVdOb1pTQkJjRzkwYUdWclpUQUpCZ2NxZ2hRQVRBUTJFeUV6TFZOTlF5MUNMVlJsYzNScllYSjBaUzA0T0RNeE1UQXdNREF4TVRZek5USXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdBMStLWERpWXkyWTBXdkFjUk5URzRmNkNaaVBQSndiWlBrTmJnNUU3ekVVQ0lBYVU0MEFLMmxpVGZMSGkrSjZERCtIVWVLUEdaVGh4OUhwbVFybHJtbjhqIl19"
+     * @param auditEvidence
+     * @return
+     * @throws Exception 
+     */
+    public String createEntitilementPSJWT(String auditEvidence, UserRuntimeConfig userRuntimeConfig) throws Exception {
+    	
+    	IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+    	
+    	JwtClaims claims = new JwtClaims();
+        claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
+        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 300);
+        claims.setClaim("auditEvidence", auditEvidence);
+
+        String smcbHandle = getSmcbHandle(servicePorts);
+        X509Certificate smcbAuthCert = getX09Certificate(servicePorts, smcbHandle);
+
+        String entitilementPSJWT = getSignedJwt(servicePorts, smcbAuthCert, claims, signatureType, smcbHandle, true);
+    	
+    	return entitilementPSJWT;
     }
 }

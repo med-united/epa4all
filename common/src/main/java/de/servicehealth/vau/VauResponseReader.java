@@ -10,6 +10,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,10 @@ public class VauResponseReader {
             return new VauResponse(responseCode, generalError, generalError.getBytes(UTF_8), originHeaders);
         } else {
             byte[] vauBytes = vauClient.getVauStateMachine().decryptVauMessage(bytes);
+            if (responseCode >= 400 && contentTypeOpt.isPresent() && contentTypeOpt.get().contains("text/plain")) {
+                generalError = new String(vauBytes);
+                return new VauResponse(responseCode, generalError, generalError.getBytes(UTF_8), originHeaders);
+            }
 
             int i = 0;
             while (!payloadCondition(vauBytes, i) && (i + 4 < vauBytes.length)) {
@@ -88,6 +93,9 @@ public class VauResponseReader {
             byte[] payload = extractPayload(vauBytes, i, headers);
             return new VauResponse(status, null, payload, headers);
         }
+    }
+    public InputStream getUnencryptedInputStream(byte[] bytes) {
+    	return new ByteArrayInputStream(vauClient.getVauStateMachine().decryptVauMessage(bytes));
     }
 
     private byte[] extractPayload(byte[] vauBytes, int i, List<Pair<String, String>> headers) {

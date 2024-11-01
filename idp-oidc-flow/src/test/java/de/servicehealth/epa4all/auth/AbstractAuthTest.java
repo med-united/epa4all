@@ -4,6 +4,7 @@ import de.gematik.vau.lib.VauClientStateMachine;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.common.DockerAction;
 import de.servicehealth.epa4all.common.Utils;
+import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.model.GetNonce200Response;
 import de.servicehealth.vau.VauClient;
 import jakarta.inject.Inject;
@@ -23,6 +24,9 @@ public abstract class AbstractAuthTest {
     @Inject
     @ConfigProperty(name = "authorization-service.url")
     String authorizationServiceUrl;
+
+    @Inject
+    ClientFactory clientFactory;
 
     protected abstract <T> T buildApi(VauClient vauClient, Class<T> clazz, String url) throws Exception;
 

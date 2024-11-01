@@ -13,14 +13,13 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import java.util.TreeMap;
 
+import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.addProtocolHeader;
+import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.getProtocolHeaders;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
-import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.message.Message.RESPONSE_CODE;
 
-@SuppressWarnings("unchecked")
 public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
     public static final String VAU_ERROR = "VAU_ERROR";
@@ -57,17 +56,5 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
         } catch (Exception e) {
             throw new Fault(e);
         }
-    }
-
-    private void addProtocolHeader(Message message, String name, Object value) {
-        TreeMap<String, Object> map = (TreeMap<String, Object>) message.get(PROTOCOL_HEADERS);
-        map.put(name, List.of(value));
-    }
-
-    private List<Pair<String, String>> getProtocolHeaders(Message message) {
-        TreeMap<String, Object> map = (TreeMap<String, Object>) message.get(PROTOCOL_HEADERS);
-        return map.entrySet().stream()
-            .map(e -> Pair.of(e.getKey(), ((List<String>) e.getValue()).getFirst()))
-            .toList();
     }
 }

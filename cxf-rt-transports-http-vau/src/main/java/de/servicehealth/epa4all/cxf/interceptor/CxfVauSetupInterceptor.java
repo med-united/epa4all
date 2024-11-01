@@ -33,9 +33,9 @@ import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.HOST;
 import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
 
-public class CxfVauWriteInterceptor extends AbstractPhaseInterceptor<Message> {
+public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
-    private static final Logger log = LoggerFactory.getLogger(CxfVauWriteInterceptor.class);
+    private static final Logger log = LoggerFactory.getLogger(CxfVauSetupInterceptor.class);
 
     public static final String VAU_CID = "VAU-CID";
     public static final String VAU_DEBUG_SK1_S2C = "VAU-DEBUG-S_K1_s2c";
@@ -50,7 +50,7 @@ public class CxfVauWriteInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private final VauClient vauClient;
 
-    public CxfVauWriteInterceptor(VauClient vauClient) {
+    public CxfVauSetupInterceptor(VauClient vauClient) {
         super(Phase.SETUP);
         this.vauClient = vauClient;
     }
