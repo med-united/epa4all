@@ -8,7 +8,6 @@ import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.AppConfig;
-import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.smcb.SmcbManager;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import org.apache.commons.lang3.tuple.Pair;
