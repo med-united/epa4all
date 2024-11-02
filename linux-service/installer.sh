@@ -1,5 +1,5 @@
 #!/bin/bash
-mkdir /opt/epa4all/
+mkdir -p /opt/epa4all/webdav
 git pull
 mvn clean package -Dquarkus.package.type=fast-jar -DskipTests
 sudo cp -r rest-server/target/quarkus-app/* /opt/epa4all/

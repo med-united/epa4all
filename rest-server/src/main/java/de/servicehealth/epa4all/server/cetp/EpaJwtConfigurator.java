@@ -1,8 +1,8 @@
 package de.servicehealth.epa4all.server.cetp;
 
 import de.health.service.cetp.cardlink.JwtConfigurator;
-import de.servicehealth.config.api.UserRuntimeConfig;
-import de.servicehealth.epa4all.idp.IdpClient;
+import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.idp.IdpClient;
 
 import java.util.List;
 import java.util.Map;

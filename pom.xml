@@ -29,13 +29,12 @@
       <module>lib-vau</module>
       <module>cxf-rt-transports-http-vau</module>
       <module>api-xds</module>
-      <module>api-konnektor-epa</module>
+      <module>api-epa</module>
       <module>api-telematik</module>
       <module>information-service</module>
       <module>entitlement-service</module>
       <module>medication-service</module>
       <module>authorization-service</module>
-      <module>idp-oidc-flow</module>
       <module>lib-cetp</module>
       <module>rest-server</module>
     </modules>

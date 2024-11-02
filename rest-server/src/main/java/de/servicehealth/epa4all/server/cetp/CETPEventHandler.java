@@ -4,8 +4,9 @@ import de.health.service.cetp.AbstractCETPEventHandler;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.config.api.IUserConfigurations;
+import de.health.service.config.api.IUserConfigurations;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.smcb.SmcbManager;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 
 import org.jboss.logging.MDC;
@@ -24,20 +25,23 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private static final Logger log = Logger.getLogger(CETPEventHandler.class.getName());
 
     private final DefaultUserConfig defaultUserConfig;
-    private final VSDService pharmacyService;
     private final MultiEpaService multiEpaService;
+    private final SmcbManager smcbManager;
+    private final VSDService vsdService;
 
     public CETPEventHandler(
         CardlinkWebsocketClient cardlinkWebsocketClient,
         DefaultUserConfig defaultUserConfig,
-        VSDService pharmacyService,
-        MultiEpaService multiEpaService
+        MultiEpaService multiEpaService,
+        SmcbManager smcbManager,
+        VSDService vsdService
     ) {
         super(cardlinkWebsocketClient);
 
         this.defaultUserConfig = defaultUserConfig;
-        this.pharmacyService = pharmacyService;
         this.multiEpaService = multiEpaService;
+        this.vsdService = vsdService;
+        this.smcbManager = smcbManager;
     }
 
     @Override
@@ -76,7 +80,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
             try {
                 String cardHandle = paramsMap.get("CardHandle");
-                String xInsurantid = pharmacyService.getKVNR(correlationId, cardHandle, null, defaultUserConfig);
+                String xInsurantid = vsdService.getKVNR(correlationId, cardHandle, null, defaultUserConfig);
                 EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantid);
                 if (epaAPI == null) {
                     throw new IllegalStateException(String.format("Insurant [%s] ePA record is not found", xInsurantid));

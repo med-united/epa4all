@@ -2,7 +2,7 @@ package de.servicehealth.epa4all.server.rest;
 
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.epa4all.idp.IdpClient;
+import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import jakarta.inject.Inject;

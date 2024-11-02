@@ -1,7 +1,5 @@
 package de.servicehealth.utils;
 
-import de.servicehealth.config.api.IUserConfigurations;
-
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -27,22 +25,21 @@ public class SSLUtils {
         JKS, PKCS12
     }
 
-    public static SSLContext createSSLContext(IUserConfigurations userConfigurations, SSLContext defaultSSLContext) {
-        if (userConfigurations == null || userConfigurations.getClientCertificate() == null) {
+    public static SSLContext createSSLContext(
+        String certificate,
+        String certificatePassword,
+        SSLContext defaultSSLContext
+    ) {
+        if (certificate == null) {
             return defaultSSLContext;
         }
-        byte[] clientCertificateBytes = getClientCertificateBytes(userConfigurations);
+        byte[] clientCertificateBytes = getClientCertificateBytes(certificate);
         try (ByteArrayInputStream certInputStream = new ByteArrayInputStream(clientCertificateBytes)) {
-            SSLResult sslResult = initSSLContext(certInputStream, userConfigurations.getClientCertificatePassword());
+            SSLResult sslResult = initSSLContext(certInputStream, certificatePassword);
             return sslResult.getSslContext();
         } catch (Exception e) {
             return defaultSSLContext;
         }
-    }
-
-    public static SSLContext createSSLContext(InputStream certInputStream, String certPass) throws Exception {
-        SSLResult sslResult = initSSLContext(certInputStream, certPass);
-        return sslResult.getSslContext();
     }
 
     public static SSLResult initSSLContext(InputStream certInputStream, String certPass) throws Exception {
@@ -60,8 +57,7 @@ public class SSLUtils {
         return new SSLResult(sslContext, keyManagerFactory);
     }
 
-    public static byte[] getClientCertificateBytes(IUserConfigurations userConfigurations) {
-        String base64UrlCertificate = userConfigurations.getClientCertificate();
+    public static byte[] getClientCertificateBytes(String base64UrlCertificate) {
         String clientCertificateString = base64UrlCertificate.split(",")[1];
         return Base64.getDecoder().decode(clientCertificateString);
     }

@@ -3,11 +3,12 @@ package de.servicehealth.epa4all.server.cetp;
 import de.health.service.cetp.CETPEventHandlerFactory;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.config.KonnektorConfig;
-import de.servicehealth.config.KonnektorDefaultConfig;
-import de.servicehealth.epa4all.idp.IdpClient;
+import de.health.service.cetp.config.KonnektorConfig;
+import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.smcb.SmcbManager;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -17,22 +18,25 @@ import jakarta.inject.Inject;
 public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
     private final IdpClient idpClient;
+    private final VSDService vsdService;
+    private final SmcbManager smcbManager;
     private final MultiEpaService multiEpaService;
-    private final VSDService pharmacyService;
     private final DefaultUserConfig defaultUserConfig;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
     public CETPServerHandlerFactory(
         IdpClient idpClient,
+        VSDService vsdService,
+        SmcbManager smcbManager,
         MultiEpaService multiEpaService,
-        VSDService pharmacyService,
         DefaultUserConfig defaultUserConfig,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
         this.idpClient = idpClient;
+        this.vsdService = vsdService;
+        this.smcbManager = smcbManager;
         this.multiEpaService = multiEpaService;
-        this.pharmacyService = pharmacyService;
         this.defaultUserConfig = defaultUserConfig;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
     }
@@ -45,7 +49,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
             new EpaJwtConfigurator(userRuntimeConfig, idpClient)
         );
         return new ChannelInboundHandler[] {
-            new CETPEventHandler(cardlinkWebsocketClient, defaultUserConfig, pharmacyService, multiEpaService)
+            new CETPEventHandler(cardlinkWebsocketClient, defaultUserConfig, multiEpaService, smcbManager, vsdService)
         };
     }
 }

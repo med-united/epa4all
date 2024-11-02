@@ -1,9 +1,9 @@
 package de.servicehealth.epa4all.server.config;
 
-import de.servicehealth.config.KonnektorDefaultConfig;
-import de.servicehealth.config.api.IRuntimeConfig;
-import de.servicehealth.config.api.IUserConfigurations;
-import de.servicehealth.config.api.UserRuntimeConfig;
+import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.config.api.IRuntimeConfig;
+import de.health.service.config.api.IUserConfigurations;
+import de.health.service.config.api.UserRuntimeConfig;
 
 public class AppConfig implements UserRuntimeConfig {
 

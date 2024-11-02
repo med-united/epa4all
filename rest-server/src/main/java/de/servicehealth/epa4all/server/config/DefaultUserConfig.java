@@ -1,10 +1,10 @@
 package de.servicehealth.epa4all.server.config;
 
-import de.servicehealth.config.KonnektorDefaultConfig;
-import de.servicehealth.config.api.IRuntimeConfig;
-import de.servicehealth.config.api.IUserConfigurations;
-import de.servicehealth.config.api.UserRuntimeConfig;
-import de.servicehealth.epa4all.idp.IdpConfig;
+import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.config.api.IRuntimeConfig;
+import de.health.service.config.api.IUserConfigurations;
+import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.idp.IdpConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
@@ -70,7 +70,7 @@ public class DefaultUserConfig implements UserRuntimeConfig {
 
             @Override
             public String getClientCertificate() {
-                return null;
+                return null; // defaultSSLContext will be used from konnektor.default.cert.auth.store.file
             }
 
             @Override
