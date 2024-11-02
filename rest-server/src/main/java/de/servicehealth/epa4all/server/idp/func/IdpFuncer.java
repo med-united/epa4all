@@ -11,7 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.Getter;
 
-import static de.servicehealth.epa4all.server.idp.action.AuthAction.USER_AGENT;
+import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 
 @Getter
 @ApplicationScoped
@@ -30,7 +30,8 @@ public class IdpFuncer {
     }
 
     public IdpFunc init(String xInsurantId, UserRuntimeConfig userRuntimeConfig) {
-        EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantId);
+        multiEpaService.setXInsurantid(xInsurantId);
+        EpaAPI epaAPI = multiEpaService.getEpaAPI();
         AuthorizationSmcBApi authorizationSmcBApi = epaAPI.getAuthorizationSmcBApi();
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         return new IdpFunc(

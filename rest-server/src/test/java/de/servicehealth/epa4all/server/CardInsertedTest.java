@@ -1,14 +1,17 @@
 package de.servicehealth.epa4all.server;
 
 import de.gematik.ws.conn.eventservice.v7.Event;
+import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
-import de.health.service.cetp.domain.eventservice.event.DecodeResult;
-import de.service.health.api.epa4all.MultiEpaService;
 import de.health.service.cetp.config.KonnektorConfig;
+import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.config.api.IUserConfigurations;
+import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
+import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.smcb.SmcbManager;
 import de.servicehealth.epa4all.server.vsds.VSDService;
@@ -38,6 +41,9 @@ public class CardInsertedTest {
     DefaultUserConfig defaultUserConfig;
 
     @Inject
+    KonnektorDefaultConfig konnektorDefaultConfig;
+
+    @Inject
     EventMapper eventMapper;
 
     @Inject
@@ -46,13 +52,18 @@ public class CardInsertedTest {
     @Inject
     MultiEpaService multiEpaService;
 
+    @Inject
+    IKonnektorClient konnektorClient;
+
     @Test
     public void epaPdfDocumentIsSentToCardlink() throws Exception {
         CardlinkWebsocketClient cardlinkWebsocketClient = mock(CardlinkWebsocketClient.class);
         VSDService vsdService = mock(VSDService.class);
         when(vsdService.getKVNR(any(), any(), any(), any())).thenReturn("Z123456789");
+
+        AppConfig appConfig = new AppConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
-            cardlinkWebsocketClient, defaultUserConfig, multiEpaService, smcbManager, vsdService
+            cardlinkWebsocketClient, konnektorClient, multiEpaService, smcbManager, vsdService, appConfig
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 

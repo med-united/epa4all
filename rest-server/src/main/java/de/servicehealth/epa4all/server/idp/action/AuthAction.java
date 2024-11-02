@@ -1,14 +1,12 @@
 package de.servicehealth.epa4all.server.idp.action;
 
 import de.gematik.idp.authentication.AuthenticationChallenge;
-import de.servicehealth.config.api.UserRuntimeConfig;
 
 import java.security.cert.X509Certificate;
 
 public interface AuthAction {
 
     String URN_BSI_TR_03111_ECDSA = "urn:bsi:tr:03111:ecdsa";
-    String USER_AGENT = UserRuntimeConfig.getUserAgent();
 
     void execute(
         AuthenticationChallenge authChallenge,

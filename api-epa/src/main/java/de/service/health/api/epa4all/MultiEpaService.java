@@ -1,12 +1,12 @@
 package de.service.health.api.epa4all;
 
 import ca.uhn.fhir.context.FhirContext;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import de.gematik.vau.lib.VauClientStateMachine;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.EntitlementsApi;
-import de.servicehealth.config.api.UserRuntimeConfig;
-import de.servicehealth.epa4all.cxf.VauClientFactory;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
@@ -22,17 +22,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
-
 import org.apache.http.client.fluent.Executor;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 import static de.servicehealth.utils.URLUtils.getBaseUrl;
 
 @ApplicationScoped
@@ -47,14 +43,14 @@ public class MultiEpaService {
     private final EpaConfig epaConfig;
     private final ClientFactory clientFactory;
     private final EServicePortProvider eServicePortProvider;
-    
+
     @Getter
     private String xInsurantid;
-    
+
     private Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
-    	    .maximumSize(1000)
-    	    .expireAfterWrite(10, TimeUnit.MINUTES)
-    	    .build();
+        .maximumSize(1000)
+        .expireAfterWrite(10, TimeUnit.MINUTES)
+        .build();
 
     @Inject
     public MultiEpaService(
@@ -77,7 +73,7 @@ public class MultiEpaService {
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
                     VauClient vauClient = new VauClient(new VauClientStateMachine());
-                    
+
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
                     IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl, vauClient);
 
@@ -130,35 +126,34 @@ public class MultiEpaService {
     private String getBackendUrl(String backend, String serviceUrl) {
         return serviceUrl.replace("[epa-backend]", backend);
     }
-    
+
     public void setXInsurantid(String xInsurantid) {
-    	this.xInsurantid = xInsurantid;
-    	EpaAPI epaAPI = getEpaAPI();
-    	if(epaAPI != null) {    		
-    		epaAPI.setXInsurantid(xInsurantid);
-    	}
+        this.xInsurantid = xInsurantid;
+        EpaAPI epaAPI = getEpaAPI();
+        if (epaAPI != null) {
+            epaAPI.setXInsurantid(xInsurantid);
+        }
     }
 
     public EpaAPI getEpaAPI() {
-    	
-    	EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(xInsurantid);
-    	if(epaAPI != null) {
-    		return epaAPI;
-    	} else {
-	        for (EpaAPI api : epaBackendMap.values()) {
-	            if (hasEpaRecord(api, xInsurantid)) {
-	            	xInsurantid2ePAApi.put(xInsurantid, api);
-	                return api;
-	            }
-	        }
-	        return null;
-    	}
+        EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(xInsurantid);
+        if (epaAPI != null) {
+            return epaAPI;
+        } else {
+            for (EpaAPI api : epaBackendMap.values()) {
+                if (hasEpaRecord(api, xInsurantid)) {
+                    xInsurantid2ePAApi.put(xInsurantid, api);
+                    return api;
+                }
+            }
+            return null;
+        }
     }
 
     private boolean hasEpaRecord(EpaAPI api, String xInsurantid) {
         boolean result = false;
         try {
-            api.getAccountInformationApi().getRecordStatus(xInsurantid, UserRuntimeConfig.getUserAgent());
+            api.getAccountInformationApi().getRecordStatus(xInsurantid, USER_AGENT);
             result = true;
         } catch (Exception e) {
             log.info(String.format(

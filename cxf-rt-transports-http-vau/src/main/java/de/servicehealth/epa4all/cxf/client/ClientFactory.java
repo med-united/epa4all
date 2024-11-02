@@ -37,6 +37,9 @@ import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_A
 @ApplicationScoped
 public class ClientFactory {
 
+    // PU epa.health/1.0.0 ServiceHealthGmbH/GEMIncenereS2QmFN83P
+    public static final String USER_AGENT = "GEMIncenereSud1PErUR/1.0.0";
+
     void onStart(@Observes StartupEvent ev) {
         initGlobalBus();
     }

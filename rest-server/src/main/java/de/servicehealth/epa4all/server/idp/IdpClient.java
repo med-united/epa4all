@@ -8,14 +8,16 @@ import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.field.CodeChallengeMethod;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.eventservice.card.Card;
+import de.health.service.cetp.domain.eventservice.card.CardType;
+import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.MultiEpaService;
-import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.idp.action.AuthAction;
 import de.servicehealth.epa4all.server.idp.action.LoginAction;
 import de.servicehealth.epa4all.server.idp.action.VauNpAction;
 import de.servicehealth.epa4all.server.idp.func.IdpFunc;
 import de.servicehealth.epa4all.server.idp.func.IdpFuncer;
+import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -25,6 +27,7 @@ import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jose4j.jwt.JwtClaims;
 
 import java.security.Security;
@@ -38,11 +41,11 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 import static de.servicehealth.epa4all.server.idp.action.AuthAction.URN_BSI_TR_03111_ECDSA;
-import static de.servicehealth.epa4all.server.idp.action.AuthAction.USER_AGENT;
 import static de.servicehealth.epa4all.server.idp.utils.IdpUtils.getSignedJwt;
 
 @ApplicationScoped
@@ -69,6 +72,8 @@ public class IdpClient {
     // A_24883-02 - clientAttest als ECDSA-Signatur
     private String signatureType = URN_BSI_TR_03111_ECDSA;
 
+    @Inject ManagedExecutor managedExecutor;
+
     @Inject
     public IdpClient(
         IdpFuncer idpFuncer,
@@ -87,9 +92,26 @@ public class IdpClient {
     }
 
     void onStart(@Observes StartupEvent ev) {
-        discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
-            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-        );
+        // Do this async
+        managedExecutor.submit(() -> {
+            boolean worked = false;
+            while(!worked) {
+                try {
+                    log.info("Downloading: "+idpConfig.getDiscoveryDocumentUrl());
+                    discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
+                        idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+                    );
+                    worked = true;
+                } catch(Exception ex) {
+                    log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        log.log(Level.SEVERE, "Could not wait.", e);
+                    }
+                }
+            }
+        });
     }
 
     public void getVauNp(UserRuntimeConfig userRuntimeConfig, Consumer<String> vauNPConsumer) throws Exception {
@@ -142,13 +164,17 @@ public class IdpClient {
 
     }
 
+    private String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {
+        List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
+        return cards.getFirst().getCardHandle();
+    }
+
     public void processVauNPAction(
         UserRuntimeConfig userRuntimeConfig,
         AuthAction authAction,
         IdpFunc idpFunc
     ) throws Exception {
-        List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
-        String smcbHandle = cards.getFirst().getCardHandle();
+        String smcbHandle = getSmcbHandle(userRuntimeConfig);
 
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
         String nonce = idpFunc.getNonceSupplier().get();
@@ -162,7 +188,7 @@ public class IdpClient {
         JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.NONCE.getJoseName(), nonce);
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
-        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 300);
+        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
 
         // A_24882-01 - Signatur clientAttest
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
@@ -227,5 +253,32 @@ public class IdpClient {
                 );
             }
         );
+    }
+
+    /**
+     * Content for PS originated entitlements:</br>
+     *   - protected_header contains:
+     *     - "typ": "JWT"
+     *     - "alg": "ES256" or "PS256"
+     *     - "x5c": signature certificate (C.HCI.AUT from smc-b of requestor)
+     *   - payload claims:
+     *     - "iat": issued at timestamp
+     *     - "exp": expiry timestamp (always iat + 20min)
+     *     - "auditEvidence": proof-of-audit received from VSDM Service ('Prüfziffer des VSDM Prüfungsnachweises')
+     *   - signature contains token signature
+     *   example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsIng1YyI6WyJNSUlEeXpDQ0EzS2dBd0lCQWdJSEFRMnAvOXp2SXpBS0JnZ3Foa2pPUFFRREFqQ0JtVEVMTUFrR0ExVUVCaE1DUkVVeEh6QWRCZ05WQkFvTUZtZGxiV0YwYVdzZ1IyMWlTQ0JPVDFRdFZrRk1TVVF4U0RCR0JnTlZCQXNNUDBsdWMzUnBkSFYwYVc5dUlHUmxjeUJIWlhOMWJtUm9aV2wwYzNkbGMyVnVjeTFEUVNCa1pYSWdWR1ZzWlcxaGRHbHJhVzVtY21GemRISjFhM1IxY2pFZk1CMEdBMVVFQXd3V1IwVk5MbE5OUTBJdFEwRTVJRlJGVTFRdFQwNU1XVEFlRncweU1EQXhNalF3TURBd01EQmFGdzB5TkRFeU1URXlNelU1TlRsYU1JSGZNUXN3Q1FZRFZRUUdFd0pFUlRFVE1CRUdBMVVFQnd3S1I4TzJkSFJwYm1kbGJqRU9NQXdHQTFVRUVRd0ZNemN3T0RNeEhEQWFCZ05WQkFrTUUwUmhibnBwWjJWeUlGTjBjbUhEbjJVZ01UTXhLakFvQmdOVkJBb01JVE10VTAxRExVSXRWR1Z6ZEd0aGNuUmxMVGc0TXpFeE1EQXdNREV4TmpNMU1qRWRNQnNHQTFVRUJSTVVPREF5TnpZNE9ETXhNVEF3TURBeE1UWXpOVEl4RVRBUEJnTlZCQVFNQ0U1MWJHeHRZWGx5TVE4d0RRWURWUVFxREFaS2RXeHBZVzR4SGpBY0JnTlZCQU1NRlVKaFpDQkJjRzkwYUdWclpWUkZVMVF0VDA1TVdUQmFNQlFHQnlxR1NNNDlBZ0VHQ1Nza0F3TUNDQUVCQndOQ0FBUWU5bmE1VDEyOGNmOGI4VTVkVlYzdGpBQk1QdkttZHIzYVRjRTZwU1ZGdUtGTXJIM3RnYVhoN2pNVHhiOEg3ZVZ5bUtyc2lLUGlJZ2xCK0F2UEFTaXVvNElCV2pDQ0FWWXdEQVlEVlIwVEFRSC9CQUl3QURBNEJnZ3JCZ0VGQlFjQkFRUXNNQ293S0FZSUt3WUJCUVVITUFHR0hHaDBkSEE2THk5bGFHTmhMbWRsYldGMGFXc3VaR1V2YjJOemNDOHdFd1lEVlIwbEJBd3dDZ1lJS3dZQkJRVUhBd0l3SHdZRFZSMGpCQmd3Rm9BVVlvaWF4Tjc4by9PVE9jdWZrT2NUbWoySnpIVXdIUVlEVlIwT0JCWUVGQTJZR1B4RTJYcUhlYUZSSURRRDRleXR6d0xGTUE0R0ExVWREd0VCL3dRRUF3SUhnREFnQmdOVkhTQUVHVEFYTUFvR0NDcUNGQUJNQklFak1Ba0dCeXFDRkFCTUJFMHdnWVFHQlNza0NBTURCSHN3ZWFRb01DWXhDekFKQmdOVkJBWVRBa1JGTVJjd0ZRWURWUVFLREE1blpXMWhkR2xySUVKbGNteHBiakJOTUVzd1NUQkhNQmNNRmNPV1ptWmxiblJzYVdOb1pTQkJjRzkwYUdWclpUQUpCZ2NxZ2hRQVRBUTJFeUV6TFZOTlF5MUNMVlJsYzNScllYSjBaUzA0T0RNeE1UQXdNREF4TVRZek5USXdDZ1lJS29aSXpqMEVBd0lEUndBd1JBSWdBMStLWERpWXkyWTBXdkFjUk5URzRmNkNaaVBQSndiWlBrTmJnNUU3ekVVQ0lBYVU0MEFLMmxpVGZMSGkrSjZERCtIVWVLUEdaVGh4OUhwbVFybHJtbjhqIl19"
+     */
+    public String createEntitlementPSJWT(String auditEvidence, UserRuntimeConfig userRuntimeConfig) throws Exception {
+        JwtClaims claims = new JwtClaims();
+        claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
+        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
+        claims.setClaim("auditEvidence", auditEvidence);
+
+        String smcbHandle = getSmcbHandle(userRuntimeConfig);
+        Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
+        X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
+
+        IdpFunc idpFunc = idpFuncer.init("X110486750", userRuntimeConfig);
+        return getSignedJwt(smcbAuthCert, claims, signatureType, smcbHandle, true, idpFunc);
     }
 }

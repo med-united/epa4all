@@ -1,22 +1,22 @@
 package de.servicehealth.epa4all.server.rest;
 
-import java.io.IOException;
-import java.util.logging.Logger;
-
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.config.api.UserRuntimeConfig;
-import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.ValidToResponseType;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
+import java.io.IOException;
+import java.util.logging.Logger;
+
+import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 
 public abstract class AbstractResource {
 	
@@ -48,9 +48,9 @@ public abstract class AbstractResource {
 		
 		EntitlementRequestType entitlementRequest = new EntitlementRequestType();
 		String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
-		String entitilementPSJWT = idpClient.createEntitilementPSJWT(pz, defaultUserConfig);
-		entitlementRequest.setJwt(entitilementPSJWT);
-		ValidToResponseType response = epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, UserRuntimeConfig.getUserAgent(), entitlementRequest);
+		String entitlementPSJWT = idpClient.createEntitlementPSJWT(pz, defaultUserConfig);
+		entitlementRequest.setJwt(entitlementPSJWT);
+		ValidToResponseType response = epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, USER_AGENT, entitlementRequest);
 		log.info(response.toString());
 		return epaAPI;
 	}

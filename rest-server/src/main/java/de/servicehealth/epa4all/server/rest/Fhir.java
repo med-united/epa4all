@@ -1,18 +1,18 @@
 package de.servicehealth.epa4all.server.rest;
 
-import java.io.ByteArrayInputStream;
-
 import de.service.health.api.epa4all.EpaAPI;
-import de.servicehealth.config.api.UserRuntimeConfig;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+import java.io.ByteArrayInputStream;
+
+import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
+
 @Path("fhir")
 public class Fhir extends AbstractResource {
-
 
 	@GET
 	@Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
@@ -20,11 +20,10 @@ public class Fhir extends AbstractResource {
 		try {
 			EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
 			
-			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaAPI.getXInsurantid(), UserRuntimeConfig.getUserAgent(), epaAPI.getNp());
+			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaAPI.getXInsurantid(), USER_AGENT, epaAPI.getNp());
 			return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
 		} catch (Exception e) {
 			throw new WebApplicationException(e);
 		}
-		
 	}
 }
