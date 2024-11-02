@@ -2,7 +2,7 @@ package de.servicehealth.epa4all.cxf.client;
 
 import de.servicehealth.epa4all.cxf.interceptor.CxfHeadersInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
-import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauReaderProvider;
@@ -10,6 +10,9 @@ import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbWriterProvider;
 import de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory;
 import de.servicehealth.vau.VauClient;
+import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
@@ -27,27 +30,29 @@ import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import java.util.List;
 
+import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_ALIVE;
 
+@ApplicationScoped
 public class ClientFactory {
 
-    static {
+    void onStart(@Observes StartupEvent ev) {
         initGlobalBus();
     }
 
-    private static void initGlobalBus() {
+    private void initGlobalBus() {
         Bus globalBus = BusFactory.getDefaultBus();
         globalBus.setProperty("force.urlconnection.http.conduit", false);
         DestinationFactoryManager dfm = globalBus.getExtension(DestinationFactoryManager.class);
         HTTPVauTransportFactory customTransport = new HTTPVauTransportFactory();
-        dfm.registerDestinationFactory(HTTPVauTransportFactory.TRANSPORT_IDENTIFIER, customTransport);
+        dfm.registerDestinationFactory(TRANSPORT_IDENTIFIER, customTransport);
 
         ConduitInitiatorManager extension = globalBus.getExtension(ConduitInitiatorManager.class);
-        extension.registerConduitInitiator(HTTPVauTransportFactory.TRANSPORT_IDENTIFIER, customTransport);
+        extension.registerConduitInitiator(TRANSPORT_IDENTIFIER, customTransport);
     }
 
-    public static <T> T createPlainClient(Class<T> clazz, String url) throws Exception {
+    public <T> T createPlainClient(Class<T> clazz, String url) throws Exception {
         List<Object> providers = List.of(new JsonbReaderProvider(), new JsonbWriterProvider());
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
@@ -58,7 +63,7 @@ public class ClientFactory {
         return api;
     }
 
-    public static <T> T createProxyClient(VauClient vauClient, Class<T> clazz, String url) throws Exception {
+    public <T> T createProxyClient(VauClient vauClient, Class<T> clazz, String url) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
         JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauClient);
         JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
@@ -66,7 +71,7 @@ public class ClientFactory {
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
             WebClient.getConfig(api),
-            List.of(new LoggingOutInterceptor(), new CxfVauWriteInterceptor(vauClient)),
+            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauClient)),
             List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauClient))
         );
         return api;
@@ -92,8 +97,5 @@ public class ClientFactory {
         // to stick to HttpClientHTTPConduit (see HttpClientHTTPConduit.setupConnection)
         tlsParams.setSslContext(createFakeSSLContext());
         conduit.setTlsClientParameters(tlsParams);
-    }
-
-    private ClientFactory() {
     }
 }

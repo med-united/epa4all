@@ -1,46 +1,26 @@
 package de.servicehealth.epa4all.server.rest;
 
+import java.io.ByteArrayInputStream;
+
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.epa4all.server.idp.IdpClient;
-import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.vsds.VSDService;
-import jakarta.inject.Inject;
+import de.servicehealth.config.api.UserRuntimeConfig;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
-import java.io.ByteArrayInputStream;
-
 @Path("fhir")
-public class Fhir {
-	
-	@Inject
-	VSDService vsdService;
-	
-	@Inject
-	DefaultUserConfig defaultUserConfig;
-	
-	@Inject
-    MultiEpaService multiEpaService;
-	
-	@Inject
-	IdpClient idpClient;
+public class Fhir extends AbstractResource {
+
 
 	@GET
 	@Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
 	public Response get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
 		try {
-			String xInsurantid = vsdService.getKVNR(konnektor, egkHandle, null, defaultUserConfig);
-			EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantid);
-			if(epaAPI == null) {
-				return Response.serverError().entity("No epa found for: "+xInsurantid).build();
-			}
-			String np = idpClient.getVauNpSync(defaultUserConfig);
+			EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
 			
-			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, "ClientID", np);
+			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaAPI.getXInsurantid(), UserRuntimeConfig.getUserAgent(), epaAPI.getNp());
 			return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
 		} catch (Exception e) {
 			throw new WebApplicationException(e);

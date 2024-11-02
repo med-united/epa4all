@@ -13,19 +13,21 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import java.util.TreeMap;
+import java.util.logging.Logger;
 
+import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.addProtocolHeader;
+import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.getProtocolHeaders;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
-import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.message.Message.RESPONSE_CODE;
 
-@SuppressWarnings("unchecked")
 public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
     public static final String VAU_ERROR = "VAU_ERROR";
 
     private final VauResponseReader vauResponseReader;
+    
+    private static Logger log = Logger.getLogger(CxfVauReadInterceptor.class.getName());
 
     public CxfVauReadInterceptor(VauClient vauClient) {
         super(Phase.PROTOCOL);
@@ -51,23 +53,12 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             }
             byte[] payload = vauResponse.payload();
             if (payload != null) {
+            	log.info("Response: "+new String(payload));
                 message.setContent(InputStream.class, new ByteArrayInputStream(payload));
                 addProtocolHeader(message, CONTENT_LENGTH, payload.length);
             }
         } catch (Exception e) {
             throw new Fault(e);
         }
-    }
-
-    private void addProtocolHeader(Message message, String name, Object value) {
-        TreeMap<String, Object> map = (TreeMap<String, Object>) message.get(PROTOCOL_HEADERS);
-        map.put(name, List.of(value));
-    }
-
-    private List<Pair<String, String>> getProtocolHeaders(Message message) {
-        TreeMap<String, Object> map = (TreeMap<String, Object>) message.get(PROTOCOL_HEADERS);
-        return map.entrySet().stream()
-            .map(e -> Pair.of(e.getKey(), ((List<String>) e.getValue()).getFirst()))
-            .toList();
     }
 }

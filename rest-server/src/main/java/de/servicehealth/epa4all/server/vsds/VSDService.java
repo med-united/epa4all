@@ -15,11 +15,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.xml.bind.DatatypeConverter;
 import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import static de.servicehealth.epa4all.server.vsds.PersoenlicheVersichertendateXmlUtils.documentBuilder;
 import static de.servicehealth.epa4all.server.vsds.PersoenlicheVersichertendateXmlUtils.getPatient;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -52,9 +54,7 @@ public class VSDService {
     ) throws Exception {
         ReadVSDResponse readVSDResponse = readVSD(correlationId, egkHandle, smcbHandle, runtimeConfig);
 
-        byte[] pnw = readVSDResponse.getPruefungsnachweis();
-        String decodedXMLFromPNW = new String(new GZIPInputStream(new ByteArrayInputStream(pnw)).readAllBytes());
-        Document doc = documentBuilder.parse(new ByteArrayInputStream(decodedXMLFromPNW.getBytes()));
+        Document doc = createDocument(readVSDResponse);
         String e = doc.getElementsByTagName("E").item(0).getTextContent();
         if (e.equals("3")) {
             UCPersoenlicheVersichertendatenXML patient = getPatient(readVSDResponse.getPersoenlicheVersichertendaten());
@@ -62,11 +62,25 @@ public class VSDService {
             log.fine("VSDM result: " + e + " VersichertenID: " + versichertenID);
             return versichertenID;
         } else {
-            String pn = doc.getElementsByTagName("PZ").item(0).getTextContent();
-            String base64PN = new String(DatatypeConverter.parseBase64Binary(pn));
-            return base64PN.substring(0, 10);
+            String kvnr = getKVNRFromDocument(doc);
+			return kvnr;
         }
     }
+
+	public static String getKVNRFromDocument(Document doc) {
+		String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
+		byte[] base64Binary = DatatypeConverter.parseBase64Binary(pz);
+		String base64PN = new String(base64Binary);
+		String kvnr = base64PN.substring(0, 10);
+		return kvnr;
+	}
+
+	public static Document createDocument(ReadVSDResponse readVSDResponse) throws IOException, SAXException {
+		byte[] pnw = readVSDResponse.getPruefungsnachweis();
+        String decodedXMLFromPNW = new String(new GZIPInputStream(new ByteArrayInputStream(pnw)).readAllBytes());
+        Document doc = documentBuilder.parse(new ByteArrayInputStream(decodedXMLFromPNW.getBytes()));
+		return doc;
+	}
 
     public ReadVSDResponse readVSD(
         String correlationId,

@@ -7,7 +7,6 @@ import org.apache.cxf.transport.http.DestinationRegistryImpl;
 import org.apache.cxf.transport.http.HTTPConduitFactory;
 import org.apache.cxf.transport.http.HTTPTransportFactory;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,9 +15,11 @@ public class HTTPVauTransportFactory extends HTTPTransportFactory {
 
     public static final String TRANSPORT_IDENTIFIER = "http://cxf.apache.org/transports/httpsvau";
 
-    public static final List<String> DEFAULT_NAMESPACES = Collections.singletonList(TRANSPORT_IDENTIFIER);
+    public static final List<String> DEFAULT_NAMESPACES = List.of(
+        TRANSPORT_IDENTIFIER
+    );
 
-    private static final Set<String> URI_PREFIXES = Collections.singleton("https+vau://");
+    private static final Set<String> URI_PREFIXES = Set.of("https+vau://");
 
     @Getter
     private final Set<String> uriPrefixes = new HashSet<>(URI_PREFIXES);

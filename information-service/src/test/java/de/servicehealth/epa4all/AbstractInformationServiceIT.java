@@ -21,6 +21,9 @@ public abstract class AbstractInformationServiceIT {
     @ConfigProperty(name = "information-service.url")
     String informationServiceUrl;
 
+    @Inject
+    ClientFactory clientFactory;
+
     private void runWithDocker(DockerAction action) throws Exception {
         Utils.runWithDocker(INFORMATION_SERVICE, action);
     }
@@ -28,14 +31,14 @@ public abstract class AbstractInformationServiceIT {
     @Test
     public void getRecordStatusWorks() throws Exception {
         runWithDocker(() -> {
-            AccountInformationApi api = ClientFactory.createPlainClient(AccountInformationApi.class, informationServiceUrl);
+            AccountInformationApi api = clientFactory.createPlainClient(AccountInformationApi.class, informationServiceUrl);
             assertDoesNotThrow(() -> api.getRecordStatus("Z1234567890", "PSSIM123456789012345/1.2.4"));
         });
     }
     @Test
     public void getConsentDecisionWorks() throws Exception {
         runWithDocker(() -> {
-            ConsentDecisionsApi api = ClientFactory.createPlainClient(ConsentDecisionsApi.class, informationServiceUrl);
+            ConsentDecisionsApi api = clientFactory.createPlainClient(ConsentDecisionsApi.class, informationServiceUrl);
             GetConsentDecisionInformation200Response response = api.getConsentDecisionInformation("Z1234567890", "PSSIM123456789012345/1.2.4");
             assertFalse(response.getData().isEmpty());
         });

@@ -2,13 +2,17 @@ package de.service.health.api.epa4all;
 
 import de.servicehealth.epa4all.cxf.VauClientFactory;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
-import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadSoapInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
+import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteSoapInterceptor;
 import de.servicehealth.vau.VauClient;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.XDSDocumentService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.xml.ws.soap.SOAPBinding;
+
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
@@ -17,52 +21,73 @@ import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.apache.cxf.ws.addressing.WSAddressingFeature;
 
 import javax.xml.namespace.QName;
-import java.util.List;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_ALIVE;
 
 @ApplicationScoped
 public class EServicePortProvider {
 
-    private final VauClient vauClient;
 
     @Inject
-    public EServicePortProvider(VauClientFactory vauClientFactory) {
-        this.vauClient = vauClientFactory.getVauClient();
+    public EServicePortProvider() {
     }
 
     // TODO Feature
 
-    public IDocumentManagementPortType getDocumentManagementPortType(String documentManagementUrl) throws Exception {
+    public IDocumentManagementPortType getDocumentManagementPortType(String documentManagementUrl, VauClient vauClient) throws Exception {
         IDocumentManagementPortType documentManagement = createXDSDocumentPortType(
-            documentManagementUrl, IDocumentManagementPortType.class
+            documentManagementUrl, IDocumentManagementPortType.class, vauClient
         );
         initPortType(documentManagement);
         return documentManagement;
     }
 
-    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(String documentManagementUrl) throws Exception {
+    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(String documentManagementUrl, VauClient vauClient) throws Exception {
         IDocumentManagementInsurantPortType documentManagementInsurant = createXDSDocumentPortType(
-            documentManagementUrl, IDocumentManagementInsurantPortType.class
+            documentManagementUrl, IDocumentManagementInsurantPortType.class, vauClient
         );
         initPortType(documentManagementInsurant);
         return documentManagementInsurant;
     }
 
-    private <T> T createXDSDocumentPortType(String address, Class<T> clazz) {
+    private <T> T createXDSDocumentPortType(String address, Class<T> clazz, VauClient vauClient) {
         JaxWsProxyFactoryBean jaxWsProxyFactory = new JaxWsProxyFactoryBean();
+        jaxWsProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
         jaxWsProxyFactory.setServiceClass(XDSDocumentService.class);
         jaxWsProxyFactory.setServiceName(new QName("urn:ihe:iti:xds-b:2007", "XDSDocumentService"));
+        // https://gemspec.gematik.de/docs/gemSpec/gemSpec_Aktensystem_ePAfueralle/latest/#A_15186
+        jaxWsProxyFactory.getFeatures().add(new WSAddressingFeature());
         jaxWsProxyFactory.setAddress(address);
-        jaxWsProxyFactory.getOutInterceptors().addAll(List.of(new LoggingOutInterceptor(), new CxfVauWriteInterceptor(vauClient)));
-        jaxWsProxyFactory.getInInterceptors().addAll(List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauClient)));
+        Map<String,Object> props = new HashMap<String, Object>();
+	    // Boolean.TRUE or "true" will work as the property value below
+	    props.put("mtom-enabled", Boolean.TRUE); 
+        jaxWsProxyFactory.setProperties(props);
+//         jaxWsProxyFactory.setBindingId(SOAPBinding.SOAP12HTTP_BINDING);
+
+        
+        
+        jaxWsProxyFactory.getOutInterceptors().addAll(
+            List.of(
+                new LoggingOutInterceptor(),
+                new CxfVauSetupInterceptor(vauClient),
+                new CxfVauWriteSoapInterceptor(vauClient)
+            )
+        );
+        jaxWsProxyFactory.getInInterceptors().addAll(List.of(new LoggingInInterceptor(), new CxfVauReadSoapInterceptor(vauClient)));
         return jaxWsProxyFactory.create(clazz);
     }
 
     private void initPortType(Object portType) throws Exception {
+    	
         Client client = ClientProxy.getClient(portType);
 
         // TODO ClientFactory.initClient()
