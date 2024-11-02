@@ -26,7 +26,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
     public static final String VAU_ERROR = "VAU_ERROR";
 
     private final VauResponseReader vauResponseReader;
-    
+
     private static Logger log = Logger.getLogger(CxfVauReadInterceptor.class.getName());
 
     public CxfVauReadInterceptor(VauClient vauClient) {
@@ -53,7 +53,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             }
             byte[] payload = vauResponse.payload();
             if (payload != null) {
-            	log.info("Response: "+new String(payload));
+                log.info("Response: " + new String(payload));
                 message.setContent(InputStream.class, new ByteArrayInputStream(payload));
                 addProtocolHeader(message, CONTENT_LENGTH, payload.length);
             }

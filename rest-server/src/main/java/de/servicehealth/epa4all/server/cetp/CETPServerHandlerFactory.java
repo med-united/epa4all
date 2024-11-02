@@ -1,13 +1,14 @@
 package de.servicehealth.epa4all.server.cetp;
 
 import de.health.service.cetp.CETPEventHandlerFactory;
+import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
+import de.health.service.cetp.config.KonnektorConfig;
+import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.config.KonnektorConfig;
-import de.servicehealth.config.KonnektorDefaultConfig;
-import de.servicehealth.epa4all.idp.IdpClient;
 import de.servicehealth.epa4all.server.config.AppConfig;
-import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.idp.IdpClient;
+import de.servicehealth.epa4all.server.smcb.SmcbManager;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -17,35 +18,39 @@ import jakarta.inject.Inject;
 public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
     private final IdpClient idpClient;
+    private final VSDService vsdService;
+    private final SmcbManager smcbManager;
     private final MultiEpaService multiEpaService;
-    private final VSDService pharmacyService;
-    private final DefaultUserConfig defaultUserConfig;
+    private final IKonnektorClient konnektorClient;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
     public CETPServerHandlerFactory(
         IdpClient idpClient,
+        VSDService vsdService,
+        SmcbManager smcbManager,
         MultiEpaService multiEpaService,
-        VSDService pharmacyService,
-        DefaultUserConfig defaultUserConfig,
+        IKonnektorClient konnektorClient,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
         this.idpClient = idpClient;
+        this.vsdService = vsdService;
+        this.smcbManager = smcbManager;
         this.multiEpaService = multiEpaService;
-        this.pharmacyService = pharmacyService;
-        this.defaultUserConfig = defaultUserConfig;
+        this.konnektorClient = konnektorClient;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
     }
 
     @Override
     public ChannelInboundHandler[] build(KonnektorConfig konnektorConfig) {
-        AppConfig userRuntimeConfig = new AppConfig(konnektorDefaultConfig, konnektorConfig.getUserConfigurations());
+        AppConfig appConfig = new AppConfig(konnektorDefaultConfig, konnektorConfig.getUserConfigurations());
         CardlinkWebsocketClient cardlinkWebsocketClient = new CardlinkWebsocketClient(
             konnektorConfig.getCardlinkEndpoint(),
-            new EpaJwtConfigurator(userRuntimeConfig, idpClient)
+            new EpaJwtConfigurator(appConfig, idpClient)
         );
-        return new ChannelInboundHandler[] {
-            new CETPEventHandler(cardlinkWebsocketClient, defaultUserConfig, pharmacyService, multiEpaService)
-        };
+        CETPEventHandler cetpEventHandler = new CETPEventHandler(
+            cardlinkWebsocketClient, konnektorClient, multiEpaService, smcbManager, vsdService, appConfig
+        );
+        return new ChannelInboundHandler[] { cetpEventHandler };
     }
 }

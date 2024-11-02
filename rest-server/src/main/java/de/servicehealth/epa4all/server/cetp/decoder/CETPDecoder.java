@@ -3,7 +3,7 @@ package de.servicehealth.epa4all.server.cetp.decoder;
 import de.gematik.ws.conn.eventservice.v7.Event;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.cetp.domain.eventservice.event.mapper.CetpEventMapper;
-import de.servicehealth.config.api.IUserConfigurations;
+import de.health.service.config.api.IUserConfigurations;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;

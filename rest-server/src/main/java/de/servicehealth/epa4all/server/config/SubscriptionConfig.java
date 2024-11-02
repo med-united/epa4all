@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.server.config;
 
 import de.health.service.cetp.CETPServer;
-import de.servicehealth.config.api.ISubscriptionConfig;
+import de.health.service.config.api.ISubscriptionConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;

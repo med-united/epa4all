@@ -2,7 +2,6 @@ package de.servicehealth.epa4all.cxf.provider;
 
 import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import de.servicehealth.vau.VauClient;
-import io.quarkus.logging.Log;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.WebApplicationException;
@@ -30,7 +29,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
     private final VauClient vauClient;
     private final JsonbBuilder jsonbBuilder;
-    
+
     private static Logger log = Logger.getLogger(JsonbVauWriterProvider.class.getName());
 
     public JsonbVauWriterProvider(VauClient vauClient) {
@@ -66,8 +65,8 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
                 .collect(Collectors.joining("\r\n"));
 
 
-            if(vauClient.getNp() != null) {
-            	additionalHeaders += "\r\nVAU-NP: "+vauClient.getNp();
+            if (vauClient.getNp() != null) {
+                additionalHeaders += "\r\nVAU-NP: " + vauClient.getNp();
             }
             if (!additionalHeaders.isBlank()) {
                 additionalHeaders += "\r\n";
@@ -82,8 +81,8 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
                 + prepareContentHeaders(originPayload)).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, originPayload);
-            
-            log.info("REST Inner Request: "+new String(content));
+
+            log.info("REST Inner Request: " + new String(content));
 
             byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
             entityStream.write(vauMessage);
@@ -95,7 +94,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
     }
 
     private String prepareContentHeaders(byte[] originPayload) {
-        int length = originPayload == null ? 0 :originPayload.length;
+        int length = originPayload == null ? 0 : originPayload.length;
         return "Content-Type: application/json\r\nContent-Length: " + length + "\r\n\r\n";
     }
 }
