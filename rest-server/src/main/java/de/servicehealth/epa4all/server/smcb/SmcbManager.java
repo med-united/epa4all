@@ -20,6 +20,7 @@ import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DLSequence;
 import org.bouncycastle.asn1.isismtt.ISISMTTObjectIdentifiers;
+import org.bouncycastle.asn1.isismtt.x509.AdmissionSyntax;
 import org.bouncycastle.asn1.isismtt.x509.Admissions;
 import org.bouncycastle.asn1.util.ASN1Dump;
 
@@ -76,7 +77,8 @@ public class SmcbManager {
         }
     }
     
-    public static String extractTelematikIdFromCertificate(X509Certificate cert) {
+    @SuppressWarnings("resource")
+	public static String extractTelematikIdFromCertificate(X509Certificate cert) {
     	// https://oidref.com/1.3.36.8.3.3
     	byte[] admission = cert.getExtensionValue(ISISMTTObjectIdentifiers.id_isismtt_at_admission.toString());
     	
@@ -85,14 +87,12 @@ public class SmcbManager {
         ASN1Primitive p;
         try {
         	// Based on https://stackoverflow.com/a/20439748
-			while ((p = input.readObject()) != null) {
-				
-		        System.out.println(ASN1Dump.dumpAsString(p));
-		        
+			while ((p = input.readObject()) != null) { 
 		        DEROctetString derOctetString = (DEROctetString) p;
 		        ASN1InputStream asnInputStream = new ASN1InputStream(new ByteArrayInputStream(derOctetString.getOctets()));
 		        ASN1Primitive asn1 = asnInputStream.readObject();
-		        // Admissions admissions = Admissions.getInstance(asn1);
+		        AdmissionSyntax admissionSyntax = AdmissionSyntax.getInstance(asn1);
+		        return admissionSyntax.getContentsOfAdmissions()[0].getProfessionInfos()[0].getRegistrationNumber();
 
 			}
 		} catch (IOException e) {
