@@ -32,12 +32,6 @@
     </dependencyManagement>
 
     <dependencies>
-    
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>openui5</artifactId>
-            <version>1.115.0</version>
-        </dependency>
         <dependency>
             <groupId>jakarta.enterprise</groupId>
             <artifactId>jakarta.enterprise.cdi-api</artifactId>
@@ -63,7 +57,7 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-context-propagation</artifactId>
         </dependency>
-        <dependency>
+		<dependency>
             <groupId>org.jugs.webdav</groupId>
             <artifactId>webdav-jaxrs</artifactId>
             <version>3.1</version>
@@ -82,6 +76,11 @@
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>cxf-rt-transports-http-vau</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>de.servicehealth.epa4all</groupId>
+            <artifactId>frontend</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
 

@@ -36,6 +36,7 @@
       <module>medication-service</module>
       <module>authorization-service</module>
       <module>lib-cetp</module>
+      <module>frontend</module>
       <module>rest-server</module>
     </modules>
 

@@ -16,7 +16,7 @@
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>openui5</artifactId>
-            <version>1.120.10</version>
+            <version>1.115.0</version>
         </dependency>
     </dependencies>
 
@@ -34,7 +34,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.build.directory}/resources/META-INF/resources/frontend</outputDirectory>
+                            <outputDirectory>${project.build.directory}/classes/META-INF/resources/frontend</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>webapp</directory>

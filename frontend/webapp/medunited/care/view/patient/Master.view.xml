@@ -24,14 +24,17 @@
 		<!-- DynamicPage Content -->
 		<f:content>
 			<Table items="{/D:response}">
-			<columns>
-				<Column>
-					<Text text="Name" />
-				</Column>
-			</columns>
-			<ColumnListItem>
-				<Text text="{D:propstat/D:prop/D:displayname}" />
-			</ColumnListItem>
+				<columns>
+					<Column>
+						<Text text="Name" />
+					</Column>
+				</columns>
+				<ColumnListItem type="Navigation" press="onListItemPress">
+					<cells>
+					<!-- {D:propstat/D:prop/D:displayname} -->
+						<Text text="Patient" />
+					</cells>
+				</ColumnListItem>
 			</Table>
 			<!-- 
 			<Table id="patientTable" inset="false" items="{path: '/Patient',
