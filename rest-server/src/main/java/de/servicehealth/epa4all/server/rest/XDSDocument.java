@@ -69,13 +69,13 @@ public class XDSDocument extends AbstractResource {
             if (egkHandle != null) {
                 egkHandle = egkHandle.replaceAll("/", "");
             }
-            String kvnr = vsdService.getKVNR(UUID.randomUUID().toString(), egkHandle, null, defaultUserConfig);
             if (folder != null) {
                 folder = folder.replaceAll("/", "");
             } else {
                 folder = "other";
             }
             EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
+            String kvnr = multiEpaService.getXInsurantid();
 
 
             Document document = new Document();

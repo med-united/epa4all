@@ -8,7 +8,7 @@ import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
-import de.servicehealth.epa4all.server.smcb.SmcbManager;
+import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -19,7 +19,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
     private final IdpClient idpClient;
     private final VSDService vsdService;
-    private final SmcbManager smcbManager;
+    private final WebdavSmcbManager smcbManager;
     private final MultiEpaService multiEpaService;
     private final IKonnektorClient konnektorClient;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
@@ -28,7 +28,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     public CETPServerHandlerFactory(
         IdpClient idpClient,
         VSDService vsdService,
-        SmcbManager smcbManager,
+        WebdavSmcbManager smcbManager,
         MultiEpaService multiEpaService,
         IKonnektorClient konnektorClient,
         KonnektorDefaultConfig konnektorDefaultConfig

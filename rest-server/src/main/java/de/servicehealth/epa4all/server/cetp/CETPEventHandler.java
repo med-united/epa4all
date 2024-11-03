@@ -8,7 +8,7 @@ import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.AppConfig;
-import de.servicehealth.epa4all.server.smcb.SmcbManager;
+import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jboss.logging.MDC;
@@ -32,7 +32,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
     private final IKonnektorClient konnektorClient;
     private final MultiEpaService multiEpaService;
-    private final SmcbManager smcbManager;
+    private final WebdavSmcbManager smcbManager;
     private final VSDService vsdService;
     private final AppConfig appConfig;
 
@@ -40,7 +40,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         CardlinkWebsocketClient cardlinkWebsocketClient,
         IKonnektorClient konnektorClient,
         MultiEpaService multiEpaService,
-        SmcbManager smcbManager,
+        WebdavSmcbManager smcbManager,
         VSDService vsdService,
         AppConfig appConfig
     ) {
@@ -103,7 +103,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(appConfig, smcbHandle);
                 // x509Certificate.getKey().getNonCriticalExtensionOIDs()
 
-                String telematikId = "3-SMC-B-Testkarte-883110000116352"; // TODO extract from x509Certificate
+                String telematikId = WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey()); // TODO extract from x509Certificate
                 smcbManager.checkOrCreateSmcbFolders(telematikId);
 
                 byte[] bytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, USER_AGENT);

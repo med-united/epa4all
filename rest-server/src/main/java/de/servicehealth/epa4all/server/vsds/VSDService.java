@@ -12,6 +12,7 @@ import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.health.service.config.api.UserRuntimeConfig;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.xml.bind.DatatypeConverter;
 import org.w3c.dom.Document;
@@ -36,6 +37,9 @@ public class VSDService {
 
     private final MultiKonnektorService multiKonnektorService;
     private final IKonnektorClient konnektorClient;
+    
+    @Inject
+	Event<ReadVSDResponse> readVSDResponseEvent;
 
     @Inject
     public VSDService(
@@ -55,7 +59,11 @@ public class VSDService {
         ReadVSDResponse readVSDResponse = readVSD(correlationId, egkHandle, smcbHandle, runtimeConfig);
 
         Document doc = createDocument(readVSDResponse);
-        String e = doc.getElementsByTagName("E").item(0).getTextContent();
+        return getKVNRFromResponseOrDoc(readVSDResponse, doc);
+    }
+
+	public static String getKVNRFromResponseOrDoc(ReadVSDResponse readVSDResponse, Document doc) throws Exception {
+		String e = doc.getElementsByTagName("E").item(0).getTextContent();
         if (e.equals("3")) {
             UCPersoenlicheVersichertendatenXML patient = getPatient(readVSDResponse.getPersoenlicheVersichertendaten());
             String versichertenID = patient.getVersicherter().getVersichertenID();
@@ -65,7 +73,7 @@ public class VSDService {
             String kvnr = getKVNRFromDocument(doc);
 			return kvnr;
         }
-    }
+	}
 
 	public static String getKVNRFromDocument(Document doc) {
 		String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
@@ -112,7 +120,9 @@ public class VSDService {
         // TODO readEPrescriptionsMXBean.increaseVSDRead();
 
         ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle, smcbHandle);
-        return servicePorts.getVSDServicePortType().readVSD(readVSD);
+        ReadVSDResponse readVSDResponse = servicePorts.getVSDServicePortType().readVSD(readVSD);
+        readVSDResponseEvent.fire(readVSDResponse);
+		return readVSDResponse;
     }
 
     private ReadVSD prepareReadVSDRequest(

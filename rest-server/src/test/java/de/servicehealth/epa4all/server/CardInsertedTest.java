@@ -13,7 +13,7 @@ import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.smcb.SmcbManager;
+import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusTest;
@@ -47,7 +47,7 @@ public class CardInsertedTest {
     EventMapper eventMapper;
 
     @Inject
-    SmcbManager smcbManager;
+    WebdavSmcbManager smcbManager;
 
     @Inject
     MultiEpaService multiEpaService;

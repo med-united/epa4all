@@ -16,7 +16,7 @@ class SmcbManagerTest {
 		try {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509", BOUNCY_CASTLE_PROVIDER);
             X509Certificate cert = (X509Certificate) certFactory.generateCertificate(getClass().getResourceAsStream("/certs/SMC-B/Bad_ApothekeTESTONLY-80276883110000116352-aut-rsa.cer"));
-            assertEquals("3-SMC-B-Testkarte-883110000116352", SmcbManager.extractTelematikIdFromCertificate(cert));
+            assertEquals("3-SMC-B-Testkarte-883110000116352", WebdavSmcbManager.extractTelematikIdFromCertificate(cert));
 		} catch (CertificateException e) {
             throw new RuntimeException(e);
         }
