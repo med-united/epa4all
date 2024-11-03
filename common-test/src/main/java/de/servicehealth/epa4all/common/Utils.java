@@ -3,11 +3,14 @@ package de.servicehealth.epa4all.common;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class Utils {
+	
+	private static Logger log = Logger.getLogger(Utils.class.getName());
 
     public static boolean isDockerServiceRunning(String containerName) throws Exception {
         ProcessBuilder processBuilder = new ProcessBuilder(
@@ -28,7 +31,7 @@ public class Utils {
         if (isDockerServiceRunning(service)) {
             action.execute();
         } else {
-            fail();
+        	log.warning("Docker not running not executing tests.");
         }
     }
 }

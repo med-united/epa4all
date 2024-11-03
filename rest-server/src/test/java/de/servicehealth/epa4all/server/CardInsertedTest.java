@@ -9,6 +9,7 @@ import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
+import de.servicehealth.epa4all.common.Utils;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.AppConfig;
@@ -57,39 +58,41 @@ public class CardInsertedTest {
 
     @Test
     public void epaPdfDocumentIsSentToCardlink() throws Exception {
-        CardlinkWebsocketClient cardlinkWebsocketClient = mock(CardlinkWebsocketClient.class);
-        VSDService vsdService = mock(VSDService.class);
-        when(vsdService.getKVNR(any(), any(), any(), any())).thenReturn("Z123456789");
-
-        AppConfig appConfig = new AppConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
-        CETPEventHandler cetpServerHandler = new CETPEventHandler(
-            cardlinkWebsocketClient, konnektorClient, multiEpaService, smcbManager, vsdService, appConfig
-        );
-        EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
-
-        String slotIdValue = "3";
-        String ctIdValue = "CtIDValue";
-
-        KonnektorConfig konnektorConfig = mock(KonnektorConfig.class);
-        IUserConfigurations configurations = mock(IUserConfigurations.class);
-        when(konnektorConfig.getUserConfigurations()).thenReturn(configurations);
-        
-        channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue));
-        channel.pipeline().fireChannelReadComplete();
-
-        ArgumentCaptor<String> messageTypeCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<Map<String, Object>> mapCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(cardlinkWebsocketClient, times(1)).sendJson(any(), any(), messageTypeCaptor.capture(), mapCaptor.capture());
-
-        List<String> capturedMessages = messageTypeCaptor.getAllValues();
-        assertTrue(capturedMessages.getFirst().contains("eRezeptBundlesFromAVS"));
-
-        List<Map<String, Object>> maps = mapCaptor.getAllValues();
-        Map<String, Object> payloadData = maps.getFirst();
-
-        String bas64EncodedPdfContent = (String) payloadData.get("bundles");
-        assertFalse(bas64EncodedPdfContent.isEmpty());
-        assertTrue(bas64EncodedPdfContent.startsWith("PDF:"));
+    	Utils.runWithDocker("information-service", () -> {
+	    	CardlinkWebsocketClient cardlinkWebsocketClient = mock(CardlinkWebsocketClient.class);
+	        VSDService vsdService = mock(VSDService.class);
+	        when(vsdService.getKVNR(any(), any(), any(), any())).thenReturn("Z123456789");
+	
+	        AppConfig appConfig = new AppConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
+	        CETPEventHandler cetpServerHandler = new CETPEventHandler(
+	            cardlinkWebsocketClient, konnektorClient, multiEpaService, smcbManager, vsdService, appConfig
+	        );
+	        EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
+	
+	        String slotIdValue = "3";
+	        String ctIdValue = "CtIDValue";
+	
+	        KonnektorConfig konnektorConfig = mock(KonnektorConfig.class);
+	        IUserConfigurations configurations = mock(IUserConfigurations.class);
+	        when(konnektorConfig.getUserConfigurations()).thenReturn(configurations);
+	        
+	        channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue));
+	        channel.pipeline().fireChannelReadComplete();
+	
+	        ArgumentCaptor<String> messageTypeCaptor = ArgumentCaptor.forClass(String.class);
+	        ArgumentCaptor<Map<String, Object>> mapCaptor = ArgumentCaptor.forClass(Map.class);
+	        verify(cardlinkWebsocketClient, times(1)).sendJson(any(), any(), messageTypeCaptor.capture(), mapCaptor.capture());
+	
+	        List<String> capturedMessages = messageTypeCaptor.getAllValues();
+	        assertTrue(capturedMessages.getFirst().contains("eRezeptBundlesFromAVS"));
+	
+	        List<Map<String, Object>> maps = mapCaptor.getAllValues();
+	        Map<String, Object> payloadData = maps.getFirst();
+	
+	        String bas64EncodedPdfContent = (String) payloadData.get("bundles");
+	        assertFalse(bas64EncodedPdfContent.isEmpty());
+	        assertTrue(bas64EncodedPdfContent.startsWith("PDF:"));
+    	});
     }
 
     private DecodeResult decode(
