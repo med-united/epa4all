@@ -1,0 +1,169 @@
+{
+	"_version": "1.21.0",
+	"sap.app": {
+		"id": "medunited.care",
+		"type": "application",
+		"applicationVersion": {
+			"version": "1.0.0"
+		},
+		"title": "{{appTitle}}",
+		"dataSources": {
+			"fhir": {
+				"uri": "https://hapi.fhir.org/baseR4/",
+				"type": "FHIR",
+				"settings": {
+					"groupProperties": {
+						"patientDetails": {
+							"submit": "Batch"
+						}
+					}
+				}
+			},
+			"webdav": {
+				"uri": "http://localhost:8090/webdav/3-SMC-B-Testkarte--883110000147804",
+				"type": "webdav"
+			},
+			"app-state": {
+				"uri": "../../resources/local/state.json",
+				"type": "JSON"
+			}
+		}
+	},
+	"sap.ui": {
+		"technology": "UI5",
+		"deviceTypes": {
+			"desktop": true,
+			"tablet": true,
+			"phone": true
+		}
+	},
+	"sap.ui5": {
+		"rootView": {
+			"viewName": "medunited.care.view.App",
+			"type": "XML",
+			"async": true,
+			"id": "app"
+		},
+		"dependencies": {
+			"minUI5Version": "1.98.0",
+			"libs": {
+				"sap.ui.core": {},
+				"sap.tnt": {},
+				"sap.m": {}
+			}
+		},
+		"contentDensities": {
+			"compact": true,
+			"cozy": true
+		},
+		"models": {
+			"": {
+				"type": "medunited.care.model.WebdavModel",
+				"dataSource": "webdav",
+				"settings": {
+				}
+			},
+			"fhir": {
+				"type": "sap.fhir.model.r4.FHIRModel",
+				"dataSource": "fhir",
+				"settings": {
+					"groupProperties": {
+						"patientDetails": {
+							"submit": "Transaction"
+						}
+					},
+					"defaultQueryParameters": {
+						"_total": "accurate"
+					}
+				}
+			},
+			"i18n": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"settings": {
+					"bundleName": "medunited.care.i18n.i18n"
+				}
+			},
+			"appState": {
+				"dataSource": "app-state",
+				"type": "sap.ui.model.json.JSONModel"
+			}
+		},
+		"resources": {
+			"js": [
+				{
+					"uri": "./lib/zxing-0.19.1.min.js"
+				},
+				{
+					"uri": "./lib/datamatrix.min.js"
+				}
+			],
+			"css": [
+				{
+					"uri": "css/style.css"
+				}
+			]
+		},
+		"routing": {
+			"config": {
+				"routerClass": "sap.m.routing.Router",
+				"viewType": "XML",
+				"viewPath": "medunited.care.view",
+				"controlId": "fcl",
+				"transition": "slide"
+			},
+			"routes": [
+				{
+					"pattern": "",
+					"name": "home",
+					"target": [
+						"patient-master"
+					]
+				},
+				{
+					"pattern": "patient/action/add",
+					"name": "patient-add",
+					"target": [
+						"patient-master",
+						"patient-detail"
+					]
+				},
+				{
+					"pattern": "patient/:layout:",
+					"name": "patient-master",
+					"target": [
+						"patient-master",
+						"patient-detail"
+					]
+				},
+				{
+					"pattern": "patient/search/:query:",
+					"name": "patient-search",
+					"target": [
+						"patient-master",
+						"patient-detail"
+					]
+				},
+				{
+					"pattern": "patient/{patient}/{layout}",
+					"name": "patient-detail",
+					"target": [
+						"patient-master",
+						"patient-detail"
+					]
+				}
+			],
+			"targets": {
+				"patient-master": {
+					"viewName": "patient/Master",
+					"controlAggregation": "beginColumnPages",
+					"clearControlAggregation": true
+				},
+				"patient-detail": {
+					"viewName": "patient/Detail",
+					"controlAggregation": "midColumnPages",
+					"clearControlAggregation": true
+				}
+			}
+		}
+	}
+}

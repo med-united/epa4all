@@ -1,0 +1,50 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:form="sap.ui.layout.form">
+   	<form:SimpleForm id="nameFormRead"
+		editable="false"
+		layout="ResponsiveGridLayout"
+		labelSpanXL="3"
+		labelSpanL="3"
+		labelSpanM="3"
+		labelSpanS="12"
+		emptySpanXL="4"
+		emptySpanL="4"
+		emptySpanM="4"
+		emptySpanS="0"
+		columnsXL="2"
+		columnsL="2"
+		columnsM="2"
+		visible="{= !${appState>/editMode}}">
+		<form:content>
+			<Label text="{i18n>labelPatientFirstname}" labelFor="firstnameText"/>
+            <Text id="firstnameText" text="{name/[use=official]/given/0}" />
+            <Label text="{i18n>labelPatientSecondname}" labelFor="secondnameText"/>
+            <Text id="secondnameText" text="{name/[use=official]/given/1}" />
+			<Label text="{i18n>labelPatientFamilyname}" labelFor="familynameText"/>
+            <Text id="familynameText" text="{name/[use=official]/family}" />
+		</form:content>
+    </form:SimpleForm>
+	<form:SimpleForm id="nameFormEdit"
+		editable="true"
+		layout="ResponsiveGridLayout"
+		labelSpanXL="3"
+		labelSpanL="3"
+		labelSpanM="3"
+		labelSpanS="12"
+		emptySpanXL="4"
+		emptySpanL="4"
+		emptySpanM="4"
+		emptySpanS="0"
+		columnsXL="2"
+		columnsL="2"
+		columnsM="2"
+		visible="{appState>/editMode}">
+		<form:content>
+			<Label text="{i18n>labelPatientFirstname}" labelFor="firstnameInput"/>
+			<Input id="firstnameInput" value="{name/[use=official]/given/0}" />
+			<Label text="{i18n>labelPatientSecondname}" labelFor="secondnameInput"/>
+      		<Input id="secondnameInput" value="{name/[use=official]/given/1}" />
+			<Label text="{i18n>labelPatientFamilyname}" labelFor="familynameInput"/>
+            <Input id="familynameInput" value="{name/[use=official]/family}" />
+		</form:content>
+    </form:SimpleForm>
+</mvc:View>

@@ -1,0 +1,15 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <form:SimpleForm id="defaultOrganizationFormRead" editable="false" layout="ResponsiveGridLayout" labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12" emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0" columnsXL="2" columnsL="2" columnsM="2" visible="{= !${appState>/editMode}}">
+        <form:content>
+            <Text id="defaultOrganizationText" text="{managingOrganization/reference/name}" />
+        </form:content>
+    </form:SimpleForm>
+    <form:SimpleForm id="defaultOrganizationFormEdit" editable="true" layout="ResponsiveGridLayout" labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12" emptySpanXL="4" emptySpanL="4" emptySpanM="4" emptySpanS="0" columnsXL="2" columnsL="2" columnsM="2" visible="{appState>/editMode}">
+        <form:content>
+            <Label text="{i18n>defaultOrganizationName}" labelFor="defaultOrganizationSelect" />
+            <ComboBox items="{/Organization}" selectedKey="{managingOrganization/reference}">
+                <core:Item key="Organization/{id}" text="{name}" />
+            </ComboBox>
+        </form:content>
+    </form:SimpleForm>
+</mvc:View>

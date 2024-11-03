@@ -1,0 +1,40 @@
+<mvc:View displayBlock="true"
+	xmlns:core="sap.ui.core"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	xmlns:f="sap.f"
+	xmlns:tnt="sap.tnt" controllerName="medunited.care.controller.App"
+	xmlns:html="http://www.w3.org/1999/xhtml">
+	<App id="app">
+		<Page id="page-for-shell-bar">
+			<html:style>
+			.sapMIBar {
+				border: none !important;
+			}
+			.sapMITBTextOnly .sapMITBFilter {
+				padding: 0 2rem;
+			}
+			</html:style>
+			<customHeader>
+				<f:ShellBar title="{i18n>medicationsTitle}" secondTitle="" homeIcon="./images/logo_med-united_white.png" showCopilot="false" showSearch="false" showNotifications="false" showProductSwitcher="false" showNavButton="{= ${/layout} === 'EndColumnFullScreen'}" notificationsNumber="0" navButtonPressed="handleBackButtonPressed">
+					<f:profile>
+						<Avatar initials="" tooltip="" press="dialogToLogOut" />
+					</f:profile>
+				</f:ShellBar>
+			</customHeader>
+			<Page id="page-for-tool-head">
+				<customHeader>
+					<tnt:ToolHeader>
+						<ToolbarSpacer width="3rem" />
+						<IconTabHeader id="iconTabHeader" mode="Inline" select=".changeTab">
+							<items>
+								<IconTabFilter key="patient-master" text="{i18n>patientsTabFilter}" />
+							</items>
+						</IconTabHeader>
+					</tnt:ToolHeader>
+				</customHeader>
+				<f:FlexibleColumnLayout id="fcl" stateChange="onStateChanged" layout="{Layout>/layout}" backgroundDesign="Solid"/>
+			</Page>
+		</Page>
+	</App>
+</mvc:View>

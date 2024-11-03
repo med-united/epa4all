@@ -66,3 +66,4 @@ nb-configuration.xml
 .certs/
 **/logs/
 **/pcap/
+node_modules/

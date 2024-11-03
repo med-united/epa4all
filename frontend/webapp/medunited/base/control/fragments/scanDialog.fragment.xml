@@ -1,0 +1,56 @@
+<core:FragmentDefinition
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+>
+
+  <Dialog
+    title="{ parts: ['i18n>titleScanDialog', 'scanModel>/type'], formatter: '.getTitle'}"
+    showHeader="true"
+    contentWidth="auto"
+    contentHeight="auto"
+    horizontalScrolling="false"
+    verticalScrolling="false"
+  >
+    <content>
+      <VBox justifyContent="Center" width="100%" height="100%">
+        <html:div id="videoContainer" class="customContainer">
+          <html:div class="scanner-laser laser-rightBottom" style="opacity: 0.5;">
+          </html:div>
+          <html:div class="scanner-laser laser-rightTop" style="opacity: 0.5;">
+          </html:div>
+          <html:div class="scanner-laser laser-leftBottom" style="opacity: 0.5;">
+          </html:div>
+          <html:div class="scanner-laser laser-leftTop" style="opacity: 0.5;">
+          </html:div>
+          <html:div id="videoContainer" class="customContainer">
+          </html:div>
+          <html:video
+            id="scanVideo"
+            class="customVideo"
+          />
+        </html:div>
+      </VBox>
+      <Input placeholder="{i18n>pasteMedicationPlanInfoHere}" change="onChangeMedicationPlanXml" />
+    </content>
+    <buttons>
+      <Button
+        tooltip="{i18n>textChangeButton}"
+        icon="sap-icon://synchronize"
+        visible="{scanModel>/changeButton}"
+        press="onChangePress"
+      />
+      <Button
+        text="{i18n>textOkButton}"
+        icon="sap-icon://accept"
+        visible="{scanModel>/editButton}"
+        press="onOkPress"
+      />
+      <Button
+        text="{i18n>textCancelButton}"
+        icon="sap-icon://decline"
+        press="onCancelPress"
+      />
+    </buttons>
+  </Dialog>
+</core:FragmentDefinition>

@@ -1,0 +1,93 @@
+<mvc:View controllerName="medunited.care.controller.patient.Master" 
+	xmlns="sap.m" 
+	xmlns:f="sap.f" 
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:l="sap.ui.layout.form"
+	xmlns:medunited="medunited.base.control"
+	height="100%"
+	displayBlock="true">
+	<f:DynamicPage id="patientPageId"
+		toggleHeaderOnTitleClick="false">
+		<!-- DynamicPage Title -->
+		<f:title>
+			<f:DynamicPageTitle>
+				<f:heading>
+					<Title text="{i18n>pageTitlePatients}" />
+				</f:heading>
+				<f:actions>
+					<Button text="{i18n>createPatientFromBMP}" press="onPressCreatePatientFromBMP" />
+					<Button type="Emphasized" text="{i18n>CreatePatient}" press="onAdd" />
+				</f:actions>
+			</f:DynamicPageTitle>
+		</f:title>
+
+		<!-- DynamicPage Content -->
+		<f:content>
+			<Table items="{/D:response}">
+			<columns>
+				<Column>
+					<Text text="Name" />
+				</Column>
+			</columns>
+			<ColumnListItem>
+				<Text text="{D:propstat/D:prop/D:displayname}" />
+			</ColumnListItem>
+			</Table>
+			<!-- 
+			<Table id="patientTable" inset="false" items="{path: '/Patient',
+					sorter: { path: 'family', descending: false},
+					parameters: {
+						request: {
+							_include: ['Patient:general-practitioner',
+							'Patient:organization']
+						}
+					}
+				}" class="sapFDynamicPageAlignContent" width="auto" growing="true" growingScrollToLoad="true" growingThreshold="25" autoPopinMode="true" mode="MultiSelect" selectionChange="onSelectionChange">
+				<headerToolbar>
+					<OverflowToolbar>
+						<ToolbarSpacer />
+						<SearchField search="onSearch" width="17.5rem" />
+						<OverflowToolbarButton icon="sap-icon://sort" type="Transparent" press="onSort" />
+					</OverflowToolbar>
+				</headerToolbar>
+				<columns>
+					<Column width="20%" importance="Medium" autoPopinWidth="10">
+						<Text text="{i18n>GivenName}" />
+					</Column>
+					<Column width="20%" importance="High">
+						<Link text="{i18n>FamilyName}" press="onSortFamilyName" />
+					</Column>
+					<Column width="20%" importance="High">
+						<Link text="{i18n>BirthDate}" press="onSortBirthDate" />
+					</Column>
+					<Column width="20%" importance="Medium">
+						<Text text="{i18n>GeneralPractitioner}" />
+					</Column>
+					<Column width="20%" importance="Low">
+						<Text text="{i18n>ManagingOrganization}" />
+					</Column>
+				</columns>
+				<items>
+					<ColumnListItem type="Navigation" press="onListItemPress">
+						<cells>
+							<Text text="{name/0/given}" />
+							<Text text="{name/0/family}" />
+							<Text text="{path: 'birthDate', formatOptions: {style: 'short'}}" />
+							<Text text="{path: 'generalPractitioner/0/reference', formatter: '.referencePractitioner'}" />
+							<Text text="{path: 'managingOrganization/reference', formatter: '.referenceOrganization'}" />
+						</cells>
+					</ColumnListItem>
+				</items>
+			</Table> -->
+		</f:content>
+		<f:footer>
+			<OverflowToolbar>
+				<ToolbarSpacer />
+				<Button type="Reject" text="{i18n>DeleteSelected}" press="onDeleteSelected" />
+			</OverflowToolbar>
+		</f:footer>
+		<f:dependents>
+			<medunited:ExtScanner id="extScanner" editMode="false" type="DatamatrixCode" laser="true" tryHarder="true" valueScanned="onValueScanned" />
+		</f:dependents>
+	</f:DynamicPage>
+</mvc:View>

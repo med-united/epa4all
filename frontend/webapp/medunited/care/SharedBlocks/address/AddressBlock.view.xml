@@ -1,0 +1,50 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:form="sap.ui.layout.form">
+    <form:SimpleForm id="addressFormRead" binding="{address/[use=home]}"
+        editable="false"
+        layout="ResponsiveGridLayout"
+        labelSpanXL="3"
+        labelSpanL="3"
+        labelSpanM="3"
+        labelSpanS="12"
+        emptySpanXL="4"
+        emptySpanL="4"
+        emptySpanM="4"
+        emptySpanS="0"
+        columnsXL="2"
+        columnsL="2"
+        columnsM="2"
+        visible="{= !${appState>/editMode}}">
+        <form:content>
+            <Label text="{i18n>labelPatientStreet}" labelFor="patientStreetText"/>
+            <Text id="patientStreetText" text="{line/0}" />
+            <Label text="{i18n>labelPatientPostalCode}" labelFor="patientPostalCodeText"/>
+            <Text id="patientPostalCodeText" text="{postalCode}" />
+            <Label text="{i18n>labelPatientCity}" labelFor="patientCityText"/>
+            <Text id="patientCityText" text="{city}" />
+        </form:content>
+    </form:SimpleForm>
+    <form:SimpleForm id="addressFormEdit" binding="{address/[use=home]}"
+        editable="true"
+        layout="ResponsiveGridLayout"
+        labelSpanXL="3"
+        labelSpanL="3"
+        labelSpanM="3"
+        labelSpanS="12"
+        emptySpanXL="4"
+        emptySpanL="4"
+        emptySpanM="4"
+        emptySpanS="0"
+        columnsXL="2"
+        columnsL="2"
+        columnsM="2"
+        visible="{appState>/editMode}">
+        <form:content>
+            <Label text="{i18n>labelPatientStreet}" labelFor="patientStreetInput"/>
+            <Input id="patientStreetInput" value="{line/0}"/>
+            <Label text="{i18n>labelPatientPostalCode}" labelFor="patientPostalCodeInput"/>
+            <Input id="patientPostalCodeInput" value="{postalCode}" width="100px" class="sapUiTinyMarginEnd"/>
+            <Label text="{i18n>labelPatientCity}" labelFor="patientCityInput"/>
+            <Input id="patientCityInput" value="{city}" />
+        </form:content>
+    </form:SimpleForm>
+</mvc:View>

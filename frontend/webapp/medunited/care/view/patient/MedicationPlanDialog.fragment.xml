@@ -1,0 +1,10 @@
+<core:FragmentDefinition xmlns="sap.m"
+	xmlns:l="sap.ui.layout" xmlns:form="sap.ui.layout.form"
+	xmlns:core="sap.ui.core">
+	<Dialog id="medicationPlanDialog" title="{i18n>dialogTitleMedicationPlan}" contentWidth="80rem" contentHeight="50rem" draggable="true" resizable="true">
+		<PDFViewer id="medicationPlanPdfViewer" />
+		<beginButton>
+			<Button type="Reject" text="{i18n>buttonClose}" press="onCloseMedicationPlan" />
+		</beginButton>
+	</Dialog>
+</core:FragmentDefinition>

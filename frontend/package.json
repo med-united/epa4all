@@ -1,0 +1,17 @@
+{
+    "name": "epa4all-frontend",
+    "private": true,
+    "version": "1.0.0",
+    "author": "service health erx GmbH",
+    "description": "epa4all Frontend",
+    "scripts": {
+        "start": "ui5 serve -o index.html --accept-remote-connections",
+        "build": "ui5 build"
+    },
+    "devDependencies": {
+        "@ui5/cli": "^2.14.14"
+    },
+    "dependencies": {
+        "openui5-fhir": "^2.3.3"
+    }
+}

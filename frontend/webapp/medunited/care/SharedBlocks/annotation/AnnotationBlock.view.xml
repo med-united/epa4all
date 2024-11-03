@@ -1,0 +1,24 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns="sap.m">
+    <Table id="annotationTable" inset="false" items="{Note>/}" mode="None" autoPopinMode="true" width="100%">
+        <columns>
+            <Column width="20%" importance="High">
+                <Text text="{i18n>columnLabelAuthor}" />
+            </Column>
+            <Column width="40%" importance="Low">
+                <Text text="{i18n>columnLabelTime}" />
+            </Column>
+            <Column width="40%" importance="High">
+                <Text text="{i18n>columnLabelText}" />
+            </Column>
+        </columns>
+        <items>
+            <ColumnListItem>
+                <cells>
+                    <Text text="{Note>authorString}" />
+                    <Text text="{Note>time}" />
+                    <Text text="{Note>text}" />
+                </cells>
+            </ColumnListItem>
+        </items>
+    </Table>
+</mvc:View>

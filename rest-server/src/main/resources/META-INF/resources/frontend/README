@@ -1,0 +1,2 @@
+For development create a symlink to frontend here:
+ln -s ../../../../../../frontend/webapp/ frontend

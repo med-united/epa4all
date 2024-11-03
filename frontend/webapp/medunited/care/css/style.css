@@ -1,0 +1,76 @@
+.mediumFont {
+    font-size: large;
+}
+
+.bar {
+    height: 60px;
+    padding-top: 20px;
+}
+
+.tabsTitel {
+    font-size: x-large;
+    padding-left: 40px;
+}
+
+.medicamentBox {
+    margin-top: 30px;
+}
+
+/* Enter your custom styles here */
+.specialToolbarBorder {
+    border-bottom: 0 !important;
+}
+
+.scanner-laser {
+    position: fixed;
+    margin-top: 68px;
+    margin-bottom: 68px;
+    margin-left: 30px;
+    margin-right: 30px;
+    height: 30px;
+    width: 30px;
+}
+
+.laser-leftTop {
+    top: 0;
+    left: 0;
+    border-top: solid red 5px;
+    border-left: solid red 5px;
+}
+
+.laser-leftBottom {
+    bottom: 0;
+    left: 0;
+    border-bottom: solid red 5px;
+    border-left: solid red 5px;
+}
+
+.laser-rightTop {
+    top: 0;
+    right: 0;
+    border-top: solid red 5px;
+    border-right: solid red 5px;
+}
+
+.laser-rightBottom {
+    bottom: 0;
+    right: 0;
+    border-bottom: solid red 5px;
+    border-right: solid red 5px;
+}
+
+.customContainer {
+    top: 0;
+    right: 0;
+    left: 0;
+    display: contents;
+}
+
+.customVideo {
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    z-index: -1;
+    width: auto;
+    height: auto;
+}

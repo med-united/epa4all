@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library
+	xmlns="http://www.sap.com/sap.ui.library.xsd" >
+	<name>sap.fhir</name>
+	<vendor>SAP SE</vendor>
+	<copyright>SAP SE
+ * (c) Copyright 2009-2022 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.</copyright>
+	<version>2.3.3</version>
+	<documentation>The sap.fhir library provides a model to build state of the art UI5 applications in context of health industries.</documentation>
+	<dependencies>
+		<dependency>
+			<libraryName>sap.ui.core</libraryName>
+		</dependency>
+	</dependencies>
+</library>

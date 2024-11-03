@@ -1,0 +1,41 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns="sap.m" controllerName="medunited.care.SharedBlocks.insurance.InsuranceBlockController">
+    <HBox justifyContent="End" class="sapUiSmallMarginBottom" visible="{appState>/editMode}">
+        <Link text="Versicherung hinzufügen" press="addInsurance"/>
+    </HBox>
+    <Table id="insuranceTable" items="{path: '/Coverage', parameters : {request: { _include: 'Coverage:payor'}}}">
+        <columns>
+            <Column hAlign="Left">
+                <Text text="{i18n>columnLabelPatientInsuranceNumber}"/>
+            </Column>
+            <Column hAlign="Left">
+                <Text text="{i18n>columnLabelInsuranceName}"/>
+            </Column>
+            <Column hAlign="Left">
+                <Text text="{i18n>columnLabelInsuranceType}"/>
+            </Column>
+            <Column hAlign="Left">
+                <Text text="{i18n>columnLabelPatientInsuranceStartDate}"/>
+            </Column>
+            <Column hAlign="Left">
+                <Text text="{i18n>columnLabelPatientInsuranceEndDate}"/>
+            </Column>
+        </columns>
+        <items>
+             <ColumnListItem>
+                <cells>
+                    <Input value="{subscriberId}" enabled="{appState>/editMode}"/>
+                    <Input suggestionItems="{path: '/Organization', templateShareable: false}" showSuggestion="true" enabled="{appState>/editMode}" suggestionItemSelected="onInsuranceChange" modelContextChange="onInsuranceCompanyModelChange">
+                        <suggestionItems>
+                            <core:Item key="{id}" text="{name}"/>
+                        </suggestionItems>
+                    </Input>
+                    <Select forceSelection="false" selectedKey="{type/coding/0/code}" items="{path: 'type', templateShareable: false}" enabled="{appState>/editMode}">
+                        <core:Item key="{code}" text="{display}"/>
+                    </Select>
+                    <DatePicker id="datePickerStart" value="{period/start}" valueFormat="yyyy-MM-dd" displayFormat="long" change="handleStartDateChange" enabled="{appState>/editMode}"/>
+                    <DatePicker id="datePickerEnd" value="{period/end}" valueFormat="yyyy-MM-dd" displayFormat="long" change="handleEndDateChange" enabled="{appState>/editMode}"/>
+                </cells>
+            </ColumnListItem>
+        </items>
+    </Table>
+</mvc:View>

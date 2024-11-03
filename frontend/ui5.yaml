@@ -1,0 +1,25 @@
+specVersion: '2.6'
+metadata:
+  name: epa4all-frontendhealth 
+type: application
+server:
+  customMiddleware:
+    - name: serveIndexHtml
+      afterMiddleware: compression
+framework:
+  name: OpenUI5
+  version: 1.101.0
+  libraries:
+    - name: sap.ui.core
+    - name: sap.m
+    - name: themelib_sap_fiori_3
+    - name: sap.tnt
+---
+# Custom middleware extension as part of your project
+specVersion: "2.6"
+kind: extension
+type: server-middleware
+metadata:
+  name: serveIndexHtml 
+middleware:
+  path: lib/middleware/serveIndexHtml.js

@@ -1,0 +1,26 @@
+<core:FragmentDefinition
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+>
+  <ResponsivePopover
+    class="sapUiContentPadding"
+    placement="PreferredBottomOrFlip"
+    showHeader="{device>/system/phone}"
+    initialFocus="idShowMode"
+  >
+    <content>
+      <VBox>
+        <Button width="100%" type="Transparent" icon="sap-icon://reset" text="{i18n>resetScan}" press="onResetScan" />
+        <!-- show format as a info on input ??? -->
+        <Button visible="false" enabled="{= !!${scanModel>/value} }" width="100%" type="Transparent" icon="sap-icon://detail-view" text="{i18n>details}" press="onDetails" />
+        <SegmentedButton width="100%" selectedKey="{scanModel>/decoderKey}" items="{scanModel>/decoders}" selectionChange="onDecoderChanges">
+          <items>
+            <SegmentedButtonItem width="auto" key="{scanModel>key}" text="{scanModel>text}"/>
+          </items>
+        </SegmentedButton>
+        <ToggleButton width="100%" type="Transparent" icon="sap-icon://fx" text="{i18n>harder}" pressed="{scanModel>/tryHarder}" press="onHarderChange" />
+        <Button visible="false" width="100%" type="Transparent" icon="sap-icon://hint" text="{i18n>about}" press="onAboutPress" />
+      </VBox>
+    </content>
+  </ResponsivePopover>
+</core:FragmentDefinition>
