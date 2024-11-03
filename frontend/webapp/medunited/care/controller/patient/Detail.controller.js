@@ -18,6 +18,14 @@ sap.ui.define([
 				groupId: "patientDetails"
 			};
 		},
+		_onMatched: function (oEvent) {
+			AbstractDetailController.prototype._onMatched.apply(this, arguments);
+			let oWebdavModel = this.getView().getModel();
+			let sPatientId = "X110486750";
+			oWebdavModel.loadFileForContext(this.getView().getBindingContext().getPath(), sPatientId+"/local/AllgemeineVersicherungsdaten.xml");
+			oWebdavModel.loadFileForContext(this.getView().getBindingContext().getPath(), sPatientId+"local/GeschuetzteVersichertendaten.xml");
+			oWebdavModel.loadFileForContext(this.getView().getBindingContext().getPath(), sPatientId+"local/GeschuetzteVersichertendaten.xml");
+		},
 		formatPatientDataMatrix: function (sId, optionSelected) {
 			const oPatient = this.getView().getModel().getProperty("/Patient/" + sId);
 			const oMedicationStatement = this.getView().getModel().getProperty("/MedicationStatement");

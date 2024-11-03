@@ -29,6 +29,17 @@ sap.ui.define([
             })
 			.then(o => o.text())
 			.then(xml => me.setXML(xml) );
-        }
+        },
+		loadFileForContext: function(sPath, sFile) {
+			let me = this;
+            fetch(this.sServiceUrl+sPath+sFile)
+			.then(o => o.text())
+			.then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+			.then(xml => {
+				let oNodesForImport = me.getData().importNode(xml.documentElement,true);
+				// TODO find correct context node
+				me.getData().appendChild(oNodesForImport);
+			});
+		}
     });
 });

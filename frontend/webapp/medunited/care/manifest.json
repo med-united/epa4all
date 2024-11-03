@@ -20,7 +20,7 @@
 				}
 			},
 			"webdav": {
-				"uri": "http://localhost:8090/webdav/3-SMC-B-Testkarte--883110000147804",
+				"uri": "http://localhost:8090/webdav/3-SMC-B-Testkarte-883110000116352",
 				"type": "webdav"
 			},
 			"app-state": {
