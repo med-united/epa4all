@@ -39,16 +39,6 @@
                                     <biological:BiologicalBlock id="biologicalBlock" columnLayout="1" />
                                 </uxap:blocks>
                             </uxap:ObjectPageSubSection>
-                            <uxap:ObjectPageSubSection id="generalPractitionerSubSection" title="{i18n>titleSubSectionGeneralPractitioner}">
-                                <uxap:blocks>
-                                    <generalPractitioner:GeneralPractitionerBlock id="generalPractitionerBlock" columnLayout="1" />
-                                </uxap:blocks>
-                            </uxap:ObjectPageSubSection>
-                            <uxap:ObjectPageSubSection id="defaultOrganizationSubSection" title="{i18n>titleSubSectionDefaultOrganization}">
-                                <uxap:blocks>
-                                    <defaultOrganization:DefaultOrganizationBlock id="defaultOrganizationBlock" columnLayout="1" />
-                                </uxap:blocks>
-                            </uxap:ObjectPageSubSection>
                         </uxap:subSections>
                     </uxap:ObjectPageSection>
                     <uxap:ObjectPageSection id="insuranceSection" title="{i18n>titleSectionInsurance}">

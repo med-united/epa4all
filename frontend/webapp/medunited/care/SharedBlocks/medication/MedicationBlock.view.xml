@@ -1,0 +1,74 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns="sap.m" xmlns:dnd="sap.ui.core.dnd" controllerName="medunited.care.SharedBlocks.medication.MedicationBlockController">
+    <Table id="medicationTable" items="{
+            path: '/MedicationStatement',
+            events: {
+                dataReceived: '.onDataReceivedAsureStructure'
+            },
+            parameters : {
+                request: { _include: 'MedicationStatement:medication'}
+            }
+        }" mode="{= ${appState>/editMode} ? 'MultiSelect' : 'None'}" autoPopinMode="true">
+        <columns>
+            <Column width="28%" importance="High">
+                <Text text="{i18n>columnLabelMedicationName}" />
+            </Column>
+            <Column width="11%" importance="Low">
+                <Text text="{i18n>columnLabelMedicationEffectiveDate}" />
+            </Column>
+            <Column width="10%" importance="High">
+                <Text text="{i18n>columnLabelMedicationPZN}" />
+            </Column>
+            <Column width="10%" importance="High">
+                <Text text="{i18n>columnLabelMedicationDosage}" />
+            </Column>
+            <Column width="3%" importance="Low">
+                <Text text="{i18n>medicationSize}" />
+            </Column>
+            <Column width="6%" importance="Medium">
+                <Text text="{i18n>standardSize}" />
+            </Column>
+            <Column width="8%" importance="Medium">
+                <Text text="{i18n>columnLabelMedicationNote}" />
+            </Column>
+            <Column width="12%" importance="Medium">
+                <Text text="{i18n>columnLabelPractitioner}" />
+            </Column>
+            <Column width="12%" importance="Low">
+                <Text text="{i18n>columnLabelPharmacy}" />
+            </Column>
+        </columns>
+        <dragDropConfig>
+            <dnd:DragDropInfo
+				sourceAggregation="items"
+				targetAggregation="items"
+				dropPosition="Between"
+				drop="onDropSelectedMedicationTable"/>
+        </dragDropConfig>
+        <items>
+            <ColumnListItem>
+                <cells>
+                    <Input value="{medicationCodeableConcept/text}" showSuggestion="true" suggest=".onSuggestMedicationName" suggestionItemSelected=".onSuggestionMedicationNameSelected" enabled="{appState>/editMode}" />
+                    <DatePicker value="{path: 'effectiveDateTime', type: 'sap.ui.model.type.Date', formatOptions: {source: {pattern: 'yyyy-MM-dd'}}}" enabled="{appState>/editMode}" />
+                    <Input value="{identifier/0/value}" showSuggestion="true" suggest=".onSuggestPZN" suggestionItemSelected=".onSuggestionPZNSelected" enabled="{appState>/editMode}" />
+                    <Input value="{dosage/0/text}" enabled="{appState>/editMode}" />
+                    <Input value="{extension/0/valueString}" enabled="{appState>/editMode}" />
+                    <Input value="{extension/1/valueString}" enabled="false" />
+                    <Input value="{note/0/text}" enabled="{appState>/editMode}" />
+                    <ComboBox items="{/Practitioner}" selectedKey="{informationSource/reference}" enabled="{appState>/editMode}">
+                        <core:Item key="Practitioner/{id}" text="{name/0/given/0} {name/0/family}" />
+                    </ComboBox>
+                    <ComboBox items="{/Organization}" selectedKey="{derivedFrom/0/reference}" enabled="{appState>/editMode}">
+                        <core:Item key="Organization/{id}" text="{name}" />
+                    </ComboBox>
+                </cells>
+            </ColumnListItem>
+        </items>
+    </Table>
+    <VBox class="sapUiSmallMarginBottom" visible="{appState>/editMode}">
+        <OverflowToolbar>
+            <Button icon="sap-icon://delete" tooltip="Selektierte Medikation löschen" press="deleteMedication" />
+            <ToolbarSpacer />
+            <Button icon="sap-icon://add" tooltip="Medikation hinzufügen" press="addMedication" />
+        </OverflowToolbar>
+    </VBox>
+</mvc:View>

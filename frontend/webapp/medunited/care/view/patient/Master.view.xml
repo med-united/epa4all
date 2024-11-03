@@ -23,7 +23,7 @@
 
 		<!-- DynamicPage Content -->
 		<f:content>
-			<Table items="{/D:response}">
+			<Table items="{/response}">
 				<columns>
 					<Column>
 						<Text text="Name" />
@@ -31,8 +31,7 @@
 				</columns>
 				<ColumnListItem type="Navigation" press="onListItemPress">
 					<cells>
-					<!-- {D:propstat/D:prop/D:displayname} -->
-						<Text text="Patient" />
+						<Text text="{propstat/prop/displayname}" />
 					</cells>
 				</ColumnListItem>
 			</Table>

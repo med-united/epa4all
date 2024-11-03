@@ -13,6 +13,10 @@ sap.ui.define([
 			sServiceUrl = sServiceUrl.slice(-1) === "/" ?  sServiceUrl.slice(0, -1) : sServiceUrl;
 			this.oServiceUrl = new URI(sServiceUrl);
 			this.sServiceUrl = this.oServiceUrl.query("").toString();
+			// Set default namespace
+			// Relative bindings: {D:propstat/D:prop/D:displayname} cause an issue with the XML parser
+			// Absolute ones work {/D:response}
+			this.setNameSpace("DAV:");
 			this._setupData();
         },
         _setupData: function() {

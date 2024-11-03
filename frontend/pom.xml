@@ -15,7 +15,7 @@
     <dependencies>
         <dependency>
             <groupId>org.webjars</groupId>
-            <artifactId>openui5</artifactId>
+            <artifactId>openui5</artifactId>	
             <version>1.115.0</version>
         </dependency>
     </dependencies>
