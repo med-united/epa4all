@@ -16,9 +16,9 @@
         visible="{= !${appState>/editMode}}">
         <form:content>
             <Label text="{i18n>labelPatientBirthDate}" labelFor="patientBirthdateText"/>
-            <Text id="patientBirthDateText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Strasse'} {path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum'}" />
+            <Text id="patientBirthDateText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum'}" />
             <Label text="{i18n>labelPatientGender}" labelFor="patientGenderText"/>
-            <Text id="patientGenderText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Strasse'} {path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geschlecht'}" />
+            <Text id="patientGenderText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geschlecht'}" />
         </form:content>
     </form:SimpleForm>
     <form:SimpleForm id="biologicalFormEdit"
@@ -38,9 +38,9 @@
         visible="{appState>/editMode}">
         <form:content>
             <Label text="{i18n>labelPatientBirthDate}" labelFor="patientBirthdateInput"/>
-            <DatePicker id="patientBirthdateInput" valueFormat="YYYY-MM-dd" value="{birthDate}"/>
+            <DatePicker id="patientBirthdateInput" valueFormat="YYYY-MM-dd" value="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum'}"/>
             <Label text="{i18n>labelPatientGender}" labelFor="patientGenderSelect"/>
-            <Select id="patientGenderSelect" forceSelection="false" selectedKey="{gender}">
+            <Select id="patientGenderSelect" forceSelection="false" selectedKey="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geschlecht'}">
                 <core:Item key="male" text="{i18n>Male}"/>
                 <core:Item key="female" text="{i18n>Female}"/>
             </Select>
