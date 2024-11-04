@@ -23,7 +23,7 @@
 
 		<!-- DynamicPage Content -->
 		<f:content>
-			<Table items="{/response}">
+			<Table id="patientTable" inset="false" items="{/response}" width="auto" class="sapFDynamicPageAlignContent">
 				<columns>
 					<Column>
 						<Text text="Name" />
