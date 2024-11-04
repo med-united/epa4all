@@ -33,8 +33,10 @@ sap.ui.define([
         },
 		loadFileForContext: function(sPath, sFileWithPath) {
 			let me = this;
+			let decoder = new TextDecoder('iso-8859-1');
             fetch(this.sServiceUrl+sFileWithPath)
-			.then(o => o.text())
+			.then(o => o.arrayBuffer())
+			.then(buf => decoder.decode(buf))
 			.then(str => new window.DOMParser().parseFromString(str, "text/xml"))
 			.then(xml => {
 				let oNodesForImport = me.getData().importNode(xml.documentElement,true);

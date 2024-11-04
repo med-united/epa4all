@@ -25,8 +25,8 @@ sap.ui.define([
 			let sWebDavPath = "/response/"+iPatientModelOffest+"/propstat/prop";
 			this.getView().bindElement(sWebDavPath);
 			let sPatientId = oWebdavModel.getProperty(sWebDavPath+"/displayname");
+			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/PersoenlicheVersichertendaten.xml");
 			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/AllgemeineVersicherungsdaten.xml");
-			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/GeschuetzteVersichertendaten.xml");
 			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/GeschuetzteVersichertendaten.xml");
 		},
 		formatPatientDataMatrix: function (sId, optionSelected) {

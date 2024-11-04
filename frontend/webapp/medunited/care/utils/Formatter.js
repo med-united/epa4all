@@ -16,10 +16,11 @@ sap.ui.define(["sap/ui/core/format/DateFormat"], function(DateFormat) {
 				});
 
                 let birthDate =  dateFormat.format(new Date(sDate));
+				// 19961009
                 const birthDateParts = birthDate.split(".");
-                let dd = birthDateParts[0];
-                let mm = birthDateParts[1];
-                let yyyy = birthDateParts[2];
+                let dd = birthDate.substring(6,2);
+                let mm = birthDate.substring(4,2);
+                let yyyy = birthDate.substring(0,4);
 
                 let currentDate = new Date();
                 let currentYear = currentDate.getFullYear();
