@@ -109,6 +109,7 @@ public class XDSDocument extends AbstractResource {
             classificationTypeAutor.setId("author");
             classificationTypeAutor.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
             classificationTypeAutor.getSlot().add(createSlotType("authorPerson", "^LastName^FirstName^^^Prof. Dr.^^^"));
+            classificationTypeAutor.getSlot().add(createSlotType("authorInstitution", "Unknown^^^^^&amp;1.2.276.0.76.4.188&amp;ISO^^^^"+telematikId));
             registryPackageType.getClassification().add(classificationTypeAutor);
 
             ClassificationType classificationTypeContentType = new ClassificationType();
