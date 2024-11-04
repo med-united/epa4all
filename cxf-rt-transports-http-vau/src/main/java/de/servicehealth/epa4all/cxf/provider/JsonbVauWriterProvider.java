@@ -63,6 +63,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
                 .filter(p -> !p.getKey().equals(ACCEPT))
                 .map(p -> p.getKey() + ": " + p.getValue().getFirst())
                 .collect(Collectors.joining("\r\n"));
+            httpHeaders.remove("x-insurantid");
 
 
             if (vauClient.getNp() != null) {
