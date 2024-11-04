@@ -16,11 +16,11 @@
 		visible="{= !${appState>/editMode}}">
 		<form:content>
 			<Label text="{i18n>labelPatientFirstname}" labelFor="firstnameText"/>
-            <Text id="firstnameText" text="{name/[use=official]/given/0}" />
+            <Text id="firstnameText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Vorname'}" />
             <Label text="{i18n>labelPatientSecondname}" labelFor="secondnameText"/>
-            <Text id="secondnameText" text="{name/[use=official]/given/1}" />
+            <Text id="secondnameText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Namenszusatz'}" />
 			<Label text="{i18n>labelPatientFamilyname}" labelFor="familynameText"/>
-            <Text id="familynameText" text="{name/[use=official]/family}" />
+            <Text id="familynameText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Nachname'}" />
 		</form:content>
     </form:SimpleForm>
 	<form:SimpleForm id="nameFormEdit"

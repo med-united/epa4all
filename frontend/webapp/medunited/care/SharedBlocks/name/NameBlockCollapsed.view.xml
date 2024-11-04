@@ -38,9 +38,9 @@
 		visible="{appState>/editMode}">
 		<form:content>
 			<Label text="{i18n>labelPatientFirstname}" labelFor="firstnameInput"/>
-			<Input id="firstnameInput" value="{name/[use=official]/given/0}" />
+			<Input id="firstnameInput" value="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Vorname'}" />
 			<Label text="{i18n>labelPatientFamilyname}" labelFor="familynameInput"/>
-            <Input id="familynameInput" value="{name/[use=official]/family}" />
+            <Input id="familynameInput" value="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Nachname'}" />
 		</form:content>
     </form:SimpleForm>
 </mvc:View>

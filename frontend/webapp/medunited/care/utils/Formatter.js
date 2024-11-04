@@ -13,8 +13,8 @@ sap.ui.define(["sap/ui/core/format/DateFormat"], function(DateFormat) {
 			if (sDate) {
 
 				// 19961009
-                let dd = sDate.substring(6,2);
-                let mm = sDate.substring(4,2);
+                let dd = sDate.substring(6,8);
+                let mm = sDate.substring(4,6);
                 let yyyy = sDate.substring(0,4);
 
                 let currentDate = new Date();
@@ -33,9 +33,9 @@ sap.ui.define(["sap/ui/core/format/DateFormat"], function(DateFormat) {
                     return "Falsches geburtsdatum eingestellt! " + birthDate;
                 }
                 if (calculatedAge == 1) {
-                    return yyyy+"-"+mm+"-"+dd + " - " + calculatedAge + " Jahr";
+                    return dd + "."+mm+"."+yyyy + " - " + calculatedAge + " Jahr";
                 }
-				return yyyy+"-"+mm+"-"+dd + " - " + calculatedAge + " Jahre";
+				return dd + "."+mm+"."+yyyy + " - " + calculatedAge + " Jahre";
 			}
 			return "";
         },

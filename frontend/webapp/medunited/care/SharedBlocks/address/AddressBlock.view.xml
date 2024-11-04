@@ -1,5 +1,5 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:form="sap.ui.layout.form">
-    <form:SimpleForm id="addressFormRead" binding="{address/[use=home]}"
+    <form:SimpleForm id="addressFormRead"
         editable="false"
         layout="ResponsiveGridLayout"
         labelSpanXL="3"
@@ -16,14 +16,14 @@
         visible="{= !${appState>/editMode}}">
         <form:content>
             <Label text="{i18n>labelPatientStreet}" labelFor="patientStreetText"/>
-            <Text id="patientStreetText" text="{line/0}" />
+            <Text id="patientStreetText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Strasse'} {path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Hausnummer'}" />
             <Label text="{i18n>labelPatientPostalCode}" labelFor="patientPostalCodeText"/>
-            <Text id="patientPostalCodeText" text="{postalCode}" />
+            <Text id="patientPostalCodeText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Postleitzahl'}" />
             <Label text="{i18n>labelPatientCity}" labelFor="patientCityText"/>
-            <Text id="patientCityText" text="{city}" />
+            <Text id="patientCityText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Ort'}" />
         </form:content>
     </form:SimpleForm>
-    <form:SimpleForm id="addressFormEdit" binding="{address/[use=home]}"
+    <form:SimpleForm id="addressFormEdit"
         editable="true"
         layout="ResponsiveGridLayout"
         labelSpanXL="3"
@@ -40,11 +40,11 @@
         visible="{appState>/editMode}">
         <form:content>
             <Label text="{i18n>labelPatientStreet}" labelFor="patientStreetInput"/>
-            <Input id="patientStreetInput" value="{line/0}"/>
+            <Input id="patientStreetInput" value="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Strasse'} {path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Hausnummer'}"/>
             <Label text="{i18n>labelPatientPostalCode}" labelFor="patientPostalCodeInput"/>
-            <Input id="patientPostalCodeInput" value="{postalCode}" width="100px" class="sapUiTinyMarginEnd"/>
+            <Input id="patientPostalCodeInput" value="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Postleitzahl'}" width="100px" class="sapUiTinyMarginEnd"/>
             <Label text="{i18n>labelPatientCity}" labelFor="patientCityInput"/>
-            <Input id="patientCityInput" value="{city}" />
+            <Input id="patientCityInput" value="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:StrassenAdresse/vsdm:Ort'}" />
         </form:content>
     </form:SimpleForm>
 </mvc:View>
