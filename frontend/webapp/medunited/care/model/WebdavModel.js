@@ -17,7 +17,7 @@ sap.ui.define([
 			// Relative bindings: {D:propstat/D:prop/D:displayname} cause an issue with the XML parser
 			// Absolute ones work {/D:response}
 			this.setNameSpace("DAV:");
-			this.setNameSpace("vsdm:", "http://ws.gematik.de/fa/vsdm/vsd/v5.2")
+			this.setNameSpace("http://ws.gematik.de/fa/vsdm/vsd/v5.2", "vsdm")
 			this._setupData();
         },
         _setupData: function() {
@@ -42,6 +42,7 @@ sap.ui.define([
 				let oNodesForImport = me.getData().importNode(xml.documentElement,true);
 				let oNode = me._getObject(sPath)[0];
 				oNode.appendChild(oNodesForImport);
+				me.updateBindings();
 			});
 		}
     });
