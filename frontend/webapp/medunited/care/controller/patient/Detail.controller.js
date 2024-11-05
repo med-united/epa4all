@@ -4,8 +4,9 @@ sap.ui.define([
 	"sap/m/MessageBox",
 	"sap/ui/core/Fragment",
 	"sap/base/security/URLListValidator",
+	"sap/ui/core/mvc/XMLView",
 	'medunited/care/utils/PropertyExtractor'
-], function (AbstractDetailController, Formatter, MessageBox, Fragment, URLListValidator, PropertyExtractor) {
+], function (AbstractDetailController, Formatter, MessageBox, Fragment, URLListValidator, XMLView, PropertyExtractor) {
 	"use strict";
 
 	return AbstractDetailController.extend("medunited.care.controller.patient.Detail", {
@@ -453,6 +454,26 @@ sap.ui.define([
 				}
 			}
 			return medicationStatementsOfPatient;
+		},
+		onSeeMedicationPlan: function() {
+			const oFlexibleColumnLayout = this.getOwnerComponent().getRootControl().byId("fcl");
+			const me = this;
+			this.getOwnerComponent().runAsOwner(() => {
+				XMLView.create({
+				    viewName: "medunited.care.view.patient.viewer.HtmlViewer"
+				}).then((oView) => {
+					fetch("/fhir/xhtml/1")
+						.then(o => o.text())
+						.then((text) => oView.byId("html").setContent(text));
+					oFlexibleColumnLayout.removeAllEndColumnPages();
+				    oFlexibleColumnLayout.addEndColumnPage(oView);
+					me.oRouter.navTo(this.getEntityName().toLowerCase() + "-master", {
+						"patient" : this._entity,
+						"layout": "ThreeColumnsEndExpanded",
+						"document": "/fhir/xhtml/1"
+					});
+				});
+			});
 		}
 	});
 }, true);

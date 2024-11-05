@@ -144,7 +144,7 @@
 					]
 				},
 				{
-					"pattern": "patient/{patient}/{layout}",
+					"pattern": "patient/{patient}/{layout}:document:",
 					"name": "patient-detail",
 					"target": [
 						"patient-master",

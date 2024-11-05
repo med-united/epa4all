@@ -6,6 +6,8 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.message.BasicHeader;
 
+import io.quarkus.logging.Log;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -59,9 +61,17 @@ public abstract class AbstractRenderClient implements IRenderClient {
     }
 
     @Override
-    public String getXhtmlDocument(String xInsurantid, String xUseragent) throws Exception {
+    public byte[] getXhtmlDocument(String xInsurantid, String xUseragent, String np) throws Exception {
+    	this.np = np;
+    	return getXhtmlDocument(xInsurantid, xUseragent);
+    	
+    }
+    
+    public byte[] getXhtmlDocument(String xInsurantid, String xUseragent) throws Exception {
         try (InputStream content = execute(XHTML_EXT, xInsurantid, xUseragent)) {
-            return new String(content.readAllBytes(), StandardCharsets.UTF_8);
+            byte[] bytes = content.readAllBytes();
+            Log.info(new String(bytes, StandardCharsets.UTF_8));
+            return bytes;
         }
     }
 

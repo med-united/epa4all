@@ -15,13 +15,33 @@ import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 public class Fhir extends AbstractResource {
 
 	@GET
-	@Path("{konnektor : (\\w+)?}{egkHandle : (/\\w+)?}")
-	public Response get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
+	@Path("pdf/{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}")
+	public Response pdf(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
 		try {
+            if (egkHandle != null) {
+                egkHandle = egkHandle.replaceAll("/", "");
+            }
 			EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
 			
 			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaAPI.getXInsurantid(), USER_AGENT, epaAPI.getNp());
 			return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
+		} catch (Exception e) {
+			throw new WebApplicationException(e);
+		}
+	}
+	
+
+	@GET
+	@Path("xhtml/{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}")
+	public Response get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
+		try {
+            if (egkHandle != null) {
+                egkHandle = egkHandle.replaceAll("/", "");
+            }
+			EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
+			
+			byte[] html = epaAPI.getRenderClient().getXhtmlDocument(epaAPI.getXInsurantid(), USER_AGENT, epaAPI.getNp());
+			return Response.ok(html, "text/html").build();
 		} catch (Exception e) {
 			throw new WebApplicationException(e);
 		}

@@ -8,7 +8,7 @@ public interface IRenderClient {
 
     File getPdfFile(String xInsurantid, String xUseragent) throws Exception;
 
-    String getXhtmlDocument(String xInsurantid, String xUseragent) throws Exception;
+    byte[] getXhtmlDocument(String xInsurantid, String xUseragent, String string) throws Exception;
 
 	byte[] getPdfBytes(String xInsurantid, String string, String np) throws Exception;
 }
