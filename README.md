@@ -20,11 +20,11 @@
 | OIDC Flow | IBM  | X110486750 | Works |
 | OIDC Flow | RISE | X110485291 | Works |
 | Entitlemenets (setEntitlementPs) | IBM  | X110486750 | Works |
-| Entitlemenets (setEntitlementPs) | RISE | X110485291 | HTTP 403 Forbidden |
+| Entitlemenets (setEntitlementPs) | RISE | X110485291 | Works |
 | XDS Service | IBM | X110486750 | Works |
 | XDS Service (documentRepositoryRetrieveDocumentSet) | IBM | X110486750 | Works (not document found) |
-| XDS Service (documentRepositoryProvideAndRegisterDocumentSetB) | IBM | X110486750 | HTTP Code 502 Bad Gateway  |
-| XDS Service | RISE | X110485291 | (When connecting without VAU-NP) session ThreadLocal Variable not initialized |
+| XDS Service (documentRepositoryProvideAndRegisterDocumentSetB) | IBM | X110486750 | Works  |
+| XDS Service (documentRepositoryProvideAndRegisterDocumentSetB)  | RISE | X110485291 | Works |
 | Fhir PDF | IBM | X110486750 | Works (but empty page) |
 | Fhir HTML | IBM | X110486750 | Works |
 | Fhir PDF | RISE | X110485291 | Depends on Entitlement |
