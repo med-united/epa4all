@@ -4,6 +4,7 @@ import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 
 import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -38,7 +39,15 @@ public class TelematikIdRequestScopeProducer {
 	public String telematikId() {
 		try {
 			List<Card> cards = konnektorClient.getCards(defaultUserConfig, SMC_B);
-	        String smcbHandle = cards.getFirst().getCardHandle();
+			
+			Optional<Card> vizenzkrCard = cards.stream().filter(c -> "VincenzkrankenhausTEST-ONLY".equals(c.getCardHolderName())).findAny();
+        	String smcbHandle;
+			if(vizenzkrCard.isPresent()) {
+				smcbHandle = vizenzkrCard.get().getCardHandle();
+        	} else {
+        		smcbHandle = cards.getFirst().getCardHandle();
+        	}
+			
 	        Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(defaultUserConfig, smcbHandle);
 	        
 	        return WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());

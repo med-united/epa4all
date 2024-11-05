@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Path("xds-document")
@@ -83,60 +84,61 @@ public class XDSDocument extends AbstractResource {
             document.setId(documentId);
             document.setValue(is.readAllBytes());
 
-
-            SlotListType slotListType = new SlotListType();
-            slotListType.getSlot().add(createSlotType("homeCommunityId", "urn:oid:1.2.276.0.76.3.1.315.3.2.1.1"));
-
-
             RegistryObjectListType registryObjectListType = new RegistryObjectListType();
 
 
             RegistryPackageType registryPackageType = new RegistryPackageType();
+            
+            registryPackageType.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:RegistryPackage");
+            registryPackageType.setId("submissionset");
 
             JAXBElement<RegistryPackageType> jaxbElement2 = new JAXBElement<>(
-                new QName("RegistryPackageType"), RegistryPackageType.class, registryPackageType
+                new QName("urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0", "RegistryPackage"), RegistryPackageType.class, registryPackageType
             );
             registryObjectListType.getIdentifiable().add(jaxbElement2);
 
             SlotType1 submissionTime = new SlotType1();
+            submissionTime.setName("submissionTime");
             submissionTime.setValueList(new ValueListType());
             submissionTime.getValueList().getValue().add(getNumericISO8601Timestamp());
             registryPackageType.getSlot().add(submissionTime);
+            
+            ClassificationType classificationTypeRegistryPackage = new ClassificationType();
+            classificationTypeRegistryPackage.setClassifiedObject("submissionset");
+            classificationTypeRegistryPackage.setId("SubmissionSetClassification");
+            classificationTypeRegistryPackage.setClassificationNode("urn:uuid:a54d6aa5-d40d-43f9-88c5-b4633d873bdd");
+            classificationTypeRegistryPackage.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
+            registryPackageType.getClassification().add(classificationTypeRegistryPackage);
 
             ClassificationType classificationTypeAutor = new ClassificationType();
             classificationTypeAutor.setClassificationScheme("urn:uuid:a7058bb9-b4e4-4307-ba5b-e3f0ab85e12d");
             classificationTypeAutor.setClassifiedObject("submissionset");
             classificationTypeAutor.setId("author");
             classificationTypeAutor.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
-            classificationTypeAutor.getSlot().add(createSlotType("authorPerson", "^LastName^FirstName^^^Prof. Dr.^^^"));
-            classificationTypeAutor.getSlot().add(createSlotType("authorInstitution", "Unknown^^^^^&amp;1.2.276.0.76.4.188&amp;ISO^^^^"+telematikId));
+            classificationTypeAutor.getSlot().add(createSlotType("authorPerson", "123456667^LastName^FirstName^^^Prof. Dr.^^^&1.2.276.0.76.4.16&ISO"));
+            classificationTypeAutor.getSlot().add(createSlotType("authorInstitution", "Unknown^^^^^&1.2.276.0.76.4.188&ISO^^^^"+telematikId));
+            classificationTypeAutor.getSlot().add(createSlotType("authorRole", "8^^^&1.3.6.1.4.1.19376.3.276.1.5.13&ISO"));
             registryPackageType.getClassification().add(classificationTypeAutor);
 
             ClassificationType classificationTypeContentType = new ClassificationType();
-            classificationTypeContentType.setClassificationScheme("urn:uuid:aa543740-bdda-424e-8c96-df4873be850");
             classificationTypeContentType.setClassifiedObject("submissionset");
             classificationTypeContentType.setId("contentType");
             classificationTypeContentType.setNodeRepresentation("8");
+            registryPackageType.getClassification().add(classificationTypeContentType);
 
             classificationTypeContentType.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
             classificationTypeContentType.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.3.276.1.5.12"));
             classificationTypeContentType.setName(new InternationalStringType());
-            classificationTypeContentType.getName().getLocalizedString().add(createLocalizedString("de", "Veranlassung durch Patient"));
+            classificationTypeContentType.getName().getLocalizedString().add(createLocalizedString("de-DE", "Veranlassung durch Patient"));
             registryPackageType.getClassification().add(classificationTypeContentType);
 
-            ClassificationType classificationTypeRegistryPackage = new ClassificationType();
-            classificationTypeRegistryPackage.setClassificationScheme("urn:uuid:a54d6aa5-d40d-43f9-88c5-b4633d873bdd");
-            classificationTypeRegistryPackage.setClassifiedObject("submissionset");
-            classificationTypeRegistryPackage.setId("SubmissionSetClassification");
-            classificationTypeRegistryPackage.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
-            registryPackageType.getClassification().add(classificationTypeRegistryPackage);
 
             ExternalIdentifierType externalIdentifierTypePatientId = new ExternalIdentifierType();
             externalIdentifierTypePatientId.setId("patientId");
             externalIdentifierTypePatientId.setIdentificationScheme("urn:uuid:6b5aea1a-874d-4603-a4bc-96a0a7b38446");
             externalIdentifierTypePatientId.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:ExternalIdentifier");
             externalIdentifierTypePatientId.setRegistryObject("submissionset");
-            externalIdentifierTypePatientId.setValue(kvnr + "^^^&amp;1.2.276.0.76.4.8&amp;ISO");
+            externalIdentifierTypePatientId.setValue(kvnr + "^^^&1.2.276.0.76.4.8&ISO");
             externalIdentifierTypePatientId.setName(new InternationalStringType());
             externalIdentifierTypePatientId.getName().getLocalizedString().add(createLocalizedString(null, "XDSSubmissionSet.patientId"));
             registryPackageType.getExternalIdentifier().add(externalIdentifierTypePatientId);
@@ -152,32 +154,23 @@ public class XDSDocument extends AbstractResource {
             externalIdentifierTypeUniqueId.getName().getLocalizedString().add(createLocalizedString(null, "XDSSubmissionSet.uniqueId"));
             registryPackageType.getExternalIdentifier().add(externalIdentifierTypeUniqueId);
 
-
-            AssociationType1 associationType1 = new AssociationType1();
-            associationType1.setAssociationType("urn:oasis:names:tc:ebxml-regrep:AssociationType:HasMember");
-            associationType1.setId("association-0");
-            associationType1.setSourceObject("submissionset");
-            associationType1.setTargetObject(documentId);
-            associationType1.getSlot().add(createSlotType("SubmissionSetStatus", "Original"));
-
-            JAXBElement<AssociationType1> jaxbElement = new JAXBElement<>(
-                new QName("Association"), AssociationType1.class, associationType1
-            );
-            registryObjectListType.getIdentifiable().add(jaxbElement);
-
             ExtrinsicObjectType extrinsicObjectType = new ExtrinsicObjectType();
             extrinsicObjectType.setId(documentId);
             extrinsicObjectType.setMimeType("application/xml");
             extrinsicObjectType.setObjectType("urn:uuid:7edca82f-054d-47f2-a032-9b2a5b5186c1");
-            extrinsicObjectType.setHome("urn:oid:1.2.276.0.76.3.1.315.3.2.1.1");
-
-            extrinsicObjectType.getSlot().add(createSlotType("creationTime", getNumericISO8601Timestamp()));
-            extrinsicObjectType.getSlot().add(createSlotType("languageCode", "de"));
+            
+            JAXBElement<ExtrinsicObjectType> jaxbElement3 = new JAXBElement<>(
+                new QName("urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0", "ExtrinsicObject"), ExtrinsicObjectType.class, extrinsicObjectType
+            );
+            registryObjectListType.getIdentifiable().add(jaxbElement3);
+            
+            extrinsicObjectType.getSlot().add(createSlotType("creationTime", "20241105091854"));
+            extrinsicObjectType.getSlot().add(createSlotType("languageCode", "de-DE"));
             extrinsicObjectType.getSlot().add(createSlotType("URI", uniqueIdValue + ".xml"));
 
 
             LocalizedStringType localizedStringType = new LocalizedStringType();
-            localizedStringType.setLang("de");
+            localizedStringType.setLang("de-DE");
             localizedStringType.setValue("Dokument " + uniqueIdValue);
             extrinsicObjectType.setName(new InternationalStringType());
             extrinsicObjectType.getName().getLocalizedString().add(localizedStringType);
@@ -187,12 +180,12 @@ public class XDSDocument extends AbstractResource {
             classificationTypeDocumentEntryClassCode.setClassificationScheme("urn:uuid:41a5887f-8865-4c09-adf7-e362475b143a");
             classificationTypeDocumentEntryClassCode.setClassifiedObject(documentId);
             classificationTypeDocumentEntryClassCode.setId("class-0");
-            classificationTypeDocumentEntryClassCode.setNodeRepresentation("PLA");
+            classificationTypeDocumentEntryClassCode.setNodeRepresentation("ADM");
             classificationTypeDocumentEntryClassCode.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
             classificationTypeDocumentEntryClassCode.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.3.276.1.5.8"));
             classificationTypeDocumentEntryClassCode.setName(new InternationalStringType());
-            classificationTypeDocumentEntryClassCode.getName().getLocalizedString().add(createLocalizedString("de", "Planungsdokument"));
-            registryPackageType.getClassification().add(classificationTypeDocumentEntryClassCode);
+            classificationTypeDocumentEntryClassCode.getName().getLocalizedString().add(createLocalizedString("de-DE", "Administratives Dokument"));
+            extrinsicObjectType.getClassification().add(classificationTypeDocumentEntryClassCode);
 
 
             // <!-- DocumentEntry.confidentialityCode -->
@@ -204,8 +197,8 @@ public class XDSDocument extends AbstractResource {
             classificationTypeDocumentEntryConfidentialityCode.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
             classificationTypeDocumentEntryConfidentialityCode.getSlot().add(createSlotType("codingScheme", "1.2.276.0.76.5.491"));
             classificationTypeDocumentEntryConfidentialityCode.setName(new InternationalStringType());
-            classificationTypeDocumentEntryConfidentialityCode.getName().getLocalizedString().add(createLocalizedString("de", "Dokument einer Leistungserbringerinstitution"));
-            registryPackageType.getClassification().add(classificationTypeDocumentEntryConfidentialityCode);
+            classificationTypeDocumentEntryConfidentialityCode.getName().getLocalizedString().add(createLocalizedString("de-DE", "Dokument einer Leistungserbringerinstitution"));
+            extrinsicObjectType.getClassification().add(classificationTypeDocumentEntryConfidentialityCode);
 
             // <!-- DocumentEntry.formatCode -->
             ClassificationType classificationTypeDocumentEntryFormatCode = new ClassificationType();
@@ -214,12 +207,12 @@ public class XDSDocument extends AbstractResource {
             classificationTypeDocumentEntryFormatCode.setId("formatCode-0");
             // Everything is technical
             // Here is a full list https://github.com/gematik/ePA-XDS-Document/blob/ePA-3.1.0/src/vocabulary/value_sets/vs-format-code.xml
-            classificationTypeDocumentEntryFormatCode.setNodeRepresentation("urn:ihe-d:mime");
+            classificationTypeDocumentEntryFormatCode.setNodeRepresentation("urn:ihe:iti:xds:2017:mimeTypeSufficient");
             classificationTypeDocumentEntryFormatCode.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
-            classificationTypeDocumentEntryFormatCode.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.3.276.1.5.6"));
+            classificationTypeDocumentEntryFormatCode.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.1.2.3"));
             classificationTypeDocumentEntryFormatCode.setName(new InternationalStringType());
-            classificationTypeDocumentEntryFormatCode.getName().getLocalizedString().add(createLocalizedString("de", "Dokument mit mime-type"));
-            registryPackageType.getClassification().add(classificationTypeDocumentEntryFormatCode);
+            classificationTypeDocumentEntryFormatCode.getName().getLocalizedString().add(createLocalizedString("de-DE", "Dokument mit mime-type"));
+            extrinsicObjectType.getClassification().add(classificationTypeDocumentEntryFormatCode);
 
 
             // <!-- DocumentEntry.healthCareFacilityTypeCode -->
@@ -231,8 +224,8 @@ public class XDSDocument extends AbstractResource {
             classificationTypeDocumentEntryHealthCareFacilityTypeCode.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
             classificationTypeDocumentEntryHealthCareFacilityTypeCode.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.3.276.1.5.2"));
             classificationTypeDocumentEntryHealthCareFacilityTypeCode.setName(new InternationalStringType());
-            classificationTypeDocumentEntryHealthCareFacilityTypeCode.getName().getLocalizedString().add(createLocalizedString("de", "Arztpraxis"));
-            registryPackageType.getClassification().add(classificationTypeDocumentEntryHealthCareFacilityTypeCode);
+            classificationTypeDocumentEntryHealthCareFacilityTypeCode.getName().getLocalizedString().add(createLocalizedString("de-DE", "Arztpraxis"));
+            extrinsicObjectType.getClassification().add(classificationTypeDocumentEntryHealthCareFacilityTypeCode);
 
             // <!-- DocumentEntry.authorPerson -->
             ClassificationType classificationTypeDocumentEntryAuthorPerson = new ClassificationType();
@@ -241,8 +234,9 @@ public class XDSDocument extends AbstractResource {
             classificationTypeDocumentEntryAuthorPerson.setId("author-0");
             classificationTypeDocumentEntryAuthorPerson.setNodeRepresentation("PRA");
             classificationTypeDocumentEntryAuthorPerson.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
-            classificationTypeDocumentEntryAuthorPerson.getSlot().add(createSlotType("authorPerson", "^LastName^FirstName^^^Prof. Dr.^^^"));
-            registryPackageType.getClassification().add(classificationTypeDocumentEntryAuthorPerson);
+            // starts with LANR
+            classificationTypeDocumentEntryAuthorPerson.getSlot().add(createSlotType("authorPerson", "123456667^LastName^FirstName^^^Prof. Dr.^^^&1.2.276.0.76.4.16&ISO"));
+            extrinsicObjectType.getClassification().add(classificationTypeDocumentEntryAuthorPerson);
 
             // practiceSettingCode
             ClassificationType classificationTypeDocumentEntryPracticeSettingCode = new ClassificationType();
@@ -253,8 +247,8 @@ public class XDSDocument extends AbstractResource {
             classificationTypeDocumentEntryPracticeSettingCode.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
             classificationTypeDocumentEntryPracticeSettingCode.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.3.276.1.5.4"));
             classificationTypeDocumentEntryPracticeSettingCode.setName(new InternationalStringType());
-            classificationTypeDocumentEntryPracticeSettingCode.getName().getLocalizedString().add(createLocalizedString("de", "Allgemeinmedizin"));
-            registryPackageType.getClassification().add(classificationTypeDocumentEntryPracticeSettingCode);
+            classificationTypeDocumentEntryPracticeSettingCode.getName().getLocalizedString().add(createLocalizedString("de-DE", "Allgemeinmedizin"));
+            extrinsicObjectType.getClassification().add(classificationTypeDocumentEntryPracticeSettingCode);
 
 
             // typeCode
@@ -262,37 +256,48 @@ public class XDSDocument extends AbstractResource {
             classificationTypeDocumentEntryTypeCode.setClassificationScheme("urn:uuid:f0306f51-975f-434e-a61c-c59651d33983");
             classificationTypeDocumentEntryTypeCode.setClassifiedObject(documentId);
             classificationTypeDocumentEntryTypeCode.setId("typeCode-0");
-            classificationTypeDocumentEntryTypeCode.setNodeRepresentation("MEDI");
+            classificationTypeDocumentEntryTypeCode.setNodeRepresentation("BERI");
             classificationTypeDocumentEntryTypeCode.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
             classificationTypeDocumentEntryTypeCode.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.3.276.1.5.9"));
             classificationTypeDocumentEntryTypeCode.setName(new InternationalStringType());
-            classificationTypeDocumentEntryTypeCode.getName().getLocalizedString().add(createLocalizedString("de", "TypeCode"));
-            registryPackageType.getClassification().add(classificationTypeDocumentEntryTypeCode);
+            classificationTypeDocumentEntryTypeCode.getName().getLocalizedString().add(createLocalizedString("de-DE", "Arztbericht"));
+            extrinsicObjectType.getClassification().add(classificationTypeDocumentEntryTypeCode);
 
             ExternalIdentifierType externalIdentifierTypeDocumentEntryPatientId = new ExternalIdentifierType();
             externalIdentifierTypeDocumentEntryPatientId.setId("patient-0");
             externalIdentifierTypeDocumentEntryPatientId.setIdentificationScheme("urn:uuid:58a6f841-87b3-4a3e-92fd-a8ffeff98427");
             externalIdentifierTypeDocumentEntryPatientId.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:ExternalIdentifier");
             externalIdentifierTypeDocumentEntryPatientId.setRegistryObject(documentId);
-            externalIdentifierTypeDocumentEntryPatientId.setValue(kvnr + "^^^&amp;1.2.276.0.76.4.8&amp;ISO");
+            externalIdentifierTypeDocumentEntryPatientId.setValue(kvnr + "^^^&1.2.276.0.76.4.8&ISO");
             externalIdentifierTypeDocumentEntryPatientId.setName(new InternationalStringType());
             externalIdentifierTypeDocumentEntryPatientId.getName().getLocalizedString().add(createLocalizedString(null, "XDSDocumentEntry.patientId"));
-            registryPackageType.getExternalIdentifier().add(externalIdentifierTypeDocumentEntryPatientId);
+            extrinsicObjectType.getExternalIdentifier().add(externalIdentifierTypeDocumentEntryPatientId);
 
             ExternalIdentifierType externalIdentifierTypeDocumentEntryUniqueId = new ExternalIdentifierType();
-            externalIdentifierTypeDocumentEntryUniqueId.setId("patient-0");
+            externalIdentifierTypeDocumentEntryUniqueId.setId("unique-0");
             externalIdentifierTypeDocumentEntryUniqueId.setIdentificationScheme("urn:uuid:2e82c1f6-a085-4c72-9da3-8640a32e42ab");
             externalIdentifierTypeDocumentEntryUniqueId.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:ExternalIdentifier");
             externalIdentifierTypeDocumentEntryUniqueId.setRegistryObject(documentId);
             externalIdentifierTypeDocumentEntryUniqueId.setValue(uniqueIdValue);
             externalIdentifierTypeDocumentEntryUniqueId.setName(new InternationalStringType());
             externalIdentifierTypeDocumentEntryUniqueId.getName().getLocalizedString().add(createLocalizedString(null, "XDSDocumentEntry.uniqueId"));
-            registryPackageType.getExternalIdentifier().add(externalIdentifierTypeDocumentEntryUniqueId);
+            extrinsicObjectType.getExternalIdentifier().add(externalIdentifierTypeDocumentEntryUniqueId);
+
+            AssociationType1 associationType1 = new AssociationType1();
+            associationType1.setAssociationType("urn:oasis:names:tc:ebxml-regrep:AssociationType:HasMember");
+            associationType1.setId("association-0");
+            associationType1.setSourceObject("submissionset");
+            associationType1.setTargetObject(documentId);
+            associationType1.getSlot().add(createSlotType("SubmissionSetStatus", "Original"));
+
+            JAXBElement<AssociationType1> jaxbElement = new JAXBElement<>(
+                new QName("urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0", "Association"), AssociationType1.class, associationType1
+            );
+            registryObjectListType.getIdentifiable().add(jaxbElement);
 
 
             SubmitObjectsRequest submitObjectsRequest = new SubmitObjectsRequest();
             submitObjectsRequest.setRegistryObjectList(registryObjectListType);
-            submitObjectsRequest.setRequestSlotList(slotListType);
 
 
             ProvideAndRegisterDocumentSetRequestType provideAndRegisterDocumentSetRequestType = new ProvideAndRegisterDocumentSetRequestType();
@@ -311,9 +316,9 @@ public class XDSDocument extends AbstractResource {
         StringBuilder oid = new StringBuilder("2.25");
         // https://www.itu.int/itu-t/recommendations/rec.aspx?rec=X.667
         UUID uuid = UUID.randomUUID();
-        oid.append(uuid.getLeastSignificantBits());
+        oid.append(Long.toUnsignedString(uuid.getLeastSignificantBits()));
         oid.append(".");
-        oid.append(uuid.getMostSignificantBits());
+        oid.append(Long.toUnsignedString(uuid.getMostSignificantBits()));
         return oid.toString();
     }
 

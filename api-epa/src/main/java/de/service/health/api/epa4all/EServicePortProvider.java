@@ -8,6 +8,8 @@ import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.XDSDocumentService;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.xml.ws.soap.SOAPBinding;
+
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
@@ -60,7 +62,7 @@ public class EServicePortProvider {
         // Boolean.TRUE or "true" will work as the property value below
         props.put("mtom-enabled", Boolean.TRUE);
         jaxWsProxyFactory.setProperties(props);
-        // jaxWsProxyFactory.setBindingId(SOAPBinding.SOAP12HTTP_BINDING);
+        jaxWsProxyFactory.setBindingId(SOAPBinding.SOAP12HTTP_BINDING);
 
         jaxWsProxyFactory.getOutInterceptors().addAll(
             List.of(

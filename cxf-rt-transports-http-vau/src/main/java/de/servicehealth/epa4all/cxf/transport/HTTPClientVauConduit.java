@@ -17,11 +17,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.cxf.Bus;
+import org.apache.cxf.binding.soap.Soap12;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageContentsList;
 import org.apache.cxf.service.model.EndpointInfo;
@@ -55,13 +57,14 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         Address a = new Address(vauUri, URI.create(vauUri));
 
         String method = (String) message.get(HTTP_REQUEST_METHOD);
+        Object soapVersion = message.get("org.apache.cxf.binding.soap.SoapVersion");
         String endpoint = (String) message.get(ENDPOINT_ADDRESS);
         endpoint = endpoint.replace(vauCid, "").replace("https:", "https+vau:");
         message.put(ENDPOINT_ADDRESS, endpoint);
         String path = URI.create(endpoint).getPath();
 
         boolean post = POST_METHOD.equals(method);
-        if (!post) {
+        if (!post && !(soapVersion instanceof Soap12)) {
             message.put(HTTP_REQUEST_METHOD, POST_METHOD);
 
             // SOAP
@@ -80,11 +83,15 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         message.put(REQUEST_URI, vauUri);
 
         Object map = message.get(PROTOCOL_HEADERS);
+        if(map == null) {
+        	map = new HashMap<String,List<String>>();
+        	message.put(PROTOCOL_HEADERS, map);
+        }
         if (map instanceof Map headers) {
             headers.put(CONNECTION, List.of(KEEP_ALIVE));
             headers.put(CONTENT_TYPE, List.of(APPLICATION_OCTET_STREAM));
             headers.put(ACCEPT, List.of(APPLICATION_OCTET_STREAM));
-            headers.put(VAU_METHOD_PATH, List.of(method + " " + path));
+            headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + path));
         }
 
         super.setupConnection(message, a, csPolicy);

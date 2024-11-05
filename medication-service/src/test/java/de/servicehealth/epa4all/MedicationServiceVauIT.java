@@ -66,8 +66,8 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
             File file = renderClient.getPdfFile("Z123456789", "CLIENTID1234567890AB/2.1.12-45");
             assertTrue(file.exists());
 
-            String xhtmlDocument = renderClient.getXhtmlDocument("Z123456789", "CLIENTID1234567890AB/2.1.12-45");
-            assertTrue(xhtmlDocument.contains("Verordnungsdatum"));
+            byte[] xhtmlDocument = renderClient.getXhtmlDocument("Z123456789", "CLIENTID1234567890AB/2.1.12-45", null);
+            assertTrue(new String(xhtmlDocument).contains("Verordnungsdatum"));
         }
     }
 }

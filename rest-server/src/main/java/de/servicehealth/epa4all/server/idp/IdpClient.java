@@ -115,7 +115,7 @@ public class IdpClient {
     }
 
     public void getVauNp(UserRuntimeConfig userRuntimeConfig, Consumer<String> vauNPConsumer) throws Exception {
-        IdpFunc idpFunc = idpFuncer.init("X110486750", userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantid(), userRuntimeConfig);
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
@@ -128,7 +128,7 @@ public class IdpClient {
     public String getVauNpSync(UserRuntimeConfig userRuntimeConfig) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ThreadLocal<String> threadLocalString = new ThreadLocal<String>();
-        IdpFunc idpFunc = idpFuncer.init("X110486750", userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantid(), userRuntimeConfig);
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
@@ -144,7 +144,7 @@ public class IdpClient {
     }
 
     public void getBearerToken(UserRuntimeConfig userRuntimeConfig, Consumer<String> bearerConsumer) throws Exception {
-        IdpFunc idpFunc = idpFuncer.init("X110486750", userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantid(), userRuntimeConfig);
         LoginAction authAction = new LoginAction(
             idpConfig.getClientId(),
             idpConfig.getAuthRequestRedirectUrl(),
@@ -166,6 +166,12 @@ public class IdpClient {
 
     private String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {
         List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
+        if(cards.size() > 1) {
+        	Optional<Card> vizenzkrCard = cards.stream().filter(c -> "VincenzkrankenhausTEST-ONLY".equals(c.getCardHolderName())).findAny();
+        	if(vizenzkrCard.isPresent()) {
+        		return vizenzkrCard.get().getCardHandle();
+        	}
+        }
         return cards.getFirst().getCardHandle();
     }
 
@@ -278,7 +284,7 @@ public class IdpClient {
         Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
 
-        IdpFunc idpFunc = idpFuncer.init("X110486750", userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantid(), userRuntimeConfig);
         return getSignedJwt(smcbAuthCert, claims, signatureType, smcbHandle, true, idpFunc);
     }
 }
