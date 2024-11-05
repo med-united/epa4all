@@ -2,6 +2,13 @@
 
 [![Medication list from the epa4all implementation](https://img.youtube.com/vi/fryBy0tj31k/0.jpg)](https://www.youtube.com/watch?v=fryBy0tj31k)
 
+## Screenshots
+![Patienten](doc/Screenshots/Patienten.png?raw=true "Patienten")
+![Patient](doc/Screenshots/Patient.png?raw=true "Patient")
+![Medikationsliste](doc/Screenshots/Medikationsliste.png?raw=true "Medikationsliste")
+![Medikationsplan](doc/Screenshots/Medikationsplan.png?raw=true "Medikationsplan")
+
+
 ## Testing Status
 
 | Test Case  | System | KVNR | Status |
@@ -19,9 +26,9 @@
 | XDS Service (documentRepositoryProvideAndRegisterDocumentSetB) | IBM | X110486750 | HTTP Code 502 Bad Gateway  |
 | XDS Service | RISE | X110485291 | (When connecting without VAU-NP) session ThreadLocal Variable not initialized |
 | Fhir PDF | IBM | X110486750 | Works (but empty page) |
-| Fhir PDF | RISE | X110485291 | Depends on OIDC Flow |
-
-
+| Fhir HTML | IBM | X110486750 | Works |
+| Fhir PDF | RISE | X110485291 | Depends on Entitlement |
+| Fhir PDF | RISE | X110485291 | Depends on Entitlement |
 
 ## Description
 
