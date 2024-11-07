@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.service.health.api.epa4all.EpaAPI;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -12,6 +13,7 @@ import java.io.ByteArrayInputStream;
 
 import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 
+@RequestScoped
 @Path("fhir")
 public class Fhir extends AbstractResource {
 	

@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope" xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:c14n="http://www.w3.org/2001/10/xml-exc-c14n#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:saml1="urn:oasis:names:tc:SAML:1.0:assertion" xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" xmlns:wsc="http://docs.oasis-open.org/ws-sx/ws-secureconversation/200512" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:chan="http://schemas.microsoft.com/ws/2005/02/duplex" xmlns:wsa5="http://www.w3.org/2005/08/addressing" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512" xmlns:hl7v3="urn:hl7-org:v3" xmlns:faphr="http://ws.gematik.de/fa/phr/v1.1" xmlns:rs="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" xmlns:phrext="http://ws.gematik.de/fa/phrext/v1.0" xmlns:dsmlc="urn:oasis:names:tc:DSML:2:0:core" xmlns:rim="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0" xmlns:err="http://ws.gematik.de/tel/error/v2.0" xmlns:authentication="http://ws.gematik.de/fd/phrs/I_Authentication_Insurant/WSDL/v1.1" xmlns:authentication2="http://ws.gematik.de/fd/phrs/I_Authentication_Insurant/v1.1" xmlns:authorization="http://ws.gematik.de/fd/phrs/AuthorizationService/v1.1" xmlns:dmc="http://ws.gematik.de/fd/phr/I_Document_Management_Connect/v1.0" xmlns:dsml="http://ws.gematik.de/phr/dsml/v2" xmlns:query="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0" xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0" xmlns:xds="urn:ihe:iti:xds-b:2007">
+  <SOAP-ENV:Header>
+    <wsa5:MessageID>urn:uuid:aa6daf88-660a-499e-bba3-31919d237286</wsa5:MessageID>
+    <wsa5:RelatesTo>urn:uuid:8b511d78-bc2a-4793-abb9-03317f6372fa</wsa5:RelatesTo>
+    <wsa5:To SOAP-ENV:mustUnderstand="true">http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</wsa5:To>
+    <wsa5:Action SOAP-ENV:mustUnderstand="true">urn:ihe:iti:2007:RegistryStoredQueryResponse</wsa5:Action>
+  </SOAP-ENV:Header>
+  <SOAP-ENV:Body>
+    <query:AdhocQueryResponse totalResultCount="1" status="urn:oasis:names:tc:ebxml-regrep:ResponseStatusType:Success">
+      <rim:RegistryObjectList>
+        <rim:ExtrinsicObject id="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa" status="urn:oasis:names:tc:ebxml-regrep:StatusType:Approved" mimeType="application/xml" objectType="urn:uuid:7edca82f-054d-47f2-a032-9b2a5b5186c1">
+          <rim:Slot name="creationTime">
+            <rim:ValueList>
+              <rim:Value>20241105091854</rim:Value>
+            </rim:ValueList>
+          </rim:Slot>
+          <rim:Slot name="hash">
+            <rim:ValueList>
+              <rim:Value>80483cbbbe6164792161efa1c230a9644b00c2ca267522ae92d3122e90703503</rim:Value>
+            </rim:ValueList>
+          </rim:Slot>
+          <rim:Slot name="languageCode">
+            <rim:ValueList>
+              <rim:Value>de-DE</rim:Value>
+            </rim:ValueList>
+          </rim:Slot>
+          <rim:Slot name="urn:ihe:iti:xds:2013:referenceIdList">
+            <rim:ValueList>
+              <rim:Value>2.2511444075695883294390.6228729542711395433^^^^urn:gematik:iti:xds:2023:rootDocumentUniqueId</rim:Value>
+            </rim:ValueList>
+          </rim:Slot>
+          <rim:Slot name="repositoryUniqueId">
+            <rim:ValueList>
+              <rim:Value>1.2.276.0.76.3.1.315.3.6.1.1</rim:Value>
+            </rim:ValueList>
+          </rim:Slot>
+          <rim:Slot name="size">
+            <rim:ValueList>
+              <rim:Value>7618</rim:Value>
+            </rim:ValueList>
+          </rim:Slot>
+          <rim:Slot name="URI">
+            <rim:ValueList>
+              <rim:Value>2.2511444075695883294390.6228729542711395433.xml</rim:Value>
+            </rim:ValueList>
+          </rim:Slot>
+          <rim:Name>
+            <rim:LocalizedString value="Dokument 2.2511444075695883294390.6228729542711395433"/>
+          </rim:Name>
+          <rim:Classification id="urn:uuid:6bb2d58a-aa49-4960-9682-c152c6bd5c64" objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification" classificationScheme="urn:uuid:93606bcf-9494-43ec-9b4e-a7748d1a838d" classifiedObject="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa">
+            <rim:Slot name="authorPerson">
+              <rim:ValueList>
+                <rim:Value>123456667^LastName^FirstName^^^Prof. Dr.^^^&amp;1.2.276.0.76.4.16&amp;ISO</rim:Value>
+              </rim:ValueList>
+            </rim:Slot>
+          </rim:Classification>
+          <rim:Classification id="urn:uuid:777aae06-4da4-4bc3-ba33-a697291c2364" objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification" classificationScheme="urn:uuid:41a5887f-8865-4c09-adf7-e362475b143a" classifiedObject="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa" nodeRepresentation="ADM">
+            <rim:Slot name="codingScheme">
+              <rim:ValueList>
+                <rim:Value>1.3.6.1.4.1.19376.3.276.1.5.8</rim:Value>
+              </rim:ValueList>
+            </rim:Slot>
+            <rim:Name>
+              <rim:LocalizedString value="Administratives Dokument"/>
+            </rim:Name>
+          </rim:Classification>
+          <rim:Classification id="urn:uuid:3f233cbb-36f2-4f00-a986-6fa44db01581" objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification" classificationScheme="urn:uuid:f4f85eac-e6cb-4883-b524-f2705394840f" classifiedObject="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa" nodeRepresentation="LEI">
+            <rim:Slot name="codingScheme">
+              <rim:ValueList>
+                <rim:Value>1.2.276.0.76.5.491</rim:Value>
+              </rim:ValueList>
+            </rim:Slot>
+            <rim:Name>
+              <rim:LocalizedString value="Dokument einer Leistungserbringerinstitution"/>
+            </rim:Name>
+          </rim:Classification>
+          <rim:Classification id="urn:uuid:56d45584-dd4f-4f71-bebd-1c97cca3ba63" objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification" classificationScheme="urn:uuid:a09d5840-386c-46f2-b5ad-9c3699a4309d" classifiedObject="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa" nodeRepresentation="urn:ihe:iti:xds:2017:mimeTypeSufficient">
+            <rim:Slot name="codingScheme">
+              <rim:ValueList>
+                <rim:Value>1.3.6.1.4.1.19376.1.2.3</rim:Value>
+              </rim:ValueList>
+            </rim:Slot>
+            <rim:Name>
+              <rim:LocalizedString value="Format aus MIME Type ableitbar"/>
+            </rim:Name>
+          </rim:Classification>
+          <rim:Classification id="urn:uuid:4125785a-f745-4b55-b4cb-f2bd2ac5b0e7" objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification" classificationScheme="urn:uuid:f33fb8ac-18af-42cc-ae0e-ed0b0bdb91e1" classifiedObject="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa" nodeRepresentation="PRA">
+            <rim:Slot name="codingScheme">
+              <rim:ValueList>
+                <rim:Value>1.3.6.1.4.1.19376.3.276.1.5.2</rim:Value>
+              </rim:ValueList>
+            </rim:Slot>
+            <rim:Name>
+              <rim:LocalizedString value="Arztpraxis"/>
+            </rim:Name>
+          </rim:Classification>
+          <rim:Classification id="urn:uuid:d0c121c1-4f24-41e9-900c-afb80fc740e3" objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification" classificationScheme="urn:uuid:cccf5598-8b07-4b77-a05e-ae952c785ead" classifiedObject="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa" nodeRepresentation="ALLG">
+            <rim:Slot name="codingScheme">
+              <rim:ValueList>
+                <rim:Value>1.3.6.1.4.1.19376.3.276.1.5.4</rim:Value>
+              </rim:ValueList>
+            </rim:Slot>
+            <rim:Name>
+              <rim:LocalizedString value="Allgemeinmedizin"/>
+            </rim:Name>
+          </rim:Classification>
+          <rim:Classification id="urn:uuid:65d9fb17-0dd4-4ef1-b281-508b1f7f8745" objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification" classificationScheme="urn:uuid:f0306f51-975f-434e-a61c-c59651d33983" classifiedObject="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa" nodeRepresentation="BERI">
+            <rim:Slot name="codingScheme">
+              <rim:ValueList>
+                <rim:Value>1.3.6.1.4.1.19376.3.276.1.5.9</rim:Value>
+              </rim:ValueList>
+            </rim:Slot>
+            <rim:Name>
+              <rim:LocalizedString value="Arztberichte"/>
+            </rim:Name>
+          </rim:Classification>
+          <rim:ExternalIdentifier id="urn:uuid:9c3bbbc8-0e99-46cf-a9c3-2936f62ba39e" objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:ExternalIdentifier" value="2.2511444075695883294390.6228729542711395433" registryObject="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa" identificationScheme="urn:uuid:2e82c1f6-a085-4c72-9da3-8640a32e42ab">
+            <rim:Name>
+              <rim:LocalizedString value="XDSDocumentEntry.uniqueId"/>
+            </rim:Name>
+          </rim:ExternalIdentifier>
+          <rim:ExternalIdentifier id="urn:uuid:996498a0-bb9d-4c74-825b-5a4a38d39ea9" objectType="urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:ExternalIdentifier" value="X110486750^^^&amp;1.2.276.0.76.4.8&amp;ISO" registryObject="urn:uuid:aa34a179-7c10-4158-a1d6-38e1e08e65aa" identificationScheme="urn:uuid:58a6f841-87b3-4a3e-92fd-a8ffeff98427">
+            <rim:Name>
+              <rim:LocalizedString value="XDSDocumentEntry.patientId"/>
+            </rim:Name>
+          </rim:ExternalIdentifier>
+        </rim:ExtrinsicObject>
+      </rim:RegistryObjectList>
+    </query:AdhocQueryResponse>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

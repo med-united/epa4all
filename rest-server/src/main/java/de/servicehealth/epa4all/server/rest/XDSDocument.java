@@ -14,6 +14,7 @@ import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.Document;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.DocumentRequest;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -38,6 +39,7 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ValueListType;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
+@RequestScoped
 @Path("xds-document")
 public class XDSDocument extends AbstractResource {
 	
@@ -155,17 +157,18 @@ public class XDSDocument extends AbstractResource {
             classificationTypeAutor.getSlot().add(createSlotType("authorRole", "8^^^&1.3.6.1.4.1.19376.3.276.1.5.13&ISO"));
             registryPackageType.getClassification().add(classificationTypeAutor);
 
-            ClassificationType classificationTypeContentType = new ClassificationType();
-            classificationTypeContentType.setClassifiedObject("submissionset");
-            classificationTypeContentType.setId("contentType");
-            classificationTypeContentType.setNodeRepresentation("8");
-            registryPackageType.getClassification().add(classificationTypeContentType);
+            // ClassificationType classificationTypeContentType = new ClassificationType();
+            // classificationTypeContentType.setClassifiedObject("submissionset");
+            // classificationTypeContentType.setClassificationScheme("urn:uuid:aa543740-bdda-424e-8c96-df4873be8500");
+            // classificationTypeContentType.setId("contentType");
+            // classificationTypeContentType.setNodeRepresentation("8");
+            // registryPackageType.getClassification().add(classificationTypeContentType);
 
-            classificationTypeContentType.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
-            classificationTypeContentType.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.3.276.1.5.12"));
-            classificationTypeContentType.setName(new InternationalStringType());
-            classificationTypeContentType.getName().getLocalizedString().add(createLocalizedString("de-DE", "Veranlassung durch Patient"));
-            registryPackageType.getClassification().add(classificationTypeContentType);
+            // classificationTypeContentType.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
+            // classificationTypeContentType.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.3.276.1.5.12"));
+            // classificationTypeContentType.setName(new InternationalStringType());
+            // classificationTypeContentType.getName().getLocalizedString().add(createLocalizedString("de-DE", "Veranlassung durch Patient"));
+            // registryPackageType.getClassification().add(classificationTypeContentType);
 
 
             ExternalIdentifierType externalIdentifierTypePatientId = new ExternalIdentifierType();
