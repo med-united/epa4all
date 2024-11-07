@@ -35,25 +35,42 @@ public class TelematikIdRequestScopeProducer {
 	@Inject
 	UserRuntimeConfig userRuntimeConfig;
 	
+	String smcbHandle;
+	
 	@Produces
 	@TelematikId
 	public String telematikId() {
 		try {
-			List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
-			
-			Optional<Card> vizenzkrCard = cards.stream().filter(c -> "VincenzkrankenhausTEST-ONLY".equals(c.getCardHolderName())).findAny();
-        	String smcbHandle;
-			if(vizenzkrCard.isPresent()) {
-				smcbHandle = vizenzkrCard.get().getCardHandle();
-        	} else {
-        		smcbHandle = cards.getFirst().getCardHandle();
-        	}
-			
+			initSMCBHandle();
 	        Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
 	        
 	        return WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
 		} catch (CetpFault e) {
 			throw new RuntimeException(e);
+		}
+	}
+	
+	@Produces
+	@SMCBHandle
+	public String smcbHandle() {
+		try {
+			initSMCBHandle();
+	        return smcbHandle;
+		} catch (CetpFault e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void initSMCBHandle() throws CetpFault {
+		if(smcbHandle == null) {
+			List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
+			
+			Optional<Card> vizenzkrCard = cards.stream().filter(c -> "VincenzkrankenhausTEST-ONLY".equals(c.getCardHolderName())).findAny();
+			if(vizenzkrCard.isPresent()) {
+				smcbHandle = vizenzkrCard.get().getCardHandle();
+			} else {
+				smcbHandle = cards.getFirst().getCardHandle();
+			}
 		}
 	}
 }

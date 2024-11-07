@@ -124,6 +124,9 @@ public class KServicePortProvider {
     }
 
     private void lookupWebServiceURLsIfNecessary(SSLContext sslContext, IUserConfigurations userConfigurations) {
+    	if(userConfigurations2endpointMap.containsKey(userConfigurations)) {
+    		return;
+    	}
     	ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         clientBuilder.sslContext(sslContext);
 
@@ -165,6 +168,7 @@ public class KServicePortProvider {
 
             NodeList serviceNodeList = serviceInformationNode.getChildNodes();
 
+            Map<String, String> endpointMap = new HashMap<>();
             for (int i = 0, n = serviceNodeList.getLength(); i < n; ++i) {
                 Node node = serviceNodeList.item(i);
 
@@ -177,7 +181,6 @@ public class KServicePortProvider {
                     break;
                 }
                 
-                Map<String, String> endpointMap = new HashMap<>();
 
                 switch (node.getAttributes().getNamedItem("Name").getTextContent()) {
                     case "AuthSignatureService": {
@@ -203,8 +206,8 @@ public class KServicePortProvider {
                     	endpointMap.put("vsdServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
                     }
                 }
-                userConfigurations2endpointMap.put(userConfigurations, endpointMap);
             }
+            userConfigurations2endpointMap.put(userConfigurations, endpointMap);
 
         } catch (ProcessingException | SAXException | IllegalArgumentException | IOException | ParserConfigurationException e) {
             throw new RuntimeException(e);

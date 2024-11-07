@@ -42,10 +42,10 @@ import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 public class XDSDocument extends AbstractResource {
 	
 	@GET
-    @Path("query/{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}")
-    public AdhocQueryResponse query(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle, @QueryParam("kvnr") String kvnr) {
+    @Path("query/{konnektor : ([0-9a-zA-Z\\-]+)?}")
+    public AdhocQueryResponse query(@PathParam("konnektor") String konnektor, @QueryParam("kvnr") String kvnr) {
         try {
-            egkHandle = getEGKHandle(egkHandle, kvnr);
+            String egkHandle = getEGKHandle(null, kvnr);
             EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
             
             AdhocQueryRequest adhocQueryRequest = new AdhocQueryRequest();

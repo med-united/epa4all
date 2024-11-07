@@ -20,6 +20,7 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
+import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.vsds.VSDService;
@@ -51,6 +52,10 @@ public abstract class AbstractResource {
 	@Inject
 	@TelematikId
 	String telematikId;
+
+    @Inject
+    @SMCBHandle
+    String smcbHandle;
 	
 
 	public String getEGKHandle(String egkHandle, String kvnr) {
@@ -86,7 +91,7 @@ public abstract class AbstractResource {
 		if(kvnr != null) {
 			xInsurantid = kvnr;
 		} else {
-			ReadVSDResponse readVSDResponse = vsdService.readVSD(konnektor, egkHandle, null, userRuntimeConfig);
+			ReadVSDResponse readVSDResponse = vsdService.readVSD(konnektor, egkHandle, smcbHandle, userRuntimeConfig);
 			doc = VSDService.createDocument(readVSDResponse);
 			xInsurantid = VSDService.getKVNRFromResponseOrDoc(readVSDResponse, doc);
 		}
