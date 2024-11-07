@@ -12,6 +12,7 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.fault.CetpFault;
+import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
@@ -32,13 +33,13 @@ public class TelematikIdRequestScopeProducer {
 	KonnektorDefaultConfig konnektorDefaultConfig;
 	
 	@Inject
-	DefaultUserConfig defaultUserConfig;
+	UserRuntimeConfig userRuntimeConfig;
 	
 	@Produces
 	@TelematikId
 	public String telematikId() {
 		try {
-			List<Card> cards = konnektorClient.getCards(defaultUserConfig, SMC_B);
+			List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
 			
 			Optional<Card> vizenzkrCard = cards.stream().filter(c -> "VincenzkrankenhausTEST-ONLY".equals(c.getCardHolderName())).findAny();
         	String smcbHandle;
@@ -48,7 +49,7 @@ public class TelematikIdRequestScopeProducer {
         		smcbHandle = cards.getFirst().getCardHandle();
         	}
 			
-	        Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(defaultUserConfig, smcbHandle);
+	        Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
 	        
 	        return WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
 		} catch (CetpFault e) {

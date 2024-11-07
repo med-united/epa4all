@@ -6,8 +6,10 @@ import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.idp.IdpConfig;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Default;
 
 @ApplicationScoped
+@Default
 public class DefaultUserConfig implements UserRuntimeConfig {
 
     private final KonnektorDefaultConfig konnektorDefaultConfig;
@@ -60,12 +62,12 @@ public class DefaultUserConfig implements UserRuntimeConfig {
         userConfigurations = new IUserConfigurations() {
             @Override
             public String getBasicAuthUsername() {
-                throw new UnsupportedOperationException("Not implemented");
+                return null;
             }
 
             @Override
             public String getBasicAuthPassword() {
-                throw new UnsupportedOperationException("Not implemented");
+            	return null;
             }
 
             @Override

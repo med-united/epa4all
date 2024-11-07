@@ -70,7 +70,8 @@ public class XDSDocument extends AbstractResource {
             adhocQueryRequest.setResponseOption(responseOptionType);
             
             AdhocQueryType adhocQueryType = new AdhocQueryType();
-            adhocQueryType.setId("adhoc-query");
+            // FindDocuments
+            adhocQueryType.setId("urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d");
             adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryPatientId", "'"+kvnr+"^^^&1.2.276.0.76.4.8&ISO'"));
             adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryStatus", "('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')"));
             adhocQueryRequest.setAdhocQuery(adhocQueryType);

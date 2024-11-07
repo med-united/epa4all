@@ -16,10 +16,11 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.cetp.domain.fault.CetpFault;
+import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
+import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
-import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.vsds.VSDService;
 import de.servicehealth.model.EntitlementRequestType;
@@ -35,7 +36,8 @@ public abstract class AbstractResource {
 	VSDService vsdService;
 
 	@Inject
-	DefaultUserConfig defaultUserConfig;
+	@FromHttpPath
+	UserRuntimeConfig userRuntimeConfig;
 
 	@Inject
 	MultiEpaService multiEpaService;
@@ -63,7 +65,7 @@ public abstract class AbstractResource {
 	public String getCardHandleForKvnr(String kvnr) {
 		List<Card> cards;
 		try {
-			cards = konnektorClient.getCards(defaultUserConfig, CardType.EGK);
+			cards = konnektorClient.getCards(userRuntimeConfig, CardType.EGK);
 			Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(kvnr)).findAny();
 			if(card.isPresent()) {				
 				return card.get().getCardHandle();
@@ -84,7 +86,7 @@ public abstract class AbstractResource {
 		if(kvnr != null) {
 			xInsurantid = kvnr;
 		} else {
-			ReadVSDResponse readVSDResponse = vsdService.readVSD(konnektor, egkHandle, null, defaultUserConfig);
+			ReadVSDResponse readVSDResponse = vsdService.readVSD(konnektor, egkHandle, null, userRuntimeConfig);
 			doc = VSDService.createDocument(readVSDResponse);
 			xInsurantid = VSDService.getKVNRFromResponseOrDoc(readVSDResponse, doc);
 		}
@@ -93,12 +95,12 @@ public abstract class AbstractResource {
 		if (epaAPI == null) {
 			throw new WebApplicationException("No epa found for: " + xInsurantid);
 		}
-		String np = idpClient.getVauNpSync(defaultUserConfig);
+		String np = idpClient.getVauNpSync(userRuntimeConfig);
 		epaAPI.setNp(np);
 		if(doc != null) {
 			EntitlementRequestType entitlementRequest = new EntitlementRequestType();
 			String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
-			String entitlementPSJWT = idpClient.createEntitlementPSJWT(pz, defaultUserConfig);
+			String entitlementPSJWT = idpClient.createEntitlementPSJWT(pz, userRuntimeConfig);
 			entitlementRequest.setJwt(entitlementPSJWT);
 			ValidToResponseType response = epaAPI.getEntitlementsApi().setEntitlementPs(xInsurantid, USER_AGENT,
 					entitlementRequest);
