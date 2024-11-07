@@ -1,5 +1,12 @@
 package de.servicehealth.epa4all.server.rest;
 
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
+
+import javax.xml.namespace.QName;
+
 import de.service.health.api.epa4all.EpaAPI;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
@@ -11,9 +18,14 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.xml.bind.JAXBElement;
 import oasis.names.tc.ebxml_regrep.xsd.lcm._3.SubmitObjectsRequest;
+import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
+import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
+import oasis.names.tc.ebxml_regrep.xsd.query._3.ResponseOptionType;
+import oasis.names.tc.ebxml_regrep.xsd.rim._3.AdhocQueryType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.AssociationType1;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ClassificationType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExternalIdentifierType;
@@ -22,30 +34,60 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.InternationalStringType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.LocalizedStringType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.RegistryObjectListType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.RegistryPackageType;
-import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotListType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ValueListType;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
-import javax.xml.namespace.QName;
-import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
 @Path("xds-document")
 public class XDSDocument extends AbstractResource {
+	
+	@GET
+    @Path("query/{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}")
+    public AdhocQueryResponse query(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle, @QueryParam("kvnr") String kvnr) {
+        try {
+            egkHandle = getEGKHandle(egkHandle, kvnr);
+            EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
+            
+            AdhocQueryRequest adhocQueryRequest = new AdhocQueryRequest();
+            /* https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/adhocquery.xml
+              <query:ResponseOption returnType="LeafClass" returnComposedObjects="true"/>
+		      <rim:AdhocQuery id="urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d" home="urn:oid:1.2.276.0.76.3.1.405">
+		        <rim:Slot name="$XDSDocumentEntryPatientId">
+		          <rim:ValueList>
+		            <rim:Value>'X110473550^^^&amp;1.2.276.0.76.4.8&amp;ISO'</rim:Value>
+		          </rim:ValueList>
+		        </rim:Slot>
+		        <rim:Slot name="$XDSDocumentEntryStatus">
+		          <rim:ValueList>
+		            <rim:Value>('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')</rim:Value>
+		          </rim:ValueList>
+		        </rim:Slot>
+             */
+            ResponseOptionType responseOptionType = new ResponseOptionType();
+            responseOptionType.setReturnType("LeafClass");
+            responseOptionType.setReturnComposedObjects(true);
+            
+            adhocQueryRequest.setResponseOption(responseOptionType);
+            
+            AdhocQueryType adhocQueryType = new AdhocQueryType();
+            adhocQueryType.setId("adhoc-query");
+            adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryPatientId", "'"+kvnr+"^^^&1.2.276.0.76.4.8&ISO'"));
+            adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryStatus", "('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')"));
+            adhocQueryRequest.setAdhocQuery(adhocQueryType);
+            
+            AdhocQueryResponse adhocQueryRespone = epaAPI.getDocumentManagementPortType().documentRegistryRegistryStoredQuery(adhocQueryRequest);
+            return adhocQueryRespone;
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
+    }
 
 
     @GET
-    @Path("{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}")
-    public String get(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle) {
+    @Path("document/{konnektor : ([0-9a-zA-Z\\-]+)?}/{uniqueId : (/[0-9a-zA-Z\\-]+)?}")
+    public RetrieveDocumentSetResponseType get(@PathParam("konnektor") String konnektor, @PathParam("uniqueId") String uniqueId, @QueryParam("kvnr") String kvnr) {
         try {
-            if (egkHandle != null) {
-                egkHandle = egkHandle.replaceAll("/", "");
-            }
+            String egkHandle = getEGKHandle(null, kvnr);
             EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
 
             RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
@@ -54,9 +96,7 @@ public class XDSDocument extends AbstractResource {
             documentRequest.setRepositoryUniqueId("1.2.276.0.76.3.1.315.3.2.1.1");
             retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
             RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = epaAPI.getDocumentManagementPortType().documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequestType);
-            return retrieveDocumentSetResponseType.getDocumentResponse().stream()
-                .map(RetrieveDocumentSetResponseType.DocumentResponse::getDocumentUniqueId)
-                .collect(Collectors.joining(", "));
+            return retrieveDocumentSetResponseType;
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
@@ -64,19 +104,13 @@ public class XDSDocument extends AbstractResource {
 
     // Based on: https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/provideandregister.xml
     @POST
-    @Path("{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}{folder : (/[0-9a-zA-Z\\-]+)?}")
-    public RegistryResponseType post(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle, @PathParam("folder") String folder, InputStream is) {
+    @Path("{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}")
+    public RegistryResponseType post(@PathParam("konnektor") String konnektor, @PathParam("egkHandle") String egkHandle, @QueryParam("kvnr") String kvnr, InputStream is) {
         try {
-            if (egkHandle != null) {
-                egkHandle = egkHandle.replaceAll("/", "");
-            }
-            if (folder != null) {
-                folder = folder.replaceAll("/", "");
-            } else {
-                folder = "other";
-            }
+        	egkHandle = getEGKHandle(egkHandle, kvnr);
+            
             EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
-            String kvnr = multiEpaService.getXInsurantid();
+            kvnr = multiEpaService.getXInsurantid();
 
 
             Document document = new Document();
