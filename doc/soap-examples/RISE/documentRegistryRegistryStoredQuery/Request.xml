@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+  <soap:Header>
+    <Action xmlns="http://www.w3.org/2005/08/addressing">urn:ihe:iti:2007:RegistryStoredQuery</Action>
+    <MessageID xmlns="http://www.w3.org/2005/08/addressing">urn:uuid:a98c2353-792b-4112-8b65-cccd20a21a94</MessageID>
+    <To xmlns="http://www.w3.org/2005/08/addressing">https://epa-as-2.dev.epa4all.de:443/epa/xds-document/api/I_Document_Management</To>
+    <ReplyTo xmlns="http://www.w3.org/2005/08/addressing">
+      <Address>http://www.w3.org/2005/08/addressing/anonymous</Address>
+    </ReplyTo>
+  </soap:Header>
+  <soap:Body>
+    <ns3:AdhocQueryRequest xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0" xmlns:ns2="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" xmlns:ns3="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0" xmlns:ns4="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0" xmlns:ns5="urn:ihe:iti:xds-b:2007" xmlns:ns6="urn:ihe:iti:rmd:2017">
+      <ns3:ResponseOption returnType="LeafClass" returnComposedObjects="true"/>
+      <AdhocQuery id="urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d">
+        <Slot name="$XDSDocumentEntryPatientId">
+          <ValueList>
+            <Value>'X110485291^^^&amp;1.2.276.0.76.4.8&amp;ISO'</Value>
+          </ValueList>
+        </Slot>
+        <Slot name="$XDSDocumentEntryStatus">
+          <ValueList>
+            <Value>('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')</Value>
+          </ValueList>
+        </Slot>
+      </AdhocQuery>
+    </ns3:AdhocQueryRequest>
+  </soap:Body>
+</soap:Envelope>
