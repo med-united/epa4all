@@ -95,7 +95,7 @@ public class XDSDocument extends AbstractResource {
 
             RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
             DocumentRequest documentRequest = new DocumentRequest();
-            documentRequest.setDocumentUniqueId("2.25.62396952547397177119830569025634648826.332997229402574034029349705675377385445");
+            documentRequest.setDocumentUniqueId(uniqueId);
             documentRequest.setRepositoryUniqueId("1.2.276.0.76.3.1.315.3.2.1.1");
             retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
             RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = epaAPI.getDocumentManagementPortType().documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequestType);
