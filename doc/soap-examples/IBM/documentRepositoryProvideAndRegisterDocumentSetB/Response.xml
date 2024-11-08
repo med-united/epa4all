@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope" xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:c14n="http://www.w3.org/2001/10/xml-exc-c14n#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:saml1="urn:oasis:names:tc:SAML:1.0:assertion" xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" xmlns:wsc="http://docs.oasis-open.org/ws-sx/ws-secureconversation/200512" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:chan="http://schemas.microsoft.com/ws/2005/02/duplex" xmlns:wsa5="http://www.w3.org/2005/08/addressing" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:wst="http://docs.oasis-open.org/ws-sx/ws-trust/200512" xmlns:hl7v3="urn:hl7-org:v3" xmlns:faphr="http://ws.gematik.de/fa/phr/v1.1" xmlns:rs="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0" xmlns:phrext="http://ws.gematik.de/fa/phrext/v1.0" xmlns:dsmlc="urn:oasis:names:tc:DSML:2:0:core" xmlns:rim="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0" xmlns:err="http://ws.gematik.de/tel/error/v2.0" xmlns:authentication="http://ws.gematik.de/fd/phrs/I_Authentication_Insurant/WSDL/v1.1" xmlns:authentication2="http://ws.gematik.de/fd/phrs/I_Authentication_Insurant/v1.1" xmlns:authorization="http://ws.gematik.de/fd/phrs/AuthorizationService/v1.1" xmlns:dmc="http://ws.gematik.de/fd/phr/I_Document_Management_Connect/v1.0" xmlns:dsml="http://ws.gematik.de/phr/dsml/v2" xmlns:query="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0" xmlns:lcm="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0" xmlns:xds="urn:ihe:iti:xds-b:2007">
+  <SOAP-ENV:Header>
+    <wsa5:MessageID>urn:uuid:47bbcfde-cf31-482c-9cc3-c0fb1f5a2f22</wsa5:MessageID>
+    <wsa5:RelatesTo>urn:uuid:2d96988a-85ee-4403-a0df-b010e7b2d886</wsa5:RelatesTo>
+    <wsa5:To SOAP-ENV:mustUnderstand="true">http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</wsa5:To>
+    <wsa5:Action SOAP-ENV:mustUnderstand="true">urn:ihe:iti:2007:ProvideAndRegisterDocumentSet-bResponse</wsa5:Action>
+  </SOAP-ENV:Header>
+  <SOAP-ENV:Body>
+    <rs:RegistryResponse status="urn:oasis:names:tc:ebxml-regrep:ResponseStatusType:Success"/>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

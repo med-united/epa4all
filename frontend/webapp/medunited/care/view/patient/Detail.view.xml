@@ -1,4 +1,4 @@
-<mvc:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:uxap="sap.uxap" xmlns:medunited="medunited.base.control" xmlns:name="medunited.care.SharedBlocks.name" xmlns:address="medunited.care.SharedBlocks.address" xmlns:biological="medunited.care.SharedBlocks.biological" xmlns:generalPractitioner="medunited.care.SharedBlocks.generalPractitioner" xmlns:defaultOrganization="medunited.care.SharedBlocks.defaultOrganization" xmlns:insurance="medunited.care.SharedBlocks.insurance" xmlns:medication="medunited.care.SharedBlocks.medication" controllerName="medunited.care.controller.patient.Detail" xmlns:html="http://www.w3.org/1999/xhtml">
+<mvc:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:uxap="sap.uxap" xmlns:medunited="medunited.base.control" xmlns:name="medunited.care.SharedBlocks.name" xmlns:address="medunited.care.SharedBlocks.address" xmlns:biological="medunited.care.SharedBlocks.biological" xmlns:generalPractitioner="medunited.care.SharedBlocks.generalPractitioner" xmlns:defaultOrganization="medunited.care.SharedBlocks.defaultOrganization" xmlns:insurance="medunited.care.SharedBlocks.insurance" xmlns:document="medunited.care.SharedBlocks.document" xmlns:medication="medunited.care.SharedBlocks.medication" controllerName="medunited.care.controller.patient.Detail" xmlns:html="http://www.w3.org/1999/xhtml">
     <Page showHeader="false">
         <content>
             <uxap:ObjectPageLayout id="objectPageLayout" showTitleInHeaderContent="true">
@@ -38,6 +38,15 @@
                             <uxap:ObjectPageSubSection id="biologicalSubSection" title="{i18n>titleSubSectionBiologicalInformation}">
                                 <uxap:blocks>
                                     <biological:BiologicalBlock id="biologicalBlock" columnLayout="1" />
+                                </uxap:blocks>
+                            </uxap:ObjectPageSubSection>
+                        </uxap:subSections>
+                    </uxap:ObjectPageSection>
+                    <uxap:ObjectPageSection id="documentSection" title="{i18n>titleDocumentInsurance}">
+                        <uxap:subSections>
+                            <uxap:ObjectPageSubSection id="documentSubSection" title="{i18n>titleSectionDocument}">
+                                <uxap:blocks>
+                                    <document:DocumentBlock id="documentBlock" />
                                 </uxap:blocks>
                             </uxap:ObjectPageSubSection>
                         </uxap:subSections>
