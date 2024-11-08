@@ -19,6 +19,8 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 
+import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
+
 @ApplicationScoped
 public class StructureDefinitionService {
 
@@ -45,10 +47,6 @@ public class StructureDefinitionService {
         fallbackStructureDefinition.setElements(elements);
     }
 
-    private boolean xmlAwareContentType(String contentType) {
-        return contentType.contains("xml"); // TODO extend
-    }
-
     public StructureDefinition getStructureDefinition(String contentType, byte[] documentBytes) throws Exception {
         String documentType = extractDocumentType(contentType, documentBytes);
         if (documentType == null) {
@@ -70,7 +68,7 @@ public class StructureDefinitionService {
     }
 
     private String extractDocumentType(String contentType, byte[] documentBytes) throws Exception {
-        if (xmlAwareContentType(contentType)) {
+        if (isXmlCompliant(contentType)) {
             Document xmlDocument = toXmlDocument(new String(documentBytes));
             NodeList documentTypeCd = xmlDocument.getElementsByTagName("document_type_cd");
             if (documentTypeCd.getLength() > 0) {

@@ -3,8 +3,6 @@ package de.servicehealth.epa4all.xds.classification.de;
 import jakarta.enterprise.context.Dependent;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ClassificationType;
 
-import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
-
 @Dependent
 public class ClassCodeClassificationBuilder extends AbstractDEClassificationBuilder<ClassCodeClassificationBuilder> {
 
@@ -17,13 +15,11 @@ public class ClassCodeClassificationBuilder extends AbstractDEClassificationBuil
         classCodeclassificationType.setId("classCode-0");
         classCodeclassificationType.setClassificationScheme(CLASS_CODE_CLASSIFICATION_SCHEME);
 
-        classCodeclassificationType.getSlot().add(createSlotType("codingScheme", getCodingSchema()));
-
         return classCodeclassificationType;
     }
 
     @Override
-    public String getCodingSchema() {
-        return "1.3.6.1.4.1.19376.3.276.1.5.8";
+    public String getName() {
+        return "documentEntry.classCode";
     }
 }

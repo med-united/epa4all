@@ -68,8 +68,12 @@ public class RegistryPackageBuilder {
         applySubmissionTime(registryPackageType);
         applySSClassificationNode(registryPackageType);
 
-        Stream.of(classificationTypes).forEach(registryPackageType.getClassification()::add);
-        Stream.of(externalIdentifierTypes).forEach(registryPackageType.getExternalIdentifier()::add);
+        if (classificationTypes != null) {
+            Stream.of(classificationTypes).forEach(registryPackageType.getClassification()::add);
+        }
+        if (externalIdentifierTypes != null) {
+            Stream.of(externalIdentifierTypes).forEach(registryPackageType.getExternalIdentifier()::add);
+        }
 
         if (authorPerson != null) {
             ClassificationType authorClassificationType = authorPersonClassificationBuilder

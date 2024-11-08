@@ -6,7 +6,6 @@ import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
-import de.servicehealth.epa4all.xds.ProvideAndRegisterSingleDocumentTypeBuilder;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -45,7 +44,7 @@ public class TelematikIdRequestScopeProducer {
             }
 
             Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(defaultUserConfig, smcbHandle);
-            return smcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
+            return WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
         } catch (CetpFault e) {
             throw new RuntimeException(e);
         }

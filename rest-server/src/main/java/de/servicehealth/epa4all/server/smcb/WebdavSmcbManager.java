@@ -1,5 +1,22 @@
 package de.servicehealth.epa4all.server.smcb;
 
+import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
+import de.servicehealth.epa4all.server.cdi.TelematikId;
+import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.epa4all.server.vsds.VSDService;
+import io.quarkus.runtime.Startup;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.isismtt.ISISMTTObjectIdentifiers;
+import org.bouncycastle.asn1.isismtt.x509.AdmissionSyntax;
+import org.w3c.dom.Document;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -16,24 +33,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
-
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.isismtt.ISISMTTObjectIdentifiers;
-import org.bouncycastle.asn1.isismtt.x509.AdmissionSyntax;
-import org.w3c.dom.Document;
-
-import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
-import de.servicehealth.epa4all.server.cdi.TelematikId;
-import de.servicehealth.epa4all.server.config.WebdavConfig;
-import de.servicehealth.epa4all.server.vsds.VSDService;
-import io.quarkus.runtime.Startup;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
 
 @ApplicationScoped
 @Startup
@@ -75,7 +74,7 @@ public class WebdavSmcbManager {
     }
 
     @SuppressWarnings("resource")
-    public String extractTelematikIdFromCertificate(X509Certificate cert) {
+    public static String extractTelematikIdFromCertificate(X509Certificate cert) {
         // https://oidref.com/1.3.36.8.3.3
         byte[] admission = cert.getExtensionValue(ISISMTTObjectIdentifiers.id_isismtt_at_admission.toString());
 

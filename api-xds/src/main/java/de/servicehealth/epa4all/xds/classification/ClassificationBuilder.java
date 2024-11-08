@@ -4,6 +4,8 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.ClassificationType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.InternationalStringType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.LocalizedStringType;
 
+import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
+
 @SuppressWarnings("unchecked")
 public abstract class ClassificationBuilder<T extends ClassificationBuilder<T>> {
 
@@ -14,9 +16,10 @@ public abstract class ClassificationBuilder<T extends ClassificationBuilder<T>> 
     protected LocalizedStringType localizedString;
     protected String nodeRepresentation;
     protected String mimeType;
+    protected String codingScheme;
 
     public abstract String getCodingSchemaType();
-    public abstract String getCodingSchema();
+    public abstract String getName();
 
     public T withLocalizedString(LocalizedStringType localizedString) {
         this.localizedString = localizedString;
@@ -38,6 +41,11 @@ public abstract class ClassificationBuilder<T extends ClassificationBuilder<T>> 
         return (T) this;
     }
 
+    public T withCodingScheme(String codingScheme) {
+        this.codingScheme = codingScheme;
+        return (T) this;
+    }
+
     public ClassificationType build() {
         ClassificationType classificationType = new ClassificationType();
         classificationType.setObjectType(CLASSIFICATION_OBJECT_TYPE);
@@ -49,6 +57,9 @@ public abstract class ClassificationBuilder<T extends ClassificationBuilder<T>> 
         }
         if (nodeRepresentation != null) {
             classificationType.setNodeRepresentation(nodeRepresentation);
+        }
+        if (codingScheme != null) {
+            classificationType.getSlot().add(createSlotType("codingScheme", codingScheme));
         }
 
         return classificationType;

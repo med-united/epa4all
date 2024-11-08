@@ -30,8 +30,8 @@ public class AuthorClassificationBuilder extends AbstractDEClassificationBuilder
     }
 
     @Override
-    public String getCodingSchema() {
-        return "undefined";
+    public String getName() {
+        return "documentEntry.author";
     }
 }
 

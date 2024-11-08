@@ -6,9 +6,26 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.ValueListType;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 import java.util.UUID;
 
 public class XDSUtils {
+
+    private static final Set<String> xmlCompliantMimeTypes = Set.of(
+        "application/fhir+xml",
+        "application/xml+fhir",
+        "application/xml",
+        "text/xml",
+        "application/xop+xml",
+        "application/hl7-v2+xml",
+        "application/hl7-v3+xml",
+        "application/x-cda+xml",
+        "application/xds+xml"
+    );
+
+    public static boolean isXmlCompliant(String type) {
+        return xmlCompliantMimeTypes.stream().anyMatch(t -> t.equalsIgnoreCase(type.trim())) || type.contains("xml");
+    }
 
     public static String generateOID() {
         // Beginne mit einem statischen Präfix, das den OID-Standard entspricht.

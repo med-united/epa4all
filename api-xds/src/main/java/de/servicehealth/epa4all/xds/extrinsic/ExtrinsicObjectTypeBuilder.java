@@ -66,7 +66,7 @@ public class ExtrinsicObjectTypeBuilder<T extends ExtrinsicObjectTypeBuilder> {
         extrinsicObjectType.setId(documentId);
         extrinsicObjectType.setMimeType(mimeType);
 
-        extrinsicObjectType.getSlot().add(createSlotType("creationTime", LocalDateTime.now().format(FORMATTER)));
+        extrinsicObjectType.getSlot().add(createSlotType("creationTime", LocalDateTime.now().minusDays(7).format(FORMATTER)));
         extrinsicObjectType.getSlot().add(createSlotType("languageCode", languageCode));
         extrinsicObjectType.getSlot().add(createSlotType("URI", uniqueIdValue));
 
@@ -76,8 +76,12 @@ public class ExtrinsicObjectTypeBuilder<T extends ExtrinsicObjectTypeBuilder> {
         extrinsicObjectType.setName(new InternationalStringType());
         extrinsicObjectType.getName().getLocalizedString().add(localizedStringType);
 
-        Stream.of(classificationTypes).forEach(extrinsicObjectType.getClassification()::add);
-        Stream.of(externalIdentifierTypes).forEach(extrinsicObjectType.getExternalIdentifier()::add);
+        if (classificationTypes != null) {
+            Stream.of(classificationTypes).forEach(extrinsicObjectType.getClassification()::add);
+        }
+        if (externalIdentifierTypes != null) {
+            Stream.of(externalIdentifierTypes).forEach(extrinsicObjectType.getExternalIdentifier()::add);
+        }
 
         return extrinsicObjectType;
     }

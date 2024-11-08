@@ -18,6 +18,7 @@ import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.xml.bind.JAXBElement;
@@ -73,24 +74,19 @@ public class XDSDocument extends AbstractResource {
 
     // Based on: https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/provideandregister.xml
     @POST
-    // @Consumes(MediaType.MEDIA_TYPE_WILDCARD)
+    @Consumes(MediaType.MEDIA_TYPE_WILDCARD)
+    @Produces(MediaType.APPLICATION_XML)
     @Path("{konnektor : ([0-9a-zA-Z\\-]+)?}{egkHandle : (/[0-9a-zA-Z\\-]+)?}{folder : (/[0-9a-zA-Z\\-]+)?}")
     public RegistryResponseType post(
         @HeaderParam("Content-Type") String contentType,
-        @HeaderParam("lang-code") String languageCode,
+        @HeaderParam("Lang-Code") String languageCode,
         @PathParam("konnektor") String konnektor,
         @PathParam("egkHandle") String egkHandle,
-        @PathParam("folder") String folder,
         InputStream is
     ) {
         try {
             if (egkHandle != null) {
                 egkHandle = egkHandle.replaceAll("/", "");
-            }
-            if (folder != null) {
-                folder = folder.replaceAll("/", "");
-            } else {
-                folder = "other";
             }
             EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
             String kvnr = multiEpaService.getXInsurantid();
@@ -125,7 +121,7 @@ public class XDSDocument extends AbstractResource {
 
         StructureDefinition structure = structureDefinitionService.getStructureDefinition(contentType, documentBytes);
         List<FolderDefinition> folderDefinitions = structure.getElements().get(0).getMetadata();
-        AuthorPerson authorPerson = new AuthorPerson(kvnr, firstName, lastName, personDesc, "PRA"); // TODO
+        AuthorPerson authorPerson = new AuthorPerson("123456667", firstName, lastName, personDesc, "PRA"); // TODO
         
         builder.init(
             document,
@@ -133,10 +129,10 @@ public class XDSDocument extends AbstractResource {
             authorPerson,
             telematikId,
             documentId,
-            contentType,
             languageCode,
+            contentType,
             kvnr
-        );
+            );
         return builder.build();
     }
 

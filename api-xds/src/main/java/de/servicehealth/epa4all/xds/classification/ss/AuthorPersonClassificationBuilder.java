@@ -36,7 +36,7 @@ public class AuthorPersonClassificationBuilder extends AbstractSSClassificationB
     }
 
     @Override
-    public String getCodingSchema() {
+    public String getName() {
         return "undefined";
     }
 }

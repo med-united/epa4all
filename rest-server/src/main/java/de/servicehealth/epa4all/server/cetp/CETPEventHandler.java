@@ -102,7 +102,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 String smcbHandle = cards.getFirst().getCardHandle();
                 Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(appConfig, smcbHandle);
 
-                String telematikId = smcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
+                String telematikId = WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
                 smcbManager.checkOrCreateTelematikFolder(telematikId);
 
                 byte[] bytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, USER_AGENT);
