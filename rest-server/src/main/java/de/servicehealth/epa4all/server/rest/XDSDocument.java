@@ -1,12 +1,5 @@
 package de.servicehealth.epa4all.server.rest;
 
-import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
-
-import javax.xml.namespace.QName;
-
 import de.service.health.api.epa4all.EpaAPI;
 import de.servicehealth.epa4all.xds.ProvideAndRegisterSingleDocumentTypeBuilder;
 import de.servicehealth.epa4all.xds.author.AuthorPerson;
@@ -18,15 +11,16 @@ import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.Document;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.DocumentRequest;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.xml.bind.JAXBElement;
@@ -47,13 +41,26 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ValueListType;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
+import javax.xml.namespace.QName;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.UUID;
+
 @RequestScoped
 @Path("xds-document")
 public class XDSDocument extends AbstractResource {
 
-	@GET
+    @Inject
+    ProvideAndRegisterSingleDocumentTypeBuilder builder;
+
+    @GET
     @Path("query/{konnektor : ([0-9a-zA-Z\\-]+)?}")
-    public AdhocQueryResponse query(@PathParam("konnektor") String konnektor, @QueryParam("kvnr") String kvnr) {
+    public AdhocQueryResponse query(
+        @PathParam("konnektor") String konnektor,
+        @QueryParam("kvnr") String kvnr
+    ) {
         try {
             String egkHandle = getEGKHandle(null, kvnr);
             EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
@@ -82,23 +89,23 @@ public class XDSDocument extends AbstractResource {
             AdhocQueryType adhocQueryType = new AdhocQueryType();
             // FindDocuments
             adhocQueryType.setId("urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d");
-            adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryPatientId", "'"+kvnr+"^^^&1.2.276.0.76.4.8&ISO'"));
+            adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryPatientId", "'" + kvnr + "^^^&1.2.276.0.76.4.8&ISO'"));
             adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryStatus", "('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')"));
             adhocQueryRequest.setAdhocQuery(adhocQueryType);
 
-            AdhocQueryResponse adhocQueryRespone = epaAPI.getDocumentManagementPortType().documentRegistryRegistryStoredQuery(adhocQueryRequest);
-            return adhocQueryRespone;
+            return epaAPI.getDocumentManagementPortType().documentRegistryRegistryStoredQuery(adhocQueryRequest);
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
     }
 
-    @Inject
-    ProvideAndRegisterSingleDocumentTypeBuilder builder;
-
     @GET
     @Path("document/{konnektor : ([0-9a-zA-Z\\-]+)?}/{uniqueId : (/[0-9a-zA-Z\\-]+)?}")
-    public RetrieveDocumentSetResponseType get(@PathParam("konnektor") String konnektor, @PathParam("uniqueId") String uniqueId, @QueryParam("kvnr") String kvnr) {
+    public RetrieveDocumentSetResponseType get(
+        @PathParam("konnektor") String konnektor,
+        @PathParam("uniqueId") String uniqueId,
+        @QueryParam("kvnr") String kvnr
+    ) {
         try {
             String egkHandle = getEGKHandle(null, kvnr);
             EpaAPI epaAPI = initAndGetEpaAPI(konnektor, egkHandle);
@@ -108,8 +115,7 @@ public class XDSDocument extends AbstractResource {
             documentRequest.setDocumentUniqueId(uniqueId);
             documentRequest.setRepositoryUniqueId("1.2.276.0.76.3.1.315.3.2.1.1");
             retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
-            RetrieveDocumentSetResponseType retrieveDocumentSetResponseType = epaAPI.getDocumentManagementPortType().documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequestType);
-            return retrieveDocumentSetResponseType;
+            return epaAPI.getDocumentManagementPortType().documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequestType);
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
@@ -141,6 +147,9 @@ public class XDSDocument extends AbstractResource {
             ProvideAndRegisterDocumentSetRequestType request = prepareDocumentSetRequest0(
                 documentBytes, kvnr, contentType, languageCode, firstName, lastName, personDesc
             );
+
+            // ProvideAndRegisterDocumentSetRequestType request = prepareDocumentSetRequest(documentBytes, kvnr);
+
             IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
             return documentManagementPortType.documentRepositoryProvideAndRegisterDocumentSetB(request);
         } catch (Exception e) {
@@ -175,7 +184,7 @@ public class XDSDocument extends AbstractResource {
             languageCode,
             contentType,
             kvnr
-            );
+        );
         return builder.build();
     }
 
@@ -216,23 +225,9 @@ public class XDSDocument extends AbstractResource {
         classificationTypeAutor.setId("author");
         classificationTypeAutor.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
         classificationTypeAutor.getSlot().add(createSlotType("authorPerson", "123456667^LastName^FirstName^^^Prof. Dr.^^^&1.2.276.0.76.4.16&ISO"));
-        classificationTypeAutor.getSlot().add(createSlotType("authorInstitution", "Unknown^^^^^&1.2.276.0.76.4.188&ISO^^^^"+telematikId));
+        classificationTypeAutor.getSlot().add(createSlotType("authorInstitution", "Unknown^^^^^&1.2.276.0.76.4.188&ISO^^^^" + telematikId));
         classificationTypeAutor.getSlot().add(createSlotType("authorRole", "8^^^&1.3.6.1.4.1.19376.3.276.1.5.13&ISO"));
         registryPackageType.getClassification().add(classificationTypeAutor);
-
-            // ClassificationType classificationTypeContentType = new ClassificationType();
-            // classificationTypeContentType.setClassifiedObject("submissionset");
-            // classificationTypeContentType.setClassificationScheme("urn:uuid:aa543740-bdda-424e-8c96-df4873be8500");
-            // classificationTypeContentType.setId("contentType");
-            // classificationTypeContentType.setNodeRepresentation("8");
-            // registryPackageType.getClassification().add(classificationTypeContentType);
-
-            // classificationTypeContentType.setObjectType("urn:oasis:names:tc:ebxml-regrep:ObjectType:RegistryObject:Classification");
-            // classificationTypeContentType.getSlot().add(createSlotType("codingScheme", "1.3.6.1.4.1.19376.3.276.1.5.12"));
-            // classificationTypeContentType.setName(new InternationalStringType());
-            // classificationTypeContentType.getName().getLocalizedString().add(createLocalizedString("de-DE", "Veranlassung durch Patient"));
-            // registryPackageType.getClassification().add(classificationTypeContentType);
-
 
         ExternalIdentifierType externalIdentifierTypePatientId = new ExternalIdentifierType();
         externalIdentifierTypePatientId.setId("patientId");
