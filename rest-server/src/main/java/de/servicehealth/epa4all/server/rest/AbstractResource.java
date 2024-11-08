@@ -1,13 +1,5 @@
 package de.servicehealth.epa4all.server.rest;
 
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
-
-import java.io.IOException;
-import java.util.logging.Logger;
-
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
@@ -15,10 +7,18 @@ import de.servicehealth.epa4all.server.cdi.TelematikId;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.vsds.VSDService;
+import de.servicehealth.epa4all.xds.structure.StructureDefinitionService;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.ValidToResponseType;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+
+import java.io.IOException;
+import java.util.logging.Logger;
+
+import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 
 public abstract class AbstractResource {
 
@@ -27,6 +27,9 @@ public abstract class AbstractResource {
 	@Inject
 	VSDService vsdService;
 
+	@Inject
+	StructureDefinitionService structureDefinitionService;
+	
 	@Inject
 	DefaultUserConfig defaultUserConfig;
 

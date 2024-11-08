@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<levelone xmlns="urn::hl7-org/cda" xmlns:sciphox="urn::sciphox-org/sciphox" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn::hl7-org/cda ../Schema/DMP_Depression.xsd">
+    <clinical_document_header>
+        <id EX="123" RT="278012389"/>
+        <set_id EX="123" RT="278012389"/>
+        <version_nbr V="1"/>
+        <document_type_cd V="EDMP_DEPRESSION_EE" S="1.2.276.0.76.5.100" SN="KBV" DN="Erstmalige Dokumentation Depression"/>
+        <service_tmr V="2024-10-20"/>
+        <!-- Datum der Unterschrift = Dokumentationsdatum  -->
+        <origination_dttm V="2024-10-20"/>
+        <!-- Datum (Kopfdaten) !!! -->
+        <provider>
+            <provider.type_cd V="PRF"/>
+            <person>
+                <id EX="278012389" RT="BSNR"/>
+                <id EX="274343489" RT="LANR"/>
+                <person_name>
+                    <nm>
+                        <GIV V="Anette"/>
+                        <FAM V="Müller"/>
+                        <PFX V="Dr. med." QUAL="AC"/>
+                        <PFX V="Baron" QUAL="NB"/>
+                        <PFX V="von" QUAL="VV"/>
+                    </nm>
+                </person_name>
+                <addr>
+                    <STR V="Ottostr."/>
+                    <HNR V="1"/>
+                    <ZIP V="50859"/>
+                    <CTY V="Köln"/>
+                </addr>
+                <telecom V="tel:(0221)4449-0" USE="WP"/>
+            </person>
+        </provider>
+        <patient>
+            <patient.type_cd V="PATSBJ"/>
+            <person>
+                <id EX="123" RT="278012389"/>
+                <person_name>
+                    <nm>
+                        <GIV V="Hans"/>
+                        <FAM V="Meier"/>
+                    </nm>
+                </person_name>
+                <addr USE="PHYS">
+                    <STR V="Ottostr."/>
+                    <HNR V="4"/>
+                    <ZIP V="50859"/>
+                    <CTY V="Köln"/>
+                    <CNT V="DEU"/>
+                </addr>
+                <addr USE="PST">
+                    <ZIP V="50859"/>
+                    <CTY V="Köln"/>
+                    <CNT V="DEU"/>
+                    <POB V="12345678"/>
+                </addr>
+            </person>
+            <birth_dttm V="1990-12-12"/>
+            <administrative_gender_cd V="M"/>
+            <local_header ignore="all" descriptor="sciphox">
+                <sciphox:sciphox-ssu type="insurance" country="de" version="v3">
+                    <sciphox:GesetzlicheKrankenversicherung>
+                        <sciphox:Kostentraegerbezeichnung V="AOK Rheinland"/>
+                        <sciphox:Kostentraegerkennung V="101308719"/>
+                        <sciphox:KostentraegerAbrechnungsbereich V="00" S="2.16.840.1.113883.3.7.1.16"/>
+                        <sciphox:WOP V="01" S="2.16.840.1.113883.3.7.1.17"/>
+                        <sciphox:Versichertennummer V="123456789"/>
+                        <sciphox:Versichertenart V="1" S="2.16.840.1.113883.3.7.1.1"/>
+                        <sciphox:BesonderePersonengruppe V="04" S="1.2.276.0.76.5.222"/>
+                        <sciphox:DMP_Kennzeichnung V="02" S="1.2.276.0.76.5.223"/>
+                        <sciphox:VersicherungsschutzBeginn V="2003-12-01"/>
+                        <sciphox:VersicherungsschutzEnde V="2026-12-31"/>
+                        <sciphox:Einlesedatum V="2024-10-20"/>
+                    </sciphox:GesetzlicheKrankenversicherung>
+                </sciphox:sciphox-ssu>
+            </local_header>
+        </patient>
+        <local_header ignore="all" descriptor="sciphox">
+            <sciphox:sciphox-ssu type="software" country="de" version="v1">
+                <sciphox:Software>
+                    <sciphox:id EX="X/108/2010/36/100" RT="KBV-Prüfnummer"/>
+                    <sciphox:SoftwareName V="ABC Software"/>
+                    <sciphox:SoftwareVersion V="1.4"/>
+                    <sciphox:SoftwareTyp V="PVS"/>
+                    <sciphox:Kontakt>
+                        <sciphox:Kontakttyp V="SOFTV" S="1.2.276.0.76.3.1.1.5.2.3" DN="Softwareverantwortlicher"/>
+                        <organization.nm V="ABC Softwarehaus"/>
+                        <addr>
+                            <STR V="Ottostr."/>
+                            <HNR V="1"/>
+                            <ZIP V="50859"/>
+                            <CTY V="Köln"/>
+                        </addr>
+                        <telecom V="tel:(0221)4449-0" USE="WP"/>
+                        <telecom V="tel:(0221)4449-1" USE="WP"/>
+                    </sciphox:Kontakt>
+                    <sciphox:Kontakt>
+                        <sciphox:Kontakttyp V="REGS" S="1.2.276.0.76.3.1.1.5.2.3" DN="RegionalerSystembetreuer"/>
+                        <organization.nm V="ABC Consulting"/>
+                        <addr>
+                            <STR V="Ottostr."/>
+                            <HNR V="1"/>
+                            <ZIP V="50859"/>
+                            <CTY V="Köln"/>
+                        </addr>
+                        <telecom V="tel:(0221)4449-0" USE="WP"/>
+                    </sciphox:Kontakt>
+                    <sciphox:Software>
+                        <sciphox:SoftwareName V="XSD_EDE"/>
+                        <sciphox:SoftwareVersion V="1.02"/>
+                        <sciphox:SoftwareTyp V="XSD"/>
+                        <sciphox:Software>
+                            <sciphox:SoftwareName V="XPM_EDE"/>
+                            <sciphox:SoftwareVersion V="2021.2.1"/>
+                            <sciphox:SoftwareTyp V="XPM"/>
+                        </sciphox:Software>
+                    </sciphox:Software>
+                </sciphox:Software>
+            </sciphox:sciphox-ssu>
+        </local_header>
+    </clinical_document_header>
+    <!-- *********************************************** body *********************************************** -->
+    <body>
+        <section>
+            <!-- *********************************************** Administrative Daten *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Administrative Daten"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Einschreibung wegen"/>
+                                    <sciphox:Ergebnistext V="Depression"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+            <!-- *********************************************** Anamnese- und Befunddaten *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Anamnese- und Befunddaten"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Körpergröße"/>
+                                    <sciphox:Ergebniswert V="1.80" U="m"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Körpergewicht"/>
+                                    <sciphox:Ergebniswert V="080" U="kg"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Blutdruck systolisch"/>
+                                    <sciphox:Ergebniswert V="130" U="mmHg"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Blutdruck diastolisch"/>
+                                    <sciphox:Ergebniswert V="80" U="mmHg"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Raucher"/>
+                                    <sciphox:Ergebnistext V="Ja"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Begleiterkrankungen"/>
+                                    <sciphox:Ergebnistext V="Keine der genannten Erkrankungen"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Aktuelle Symptomatik - PHQ-9 Summenwert"/>
+                                    <sciphox:Ergebniswert V="8" U="{Punktzahl}"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Schweregrad zu Beginn der aktuellen depressiven Episode"/>
+                                    <sciphox:Ergebnistext V="Mittelgradig"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Dauer der aktuellen depressiven Episode"/>
+                                    <sciphox:Ergebnistext V="Mehr als zwei Jahre persistierend"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Suizidalität eingeschätzt"/>
+                                    <sciphox:Ergebnistext V="Ja"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+            <!-- *********************************************** Nicht-medikamentöse und medikamentöse Behandlung ******************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Nicht-medikamentöse und medikamentöse Behandlung"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Aktuelle Psychotherapie"/>
+                                    <sciphox:Ergebnistext V="Ja"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Aktuelle medikamentöse Therapie mit Antidepressiva"/>
+                                    <sciphox:Ergebnistext V="Aktuell andauernd, seit weniger als 9 Monaten"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+            <!-- *********************************************** Schulung *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Schulung"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Bereits vor Einschreibung in das DMP an einer depressionsspezifischen Schulung teilgenommen"/>
+                                    <sciphox:Ergebnistext V="Ja"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Depressionsspezifische Schulung empfohlen (bei aktueller Dokumentation)"/>
+                                    <sciphox:Ergebnistext V="Ja"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+            <!-- *********************************************** Behandlungsplanung *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Behandlungsplanung"/>
+                </caption>
+                <content>
+                    <local_markup descriptor="sciphox" ignore="all">
+                        <sciphox:sciphox-ssu country="de" type="observation" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Vom Patienten gewünschte Informationsangebote der Krankenkasse"/>
+                                    <sciphox:Ergebnistext V="Körperliches Training"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Dokumentationsintervall"/>
+                                    <sciphox:Ergebnistext V="Quartalsweise"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+        </section>
+    </body>
+</levelone>

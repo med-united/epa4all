@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<levelone xmlns="urn::hl7-org/cda" xmlns:sciphox="urn::sciphox-org/sciphox" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn::hl7-org/cda ../Schema/DMP_DiabetesMellitus1.xsd">
+    <clinical_document_header>
+        <id EX="123" RT="278012389"/>
+        <set_id EX="123" RT="278012389"/>
+        <version_nbr V="1"/>
+        <document_type_cd V="EDMP_DIABETES1_EE" S="1.2.276.0.76.5.100" SN="KBV" DN="Erstmalige Dokumentation Diabetes Typ 1"/>
+        <service_tmr V="2024-10-12"/>
+        <origination_dttm V="2024-10-12"/>
+        <!-- Datum (Kopfdaten) !!! -->
+        <provider>
+            <provider.type_cd V="PRF"/>
+            <person>
+                <id EX="278012389" RT="BSNR"/>
+                <id EX="272342332" RT="LANR"/>
+                <person_name>
+                    <nm>
+                        <GIV V="Anette"/>
+                        <FAM V="Müller"/>
+                        <PFX V="Dr. med." QUAL="AC"/>
+                    </nm>
+                </person_name>
+                <addr>
+                    <STR V="Ottostr."/>
+                    <HNR V="1"/>
+                    <ZIP V="50859"/>
+                    <CTY V="Köln"/>
+                </addr>
+                <telecom V="tel:(0221)4449-0" USE="WP"/>
+            </person>
+        </provider>
+        <patient>
+            <patient.type_cd V="PATSBJ"/>
+            <person>
+                <id EX="123456" RT="278012389"/>
+                <!-- dmp-fallnummer + betriebstaettenummer -->
+                <person_name>
+                    <nm>
+                        <GIV V="Katarina"/>
+                        <FAM V="Meier"/>
+                    </nm>
+                </person_name>
+                <addr>
+                    <STR V="Ottostr."/>
+                    <HNR V="4"/>
+                    <ZIP V="50859"/>
+                    <CTY V="Köln"/>
+                </addr>
+            </person>
+            <birth_dttm V="1950-12-12"/>
+            <administrative_gender_cd V="UN"/>
+            <local_header ignore="all" descriptor="sciphox">
+                <sciphox:sciphox-ssu type="insurance" country="de" version="v3">
+                    <sciphox:GesetzlicheKrankenversicherung>
+                        <sciphox:Kostentraegerbezeichnung V="AOK Rheinland"/>
+                        <sciphox:Kostentraegerkennung V="104212505"/>
+                        <sciphox:KostentraegerAbrechnungsbereich V="00" S="2.16.840.1.113883.3.7.1.16"/>
+                        <sciphox:WOP V="01" S="2.16.840.1.113883.3.7.1.17"/>
+                        <sciphox:Versichertennummer V="A120778335"/>
+                        <sciphox:Versichertenart V="1" S="2.16.840.1.113883.3.7.1.1"/>
+                        <sciphox:BesonderePersonengruppe V="04" S="1.2.276.0.76.5.222"/>
+                        <sciphox:DMP_Kennzeichnung V="04" S="1.2.276.0.76.5.223"/>
+                        <sciphox:VersicherungsschutzBeginn V="2001-12-01"/>
+                        <sciphox:VersicherungsschutzEnde V="2026-12-31"/>
+                        <sciphox:Einlesedatum V="2024-10-12"/>
+                    </sciphox:GesetzlicheKrankenversicherung>
+                </sciphox:sciphox-ssu>
+            </local_header>
+        </patient>
+        <local_header ignore="all" descriptor="sciphox">
+            <sciphox:sciphox-ssu type="software" country="de" version="v1">
+                <sciphox:Software>
+                    <sciphox:id EX="X/104/0812/36/100" RT="KBV-Prüfnummer"/>
+                    <sciphox:SoftwareName V="ABC Software"/>
+                    <sciphox:SoftwareVersion V="1.3"/>
+                    <sciphox:SoftwareTyp V="PVS"/>
+                    <sciphox:Kontakt>
+                        <sciphox:Kontakttyp V="SOFTV" S="1.2.276.0.76.3.1.1.5.2.3" DN="Softwareverantwortlicher"/>
+                        <organization.nm V="ABC Softwarehaus"/>
+                        <addr>
+                            <STR V="Ottostr."/>
+                            <HNR V="1"/>
+                            <ZIP V="50859"/>
+                            <CTY V="Köln"/>
+                        </addr>
+                        <telecom V="tel:(0221)4449-0" USE="WP"/>
+                        <telecom V="tel:(0221)4449-1" USE="WP"/>
+                    </sciphox:Kontakt>
+                    <sciphox:Kontakt>
+                        <sciphox:Kontakttyp V="REGS" S="1.2.276.0.76.3.1.1.5.2.3" DN="RegionalerSystembetreuer"/>
+                        <organization.nm V="ABC Consulting"/>
+                        <addr>
+                            <STR V="Ottostr."/>
+                            <HNR V="1"/>
+                            <ZIP V="50859"/>
+                            <CTY V="Köln"/>
+                        </addr>
+                        <telecom V="tel:(0221)4449-0" USE="WP"/>
+                    </sciphox:Kontakt>
+                    <sciphox:Software>
+                        <sciphox:SoftwareName V="XSD_EDM1"/>
+                        <!-- neue Schema -->
+                        <sciphox:SoftwareVersion V="5.07"/>
+                        <sciphox:SoftwareTyp V="XSD"/>
+                        <sciphox:Software>
+                            <sciphox:SoftwareName V="XPM_EDM1"/>
+                            <!-- neue Schema -->
+                            <sciphox:SoftwareVersion V="2023.4.0"/>
+                            <sciphox:SoftwareTyp V="XPM"/>
+                        </sciphox:Software>
+                    </sciphox:Software>
+                </sciphox:Software>
+            </sciphox:sciphox-ssu>
+        </local_header>
+    </clinical_document_header>
+    <!-- *********************************************** body *********************************************** -->
+    <body>
+        <section>
+            <!-- *********************************************** Administrative Daten *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Administrative Daten"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Einschreibung wegen"/>
+                                    <sciphox:Ergebnistext V="Diabetes mellitus Typ 1"/>
+                                    <sciphox:Ergebnistext V="KHK"/>
+                                    <sciphox:Ergebnistext V="rheumatoide Arthritis"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+            <!-- *********************************************** Anamnese- und Befunddaten *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Anamnese- und Befunddaten"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Körpergröße"/>
+                                    <sciphox:Ergebniswert V="1.80" U="m"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Körpergewicht"/>
+                                    <sciphox:Ergebniswert V="080" U="kg"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Blutdruck systolisch"/>
+                                    <sciphox:Ergebniswert V="130" U="mmHg"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Blutdruck diastolisch"/>
+                                    <sciphox:Ergebniswert V="80" U="mmHg"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Raucher"/>
+                                    <sciphox:Ergebnistext V="Ja"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Begleiterkrankungen"/>
+                                    <sciphox:Ergebnistext V="KHK"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="eGFR"/>
+                                    <sciphox:Ergebniswert V="12" U="ml/min/1,73m2KOF"/>
+                                </sciphox:Beobachtung>
+                                <!-- *********************************************** speziell Anamnese- und Befunddaten *********************************************** -->
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="HbA1c"/>
+                                    <sciphox:Ergebniswert V="12.3" U="%"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Pathologische Albumin-Kreatinin-Ratio"/>
+                                    <sciphox:Ergebnistext V="Nicht untersucht"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Pulsstatus"/>
+                                    <sciphox:Ergebnistext V="Unauffällig"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Sensibilitätsprüfung"/>
+                                    <sciphox:Ergebnistext V="Unauffällig"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Weiteres Risiko für Ulcus"/>
+                                    <sciphox:Ergebnistext V="Hyperkeratose mit Einblutung"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Ulkus"/>
+                                    <sciphox:Ergebnistext V="tief"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="(Wund)Infektion"/>
+                                    <sciphox:Ergebnistext V="ja"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Injektionsstellen (bei Insulintherapie)"/>
+                                    <sciphox:Ergebnistext V="Unauffällig"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Intervall für künftige Fußinspektionen (bei Patientinnen und Patienten ab dem vollendeten 18. Lebensjahr)"/>
+                                    <sciphox:Ergebnistext V="Jährlich"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Spätfolgen"/>
+                                    <sciphox:Ergebnistext V="Diabetische Nephropathie"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+            <!-- *********************************************** Relevante Ereignnisse *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Relevante Ereignisse"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Relevante Ereignisse"/>
+                                    <sciphox:Ergebnistext V="Erblindung"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+            <!-- *********************************************** Medikamente *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Medikamente"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Thrombozytenaggregationshemmer"/>
+                                    <sciphox:Ergebnistext V="orale Antikoagulation"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+            <!-- *********************************************** Schulung *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Schulung"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Schulung empfohlen (bei aktueller Dokumentation)"/>
+                                    <sciphox:Ergebnistext V="Diabetes-Schulung"/>
+                                    <sciphox:Ergebnistext V="Hypertonie-Schulung"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Schulung schon vor Einschreibung ins DMP bereits wahrgenommen"/>
+                                    <sciphox:Ergebnistext V="Diabetes-Schulung"/>
+                                    <sciphox:Ergebnistext V="Hypertonie-Schulung"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+            <!-- *********************************************** Behandlungsplanung  *********************************************** -->
+            <paragraph>
+                <caption>
+                    <caption_cd DN="Behandlungsplanung"/>
+                </caption>
+                <content>
+                    <local_markup ignore="all" descriptor="sciphox">
+                        <sciphox:sciphox-ssu type="observation" country="de" version="v1">
+                            <sciphox:Beobachtungen>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Vom Patienten gewünschte Informationsangebote der Krankenkasse"/>
+                                    <sciphox:Ergebnistext V="Tabakverzicht"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Dokumentationsintervall"/>
+                                    <sciphox:Ergebnistext V="Quartalsweise"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="HbA1c-Zielwert"/>
+                                    <sciphox:Ergebnistext V="Zielwert noch nicht erreicht"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Behandlung/Mitbehandlung in einer für das Diabetische Fußsyndrom qualifizierten Einrichtung"/>
+                                    <sciphox:Ergebnistext V="Ja"/>
+                                </sciphox:Beobachtung>
+                                <sciphox:Beobachtung>
+                                    <sciphox:Parameter DN="Diabetesbezogene stationäre Einweisung"/>
+                                    <sciphox:Ergebnistext V="Nein"/>
+                                </sciphox:Beobachtung>
+                            </sciphox:Beobachtungen>
+                        </sciphox:sciphox-ssu>
+                    </local_markup>
+                </content>
+            </paragraph>
+        </section>
+    </body>
+</levelone>
