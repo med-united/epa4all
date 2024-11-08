@@ -101,16 +101,15 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 List<Card> cards = konnektorClient.getCards(appConfig, SMC_B);
                 String smcbHandle = cards.getFirst().getCardHandle();
                 Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(appConfig, smcbHandle);
-                // x509Certificate.getKey().getNonCriticalExtensionOIDs()
 
-                String telematikId = WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey()); // TODO extract from x509Certificate
-                smcbManager.checkOrCreateSmcbFolders(telematikId);
+                String telematikId = WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
+                smcbManager.checkOrCreateTelematikFolder(telematikId);
 
                 byte[] bytes = epaAPI.getRenderClient().getPdfBytes(xInsurantid, USER_AGENT);
                 String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                 Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
                 cardlinkWebsocketClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
-            } catch (Exception e ) {
+            } catch (Exception e) {
                 log.log(Level.WARNING, String.format("[%s] Could not get medication PDF", correlationId), e);
                 String error = printException(e);
                 cardlinkWebsocketClient.sendJson(
