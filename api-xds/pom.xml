@@ -44,6 +44,23 @@
                     </wsdlOptions>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jsonschema2pojo</groupId>
+                <artifactId>jsonschema2pojo-maven-plugin</artifactId>
+                <version>1.2.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sourceDirectory>${basedir}/src/main/resources/ig-schema</sourceDirectory>
+                    <outputDirectory>${project.basedir}/target/generated-sources</outputDirectory>
+                    <targetPackage>de.servicehealth.epa4all.xds.ebrim</targetPackage>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

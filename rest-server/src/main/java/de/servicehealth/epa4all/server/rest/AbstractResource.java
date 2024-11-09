@@ -24,6 +24,7 @@ import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.vsds.VSDService;
+import de.servicehealth.epa4all.xds.structure.StructureDefinitionService;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.ValidToResponseType;
 import jakarta.inject.Inject;
@@ -37,6 +38,9 @@ public abstract class AbstractResource {
 	VSDService vsdService;
 
 	@Inject
+	StructureDefinitionService structureDefinitionService;
+
+	@Inject
 	@FromHttpPath
 	UserRuntimeConfig userRuntimeConfig;
 
@@ -48,7 +52,7 @@ public abstract class AbstractResource {
 
 	@Inject
 	IKonnektorClient konnektorClient;
-	
+
 	@Inject
 	@TelematikId
 	String telematikId;
@@ -56,7 +60,7 @@ public abstract class AbstractResource {
     @Inject
     @SMCBHandle
     String smcbHandle;
-	
+
 
 	public String getEGKHandle(String egkHandle, String kvnr) {
 		if (egkHandle != null && !"".equals(egkHandle)) {
@@ -66,13 +70,13 @@ public abstract class AbstractResource {
 		}
 		return egkHandle;
 	}
-	
+
 	public String getCardHandleForKvnr(String kvnr) {
 		List<Card> cards;
 		try {
 			cards = konnektorClient.getCards(userRuntimeConfig, CardType.EGK);
 			Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(kvnr)).findAny();
-			if(card.isPresent()) {				
+			if(card.isPresent()) {
 				return card.get().getCardHandle();
 			}
 		} catch (CetpFault e) {
@@ -80,7 +84,7 @@ public abstract class AbstractResource {
 		}
 		return null;
 	}
-	
+
 	public EpaAPI initAndGetEpaAPI(String konnektor, String egkHandle) throws Exception, IOException, SAXException {
 		return initAndGetEpaAPI(konnektor, egkHandle, null);
 	}
