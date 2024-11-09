@@ -68,12 +68,6 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private AbstractHttpEntity createEntity(Optional<Header> contentTypeOpt, byte[] payload) throws IOException {
-        if (contentTypeOpt.isPresent()) {
-            String contentType = contentTypeOpt.get().getValue();
-            if (contentType.contains("pdf")) {
-                return new ByteArrayEntity(payload);
-            }
-        }
-        return new StringEntity(new String(payload, StandardCharsets.UTF_8));
+        return new ByteArrayEntity(payload);
     }
 }
