@@ -59,7 +59,7 @@ public abstract class AbstractResource {
 	
 
 	public String getEGKHandle(String egkHandle, String kvnr) {
-		if (egkHandle != null) {
+		if (egkHandle != null && !"".equals(egkHandle)) {
 		    egkHandle = egkHandle.replaceAll("/", "");
 		} else if(kvnr != null) {
 			egkHandle = getCardHandleForKvnr(kvnr);

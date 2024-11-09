@@ -31,19 +31,40 @@ sap.ui.define([
 			.then(o => o.text())
 			.then(xml => me.setXML(xml) );
         },
+		loadFolderForContext: function(sPath, sFileWithPath) {
+			const me = this;
+			fetch(this.sServiceUrl+sFileWithPath, {
+                "method": "PROPFIND",
+                "headers": {
+                    "Depth": "2"
+                }
+            })
+			.then(o => o.text())
+			.then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+			.then(xml => {
+				me._addImportNode(sPath, xml);
+			});
+		},
 		loadFileForContext: function(sPath, sFileWithPath) {
-			let me = this;
-			let decoder = new TextDecoder('iso-8859-1');
+			const me = this;
+			const decoder = new TextDecoder('iso-8859-1');
             fetch(this.sServiceUrl+sFileWithPath)
 			.then(o => o.arrayBuffer())
 			.then(buf => decoder.decode(buf))
 			.then(str => new window.DOMParser().parseFromString(str, "text/xml"))
 			.then(xml => {
-				let oNodesForImport = me.getData().importNode(xml.documentElement,true);
-				let oNode = me._getObject(sPath)[0];
-				oNode.appendChild(oNodesForImport);
-				me.updateBindings();
+				me._addImportNode(sPath, xml);
 			});
+		},
+		_addImportNode: function(sPath, xml) {
+			const oNodeForImport = this.getData().importNode(xml.documentElement,true);
+			const oNode = this._getObject(sPath)[0];
+			const oOldNode = oNode.getElementsByTagName(oNodeForImport.tagName);
+			if(oOldNode.length > 0) {
+				oNode.removeChild(oOldNode[0]);
+			}
+			oNode.appendChild(oNodeForImport);
+			this.updateBindings();
 		}
     });
 });

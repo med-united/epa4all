@@ -21,11 +21,13 @@ sap.ui.define([
 		},
 		_onMatched: function (oEvent) {
 			AbstractDetailController.prototype._onMatched.apply(this, arguments);
-			let oWebdavModel = this.getView().getModel();
-			let iPatientModelOffest = oEvent.getParameter("arguments").patient;
-			let sWebDavPath = "/response/"+iPatientModelOffest+"/propstat/prop";
+			const oWebdavModel = this.getView().getModel();
+			const iPatientModelOffest = oEvent.getParameter("arguments").patient;
+			const sWebDavPath = "/response/"+iPatientModelOffest;
 			this.getView().bindElement(sWebDavPath);
-			let sPatientId = oWebdavModel.getProperty(sWebDavPath+"/displayname");
+			const sPatientId = oWebdavModel.getProperty(sWebDavPath+"/propstat/prop/displayname");
+			
+			oWebdavModel.loadFolderForContext("/response/"+iPatientModelOffest, "/"+sPatientId);
 			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/PersoenlicheVersichertendaten.xml");
 			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/AllgemeineVersicherungsdaten.xml");
 			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/GeschuetzteVersichertendaten.xml");
@@ -458,11 +460,12 @@ sap.ui.define([
 		onSeeMedicationPlan: function() {
 			const oFlexibleColumnLayout = this.getOwnerComponent().getRootControl().byId("fcl");
 			const me = this;
+			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
 			this.getOwnerComponent().runAsOwner(() => {
 				XMLView.create({
 				    viewName: "medunited.care.view.patient.viewer.HtmlViewer"
 				}).then((oView) => {
-					fetch("/fhir/xhtml/1")
+					fetch("/fhir/xhtml/1?kvnr="+sPatientId)
 						.then(o => o.text())
 						.then((text) => oView.byId("html").setContent(text));
 					oFlexibleColumnLayout.removeAllEndColumnPages();
@@ -470,7 +473,7 @@ sap.ui.define([
 					me.oRouter.navTo(this.getEntityName().toLowerCase() + "-master", {
 						"patient" : this._entity,
 						"layout": "ThreeColumnsEndExpanded",
-						"document": "/fhir/xhtml/1"
+						"document": "/fhir/xhtml/1?kvnr="+sPatientId
 					});
 				});
 			});

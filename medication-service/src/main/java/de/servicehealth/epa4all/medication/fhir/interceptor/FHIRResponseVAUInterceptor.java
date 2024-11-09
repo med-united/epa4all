@@ -19,12 +19,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 
 public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
 
+	private static Logger log = Logger.getLogger(FHIRResponseVAUInterceptor.class.getName());
+	
     private final VauResponseReader vauResponseReader;
 
     public FHIRResponseVAUInterceptor(VauClient vauClient) {
@@ -58,6 +61,7 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
                 response.setEntity(entity);
             }
         } catch (IllegalArgumentException e) {
+        	log.warning(new String(bytes));
             throw new HttpException(e.getMessage());
         }
     }

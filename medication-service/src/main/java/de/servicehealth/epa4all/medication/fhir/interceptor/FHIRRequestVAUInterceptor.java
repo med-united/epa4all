@@ -73,6 +73,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
                 String vauCid = initVau();
                 byte[] vauMessage = prepareVauMessage(entityRequest);
                 entityRequest.setEntity(new ByteArrayEntity(vauMessage));
+                entityRequest.removeHeaders("x-insurantid");
                 entityRequest.setHeader(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
                 entityRequest.setHeader(ACCEPT, APPLICATION_OCTET_STREAM);
 
