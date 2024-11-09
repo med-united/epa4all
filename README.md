@@ -28,8 +28,8 @@
 | XDS Service (documentRepositoryProvideAndRegisterDocumentSetB)  | RISE | X110485291 | Works |
 | Fhir PDF | IBM | X110486750 | Works (but empty page) |
 | Fhir HTML | IBM | X110486750 | Works |
-| Fhir PDF | RISE | X110485291 | Depends on Entitlement |
-| Fhir PDF | RISE | X110485291 | Depends on Entitlement |
+| Fhir PDF | RISE | X110485291 | Works |
+| Fhir HTML | RISE | X110485291 | Depends on Entitlement |
 
 ## Description
 
