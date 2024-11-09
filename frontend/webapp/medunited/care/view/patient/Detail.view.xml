@@ -42,7 +42,7 @@
                             </uxap:ObjectPageSubSection>
                         </uxap:subSections>
                     </uxap:ObjectPageSection>
-                    <uxap:ObjectPageSection id="documentSection" title="{i18n>titleDocumentInsurance}">
+                    <uxap:ObjectPageSection id="documentSection" title="{i18n>titleSectionDocument}">
                         <uxap:subSections>
                             <uxap:ObjectPageSubSection id="documentSubSection" title="{i18n>titleSectionDocument}">
                                 <uxap:blocks>
