@@ -6,7 +6,7 @@
 ![Patienten](doc/Screenshots/Patienten.png?raw=true "Patienten")
 ![Patient](doc/Screenshots/Patient.png?raw=true "Patient")
 ![Medikationsliste](doc/Screenshots/Medikationsliste.png?raw=true "Medikationsliste")
-![Medikationsplan](doc/Screenshots/Medikationsplan.png?raw=true "Medikationsplan")
+![Medikationsplan](doc/Screenshots/Medkationsplan.png?raw=true "Medikationsplan")
 
 
 ## Testing Status
@@ -29,7 +29,7 @@
 | Fhir PDF | IBM | X110486750 | Works (but empty page) |
 | Fhir HTML | IBM | X110486750 | Works |
 | Fhir PDF | RISE | X110485291 | Works |
-| Fhir HTML | RISE | X110485291 | Depends on Entitlement |
+| Fhir HTML | RISE | X110485291 | Works |
 
 ## Description
 
