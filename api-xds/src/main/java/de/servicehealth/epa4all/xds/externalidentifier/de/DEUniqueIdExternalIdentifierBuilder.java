@@ -2,6 +2,9 @@ package de.servicehealth.epa4all.xds.externalidentifier.de;
 
 import de.servicehealth.epa4all.xds.externalidentifier.UniqueIdExternalIdentifierBuilder;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExternalIdentifierType;
+import oasis.names.tc.ebxml_regrep.xsd.rim._3.InternationalStringType;
+
+import static de.servicehealth.epa4all.xds.XDSUtils.createLocalizedString;
 
 public class DEUniqueIdExternalIdentifierBuilder extends UniqueIdExternalIdentifierBuilder<DEUniqueIdExternalIdentifierBuilder> {
 
@@ -15,6 +18,9 @@ public class DEUniqueIdExternalIdentifierBuilder extends UniqueIdExternalIdentif
     public ExternalIdentifierType build() {
         ExternalIdentifierType externalIdentifierUniqueId = super.build();
         externalIdentifierUniqueId.setIdentificationScheme(DE_UNIQUE_ID_IDENTIFICATION_SCHEME);
+        externalIdentifierUniqueId.setName(new InternationalStringType());
+        externalIdentifierUniqueId.getName().getLocalizedString().add(createLocalizedString(null, "XDSDocumentEntry.uniqueId"));
+
         return externalIdentifierUniqueId;
     }
 }

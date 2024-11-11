@@ -18,7 +18,9 @@ import java.io.File;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Map;
 
+import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 
 @ApplicationScoped
@@ -34,6 +36,12 @@ public class StructureDefinitionService {
     @ConfigProperty(name = "ig.schema.folder.path")
     String schemasFolderPath;
 
+    @ConfigProperty(name = "ig.schema.xml")
+    Map<String, String> xmlSchemasMap;
+
+    @ConfigProperty(name = "ig.schema.pdf")
+    Map<String, String> pdfSchemasMap;
+
     private final ObjectMapper mapper = new ObjectMapper();
     private final StructureDefinition fallbackStructureDefinition;
 
@@ -48,8 +56,8 @@ public class StructureDefinitionService {
     }
 
     public StructureDefinition getStructureDefinition(String contentType, byte[] documentBytes) throws Exception {
-        String documentType = extractDocumentType(contentType, documentBytes);
-        if (documentType == null) {
+        String schemaFileName = extractSchemaFileName(contentType, documentBytes);
+        if (schemaFileName == null) {
             return fallbackStructureDefinition;
         }
 
@@ -57,7 +65,6 @@ public class StructureDefinitionService {
         if (!schemaFolder.exists()) {
             throw new IllegalStateException("IG-Schema files are not found");
         }
-        String schemaFileName = documentType + ".json";
         File[] files = schemaFolder.listFiles(f ->
             f.exists() && f.getName().equalsIgnoreCase(schemaFileName)
         );
@@ -67,16 +74,18 @@ public class StructureDefinitionService {
         return mapper.readValue(Files.readString(files[0].toPath()), StructureDefinition.class);
     }
 
-    private String extractDocumentType(String contentType, byte[] documentBytes) throws Exception {
+    private String extractSchemaFileName(String contentType, byte[] documentBytes) throws Exception {
         if (isXmlCompliant(contentType)) {
             Document xmlDocument = toXmlDocument(new String(documentBytes));
             NodeList documentTypeCd = xmlDocument.getElementsByTagName("document_type_cd");
             if (documentTypeCd.getLength() > 0) {
                 Element element = (Element) documentTypeCd.item(0);
-                return element.getAttribute("V");
+                return xmlSchemasMap.get(element.getAttribute("V"));
             } else {
                 return null;
             }
+        } else if(isPdfCompliant(contentType)) {
+            return pdfSchemasMap.get("fallback");
         } else {
             return null;
         }
