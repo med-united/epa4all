@@ -62,7 +62,7 @@ public interface WebDavResource {
     @PROPFIND
     Response propfind(
         @Context final UriInfo uriInfo,
-        @HeaderParam(DEPTH) final int depth,
+        @HeaderParam(DEPTH) final String depth,
         final InputStream entityStream,
         @HeaderParam(CONTENT_LENGTH) final long contentLength,
         @Context final Providers providers,

@@ -112,7 +112,7 @@ public class FileResource extends AbstractResource {
     }
 
     @Override
-    public Response propfind(final UriInfo uriInfo, final int depth, final InputStream entityStream, final long contentLength, final Providers providers, final HttpHeaders httpHeaders) {
+    public Response propfind(final UriInfo uriInfo, final String depth, final InputStream entityStream, final long contentLength, final Providers providers, final HttpHeaders httpHeaders) {
         logRequest("PROPFIND", uriInfo);
 
         Date lastModified = new Date(resource.lastModified());

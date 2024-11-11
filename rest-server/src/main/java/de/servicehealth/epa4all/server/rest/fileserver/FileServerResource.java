@@ -46,7 +46,7 @@ public class FileServerResource extends AbstractResource {
     @Override
     public Response propfind(
         final UriInfo uriInfo,
-        final int depth,
+        final String depth,
         final InputStream entityStream,
         final long contentLength,
         final Providers providers,
@@ -71,9 +71,9 @@ public class FileServerResource extends AbstractResource {
         return logResponse("PROPFIND", uriInfo, propfind(uriInfo, depth, folder));
     }
 
-    private Response propfind(UriInfo uriInfo, int depth, org.jugs.webdav.jaxrs.xml.elements.Response folder) {
+    private Response propfind(UriInfo uriInfo, String depth, org.jugs.webdav.jaxrs.xml.elements.Response folder) {
         Date lastModified;
-        if (depth == 0) {
+        if ("0".equals(depth)) {
             return Response.ok(new MultiStatus(folder)).build();
         }
 

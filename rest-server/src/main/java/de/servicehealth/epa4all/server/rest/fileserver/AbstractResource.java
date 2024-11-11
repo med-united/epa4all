@@ -153,7 +153,7 @@ public class AbstractResource implements WebDavResource {
     }
 
     @Override
-    public Response propfind(final UriInfo uriInfo, final int depth, final InputStream entityStream, final long contentLength, final Providers providers, final HttpHeaders httpHeaders) throws IOException {
+    public Response propfind(final UriInfo uriInfo, final String depth, final InputStream entityStream, final long contentLength, final Providers providers, final HttpHeaders httpHeaders) throws IOException {
         logRequest("PROPFIND", uriInfo);
         return logResponse("PROPFIND", uriInfo, Response.status(404).build());
     }

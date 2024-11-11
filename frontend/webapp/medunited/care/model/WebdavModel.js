@@ -36,7 +36,7 @@ sap.ui.define([
 			fetch(this.sServiceUrl+sFileWithPath, {
                 "method": "PROPFIND",
                 "headers": {
-                    "Depth": "2"
+                    "Depth": "Infinity"
                 }
             })
 			.then(o => o.text())
