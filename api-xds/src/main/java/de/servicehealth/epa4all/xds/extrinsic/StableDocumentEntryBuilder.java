@@ -83,41 +83,40 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
         folderDefinitions.stream()
             .filter(fd -> mandatoryClassificationTypes.stream().noneMatch(fd.getName()::contains))
             .forEach(fd -> {
-            String name = fd.getName();
-            Object obj = fd.getValue();
-            if (obj instanceof Map map) {
-                String codeSystem;
-                if (name.contains("formatCode")) {
-                    codeSystem = "1.3.6.1.4.1.19376.1.2.3"; // TODO check
-                } else {
-                    codeSystem = (String) map.get("codeSystem");
+                String name = fd.getName();
+                Object obj = fd.getValue();
+                if (obj instanceof Map map) {
+                    String codeSystem;
+                    if (name.contains("formatCode")) {
+                        codeSystem = "1.3.6.1.4.1.19376.1.2.3"; // TODO check
+                    } else {
+                        codeSystem = (String) map.get("codeSystem");
+                    }
+                    String code = (String) map.get("code");
+                    List descList = (List) map.get("desc");
+                    String text;
+                    if (descList == null || descList.isEmpty()) {
+                        text = (String) map.get("displayName");
+                    } else {
+                        Map descMap = (Map) descList.getFirst();
+                        text = (String) descMap.get("#text");
+                    }
+                    classificationBuilders.stream()
+                        .filter(cb -> cb.getCodingSchemaType().equals("DE"))
+                        .filter(cb -> cb.getName().equals(name))
+                        .forEach(b -> classificationTypes.add(
+                            b
+                                .withMimeType(mimeType)
+                                .withClassifiedObject(documentId)
+                                .withNodeRepresentation(code)
+                                .withCodingScheme(codeSystem)
+                                .withLocalizedString(createLocalizedString(languageCode, text))
+                                .build()
+                        ));
                 }
-                String code = (String) map.get("code");
-                List descList = (List) map.get("desc");
-                String text;
-                if (descList == null || descList.isEmpty()) {
-                    text = (String) map.get("displayName");
-                } else {
-                    Map descMap = (Map) descList.getFirst();
-                    text = (String) descMap.get("#text");
-                }
-                classificationBuilders.stream()
-                    .filter(cb -> cb.getCodingSchemaType().equals("DE"))
-                    .filter(cb -> cb.getName().equals(name))
-                    .forEach(b -> classificationTypes.add(
-                        b
-                            .withMimeType(mimeType)
-                            .withClassifiedObject(documentId)
-                            .withNodeRepresentation(code)
-                            .withCodingScheme(codeSystem)
-                            .withLocalizedString(createLocalizedString(languageCode, text))
-                            .build()
-                    ));
-            }
-        });
-        withClassifications(classificationTypes.toArray(ClassificationType[]::new));
-        
-        return this;
+            });
+
+        return withClassifications(classificationTypes.toArray(ClassificationType[]::new));
     }
 
     @Override

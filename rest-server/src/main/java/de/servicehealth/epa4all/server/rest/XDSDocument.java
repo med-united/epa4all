@@ -44,9 +44,12 @@ import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import javax.xml.namespace.QName;
 import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.UUID;
+
+import static de.servicehealth.epa4all.xds.XDSUtils.createLocalizedString;
+import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
+import static de.servicehealth.epa4all.xds.XDSUtils.generateOID;
+import static de.servicehealth.epa4all.xds.XDSUtils.getNumericISO8601Timestamp;
 
 @RequestScoped
 @Path("xds-document")
@@ -209,7 +212,7 @@ public class XDSDocument extends AbstractResource {
         SlotType1 submissionTime = new SlotType1();
         submissionTime.setName("submissionTime");
         submissionTime.setValueList(new ValueListType());
-        submissionTime.getValueList().getValue().add(getNumericISO8601Timestamp());
+        submissionTime.getValueList().getValue().add(getNumericISO8601Timestamp(LocalDateTime.now()));
         registryPackageType.getSlot().add(submissionTime);
 
         ClassificationType classificationTypeRegistryPackage = new ClassificationType();
@@ -399,39 +402,5 @@ public class XDSDocument extends AbstractResource {
         provideAndRegisterDocumentSetRequestType.getDocument().add(document);
         provideAndRegisterDocumentSetRequestType.setSubmitObjectsRequest(submitObjectsRequest);
         return provideAndRegisterDocumentSetRequestType;
-    }
-
-    public static String generateOID() {
-        // Beginne mit einem statischen Präfix, das den OID-Standard entspricht.
-        StringBuilder oid = new StringBuilder("2.25");
-        // https://www.itu.int/itu-t/recommendations/rec.aspx?rec=X.667
-        UUID uuid = UUID.randomUUID();
-        oid.append(Long.toUnsignedString(uuid.getLeastSignificantBits()));
-        oid.append(".");
-        oid.append(Long.toUnsignedString(uuid.getMostSignificantBits()));
-        return oid.toString();
-    }
-
-    private LocalizedStringType createLocalizedString(String lang, String value) {
-        LocalizedStringType localizedStringType = new LocalizedStringType();
-        if (lang != null) {
-            localizedStringType.setLang(lang);
-        }
-        localizedStringType.setValue(value);
-        return localizedStringType;
-    }
-
-    public static SlotType1 createSlotType(String value, String string) {
-        SlotType1 slotType = new SlotType1();
-        slotType.setName(value);
-        slotType.setValueList(new ValueListType());
-        slotType.getValueList().getValue().add(string);
-        return slotType;
-    }
-
-    public static String getNumericISO8601Timestamp() {
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        return now.format(formatter);
     }
 }
