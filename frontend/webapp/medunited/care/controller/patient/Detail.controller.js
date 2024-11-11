@@ -50,8 +50,18 @@ sap.ui.define([
 						if(sViewer == "PdfViewer") {							
 							oView.byId("pdf").setSource(sDecodedDocument);
 						} else if(sViewer == "CodeViewer") {
+							const decoderIso = new TextDecoder('iso-8859-15');
+							const decoderUtf8 = new TextDecoder('utf-8');
+							
 							fetch(sDecodedDocument)
-								.then(o => o.text())
+								.then(o => o.arrayBuffer())
+								.then(buf => {
+									let text = decoderUtf8.decode(buf);
+									if(text.indexOf("ISO-8859-15") != -1) {
+										text = decoderIso.decode(buf);
+									}
+									return text;
+								})
 								.then((text) => oView.byId("code").setValue(text));
 						} else {
 							fetch(sDecodedDocument)
