@@ -23,6 +23,7 @@ sap.ui.define([
 			AbstractDetailController.prototype._onMatched.apply(this, arguments);
 			const oWebdavModel = this.getView().getModel();
 			const iPatientModelOffest = oEvent.getParameter("arguments").patient;
+			const sDocument = oEvent.getParameter("arguments").document;
 			const sWebDavPath = "/response/"+iPatientModelOffest;
 			this.getView().bindElement(sWebDavPath);
 			const sPatientId = oWebdavModel.getProperty(sWebDavPath+"/propstat/prop/displayname");
@@ -31,6 +32,40 @@ sap.ui.define([
 			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/PersoenlicheVersichertendaten.xml");
 			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/AllgemeineVersicherungsdaten.xml");
 			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/GeschuetzteVersichertendaten.xml");
+			if(sDocument) {
+				const me = this;
+				const sDecodedDocument = decodeURIComponent(sDocument);
+				this.getOwnerComponent().runAsOwner(() => {
+					let sViewer;
+					if(sDecodedDocument.endsWith(".pdf")) {
+						sViewer = "PdfViewer";
+					} else if(sDecodedDocument.endsWith(".xml")) {
+						sViewer = "CodeViewer";
+					} else {
+						sViewer = "HtmlViewer";
+					}
+					XMLView.create({
+					    viewName: "medunited.care.view.patient.viewer."+sViewer
+					}).then((oView) => {
+						if(sViewer == "PdfViewer") {							
+							oView.byId("pdf").setSource(sDecodedDocument);
+						} else if(sViewer == "CodeViewer") {
+							fetch(sDecodedDocument)
+								.then(o => o.text())
+								.then((text) => oView.byId("code").setValue(text));
+						} else {
+							fetch(sDecodedDocument)
+								.then(o => o.text())
+								.then((text) => oView.byId("html").setContent(text));
+						}
+						const oFlexibleColumnLayout = me.getOwnerComponent().getRootControl().byId("fcl");
+						
+						oFlexibleColumnLayout.removeAllEndColumnPages();
+					    oFlexibleColumnLayout.addEndColumnPage(oView);
+						
+					});
+				});
+			}
 		},
 		formatPatientDataMatrix: function (sId, optionSelected) {
 			const oPatient = this.getView().getModel().getProperty("/Patient/" + sId);
@@ -458,24 +493,11 @@ sap.ui.define([
 			return medicationStatementsOfPatient;
 		},
 		onSeeMedicationPlan: function() {
-			const oFlexibleColumnLayout = this.getOwnerComponent().getRootControl().byId("fcl");
-			const me = this;
 			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
-			this.getOwnerComponent().runAsOwner(() => {
-				XMLView.create({
-				    viewName: "medunited.care.view.patient.viewer.HtmlViewer"
-				}).then((oView) => {
-					fetch("/fhir/xhtml/1?kvnr="+sPatientId)
-						.then(o => o.text())
-						.then((text) => oView.byId("html").setContent(text));
-					oFlexibleColumnLayout.removeAllEndColumnPages();
-				    oFlexibleColumnLayout.addEndColumnPage(oView);
-					me.oRouter.navTo(this.getEntityName().toLowerCase() + "-master", {
-						"patient" : this._entity,
-						"layout": "ThreeColumnsEndExpanded",
-						"document": "/fhir/xhtml/1?kvnr="+sPatientId
-					});
-				});
+			this.oRouter.navTo(this.getEntityName().toLowerCase() + "-detail", {
+				"patient" : this._entity,
+				"layout": "ThreeColumnsEndExpanded",
+				"document": encodeURIComponent("/fhir/xhtml/1?kvnr="+sPatientId)
 			});
 		}
 	});

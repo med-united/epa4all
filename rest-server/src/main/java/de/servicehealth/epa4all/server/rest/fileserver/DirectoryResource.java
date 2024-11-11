@@ -159,19 +159,19 @@ public class DirectoryResource extends AbstractResource {
 		    
 		    if (notFound != null)
 		    	davFile = new org.jugs.webdav.jaxrs.xml.elements.Response(
-		    			new HRef(uriBuilder.path(fileName).build()),
+		    			new HRef(uriBuilder.clone().path(fileName).build()),
 		    			null, null, null, found, notFound
 		    			);
 		    else
 		    	davFile = new org.jugs.webdav.jaxrs.xml.elements.Response(
-		    			new HRef(uriBuilder.path(fileName).build()),
+		    			new HRef(uriBuilder.clone().path(fileName).build()),
 		    			null, null, null, found
 		    			);
 		    if (file.isDirectory()) {
 		        props.isCollection();
 		        if("Infinity".equals(depth)) {
 		        	DirectoryResource directoryResource = new DirectoryResource(rootFolder+"/"+fileName, file, url+"/"+fileName);
-		        	responses.addAll(directoryResource.getResponses(uriBuilder.path(fileName), prop, davFile, depth));
+		        	responses.addAll(directoryResource.getResponses(uriBuilder.clone().path(fileName), prop, davFile, depth));
 		        } else {
 		        	responses.add(davFile);
 		        }

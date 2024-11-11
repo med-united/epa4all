@@ -1,0 +1,6 @@
+<mvc:View xmlns:code="sap.ui.codeeditor" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:uxap="sap.uxap" xmlns:html="http://www.w3.org/1999/xhtml">
+	<Page>
+		<code:CodeEditor id="code" editable="false" type="xml">
+		</code:CodeEditor>
+	</Page>
+</mvc:View>

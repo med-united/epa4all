@@ -1,7 +1,7 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns="sap.m" xmlns:dnd="sap.ui.core.dnd" controllerName="medunited.care.SharedBlocks.document.DocumentBlockController">
     <Table id="documentTable" items="{
             path: 'multistatus/response'
-        }" autoPopinMode="true" type="Navication" press="onDocumentItemPress">
+        }" autoPopinMode="true">
         <columns>
             <Column width="60%" importance="High">
                 <Text text="{i18n>columnLabelDocumentName}" />
@@ -14,7 +14,7 @@
             </Column>
         </columns>
         <items>
-            <ColumnListItem>
+            <ColumnListItem type="Navigation" press="onDocumentItemPress">
                 <cells>
                 	<Text text="{propstat/prop/displayname}" />
                     <Text text="{propstat/prop/creationdate}" />

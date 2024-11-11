@@ -25,8 +25,19 @@ sap.ui.define([
             this.oRouter = sap.ui.core.UIComponent.getRouterFor(this);
             this.oRouter.getRoute("patient-detail").attachPatternMatched(this.onPatientRouteMatched, this);
         },
+		onDocumentItemPress: function (oEvent) {
+			const oContext = this.getView().getBindingContext();
+			const sPatientId = oContext.getProperty("propstat/prop/displayname");
+			const sPatientPath = oContext.getPath();
+			const sLastId = sPatientPath.split(/\//).pop();
+			this.oRouter.navTo("patient-detail", {
+				"patient" : sLastId,
+				"layout": "ThreeColumnsEndExpanded",
+				"document": encodeURIComponent(oEvent.getSource().getBindingContext().getProperty("href"))
+			});
+		},
         onPatientRouteMatched: function (oEvent) {
-            
+            this._entity = oEvent.getParameter("arguments").patient;
         },
 		addDocument: function () {
                         

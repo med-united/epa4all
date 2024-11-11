@@ -43,7 +43,6 @@ public class FileResource extends AbstractResource {
     }
 
     @GET
-    @Produces("application/octet-stream")
     public Response get() {
         logRequest("GET", url);
         if (!resource.exists()) {
@@ -58,6 +57,12 @@ public class FileResource extends AbstractResource {
             }
             builder.header("Last-Modified", new Rfc1123DateFormat().format(new Date(resource.lastModified())));
             builder.header("Content-Length", resource.length());
+            
+            if(resource.getName().endsWith(".pdf")) {
+            	builder.type("application/pdf");
+            } else {
+            	builder.type("application/octet-stream");
+            }
 
             return logResponse("GET", builder.entity(in).build());
         }

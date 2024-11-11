@@ -6,7 +6,8 @@
 ![Patienten](doc/Screenshots/Patienten.png?raw=true "Patienten")
 ![Patient](doc/Screenshots/Patient.png?raw=true "Patient")
 ![Medikationsliste](doc/Screenshots/Medikationsliste.png?raw=true "Medikationsliste")
-![Medikationsplan](doc/Screenshots/Medkationsplan.png?raw=true "Medikationsplan")
+![Medikationsplan](doc/Screenshots/Medikationsplan.png?raw=true "Medikationsplan")
+![Dokument](doc/Screenshots/Dokument.png?raw=true "Dokument")
 
 
 ## Testing Status

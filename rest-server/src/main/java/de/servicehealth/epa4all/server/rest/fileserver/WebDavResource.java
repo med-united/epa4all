@@ -34,7 +34,6 @@ import static org.jugs.webdav.jaxrs.Headers.OVERWRITE;
 public interface WebDavResource {
 
     @GET
-    @Produces("text/html")
     Response get(@Context final UriInfo uriInfo);
 
     @PUT
