@@ -11,6 +11,7 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.RegistryPackageType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ValueListType;
 
+import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.getNumericISO8601Timestamp;
@@ -91,7 +92,7 @@ public class RegistryPackageBuilder {
         SlotType1 submissionTime = new SlotType1();
         submissionTime.setName("submissionTime");
         submissionTime.setValueList(new ValueListType());
-        submissionTime.getValueList().getValue().add(getNumericISO8601Timestamp());
+        submissionTime.getValueList().getValue().add(getNumericISO8601Timestamp(LocalDateTime.now()));
         registryPackageType.getSlot().add(submissionTime);
     }
 

@@ -50,12 +50,12 @@ import jakarta.xml.ws.BindingProvider;
 
 @ApplicationScoped
 public class KServicePortProvider {
-	
-	private static Logger log = Logger.getLogger(KServicePortProvider.class.getName());
+
+    private static Logger log = Logger.getLogger(KServicePortProvider.class.getName());
 
     private final SSLContext defaultSSLContext;
-    
-    Map<IUserConfigurations, Map<String,String>> userConfigurations2endpointMap = new HashMap<>();
+
+    Map<IUserConfigurations, Map<String, String>> userConfigurations2endpointMap = new HashMap<>();
 
     @Inject
     public KServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) throws Exception {
@@ -70,7 +70,7 @@ public class KServicePortProvider {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
         CertificateService certificateService = new CertificateService();
         CertificateServicePortType certificateServicePort = certificateService.getCertificateServicePort();
-        setEndpointAddress((BindingProvider) certificateServicePort,  userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("certificateServiceEndpointAddress"), sslContext);
+        setEndpointAddress((BindingProvider) certificateServicePort, userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("certificateServiceEndpointAddress"), sslContext);
 
         return certificateServicePort;
     }
@@ -80,7 +80,7 @@ public class KServicePortProvider {
         CardService cardService = new CardService();
         CardServicePortType cardServicePort = cardService.getCardServicePort();
 
-        setEndpointAddress((BindingProvider) cardServicePort,  userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("cardServiceEndpointAddress"), sslContext);
+        setEndpointAddress((BindingProvider) cardServicePort, userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("cardServiceEndpointAddress"), sslContext);
 
         return cardServicePort;
     }
@@ -90,7 +90,7 @@ public class KServicePortProvider {
         VSDService vsdService = new VSDService();
         VSDServicePortType cardServicePort = vsdService.getVSDServicePort();
 
-        setEndpointAddress((BindingProvider) cardServicePort,  userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("vsdServiceEndpointAddress"), sslContext);
+        setEndpointAddress((BindingProvider) cardServicePort, userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("vsdServiceEndpointAddress"), sslContext);
 
         return cardServicePort;
     }
@@ -100,7 +100,7 @@ public class KServicePortProvider {
         AuthSignatureService authSignatureService = new AuthSignatureService();
         AuthSignatureServicePortType authSignatureServicePort = authSignatureService.getAuthSignatureServicePort();
 
-        setEndpointAddress((BindingProvider) authSignatureServicePort,  userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("authSignatureServiceEndpointAddress"), sslContext);
+        setEndpointAddress((BindingProvider) authSignatureServicePort, userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("authSignatureServiceEndpointAddress"), sslContext);
 
         return authSignatureServicePort;
     }
@@ -124,41 +124,41 @@ public class KServicePortProvider {
     }
 
     private void lookupWebServiceURLsIfNecessary(SSLContext sslContext, IUserConfigurations userConfigurations) {
-    	if(userConfigurations2endpointMap.containsKey(userConfigurations)) {
-    		return;
-    	}
-    	ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+        if (userConfigurations2endpointMap.containsKey(userConfigurations)) {
+            return;
+        }
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         clientBuilder.sslContext(sslContext);
 
         // disable hostname verification
         clientBuilder = clientBuilder.hostnameVerifier(new HostnameVerifier() {
 
-			@Override
-			public boolean verify(String arg0, SSLSession arg1) {
-				return true;
-			}});
-        if(userConfigurations.getConnectorBaseURL() == null) {
+            @Override
+            public boolean verify(String arg0, SSLSession arg1) {
+                return true;
+            }
+        });
+        if (userConfigurations.getConnectorBaseURL() == null) {
             log.warning("ConnectorBaseURL is null, won't read connector.sds");
             return;
         }
 
         Builder builder = clientBuilder.build()
-                .target(userConfigurations.getConnectorBaseURL())
-                .path("/connector.sds")
-                .request();
+            .target(userConfigurations.getConnectorBaseURL())
+            .path("/connector.sds")
+            .request();
 
         String basicAuthUsername = userConfigurations.getBasicAuthUsername();
         String basicAuthPassword = userConfigurations.getBasicAuthPassword();
-        if(basicAuthUsername != null && !basicAuthUsername.equals("")) {
-            builder.header("Authorization", "Basic "+Base64.getEncoder().encodeToString((basicAuthUsername+":"+basicAuthPassword).getBytes()));
+        if (basicAuthUsername != null && !basicAuthUsername.equals("")) {
+            builder.header("Authorization", "Basic " + Base64.getEncoder().encodeToString((basicAuthUsername + ":" + basicAuthPassword).getBytes()));
         }
-        Invocation invocation = builder
-                .buildGet();
+        Invocation invocation = builder.buildGet();
 
         try (InputStream inputStream = invocation.invoke(InputStream.class)) {
             Document document = DocumentBuilderFactory.newDefaultInstance()
-                    .newDocumentBuilder()
-                    .parse(inputStream);
+                .newDocumentBuilder()
+                .parse(inputStream);
 
             Node serviceInformationNode = getNodeWithTag(document.getDocumentElement(), "ServiceInformation");
 
@@ -180,41 +180,42 @@ public class KServicePortProvider {
                 if (!node.hasAttributes() || node.getAttributes().getNamedItem("Name") == null) {
                     break;
                 }
-                
+
 
                 switch (node.getAttributes().getNamedItem("Name").getTextContent()) {
                     case "AuthSignatureService": {
-                    	endpointMap.put("authSignatureServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
+                        endpointMap.put("authSignatureServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
                         break;
                     }
                     case "CardService": {
-                    	endpointMap.put("cardServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
+                        endpointMap.put("cardServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
                         break;
                     }
                     case "EventService": {
-                    	endpointMap.put("eventServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
+                        endpointMap.put("eventServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
                         break;
                     }
                     case "CertificateService": {
-                    	endpointMap.put("certificateServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
+                        endpointMap.put("certificateServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
                         break;
                     }
                     case "SignatureService": {
-                    	endpointMap.put("signatureServiceEndpointAddress", getEndpoint(node, "7.5", userConfigurations));
+                        endpointMap.put("signatureServiceEndpointAddress", getEndpoint(node, "7.5", userConfigurations));
                     }
                     case "VSDService": {
-                    	endpointMap.put("vsdServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
+                        endpointMap.put("vsdServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
                     }
                 }
             }
             userConfigurations2endpointMap.put(userConfigurations, endpointMap);
 
-        } catch (ProcessingException | SAXException | IllegalArgumentException | IOException | ParserConfigurationException e) {
+        } catch (ProcessingException | SAXException | IllegalArgumentException | IOException |
+                 ParserConfigurationException e) {
             throw new RuntimeException(e);
         }
-		
-	}
-    
+
+    }
+
     private String getEndpoint(Node serviceNode, String version, IUserConfigurations userConfig) {
         Node versionsNode = getNodeWithTag(serviceNode, "Versions");
 
@@ -227,14 +228,14 @@ public class KServicePortProvider {
             Node versionNode = versionNodes.item(i);
 
             // if we have a specified version search in the list until we find it
-            if(version != null && versionNode.hasAttributes() && !versionNode.getAttributes().getNamedItem("Version").getTextContent().startsWith(version)) {
+            if (version != null && versionNode.hasAttributes() && !versionNode.getAttributes().getNamedItem("Version").getTextContent().startsWith(version)) {
                 continue;
             }
 
             Node endpointNode = getNodeWithTag(versionNode, "EndpointTLS");
 
             if (endpointNode == null || !endpointNode.hasAttributes()
-                    || endpointNode.getAttributes().getNamedItem("Location") == null) {
+                || endpointNode.getAttributes().getNamedItem("Location") == null) {
                 continue;
             }
 
@@ -242,11 +243,11 @@ public class KServicePortProvider {
             if (location.startsWith(userConfig.getConnectorBaseURL())) {
                 return location;
             } else {
-                log.warning("Invalid service node. Maybe location: "+location+" does not start with: "+userConfig.getConnectorBaseURL());
+                log.warning("Invalid service node. Maybe location: " + location + " does not start with: " + userConfig.getConnectorBaseURL());
                 return location;
             }
         }
-        throw new IllegalArgumentException("Invalid service node. Maybe location: "+location+" does not start with: "+userConfig.getConnectorBaseURL());
+        throw new IllegalArgumentException("Invalid service node. Maybe location: " + location + " does not start with: " + userConfig.getConnectorBaseURL());
     }
 
     private Node getNodeWithTag(Node node, String tagName) {
@@ -262,10 +263,8 @@ public class KServicePortProvider {
         }
         return null;
     }
-    
 
-
-	private void setEndpointAddress(BindingProvider bp, String url, SSLContext sslContext) {
+    private void setEndpointAddress(BindingProvider bp, String url, SSLContext sslContext) {
         bp.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, url);
 
         // Get the CXF client proxy

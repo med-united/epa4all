@@ -17,8 +17,6 @@ public abstract class PatientIdExternalIdentifierBuilder<T extends PatientIdExte
     public ExternalIdentifierType build() {
         ExternalIdentifierType externalIdentifierPatientId = super.build();
         externalIdentifierPatientId.setId(patientId);
-        externalIdentifierPatientId.setName(new InternationalStringType());
-        externalIdentifierPatientId.getName().getLocalizedString().add(createLocalizedString(null, "XDSSubmissionSet.patientId"));
 
         return externalIdentifierPatientId;
     }

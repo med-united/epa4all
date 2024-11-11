@@ -18,8 +18,6 @@ public abstract class UniqueIdExternalIdentifierBuilder<T extends UniqueIdExtern
     public ExternalIdentifierType build() {
         ExternalIdentifierType externalIdentifierUniqueId = super.build();
         externalIdentifierUniqueId.setId(uniqueId);
-        externalIdentifierUniqueId.setName(new InternationalStringType());
-        externalIdentifierUniqueId.getName().getLocalizedString().add(createLocalizedString(null, "XDSSubmissionSet.uniqueId"));
 
         return externalIdentifierUniqueId;
     }

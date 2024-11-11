@@ -12,7 +12,6 @@ import de.servicehealth.epa4all.xds.extrinsic.StableDocumentEntryBuilder;
 import de.servicehealth.epa4all.xds.registryobjectlist.RegistryObjectListTypeBuilder;
 import de.servicehealth.epa4all.xds.registrypackage.RegistryPackageBuilder;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
-import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.AssociationType1;
@@ -22,8 +21,11 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.RegistryPackageType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.generateOID;
+import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
+import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 
 @RequestScoped
 public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegisterDocumentBuilder {
@@ -91,11 +93,20 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
             )
             .build();
 
+        String value;
+        if (isXmlCompliant(contentType)) {
+            value = uniqueIdValue + ".xml";
+        } else if (isPdfCompliant(contentType)) {
+            value = uniqueIdValue + ".pdf";
+        } else {
+            value = UUID.randomUUID().toString();
+        }
+
         ExtrinsicObjectType extrinsicObjectType = stableDocumentEntryBuilder
             .withDocumentId(documentId)
             .withLanguageCode(languageCode)
             .withMimeType(contentType)
-            .withUniqueId(uniqueIdValue + ".xml")
+            .withUniqueId(value)
             .withValue("Dokument " + uniqueIdValue)
             .withExternalIdentifiers(
                 new DEPatientIdExternalIdentifierBuilder(dePatientId).withRegistryObject(documentId).withValue(patientExternalIdValue).build(),

@@ -7,15 +7,13 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.InternationalStringType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.LocalizedStringType;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.stream.Stream;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
+import static de.servicehealth.epa4all.xds.XDSUtils.getNumericISO8601Timestamp;
 
 @SuppressWarnings("unchecked")
-public class ExtrinsicObjectTypeBuilder<T extends ExtrinsicObjectTypeBuilder> {
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+public class ExtrinsicObjectTypeBuilder<T extends ExtrinsicObjectTypeBuilder<T>> {
 
     private ClassificationType[] classificationTypes;
     private ExternalIdentifierType[] externalIdentifierTypes;
@@ -66,7 +64,8 @@ public class ExtrinsicObjectTypeBuilder<T extends ExtrinsicObjectTypeBuilder> {
         extrinsicObjectType.setId(documentId);
         extrinsicObjectType.setMimeType(mimeType);
 
-        extrinsicObjectType.getSlot().add(createSlotType("creationTime", LocalDateTime.now().minusDays(7).format(FORMATTER)));
+        String numericISO8601Timestamp = getNumericISO8601Timestamp(LocalDateTime.now().minusDays(7)); // TODO get right date
+        extrinsicObjectType.getSlot().add(createSlotType("creationTime", numericISO8601Timestamp));
         extrinsicObjectType.getSlot().add(createSlotType("languageCode", languageCode));
         extrinsicObjectType.getSlot().add(createSlotType("URI", uniqueIdValue));
 

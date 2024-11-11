@@ -11,6 +11,8 @@ import java.util.UUID;
 
 public class XDSUtils {
 
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
     private static final Set<String> xmlCompliantMimeTypes = Set.of(
         "application/fhir+xml",
         "application/xml+fhir",
@@ -27,10 +29,15 @@ public class XDSUtils {
         return xmlCompliantMimeTypes.stream().anyMatch(t -> t.equalsIgnoreCase(type.trim())) || type.contains("xml");
     }
 
+    public static boolean isPdfCompliant(String type) {
+        return type.contains("pdf");
+    }
+
     public static String generateOID() {
         // Beginne mit einem statischen Präfix, das den OID-Standard entspricht.
-        StringBuilder oid = new StringBuilder("2.25");
         // https://www.itu.int/itu-t/recommendations/rec.aspx?rec=X.667
+
+        StringBuilder oid = new StringBuilder("2.25");
         UUID uuid = UUID.randomUUID();
         oid.append(Long.toUnsignedString(uuid.getLeastSignificantBits()));
         oid.append(".");
@@ -55,9 +62,7 @@ public class XDSUtils {
         return localizedStringType;
     }
 
-    public static String getNumericISO8601Timestamp() {
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        return now.format(formatter);
+    public static String getNumericISO8601Timestamp(LocalDateTime dateTime) {
+        return dateTime.format(FORMATTER);
     }
 }
