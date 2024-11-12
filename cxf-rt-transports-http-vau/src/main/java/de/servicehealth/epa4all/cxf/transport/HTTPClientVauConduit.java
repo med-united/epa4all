@@ -1,27 +1,6 @@
 package de.servicehealth.epa4all.cxf.transport;
 
-import static com.google.common.net.HttpHeaders.CONNECTION;
-import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor.VAU_CID;
-import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
-import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
-import static org.apache.cxf.message.Message.ENDPOINT_ADDRESS;
-import static org.apache.cxf.message.Message.HTTP_REQUEST_METHOD;
-import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
-import static org.apache.cxf.message.Message.REQUEST_URI;
-import static org.apache.cxf.transport.http.Headers.EMPTY_REQUEST_PROPERTY;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import org.apache.cxf.Bus;
 import org.apache.cxf.binding.soap.Soap12;
 import org.apache.cxf.message.Message;
@@ -32,11 +11,32 @@ import org.apache.cxf.transport.http.HttpClientHTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.apache.cxf.ws.addressing.EndpointReferenceType;
 
-import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.google.common.net.HttpHeaders.CONNECTION;
+import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor.VAU_CID;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor.VAU_DEBUG_SK1_C2S;
+import static de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor.VAU_DEBUG_SK1_S2C;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
+import static org.apache.cxf.message.Message.ENDPOINT_ADDRESS;
+import static org.apache.cxf.message.Message.HTTP_REQUEST_METHOD;
+import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
+import static org.apache.cxf.message.Message.REQUEST_URI;
+import static org.apache.cxf.transport.http.Headers.EMPTY_REQUEST_PROPERTY;
 
 public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
     public static final String VAU_METHOD_PATH = "VAU-METHOD-PATH";
+    public static final String VAU_NON_PU_TRACING = "VAU-nonPU-Tracing";
     public static final String POST_METHOD = "POST";
 
     public HTTPClientVauConduit(Bus b, EndpointInfo ei, EndpointReferenceType t) throws IOException {
@@ -47,8 +47,8 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
     @Override
     protected void setupConnection(Message message, Address address, HTTPClientPolicy csPolicy) throws IOException {
         String vauCid = (String) message.get(VAU_CID);
-        // String s2c = (String) message.get(VAU_DEBUG_SK1_S2C);
-        // String c2s = (String) message.get(VAU_DEBUG_SK1_C2S);
+        String c2s = (String) message.get(VAU_DEBUG_SK1_C2S);
+        String s2c = (String) message.get(VAU_DEBUG_SK1_S2C);
 
         String str = address.getString().replace("+vau", "");
         URI uri = URI.create(str);
@@ -83,14 +83,15 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         message.put(REQUEST_URI, vauUri);
 
         Object map = message.get(PROTOCOL_HEADERS);
-        if(map == null) {
-        	map = new HashMap<String,List<String>>();
-        	message.put(PROTOCOL_HEADERS, map);
+        if (map == null) {
+            map = new HashMap<String, List<String>>();
+            message.put(PROTOCOL_HEADERS, map);
         }
         if (map instanceof Map headers) {
             headers.put(CONNECTION, List.of(KEEP_ALIVE));
             headers.put(CONTENT_TYPE, List.of(APPLICATION_OCTET_STREAM));
             headers.put(ACCEPT, List.of(APPLICATION_OCTET_STREAM));
+            headers.put(VAU_NON_PU_TRACING, c2s + " " + s2c);
             headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + path));
         }
 
@@ -107,35 +108,5 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         } else {
             super.close(msg);
         }
-    }
-
-    /*public class VauHttpClientWrappedOutputStream extends HttpClientHTTPConduit.HttpClientWrappedOutputStream {
-
-        public VauHttpClientWrappedOutputStream(
-            Message message, boolean needToCacheRequest, boolean isChunking, int chunkThreshold, String conduitName
-        ) {
-            super(message, needToCacheRequest, isChunking, chunkThreshold, conduitName);
-        }
-
-        @Override
-        public void setFixedLengthStreamingMode(int i) {
-            super.setFixedLengthStreamingMode(i);
-        }
-    }
-
-    @Override
-    protected OutputStream createOutputStream(Message message, boolean needToCacheRequest, boolean isChunking, int chunkThreshold) throws IOException {
-        return new VauHttpClientWrappedOutputStream(message,
-            needToCacheRequest,
-            isChunking,
-            chunkThreshold,
-            getConduitName());
-    }*/
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Set<String> getRestrictedSet(Class clazz, String fieldName) throws Exception {
-        Field field = clazz.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        return (Set<String>) field.get(null);
     }
 }

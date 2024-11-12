@@ -38,10 +38,10 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
     private static final Logger log = LoggerFactory.getLogger(CxfVauSetupInterceptor.class);
 
     public static final String VAU_CID = "VAU-CID";
-    public static final String VAU_DEBUG_SK1_S2C = "VAU-DEBUG-S_K1_s2c";
-    public static final String VAU_DEBUG_SK1_C2S = "VAU-DEBUG-S_K1_c2s";
-    public static final String VAU_DEBUG_SK2_S2C_INFO = "VAU-DEBUG-S_K2_s2c_keyConfirmation";
-    public static final String VAU_DEBUG_SK2_C2S_INFO = "VAU-DEBUG-S_K2_s2c_keyConfirmation";
+    public static final String VAU_DEBUG_SK1_S2C = "vau-debug-s_k1_s2c";
+    public static final String VAU_DEBUG_SK1_C2S = "vau-debug-s_k1_c2s";
+    public static final String VAU_DEBUG_SK2_S2C_INFO = "vau-debug-s_k2_s2c_keyconfirmation";
+    public static final String VAU_DEBUG_SK2_C2S_INFO = "vau-debug-s_k2_c2s_keyconfirmation";
 
     static {
         Security.addProvider(new BouncyCastlePQCProvider());
@@ -92,8 +92,6 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
 
                     message.put(VAU_CID, vauCid);
-                    message.put(VAU_DEBUG_SK1_S2C, getHeader(response, VAU_DEBUG_SK1_S2C));
-                    message.put(VAU_DEBUG_SK1_C2S, getHeader(response, VAU_DEBUG_SK1_C2S));
 
                     byte[] message3 = vauClient.getVauStateMachine().receiveMessage2(message2);
 
@@ -108,6 +106,10 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     byte[] message4 = getPayload(response);
                     vauDebugSC = getHeader(response, VAU_DEBUG_SK2_S2C_INFO);
                     vauDebugCS = getHeader(response, VAU_DEBUG_SK2_C2S_INFO);
+
+                    message.put(VAU_DEBUG_SK1_S2C, vauDebugSC);
+                    message.put(VAU_DEBUG_SK1_C2S, vauDebugCS);
+
                     contentLength = getHeader(response, CONTENT_LENGTH);
 
                     printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
