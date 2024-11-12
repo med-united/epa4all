@@ -89,7 +89,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
             headers.put(CONNECTION, List.of(KEEP_ALIVE));
             headers.put(CONTENT_TYPE, List.of(APPLICATION_OCTET_STREAM));
             headers.put(ACCEPT, List.of(APPLICATION_OCTET_STREAM));
-            headers.put(VAU_NON_PU_TRACING, vauNonPUTracing);
+            headers.put(VAU_NON_PU_TRACING, List.of(vauNonPUTracing));
             headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + path));
         }
 
