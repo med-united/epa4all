@@ -21,9 +21,8 @@ import java.util.Map;
 
 import static com.google.common.net.HttpHeaders.CONNECTION;
 import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor.VAU_CID;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor.VAU_DEBUG_SK1_C2S;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor.VAU_DEBUG_SK1_S2C;
+import static de.servicehealth.vau.VauClient.VAU_CID;
+import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -36,7 +35,7 @@ import static org.apache.cxf.transport.http.Headers.EMPTY_REQUEST_PROPERTY;
 public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
     public static final String VAU_METHOD_PATH = "VAU-METHOD-PATH";
-    public static final String VAU_NON_PU_TRACING = "VAU-nonPU-Tracing";
+
     public static final String POST_METHOD = "POST";
 
     public HTTPClientVauConduit(Bus b, EndpointInfo ei, EndpointReferenceType t) throws IOException {
@@ -47,8 +46,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
     @Override
     protected void setupConnection(Message message, Address address, HTTPClientPolicy csPolicy) throws IOException {
         String vauCid = (String) message.get(VAU_CID);
-        String c2s = (String) message.get(VAU_DEBUG_SK1_C2S);
-        String s2c = (String) message.get(VAU_DEBUG_SK1_S2C);
+        String vauNonPUTracing = (String) message.get(VAU_NON_PU_TRACING);
 
         String str = address.getString().replace("+vau", "");
         URI uri = URI.create(str);
@@ -91,7 +89,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
             headers.put(CONNECTION, List.of(KEEP_ALIVE));
             headers.put(CONTENT_TYPE, List.of(APPLICATION_OCTET_STREAM));
             headers.put(ACCEPT, List.of(APPLICATION_OCTET_STREAM));
-            headers.put(VAU_NON_PU_TRACING, c2s + " " + s2c);
+            headers.put(VAU_NON_PU_TRACING, vauNonPUTracing);
             headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + path));
         }
 

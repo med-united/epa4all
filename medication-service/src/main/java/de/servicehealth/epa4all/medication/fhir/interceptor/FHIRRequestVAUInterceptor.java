@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.medication.fhir.interceptor;
 
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauInfo;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -31,6 +32,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static de.servicehealth.utils.CborUtils.printCborMessage;
+import static de.servicehealth.vau.VauClient.VAU_CID;
+import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_C2S;
+import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_S2C;
+import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_C2S_INFO;
+import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
+import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
@@ -44,12 +51,6 @@ import static org.apache.http.client.fluent.Executor.newInstance;
 public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
     private static final Logger log = LoggerFactory.getLogger(FHIRRequestVAUInterceptor.class);
-
-    public static final String VAU_CID = "VAU-CID";
-    public static final String VAU_DEBUG_SK1_S2C = "VAU-DEBUG-S_K1_s2c";
-    public static final String VAU_DEBUG_SK1_C2S = "VAU-DEBUG-S_K1_c2s";
-    public static final String VAU_DEBUG_SK2_S2C_INFO = "VAU-DEBUG-S_K2_s2c_keyConfirmation";
-    public static final String VAU_DEBUG_SK2_C2S_INFO = "VAU-DEBUG-S_K2_s2c_keyConfirmation";
 
     static {
         Security.addProvider(new BouncyCastlePQCProvider());
@@ -70,15 +71,16 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
     public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
         if (request instanceof HttpEntityEnclosingRequest entityRequest) {
             try {
-                String vauCid = initVau();
+                VauInfo vauInfo = initVau();
                 byte[] vauMessage = prepareVauMessage(entityRequest);
                 entityRequest.setEntity(new ByteArrayEntity(vauMessage));
                 entityRequest.removeHeaders("x-insurantid");
                 entityRequest.setHeader(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
                 entityRequest.setHeader(ACCEPT, APPLICATION_OCTET_STREAM);
+                entityRequest.setHeader(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
 
                 String port = getMedicationPort();
-                String vauUri = medicationBaseUri.getScheme() + "://" + medicationBaseUri.getHost() + port + vauCid;
+                String vauUri = medicationBaseUri.getScheme() + "://" + medicationBaseUri.getHost() + port + vauInfo.getVauCid();
                 ((HttpRequestWrapper) entityRequest).setURI(URI.create(vauUri));
 
             } catch (Exception e) {
@@ -135,9 +137,9 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         }
     }
 
-    private String initVau() throws Exception {
-        if (vauClient.getVauCid() != null) {
-            return vauClient.getVauCid();
+    private VauInfo initVau() throws Exception {
+        if (vauClient.getVauInfo() != null) {
+            return vauClient.getVauInfo();
         }
 
         String host = medicationBaseUri.getHost();
@@ -156,13 +158,12 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         Response response = executor.execute(request1);
         HttpResponse httpResponse = response.returnResponse();
-        String vauCid = httpResponse.getFirstHeader(VAU_CID).getValue();
-        Header firstHeader = httpResponse.getFirstHeader(VAU_DEBUG_SK1_S2C);
-		String vauDebugSC = firstHeader != null ? firstHeader.getValue() : null;
-        Header firstHeader2 = httpResponse.getFirstHeader(VAU_DEBUG_SK1_C2S);
-		String vauDebugCS = firstHeader2 != null ? firstHeader2.getValue() : null;
-        Header firstHeader3 = httpResponse.getFirstHeader(CONTENT_LENGTH);
-		String contentLength = firstHeader3 != null ? firstHeader3.getValue() : null;
+
+        String vauCid = getHeaderValue(httpResponse, VAU_CID);
+        String vauDebugCS = getHeaderValue(httpResponse, VAU_DEBUG_SK1_C2S);
+        String vauDebugSC = getHeaderValue(httpResponse, VAU_DEBUG_SK1_S2C);
+		String contentLength = getHeaderValue(httpResponse, CONTENT_LENGTH);
+        
         byte[] message2 = httpResponse.getEntity().getContent().readAllBytes();
 
         printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
@@ -176,19 +177,26 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         response = executor.execute(request2);
         httpResponse = response.returnResponse();
-        Header firstHeader4 = httpResponse.getFirstHeader(VAU_DEBUG_SK2_S2C_INFO);
-		String vauDebugSCInfo = firstHeader4 != null ? firstHeader4.getValue() : null;
-        Header firstHeader5 = httpResponse.getFirstHeader(VAU_DEBUG_SK2_C2S_INFO);
-		String vauDebugCSInfo = firstHeader5 != null ? firstHeader5.getValue() : null;
-        Header firstHeader32 = httpResponse.getFirstHeader(CONTENT_LENGTH);
-		contentLength = firstHeader32 != null ? firstHeader32.getValue() : null;
+
+        vauDebugCS = getHeaderValue(httpResponse, VAU_DEBUG_SK2_C2S_INFO);
+        vauDebugSC = getHeaderValue(httpResponse, VAU_DEBUG_SK2_S2C_INFO);
+        contentLength = getHeaderValue(httpResponse, CONTENT_LENGTH);
+
+        VauInfo vauInfo = new VauInfo(vauCid, vauDebugCS, vauDebugSC);
+
         byte[] message4 = httpResponse.getEntity().getContent().readAllBytes();
 
-        printCborMessage(message4, null, vauDebugSCInfo, vauDebugCSInfo, contentLength);
+        printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
 
         vauClient.getVauStateMachine().receiveMessage4(message4);
-        vauClient.setVauCid(vauCid);
-        return vauCid;
+        vauClient.setVauInfo(vauInfo);
+        
+        return vauInfo;
+    }
+
+    private String getHeaderValue(HttpResponse httpResponse, String headerName) {
+        Header header = httpResponse.getFirstHeader(headerName);
+        return header == null ? null : header.getValue();
     }
 
     private Header[] prepareHeaders(String host) {

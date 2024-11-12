@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.cxf.interceptor;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauInfo;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import org.apache.cxf.interceptor.Fault;
@@ -26,6 +27,12 @@ import java.security.Security;
 import java.util.List;
 
 import static de.servicehealth.utils.CborUtils.printCborMessage;
+import static de.servicehealth.vau.VauClient.VAU_CID;
+import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_C2S;
+import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_S2C;
+import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_C2S_INFO;
+import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
+import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT_ENCODING;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -36,12 +43,6 @@ import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
 public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger log = LoggerFactory.getLogger(CxfVauSetupInterceptor.class);
-
-    public static final String VAU_CID = "VAU-CID";
-    public static final String VAU_DEBUG_SK1_S2C = "vau-debug-s_k1_s2c";
-    public static final String VAU_DEBUG_SK1_C2S = "vau-debug-s_k1_c2s";
-    public static final String VAU_DEBUG_SK2_S2C_INFO = "vau-debug-s_k2_s2c_keyconfirmation";
-    public static final String VAU_DEBUG_SK2_C2S_INFO = "vau-debug-s_k2_c2s_keyconfirmation";
 
     static {
         Security.addProvider(new BouncyCastlePQCProvider());
@@ -60,9 +61,10 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
         try {
             Conduit conduit = message.getExchange().getConduit(message);
             if (conduit instanceof HttpClientHTTPConduit) {
-                if (vauClient.getVauCid() != null) {
-                    String vauCid = vauClient.getVauCid();
-                    message.put(VAU_CID, vauCid);
+                VauInfo vauInfo = vauClient.getVauInfo();
+                if (vauInfo != null) {
+                    message.put(VAU_CID, vauInfo.getVauCid());
+                    message.put(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
                 } else {
                     String vauUri = (String) message.get("org.apache.cxf.message.Message.BASE_PATH");
                     if(vauUri == null) {
@@ -84,14 +86,12 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     Response response = client.post(ByteBuffer.wrap(message1));
                     byte[] message2 = getPayload(response);
 
-                    String vauCid = getHeader(response, VAU_CID);
-                    String vauDebugSC = getHeader(response, VAU_DEBUG_SK1_S2C);
-                    String vauDebugCS = getHeader(response, VAU_DEBUG_SK1_C2S);
-                    String contentLength = getHeader(response, CONTENT_LENGTH);
+                    String vauCid = getHeaderValue(response, VAU_CID);
+                    String vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK1_S2C);
+                    String vauDebugCS = getHeaderValue(response, VAU_DEBUG_SK1_C2S);
+                    String contentLength = getHeaderValue(response, CONTENT_LENGTH);
 
                     printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
-
-                    message.put(VAU_CID, vauCid);
 
                     byte[] message3 = vauClient.getVauStateMachine().receiveMessage2(message2);
 
@@ -104,18 +104,18 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     response = client.post(ByteBuffer.wrap(message3));
                     byte[] message4 = getPayload(response);
-                    vauDebugSC = getHeader(response, VAU_DEBUG_SK2_S2C_INFO);
-                    vauDebugCS = getHeader(response, VAU_DEBUG_SK2_C2S_INFO);
-
-                    message.put(VAU_DEBUG_SK1_S2C, vauDebugSC);
-                    message.put(VAU_DEBUG_SK1_C2S, vauDebugCS);
-
-                    contentLength = getHeader(response, CONTENT_LENGTH);
+                    vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK2_S2C_INFO);
+                    vauDebugCS = getHeaderValue(response, VAU_DEBUG_SK2_C2S_INFO);
+                    contentLength = getHeaderValue(response, CONTENT_LENGTH);
 
                     printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
 
                     vauClient.getVauStateMachine().receiveMessage4(message4);
-                    vauClient.setVauCid(vauCid);
+
+                    vauInfo = new VauInfo(vauCid, vauDebugCS, vauDebugSC);
+                    message.put(VAU_CID, vauCid);
+                    message.put(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
+                    vauClient.setVauInfo(vauInfo);
                 }
             }
         } catch (Exception e) {
@@ -128,9 +128,9 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
         return is.readAllBytes();
     }
 
-    private String getHeader(Response response, String name) {
+    private String getHeaderValue(Response response, String headerName) {
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        return (String) headers.getFirst(name);
+        return (String) headers.getFirst(headerName);
     }
 
     private MetadataMap<String, String> prepareVauOutboundHeaders(String uri, int length) {
