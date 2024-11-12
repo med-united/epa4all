@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
+import de.gematik.vau.lib.data.KdfKey2;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.vau.VauClient;
@@ -24,6 +25,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.security.Security;
+import java.util.Base64;
 import java.util.List;
 
 import static de.servicehealth.utils.CborUtils.printCborMessage;
@@ -96,6 +98,10 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     byte[] message3 = vauClient.getVauStateMachine().receiveMessage2(message2);
 
+                    KdfKey2 clientKey2 = vauClient.getVauStateMachine().getClientKey2();
+                    String c2sKeyConfirmation = Base64.getEncoder().encodeToString(clientKey2.getClientToServerKeyConfirmation());
+                    String s2cKeyConfirmation = Base64.getEncoder().encodeToString(clientKey2.getServerToClientKeyConfirmation());
+
                     // TODO path|query params for VAU endpoint as well
                     // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
 
@@ -115,7 +121,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     vauClient.getVauStateMachine().receiveMessage4(message4);
 
-                    vauInfo = new VauInfo(vauCid, vauDebugCS, vauDebugSC);
+                    vauInfo = new VauInfo(vauCid, c2sKeyConfirmation, s2cKeyConfirmation);
                     message.put(VAU_CID, vauCid);
                     message.put(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
                     vauClient.setVauInfo(vauInfo);

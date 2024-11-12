@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.medication.fhir.interceptor;
 
+import de.gematik.vau.lib.data.KdfKey2;
 import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauInfo;
 import org.apache.commons.lang3.ArrayUtils;
@@ -28,6 +29,7 @@ import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.URI;
 import java.security.Security;
+import java.util.Base64;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -170,6 +172,10 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         byte[] message3 = vauClient.getVauStateMachine().receiveMessage2(message2);
 
+        KdfKey2 clientKey2 = vauClient.getVauStateMachine().getClientKey2();
+        String c2sKeyConfirmation = Base64.getEncoder().encodeToString(clientKey2.getClientToServerKeyConfirmation());
+        String s2cKeyConfirmation = Base64.getEncoder().encodeToString(clientKey2.getServerToClientKeyConfirmation());
+
         Request request2 = Request
             .Post(medicationBaseUri.getScheme() + "://" + host + port + vauCid)
             .bodyByteArray(message3)
@@ -182,7 +188,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         vauDebugSC = getHeaderValue(httpResponse, VAU_DEBUG_SK2_S2C_INFO);
         contentLength = getHeaderValue(httpResponse, CONTENT_LENGTH);
 
-        VauInfo vauInfo = new VauInfo(vauCid, vauDebugCS, vauDebugSC);
+        VauInfo vauInfo = new VauInfo(vauCid, c2sKeyConfirmation, s2cKeyConfirmation);
 
         byte[] message4 = httpResponse.getEntity().getContent().readAllBytes();
 
