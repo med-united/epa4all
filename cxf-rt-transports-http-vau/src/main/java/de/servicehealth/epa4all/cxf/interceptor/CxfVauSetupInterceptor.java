@@ -99,8 +99,8 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     byte[] message3 = vauClient.getVauStateMachine().receiveMessage2(message2);
 
                     KdfKey2 clientKey2 = vauClient.getVauStateMachine().getClientKey2();
-                    String c2sKeyConfirmation = Base64.getEncoder().encodeToString(clientKey2.getClientToServerKeyConfirmation());
-                    String s2cKeyConfirmation = Base64.getEncoder().encodeToString(clientKey2.getServerToClientKeyConfirmation());
+                    String c2sAppData = Base64.getEncoder().encodeToString(clientKey2.getClientToServerAppData());
+                    String s2cAppData = Base64.getEncoder().encodeToString(clientKey2.getServerToClientAppData());
 
                     // TODO path|query params for VAU endpoint as well
                     // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
@@ -121,7 +121,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     vauClient.getVauStateMachine().receiveMessage4(message4);
 
-                    vauInfo = new VauInfo(vauCid, c2sKeyConfirmation, s2cKeyConfirmation);
+                    vauInfo = new VauInfo(vauCid, c2sAppData, s2cAppData);
                     message.put(VAU_CID, vauCid);
                     message.put(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
                     vauClient.setVauInfo(vauInfo);
