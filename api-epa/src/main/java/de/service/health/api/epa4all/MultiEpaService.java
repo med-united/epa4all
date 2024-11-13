@@ -47,7 +47,7 @@ public class MultiEpaService {
     @Getter
     private String xInsurantid;
 
-    private Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
+    private final Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
         .maximumSize(1000)
         .expireAfterWrite(10, TimeUnit.MINUTES)
         .build();

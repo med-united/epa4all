@@ -10,24 +10,27 @@ import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 
 public interface EpaAPI {
 
-	public String getBackend();
+    String getBackend();
 
-	public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType();
+    IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType();
 
-	public IDocumentManagementPortType getDocumentManagementPortType();
+    IDocumentManagementPortType getDocumentManagementPortType();
 
-	public AccountInformationApi getAccountInformationApi();
+    AccountInformationApi getAccountInformationApi();
 
-	public AuthorizationSmcBApi getAuthorizationSmcBApi();
+    AuthorizationSmcBApi getAuthorizationSmcBApi();
 
-	public IMedicationClient getMedicationClient();
+    IMedicationClient getMedicationClient();
 
-	public EntitlementsApi getEntitlementsApi();
+    EntitlementsApi getEntitlementsApi();
 
-	public IRenderClient getRenderClient();
-    
+    IRenderClient getRenderClient();
+
     void setNp(String np);
+
     void setXInsurantid(String insurantId);
-    public String getNp();
-    public String getXInsurantid();
+
+    String getNp();
+
+    String getXInsurantid();
 }
