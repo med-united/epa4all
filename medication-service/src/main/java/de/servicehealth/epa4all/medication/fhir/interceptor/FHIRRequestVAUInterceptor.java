@@ -173,8 +173,8 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         byte[] message3 = vauClient.getVauStateMachine().receiveMessage2(message2);
 
         KdfKey2 clientKey2 = vauClient.getVauStateMachine().getClientKey2();
-        String c2sKeyConfirmation = Base64.getEncoder().encodeToString(clientKey2.getClientToServerKeyConfirmation());
-        String s2cKeyConfirmation = Base64.getEncoder().encodeToString(clientKey2.getServerToClientKeyConfirmation());
+        String c2sAppData = Base64.getEncoder().encodeToString(clientKey2.getClientToServerAppData());
+        String s2cAppData = Base64.getEncoder().encodeToString(clientKey2.getServerToClientAppData());
 
         Request request2 = Request
             .Post(medicationBaseUri.getScheme() + "://" + host + port + vauCid)
@@ -188,7 +188,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         vauDebugSC = getHeaderValue(httpResponse, VAU_DEBUG_SK2_S2C_INFO);
         contentLength = getHeaderValue(httpResponse, CONTENT_LENGTH);
 
-        VauInfo vauInfo = new VauInfo(vauCid, c2sKeyConfirmation, s2cKeyConfirmation);
+        VauInfo vauInfo = new VauInfo(vauCid, c2sAppData, s2cAppData);
 
         byte[] message4 = httpResponse.getEntity().getContent().readAllBytes();
 
