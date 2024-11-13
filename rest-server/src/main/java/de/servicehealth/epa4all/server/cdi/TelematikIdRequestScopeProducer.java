@@ -65,7 +65,7 @@ public class TelematikIdRequestScopeProducer {
 		if(smcbHandle == null) {
 			List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
 			
-			Optional<Card> vizenzkrCard = cards.stream().filter(c -> "VincenzkrankenhausTEST-ONLY".equals(c.getCardHolderName())).findAny();
+			Optional<Card> vizenzkrCard = cards.stream().filter(c -> "Praxis SigmuntowskíTEST-ONLY".equals(c.getCardHolderName())).findAny();
 			if(vizenzkrCard.isPresent()) {
 				smcbHandle = vizenzkrCard.get().getCardHandle();
 			} else {
