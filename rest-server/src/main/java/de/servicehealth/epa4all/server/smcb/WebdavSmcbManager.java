@@ -3,8 +3,12 @@ package de.servicehealth.epa4all.server.smcb;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
-import de.servicehealth.epa4all.server.vsds.VSDService;
+import de.servicehealth.epa4all.server.insurance.InsuranceData;
+import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
+import de.servicehealth.epa4all.server.insurance.ReadVSDResponseEx;
 import io.quarkus.runtime.Startup;
+import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
@@ -26,24 +30,32 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
+
+import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCDocument;
 
 @ApplicationScoped
 @Startup
 public class WebdavSmcbManager {
 
     private static final Logger log = Logger.getLogger(WebdavSmcbManager.class.getName());
+    public static final String ALLGEMEINE_VERSICHERUNGSDATEN_XML = "AllgemeineVersicherungsdaten.xml";
+    public static final String PERSOENLICHE_VERSICHERTENDATEN_XML = "PersoenlicheVersichertendaten.xml";
+    public static final String GESCHUETZTE_VERSICHERTENDATEN_XML = "GeschuetzteVersichertendaten.xml";
+    public static final String PRUEFUNGSNACHWEIS_XML = "Pruefungsnachweis.xml";
 
     private final Map<String, Set<FolderInfo>> smcbDocsMap = new ConcurrentHashMap<>();
-
-    private final WebdavConfig webdavConfig;
-    private final File rootFolder;
+    private final Map<String, InsuranceData> kvnrToInsuranceMap = new ConcurrentHashMap<>();
 
     static JAXBContext readVSDJaxbContext;
 
@@ -59,16 +71,41 @@ public class WebdavSmcbManager {
     @TelematikId
     String telematikId;
 
+    private final WebdavConfig webdavConfig;
+    private final File rootFolder;
+
     @Inject
     public WebdavSmcbManager(WebdavConfig webdavConfig) {
         this.webdavConfig = webdavConfig;
-        rootFolder = new File(webdavConfig.getRootFolder());
-    }
 
-    public Path checkOrCreateTelematikFolder(String telematikId) throws Exception {
+        rootFolder = new File(webdavConfig.getRootFolder());
         if (!rootFolder.exists()) {
             throw new IllegalStateException("Root SMC-B folder is absent");
         }
+    }
+
+    void onStart(@Observes @Priority(5200) StartupEvent ev) {
+        File[] telematikFolders = rootFolder.listFiles(File::isDirectory);
+        if (telematikFolders != null) {
+            Arrays.stream(telematikFolders).flatMap(dir -> {
+                    File[] insurantFolders = dir.listFiles(File::isDirectory);
+                    return insurantFolders != null ? Stream.of(insurantFolders) : Stream.empty();
+                }).map(kvnrFolder -> {
+                    String insurantId = kvnrFolder.getName();
+                    File[] localFolders = kvnrFolder.listFiles(f -> f.isDirectory() && f.getName().equals("local"));
+                    if (localFolders != null) {
+                        Optional<File> localFolderOpt = Arrays.stream(localFolders).findFirst();
+                        return localFolderOpt.map(file -> getLocalInsuranceData(file, insurantId)).orElse(null);
+                    } else {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .forEach(data -> kvnrToInsuranceMap.put(data.getXInsurantId(), data));
+        }
+    }
+
+    public Path applyTelematikPath(String telematikId) throws Exception {
         String path = rootFolder.getAbsolutePath() + File.separator + telematikId;
         return Files.createDirectories(Paths.get(path));
     }
@@ -97,13 +134,13 @@ public class WebdavSmcbManager {
         return null;
     }
 
-    public void onRead(@Observes ReadVSDResponse readVSDResponse) {
+    public void onRead(@Observes ReadVSDResponseEx readVSDResponseEx) {
         try {
-            Path telematikPath = checkOrCreateTelematikFolder(telematikId);
-            Document doc = VSDService.createDocument(readVSDResponse);
-            String xInsurantid = VSDService.getKVNRFromResponseOrDoc(readVSDResponse, doc);
-            prepareLocalXMLs(telematikPath, xInsurantid, readVSDResponse);
+            String telematikId = readVSDResponseEx.getTelematikId();
+            String xInsurantid = readVSDResponseEx.getXInsurantId();
+            prepareLocalXMLs(telematikId, xInsurantid, readVSDResponseEx.getReadVSDResponse());
 
+            Path telematikPath = applyTelematikPath(telematikId);
             String telematikFolder = telematikPath.toFile().getAbsolutePath();
             Set<FolderInfo> folders = smcbDocsMap.computeIfAbsent(telematikFolder, f -> new HashSet<>());
             webdavConfig.getSmcbFolders().forEach(folderSetting ->
@@ -114,22 +151,71 @@ public class WebdavSmcbManager {
         }
     }
 
-    private void prepareLocalXMLs(Path telematikPath, String xInsurantid, ReadVSDResponse readVSDResponse) throws Exception {
-        Path localPath = Files.createDirectories(Paths.get(
-            telematikPath.toFile().getAbsolutePath() + File.separator + xInsurantid + File.separator + "local"
-        ));
-        File localFolder = localPath.toFile();
-        File readVSDResponseFile = new File(localFolder, "ReadVSDResponse.xml");
+    public InsuranceData getLocalInsuranceData(String telematikId, String kvnr) {
+        if (kvnr == null) {
+            return null;
+        }
+        return kvnrToInsuranceMap.computeIfAbsent(kvnr, insurantId -> {
+            try {
+                File localInsurantFolder = getLocalInsurantFolder(telematikId, kvnr);
+                return getLocalInsuranceData(localInsurantFolder, kvnr);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private InsuranceData getLocalInsuranceData(File localInsurantFolder, String kvnr) {
+        try {
+            File readVSDResponseFile = new File(localInsurantFolder, "ReadVSDResponse.xml");
+            if (readVSDResponseFile.exists()) {
+                byte[] allgemeineVersicherungsdaten = Files.readAllBytes(localInsurantFolder.toPath().resolve(ALLGEMEINE_VERSICHERUNGSDATEN_XML));
+                byte[] persoenlicheVersichertendaten = Files.readAllBytes(localInsurantFolder.toPath().resolve(PERSOENLICHE_VERSICHERTENDATEN_XML));
+                byte[] geschuetzteVersichertendaten = Files.readAllBytes(localInsurantFolder.toPath().resolve(GESCHUETZTE_VERSICHERTENDATEN_XML));
+                byte[] pruefungsnachweis = Files.readAllBytes(localInsurantFolder.toPath().resolve(PRUEFUNGSNACHWEIS_XML));
+
+                Document doc = InsuranceXmlUtils.createDocument(pruefungsnachweis);
+                String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
+
+                return new InsuranceData(
+                    pz,
+                    kvnr,
+                    createUCDocument(persoenlicheVersichertendaten),
+                    createUCDocument(geschuetzteVersichertendaten),
+                    createUCDocument(allgemeineVersicherungsdaten)
+                );
+            } else {
+                return null;
+            }
+        } catch (Exception e) {
+            log.log(Level.SEVERE, String.format("Error while reading insurance data for KVNR=%s", kvnr));
+            return null;
+        }
+    }
+
+    private void prepareLocalXMLs(String telematikId, String xInsurantid, ReadVSDResponse readVSDResponse) throws Exception {
+        File localInsurantFolder = getLocalInsurantFolder(telematikId, xInsurantid);
+        File readVSDResponseFile = new File(localInsurantFolder, "ReadVSDResponse.xml");
         if (!readVSDResponseFile.exists()) {
             readVSDResponseFile.createNewFile();
         }
         readVSDJaxbContext.createMarshaller().marshal(readVSDResponse, new FileOutputStream(readVSDResponseFile));
-        File allgemeineVersicherungsdatenFile = new File(localFolder, "AllgemeineVersicherungsdaten.xml");
+        File allgemeineVersicherungsdatenFile = new File(localInsurantFolder, ALLGEMEINE_VERSICHERUNGSDATEN_XML);
         unzipAndSaveDataToFile(readVSDResponse.getAllgemeineVersicherungsdaten(), allgemeineVersicherungsdatenFile);
-        File persoenlicheVersichertendatenFile = new File(localFolder, "PersoenlicheVersichertendaten.xml");
+        File persoenlicheVersichertendatenFile = new File(localInsurantFolder, PERSOENLICHE_VERSICHERTENDATEN_XML);
         unzipAndSaveDataToFile(readVSDResponse.getPersoenlicheVersichertendaten(), persoenlicheVersichertendatenFile);
-        File geschuetzteVersichertendatenFile = new File(localFolder, "GeschuetzteVersichertendaten.xml");
+        File geschuetzteVersichertendatenFile = new File(localInsurantFolder, GESCHUETZTE_VERSICHERTENDATEN_XML);
         unzipAndSaveDataToFile(readVSDResponse.getGeschuetzteVersichertendaten(), geschuetzteVersichertendatenFile);
+        File pruefungsnachweisFile = new File(localInsurantFolder, PRUEFUNGSNACHWEIS_XML);
+        unzipAndSaveDataToFile(readVSDResponse.getPruefungsnachweis(), pruefungsnachweisFile);
+    }
+
+    private File getLocalInsurantFolder(String telematikId, String xInsurantid) throws Exception {
+        Path telematikPath = applyTelematikPath(telematikId);
+        Path localPath = Files.createDirectories(Paths.get(
+            telematikPath.toFile().getAbsolutePath() + File.separator + xInsurantid + File.separator + "local"
+        ));
+        return localPath.toFile();
     }
 
     private void initFolder(

@@ -13,5 +13,4 @@ import jakarta.inject.Qualifier;
 @Retention(RUNTIME)
 @Target({FIELD, METHOD})
 public @interface SMCBHandle {
-
 }

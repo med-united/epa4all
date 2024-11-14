@@ -21,6 +21,7 @@ import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 import lombok.Getter;
 import org.apache.http.client.fluent.Executor;
 
@@ -45,7 +46,7 @@ public class MultiEpaService {
     private final EServicePortProvider eServicePortProvider;
 
     @Getter
-    private String xInsurantid;
+    private String xInsurantId;
 
     private final Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
         .maximumSize(1000)
@@ -127,26 +128,24 @@ public class MultiEpaService {
         return serviceUrl.replace("[epa-backend]", backend);
     }
 
-    public void setXInsurantid(String xInsurantid) {
-        this.xInsurantid = xInsurantid;
+    public void setXInsurantId(String xInsurantid) {
+        this.xInsurantId = xInsurantid;
         EpaAPI epaAPI = getEpaAPI();
-        if (epaAPI != null) {
-            epaAPI.setXInsurantid(xInsurantid);
-        }
+        epaAPI.setXInsurantid(xInsurantid);
     }
 
     public EpaAPI getEpaAPI() {
-        EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(xInsurantid);
+        EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(xInsurantId);
         if (epaAPI != null) {
             return epaAPI;
         } else {
             for (EpaAPI api : epaBackendMap.values()) {
-                if (hasEpaRecord(api, xInsurantid)) {
-                    xInsurantid2ePAApi.put(xInsurantid, api);
+                if (hasEpaRecord(api, xInsurantId)) {
+                    xInsurantid2ePAApi.put(xInsurantId, api);
                     return api;
                 }
             }
-            return null;
+            throw new WebApplicationException(String.format("Insurant [%s] - ePA record is not found", xInsurantId));
         }
     }
 

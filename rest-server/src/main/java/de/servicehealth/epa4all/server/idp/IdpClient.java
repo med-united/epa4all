@@ -8,7 +8,6 @@ import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.field.CodeChallengeMethod;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.eventservice.card.Card;
-import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.MultiEpaService;
@@ -17,7 +16,6 @@ import de.servicehealth.epa4all.server.idp.action.LoginAction;
 import de.servicehealth.epa4all.server.idp.action.VauNpAction;
 import de.servicehealth.epa4all.server.idp.func.IdpFunc;
 import de.servicehealth.epa4all.server.idp.func.IdpFuncer;
-import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -115,7 +113,7 @@ public class IdpClient {
     }
 
     public void getVauNp(UserRuntimeConfig userRuntimeConfig, Consumer<String> vauNPConsumer) throws Exception {
-        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantid(), userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantId(), userRuntimeConfig);
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
@@ -128,7 +126,7 @@ public class IdpClient {
     public String getVauNpSync(UserRuntimeConfig userRuntimeConfig) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ThreadLocal<String> threadLocalString = new ThreadLocal<String>();
-        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantid(), userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantId(), userRuntimeConfig);
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
@@ -144,7 +142,7 @@ public class IdpClient {
     }
 
     public void getBearerToken(UserRuntimeConfig userRuntimeConfig, Consumer<String> bearerConsumer) throws Exception {
-        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantid(), userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantId(), userRuntimeConfig);
         LoginAction authAction = new LoginAction(
             idpConfig.getClientId(),
             idpConfig.getAuthRequestRedirectUrl(),
@@ -284,7 +282,7 @@ public class IdpClient {
         Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
 
-        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantid(), userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(multiEpaService.getXInsurantId(), userRuntimeConfig);
         return getSignedJwt(smcbAuthCert, claims, signatureType, smcbHandle, true, idpFunc);
     }
 }

@@ -1,27 +1,30 @@
-package de.servicehealth.epa4all.server.vsds;
+package de.servicehealth.epa4all.server.insurance;
 
 import de.gematik.ws.fa.vsdm.vsd.v5.UCAllgemeineVersicherungsdatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCGeschuetzteVersichertendatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
-public class PersoenlicheVersichertendateXmlUtils {
+public class InsuranceXmlUtils {
 
-    private static final Logger log = Logger.getLogger(PersoenlicheVersichertendateXmlUtils.class.getName());
+    private static final Logger log = Logger.getLogger(InsuranceXmlUtils.class.getName());
 
-    static final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    static DocumentBuilder documentBuilder;
+    private static final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    private static DocumentBuilder documentBuilder;
 
     static {
         try {
@@ -32,9 +35,9 @@ public class PersoenlicheVersichertendateXmlUtils {
         }
     }
 
-    static final JAXBContext jaxbContext = createJaxbContext();
+    private static final JAXBContext jaxbContext = createJaxbContext();
 
-    static JAXBContext createJaxbContext() {
+    private static JAXBContext createJaxbContext() {
         try {
             return JAXBContext.newInstance(
                 UCPersoenlicheVersichertendatenXML.class,
@@ -47,14 +50,19 @@ public class PersoenlicheVersichertendateXmlUtils {
         }
     }
 
-    static UCPersoenlicheVersichertendatenXML getPatient(byte[] persBytes) throws Exception {
-        try (InputStream isPersoenlicheVersichertendaten = new GZIPInputStream(new ByteArrayInputStream(persBytes))) {
-            return (UCPersoenlicheVersichertendatenXML) jaxbContext
-                .createUnmarshaller()
-                .unmarshal(isPersoenlicheVersichertendaten);
+    public static Document createDocument(byte[] bytes) throws IOException, SAXException {
+        String decoded = new String(new GZIPInputStream(new ByteArrayInputStream(bytes)).readAllBytes());
+        return documentBuilder.parse(new ByteArrayInputStream(decoded.getBytes()));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T createUCDocument(byte[] bytes) throws Exception {
+        try (InputStream is = new GZIPInputStream(new ByteArrayInputStream(bytes))) {
+            assert jaxbContext != null;
+            return (T) jaxbContext.createUnmarshaller().unmarshal(is);
         }
     }
 
-    private PersoenlicheVersichertendateXmlUtils() {
+    private InsuranceXmlUtils() {
     }
 }
