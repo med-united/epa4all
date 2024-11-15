@@ -21,16 +21,19 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
+import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 
+@SuppressWarnings("rawtypes")
 public class JsonbVauWriterProvider implements MessageBodyWriter {
 
     private final VauClient vauClient;
     private final JsonbBuilder jsonbBuilder;
 
-    private static Logger log = Logger.getLogger(JsonbVauWriterProvider.class.getName());
+    private static final Logger log = Logger.getLogger(JsonbVauWriterProvider.class.getName());
 
     public JsonbVauWriterProvider(VauClient vauClient) {
         jsonbBuilder = new JsonBindingBuilder();
@@ -44,7 +47,15 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void writeTo(Object o, Class type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+    public void writeTo(
+        Object o,
+        Class type,
+        Type genericType,
+        Annotation[] annotations,
+        MediaType mediaType,
+        MultivaluedMap httpHeaders,
+        OutputStream entityStream
+    ) throws IOException, WebApplicationException {
         try (Jsonb build = jsonbBuilder.build()) {
 
             byte[] originPayload = new byte[0];
@@ -54,20 +65,17 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
                 originPayload = os.toByteArray();
             }
 
-            List<String> vauPathHeaders = (List<String>) httpHeaders.remove(VAU_METHOD_PATH);
-            String path = vauPathHeaders.isEmpty() ? "undefined" : vauPathHeaders.getFirst();
-
             String additionalHeaders = ((MultivaluedMap<String, String>) httpHeaders).entrySet()
                 .stream()
                 .filter(p -> !p.getKey().equals(CONTENT_TYPE))
                 .filter(p -> !p.getKey().equals(ACCEPT))
                 .map(p -> p.getKey() + ": " + p.getValue().getFirst())
                 .collect(Collectors.joining("\r\n"));
-            httpHeaders.remove("x-insurantid");
+            httpHeaders.remove(X_INSURANT_ID);
 
-
-            if (vauClient.getNp() != null) {
-                additionalHeaders += "\r\nVAU-NP: " + vauClient.getNp();
+            String np = evictHeader(httpHeaders, VAU_NP);
+            if (np != null) {
+                additionalHeaders += "\r\n" + VAU_NP + ": " + np;
             }
             if (!additionalHeaders.isBlank()) {
                 additionalHeaders += "\r\n";
@@ -75,6 +83,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
             String keepAlive = additionalHeaders.contains("Keep-Alive") ? "" : "Connection: Keep-Alive\r\n";
 
+            String path = evictHeader(httpHeaders, VAU_METHOD_PATH);
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: epa-as-2.dev.epa4all.de\r\n"
                 + additionalHeaders + keepAlive
@@ -92,6 +101,12 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
         } catch (Exception e) {
             throw new IOException(e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String evictHeader(MultivaluedMap httpHeaders, String headerName) {
+        List<String> targetHeaders = (List<String>) httpHeaders.remove(headerName);
+        return targetHeaders == null || targetHeaders.isEmpty() ? null : targetHeaders.getFirst();
     }
 
     private String prepareContentHeaders(byte[] originPayload) {

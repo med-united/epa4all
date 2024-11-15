@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.service.health.api.epa4all.EpaAPI;
+import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -10,8 +11,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 import java.io.ByteArrayInputStream;
-
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
+import java.util.UUID;
 
 @RequestScoped
 @Path("fhir")
@@ -24,8 +24,14 @@ public class Fhir extends AbstractResource {
 		@QueryParam("kvnr") String kvnr
 	) {
 		try {
-			EpaAPI epaAPI = xdsDocumentService.getEpaInsurantPair(telematikId, kvnr, smcbHandle, userRuntimeConfig).getLeft();
-			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaAPI.getXInsurantid(), USER_AGENT, epaAPI.getNp());
+			String correlationId = UUID.randomUUID().toString();
+
+			InsuranceData insuranceData = insuranceDataService.getInsuranceData(
+				telematikId, kvnr, correlationId, smcbHandle, userRuntimeConfig
+			);
+			EpaAPI epaAPI = xdsDocumentService.setEntitlementAndGetEpaAPI(userRuntimeConfig, insuranceData, smcbHandle);
+
+			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(prepareRuntimeAttributes(insuranceData));
 			return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
 		} catch (Exception e) {
 			throw new WebApplicationException(e);
@@ -39,8 +45,12 @@ public class Fhir extends AbstractResource {
 		@QueryParam("kvnr") String kvnr
 	) {
 		try {
-			EpaAPI epaAPI = xdsDocumentService.getEpaInsurantPair(telematikId, kvnr, smcbHandle, userRuntimeConfig).getLeft();
-			byte[] html = epaAPI.getRenderClient().getXhtmlDocument(epaAPI.getXInsurantid(), USER_AGENT, epaAPI.getNp());
+			String correlationId = UUID.randomUUID().toString();
+			InsuranceData insuranceData = insuranceDataService.getInsuranceData(
+				telematikId, kvnr, correlationId, smcbHandle, userRuntimeConfig
+			);
+			EpaAPI epaAPI = xdsDocumentService.setEntitlementAndGetEpaAPI(userRuntimeConfig, insuranceData, smcbHandle);
+			byte[] html = epaAPI.getRenderClient().getXhtmlDocument(prepareRuntimeAttributes(insuranceData));
 			return Response.ok(html, "text/html").build();
 		} catch (Exception e) {
 			throw new WebApplicationException(e);

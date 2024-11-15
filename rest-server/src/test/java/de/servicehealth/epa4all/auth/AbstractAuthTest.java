@@ -10,7 +10,6 @@ import de.servicehealth.model.GetNonce200Response;
 import de.servicehealth.vau.VauClient;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;

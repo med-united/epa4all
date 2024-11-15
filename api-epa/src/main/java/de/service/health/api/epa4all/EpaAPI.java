@@ -25,12 +25,4 @@ public interface EpaAPI {
     EntitlementsApi getEntitlementsApi();
 
     IRenderClient getRenderClient();
-
-    void setNp(String np);
-
-    void setXInsurantid(String insurantId);
-
-    String getNp();
-
-    String getXInsurantid();
 }

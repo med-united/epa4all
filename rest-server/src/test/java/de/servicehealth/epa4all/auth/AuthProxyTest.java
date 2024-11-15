@@ -5,6 +5,8 @@ import de.servicehealth.vau.VauClient;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
+import java.util.Map;
+
 @QuarkusTest
 @TestProfile(ProxyTestProfile.class)
 public class AuthProxyTest extends AbstractAuthTest {

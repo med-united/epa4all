@@ -16,17 +16,15 @@ public class VauClient {
 
     public static final String VAU_NON_PU_TRACING = "VAU-nonPU-Tracing";
 
+    public static final String X_INSURANT_ID = "x-insurantid";
+    public static final String X_USER_AGENT = "x-useragent";
+    public static final String VAU_NP = "VAU-NP";
+
     private final VauClientStateMachine vauStateMachine;
 
     @Setter
     private VauInfo vauInfo;
     
-    @Setter
-    private String np;
-    
-    @Setter
-    private String xInsurantId;
-
     public VauClient(VauClientStateMachine vauStateMachine) {
         this.vauStateMachine = vauStateMachine;
     }

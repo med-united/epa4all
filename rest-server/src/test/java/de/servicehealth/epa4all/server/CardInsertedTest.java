@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.server;
 
 import de.gematik.ws.conn.eventservice.v7.Event;
-import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
@@ -17,7 +16,6 @@ import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
-import de.servicehealth.epa4all.server.vsd.VSDService;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -41,22 +39,19 @@ import static org.mockito.Mockito.when;
 public class CardInsertedTest {
 
     @Inject
+    EventMapper eventMapper;
+
+    @Inject
     DefaultUserConfig defaultUserConfig;
 
     @Inject
     KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
-    EventMapper eventMapper;
-
-    @Inject
-    WebdavSmcbManager smcbManager;
+    WebdavSmcbManager webdavSmcbManager;
 
     @Inject
     MultiEpaService multiEpaService;
-
-    @Inject
-    IKonnektorClient konnektorClient;
 
     @Test
     public void epaPdfDocumentIsSentToCardlink() throws Exception {
@@ -70,11 +65,11 @@ public class CardInsertedTest {
                 null,
                 null
             );
-            when(insuranceDataService.getInsuranceData(any(), any(), any(), any(), any(), any())).thenReturn(insuranceData);
+            when(insuranceDataService.getInsuranceData(any(), any(), any(), any(), any())).thenReturn(insuranceData);
 	
 	        AppConfig appConfig = new AppConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 	        CETPEventHandler cetpServerHandler = new CETPEventHandler(
-	            cardlinkWebsocketClient, insuranceDataService, konnektorClient, multiEpaService, smcbManager, appConfig
+	            cardlinkWebsocketClient, insuranceDataService, webdavSmcbManager, multiEpaService, appConfig
 	        );
 	        EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 	

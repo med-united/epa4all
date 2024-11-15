@@ -16,5 +16,4 @@ public class PlainRenderClient extends AbstractRenderClient {
     protected Request buildRequest(URI renderUri, Header[] headers) {
         return Request.Get(renderUri).setHeaders(headers);
     }
-
 }

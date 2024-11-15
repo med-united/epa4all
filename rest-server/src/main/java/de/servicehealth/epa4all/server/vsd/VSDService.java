@@ -5,8 +5,6 @@ import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSD;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.eventservice.Subscription;
-import de.health.service.cetp.domain.eventservice.card.Card;
-import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
@@ -43,16 +41,6 @@ public class VSDService {
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
-        if (egkHandle == null || egkHandle.isEmpty()) {
-            List<Card> cards = konnektorClient.getCards(runtimeConfig, CardType.EGK);
-            egkHandle = cards.getFirst().getCardHandle();
-        }
-        if (smcbHandle == null || smcbHandle.isEmpty()) {
-            List<Card> cards = konnektorClient.getCards(runtimeConfig, CardType.SMC_B);
-            smcbHandle = cards.getFirst().getCardHandle();
-        }
-        log.info(egkHandle + " " + smcbHandle);
-
         ContextType context = servicePorts.getContextType();
         if (context.getUserId() == null || context.getUserId().isEmpty()) {
             context.setUserId(UUID.randomUUID().toString());

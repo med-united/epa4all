@@ -1,14 +1,12 @@
 package de.servicehealth.epa4all.server.smcb;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
-import de.servicehealth.epa4all.server.cdi.TelematikId;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
 import de.servicehealth.epa4all.server.insurance.ReadVSDResponseEx;
 import io.quarkus.runtime.Startup;
 import io.quarkus.runtime.StartupEvent;
-import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
@@ -42,7 +40,7 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
-import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCDocument;
+import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
 
 @ApplicationScoped
 @Startup
@@ -67,10 +65,6 @@ public class WebdavSmcbManager {
         }
     }
 
-    @Inject
-    @TelematikId
-    String telematikId;
-
     private final WebdavConfig webdavConfig;
     private final File rootFolder;
 
@@ -84,12 +78,13 @@ public class WebdavSmcbManager {
         }
     }
 
-    void onStart(@Observes @Priority(5200) StartupEvent ev) {
+    void onStart(@Observes StartupEvent ev) {
         File[] telematikFolders = rootFolder.listFiles(File::isDirectory);
         if (telematikFolders != null) {
-            Arrays.stream(telematikFolders).flatMap(dir -> {
-                    File[] insurantFolders = dir.listFiles(File::isDirectory);
-                    return insurantFolders != null ? Stream.of(insurantFolders) : Stream.empty();
+            Arrays.stream(telematikFolders)
+                .flatMap(dir -> {
+                    File[] kvnrFolders = dir.listFiles(File::isDirectory);
+                    return kvnrFolders != null ? Stream.of(kvnrFolders) : Stream.empty();
                 }).map(kvnrFolder -> {
                     String insurantId = kvnrFolder.getName();
                     File[] localFolders = kvnrFolder.listFiles(f -> f.isDirectory() && f.getName().equals("local"));
@@ -101,7 +96,7 @@ public class WebdavSmcbManager {
                     }
                 })
                 .filter(Objects::nonNull)
-                .forEach(data -> kvnrToInsuranceMap.put(data.getXInsurantId(), data));
+                .forEach(data -> kvnrToInsuranceMap.put(data.getInsurantId(), data));
         }
     }
 
@@ -156,16 +151,15 @@ public class WebdavSmcbManager {
             return null;
         }
         return kvnrToInsuranceMap.computeIfAbsent(kvnr, insurantId -> {
-            try {
-                File localInsurantFolder = getLocalInsurantFolder(telematikId, kvnr);
-                return getLocalInsuranceData(localInsurantFolder, kvnr);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            File localInsurantFolder = getLocalInsurantFolder(telematikId, kvnr);
+            return getLocalInsuranceData(localInsurantFolder, kvnr);
         });
     }
 
     private InsuranceData getLocalInsuranceData(File localInsurantFolder, String kvnr) {
+        if (localInsurantFolder == null) {
+            return null;
+        }
         try {
             File readVSDResponseFile = new File(localInsurantFolder, "ReadVSDResponse.xml");
             if (readVSDResponseFile.exists()) {
@@ -174,23 +168,23 @@ public class WebdavSmcbManager {
                 byte[] geschuetzteVersichertendaten = Files.readAllBytes(localInsurantFolder.toPath().resolve(GESCHUETZTE_VERSICHERTENDATEN_XML));
                 byte[] pruefungsnachweis = Files.readAllBytes(localInsurantFolder.toPath().resolve(PRUEFUNGSNACHWEIS_XML));
 
-                Document doc = InsuranceXmlUtils.createDocument(pruefungsnachweis);
+                Document doc = InsuranceXmlUtils.createDocument(pruefungsnachweis, false);
                 String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
 
                 return new InsuranceData(
                     pz,
                     kvnr,
-                    createUCDocument(persoenlicheVersichertendaten),
-                    createUCDocument(geschuetzteVersichertendaten),
-                    createUCDocument(allgemeineVersicherungsdaten)
+                    createUCEntity(persoenlicheVersichertendaten, false),
+                    createUCEntity(geschuetzteVersichertendaten, false),
+                    createUCEntity(allgemeineVersicherungsdaten, false)
                 );
             } else {
                 return null;
             }
         } catch (Exception e) {
             log.log(Level.SEVERE, String.format("Error while reading insurance data for KVNR=%s", kvnr));
-            return null;
         }
+        return null;
     }
 
     private void prepareLocalXMLs(String telematikId, String xInsurantid, ReadVSDResponse readVSDResponse) throws Exception {
@@ -210,12 +204,17 @@ public class WebdavSmcbManager {
         unzipAndSaveDataToFile(readVSDResponse.getPruefungsnachweis(), pruefungsnachweisFile);
     }
 
-    private File getLocalInsurantFolder(String telematikId, String xInsurantid) throws Exception {
-        Path telematikPath = applyTelematikPath(telematikId);
-        Path localPath = Files.createDirectories(Paths.get(
-            telematikPath.toFile().getAbsolutePath() + File.separator + xInsurantid + File.separator + "local"
-        ));
-        return localPath.toFile();
+    private File getLocalInsurantFolder(String telematikId, String xInsurantid) {
+        try {
+            Path telematikPath = applyTelematikPath(telematikId);
+            Path localPath = Files.createDirectories(Paths.get(
+                telematikPath.toFile().getAbsolutePath() + File.separator + xInsurantid + File.separator + "local"
+            ));
+            return localPath.toFile();
+        } catch (Exception e) {
+            log.log(Level.SEVERE, String.format("Unable to create [%s] local folder", xInsurantid), e);
+        }
+        return null;
     }
 
     private void initFolder(
@@ -263,11 +262,11 @@ public class WebdavSmcbManager {
         if (bytes == null || bytes.length == 0) {
             return new byte[0];
         }
-        try (final GZIPInputStream ungzip = new GZIPInputStream(new ByteArrayInputStream(bytes))) {
+        try (final GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(bytes))) {
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             final byte[] data = new byte[8192];
             int nRead;
-            while ((nRead = ungzip.read(data)) != -1) {
+            while ((nRead = gzipInputStream.read(data)) != -1) {
                 out.write(data, 0, nRead);
             }
             return out.toByteArray();

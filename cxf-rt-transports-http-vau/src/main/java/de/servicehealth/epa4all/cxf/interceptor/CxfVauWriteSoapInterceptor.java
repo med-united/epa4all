@@ -17,9 +17,11 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
+import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -85,10 +87,24 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             Address address = (Address) message.get("http.connection.address");
             String fullString = new String(full);
 
+            String contentType = message.get(CONTENT_TYPE).toString();
+            String insurantId = message.get(X_INSURANT_ID).toString();
+            String userAgent = message.get(X_USER_AGENT).toString();
+            String np = message.get(VAU_NP).toString();
+
+            String headers = prepareContentHeaders(
+                insurantId,
+                np,
+                userAgent,
+                contentType,
+                fullString.getBytes().length
+            );
+
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: " + address.getURL().getHost() + "\r\n"
                 + additionalHeaders + keepAlive
-                + prepareContentHeaders(message.get(CONTENT_TYPE).toString(), fullString.getBytes().length)).getBytes();
+                + headers
+            ).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, fullString.getBytes());
 
@@ -116,15 +132,21 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
         }
     }
 
-    private String prepareContentHeaders(String contentType, int length) {
+    private String prepareContentHeaders(
+        String insurantId,
+        String np,
+        String userAgent,
+        String contentType,
+        int length
+    ) {
         String headers = "Content-Type: " + contentType;
         headers += "\r\nContent-Length: " + length;
-        headers += "\r\nx-useragent: " + USER_AGENT;
-        if (vauClient.getXInsurantId() != null) {
-            headers += "\r\nx-insurantid: " + vauClient.getXInsurantId();
+        headers += "\r\n" + X_USER_AGENT + ": " + userAgent;
+        if (insurantId != null) {
+            headers += "\r\n" + X_INSURANT_ID + ": " + insurantId;
         }
-        if (vauClient.getNp() != null) {
-            headers += "\r\nVAU-NP: " + vauClient.getNp();
+        if (np != null) {
+            headers += "\r\n" + VAU_NP + ": " + np;
         }
         headers += "\r\n\r\n";
         return headers;

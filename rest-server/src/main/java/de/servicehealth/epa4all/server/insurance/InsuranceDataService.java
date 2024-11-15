@@ -16,13 +16,15 @@ import jakarta.xml.bind.DatatypeConverter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.w3c.dom.Document;
 
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createDocument;
-import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCDocument;
+import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
 
 @ApplicationScoped
 public class InsuranceDataService {
@@ -49,22 +51,58 @@ public class InsuranceDataService {
 
     // TODO check if it is possible to get KVNR by egkHandle
 
-    public String getEGKHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) {
+    public String getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) {
         try {
             List<Card> cards = konnektorClient.getCards(userRuntimeConfig, CardType.EGK);
             Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
-            return card.isPresent() ? card.get().getCardHandle() : cards.getFirst().getCardHandle();
+            return card.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
         } catch (CetpFault e) {
             log.log(Level.SEVERE, "Could not get card for insurantId: " + insurantId, e);
         }
         return null;
     }
 
+    public String getKvnr(UserRuntimeConfig userRuntimeConfig, String egkHandle) {
+        try {
+            List<Card> cards = konnektorClient.getCards(userRuntimeConfig, CardType.EGK);
+            Optional<Card> cardOpt = cards.stream()
+                .filter(c -> c.getCardHandle().equals(egkHandle))
+                .findAny();
+            return cardOpt.map(Card::getKvnr).orElse(null);
+        } catch (CetpFault e) {
+            log.log(Level.SEVERE, "Could not get card for egkHandle: " + egkHandle, e);
+        }
+        return null;
+    }
+
+    public String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {
+        List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
+        Optional<Card> cardOpt = cards.stream()
+            .filter(c -> "Praxis SigmuntowskíTEST-ONLY".equals(c.getCardHolderName()))
+            .findAny();
+        return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
+    }
+
+    public String getTelematikId(UserRuntimeConfig userRuntimeConfig, String smcbHandle) throws CetpFault {
+        Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
+        return WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
+    }
+
+    public InsuranceData getInsuranceData(
+        String telematikId,
+        String correlationId,
+        String egkHandle,
+        UserRuntimeConfig runtimeConfig
+    ) throws Exception {
+        String kvnr = getKvnr(runtimeConfig, egkHandle);
+        String smcbHandle = getSmcbHandle(runtimeConfig);
+        return getInsuranceData(telematikId, kvnr, correlationId, smcbHandle, runtimeConfig);
+    }
+
     public InsuranceData getInsuranceData(
         String telematikId,
         String kvnr,
         String correlationId,
-        String egkHandle,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
@@ -72,6 +110,7 @@ public class InsuranceDataService {
         if (localInsuranceData != null) {
             return localInsuranceData;
         }
+        String egkHandle = getEgkHandle(runtimeConfig, kvnr);
         ReadVSDResponse readVSDResponse = vsdService.readVSD(correlationId, egkHandle, smcbHandle, runtimeConfig);
         String xInsurantId = extractInsurantId(readVSDResponse);
         if (kvnr == null || kvnr.equals(xInsurantId)) {
@@ -83,12 +122,12 @@ public class InsuranceDataService {
     }
 
     private String extractInsurantId(ReadVSDResponse readVSDResponse) throws Exception {
-        Document doc = createDocument(readVSDResponse.getPruefungsnachweis());
+        Document doc = createDocument(readVSDResponse.getPruefungsnachweis(), true);
         String e = doc.getElementsByTagName("E").item(0).getTextContent();
 
         if (e.equals("3")) {
             byte[] bytes = readVSDResponse.getPersoenlicheVersichertendaten();
-            UCPersoenlicheVersichertendatenXML patient = createUCDocument(bytes);
+            UCPersoenlicheVersichertendatenXML patient = createUCEntity(bytes, true);
             String versichertenId = patient.getVersicherter().getVersichertenID();
             log.fine("VSDM result: " + e + " VersichertenID: " + versichertenId);
             return versichertenId;

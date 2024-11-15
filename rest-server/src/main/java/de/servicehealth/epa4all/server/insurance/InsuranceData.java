@@ -11,7 +11,7 @@ import lombok.Data;
 public class InsuranceData {
 
     private String pz;
-    private String xInsurantId;
+    private String insurantId;
     private UCPersoenlicheVersichertendatenXML persoenlicheVersichertendaten;
     private UCGeschuetzteVersichertendatenXML geschuetzteVersichertendaten;
     private UCAllgemeineVersicherungsdatenXML allgemeineVersicherungsdaten;

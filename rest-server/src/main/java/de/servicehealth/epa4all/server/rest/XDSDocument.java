@@ -1,6 +1,10 @@
 package de.servicehealth.epa4all.server.rest;
 
+import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.service.health.api.epa4all.EpaAPI;
+import de.servicehealth.epa4all.server.insurance.InsuranceData;
+import ihe.iti.xds_b._2007.IDocumentManagementPortType;
+import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType.DocumentRequest;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -15,6 +19,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.ResponseOptionType;
@@ -22,6 +27,8 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.AdhocQueryType;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
 import java.io.InputStream;
+import java.util.Map;
+import java.util.UUID;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
 
@@ -36,7 +43,13 @@ public class XDSDocument extends AbstractResource {
         @QueryParam("kvnr") String kvnr
     ) {
         try {
-            EpaAPI epaAPI = xdsDocumentService.getEpaInsurantPair(telematikId, kvnr, smcbHandle, userRuntimeConfig).getLeft();
+            String correlationId = UUID.randomUUID().toString();
+
+            InsuranceData insuranceData = insuranceDataService.getInsuranceData(
+                telematikId, kvnr, correlationId, smcbHandle, userRuntimeConfig
+            );
+            EpaAPI epaAPI = xdsDocumentService.setEntitlementAndGetEpaAPI(userRuntimeConfig, insuranceData, smcbHandle);
+
 
             AdhocQueryRequest adhocQueryRequest = new AdhocQueryRequest();
             /* https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/adhocquery.xml
@@ -66,7 +79,9 @@ public class XDSDocument extends AbstractResource {
             adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryStatus", "('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')"));
             adhocQueryRequest.setAdhocQuery(adhocQueryType);
 
-            return epaAPI.getDocumentManagementPortType().documentRegistryRegistryStoredQuery(adhocQueryRequest);
+            IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
+            attachVauAttributes((BindingProvider) documentManagementPortType, insuranceData);
+            return documentManagementPortType.documentRegistryRegistryStoredQuery(adhocQueryRequest);
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
@@ -80,14 +95,20 @@ public class XDSDocument extends AbstractResource {
         @QueryParam("kvnr") String kvnr
     ) {
         try {
-            EpaAPI epaAPI = xdsDocumentService.getEpaInsurantPair(telematikId, kvnr, smcbHandle, userRuntimeConfig).getLeft();
+            String correlationId = UUID.randomUUID().toString();
+            InsuranceData insuranceData = insuranceDataService.getInsuranceData(
+                telematikId, kvnr, correlationId, smcbHandle, userRuntimeConfig
+            );
+            EpaAPI epaAPI = xdsDocumentService.setEntitlementAndGetEpaAPI(userRuntimeConfig, insuranceData, smcbHandle);
 
             RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
             DocumentRequest documentRequest = new DocumentRequest();
             documentRequest.setDocumentUniqueId(uniqueId);
             documentRequest.setRepositoryUniqueId("1.2.276.0.76.3.1.315.3.2.1.1");
             retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
-            return epaAPI.getDocumentManagementPortType().documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequestType);
+            IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
+            attachVauAttributes((BindingProvider) documentManagementPortType, insuranceData);
+            return documentManagementPortType.documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequestType);
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
@@ -106,17 +127,32 @@ public class XDSDocument extends AbstractResource {
         InputStream is
     ) {
         try {
-            return xdsDocumentService.uploadXDSDocument(
-                kvnr,
-                telematikId,
-                smcbHandle,
-                contentType,
-                languageCode,
-                userRuntimeConfig,
-                is.readAllBytes()
+            String correlationId = UUID.randomUUID().toString();
+
+            InsuranceData insuranceData = insuranceDataService.getInsuranceData(
+                telematikId, kvnr, correlationId, smcbHandle, userRuntimeConfig
             );
+            EpaAPI epaAPI = xdsDocumentService.setEntitlementAndGetEpaAPI(userRuntimeConfig, insuranceData, smcbHandle);
+
+            UCPersoenlicheVersichertendatenXML versichertendaten = insuranceData.getPersoenlicheVersichertendaten();
+            UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
+            String firstName = person.getVorname();
+            String lastName = person.getNachname();
+            String title = person.getTitel();
+
+            ProvideAndRegisterDocumentSetRequestType request = xdsDocumentService.prepareDocumentSetRequest(
+                is.readAllBytes(), telematikId, kvnr, contentType, languageCode, firstName, lastName, title
+            );
+            IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
+            attachVauAttributes((BindingProvider) documentManagementPortType, insuranceData);
+            return documentManagementPortType.documentRepositoryProvideAndRegisterDocumentSetB(request);
         } catch (Exception e) {
-            throw new WebApplicationException(e);
+            throw new WebApplicationException(e.getMessage(), e);
         }
+    }
+
+    private void attachVauAttributes(BindingProvider bindingProvider, InsuranceData insuranceData) throws Exception {
+        Map<String, Object> runtimeAttributes = prepareRuntimeAttributes(insuranceData);
+        bindingProvider.getRequestContext().putAll(runtimeAttributes);
     }
 }

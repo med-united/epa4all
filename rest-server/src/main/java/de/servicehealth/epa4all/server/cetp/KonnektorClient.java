@@ -29,14 +29,14 @@ import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.cetp.domain.eventservice.card.CardsResponse;
 import de.health.service.cetp.domain.fault.CetpFault;
-import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
-import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardTypeMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardsResponseMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.status.StatusMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionResultMapper;
+import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
+import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
 import org.apache.commons.lang3.tuple.Pair;
@@ -53,7 +53,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.SubscriptionManager.FAILED;
-import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 import static de.servicehealth.epa4all.server.idp.IdpClient.BOUNCY_CASTLE_PROVIDER;
 
 @ApplicationScoped

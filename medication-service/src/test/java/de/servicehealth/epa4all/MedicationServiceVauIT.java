@@ -18,9 +18,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
 import static de.servicehealth.utils.URLUtils.getBaseUrl;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -63,10 +66,14 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
             Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(medicationServiceRenderUrl));
             IRenderClient renderClient = new VauRenderClient(executor, medicationServiceRenderUrl);
             
-            File file = renderClient.getPdfFile("Z123456789", "CLIENTID1234567890AB/2.1.12-45");
+            File file = renderClient.getPdfFile(
+                Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45")
+            );
             assertTrue(file.exists());
 
-            byte[] xhtmlDocument = renderClient.getXhtmlDocument("Z123456789", "CLIENTID1234567890AB/2.1.12-45", null);
+            byte[] xhtmlDocument = renderClient.getXhtmlDocument(
+                Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45")
+            );
             assertTrue(new String(xhtmlDocument).contains("Verordnungsdatum"));
         }
     }

@@ -45,9 +45,6 @@ public class MultiEpaService {
     private final ClientFactory clientFactory;
     private final EServicePortProvider eServicePortProvider;
 
-    @Getter
-    private String xInsurantId;
-
     private final Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
         .maximumSize(1000)
         .expireAfterWrite(10, TimeUnit.MINUTES)
@@ -111,8 +108,7 @@ public class MultiEpaService {
                         authorizationSmcBApi,
                         entitlementsApi,
                         medicationClient,
-                        renderClient,
-                        vauClient
+                        renderClient
                     );
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -128,24 +124,18 @@ public class MultiEpaService {
         return serviceUrl.replace("[epa-backend]", backend);
     }
 
-    public void setXInsurantId(String xInsurantid) {
-        this.xInsurantId = xInsurantid;
-        EpaAPI epaAPI = getEpaAPI();
-        epaAPI.setXInsurantid(xInsurantid);
-    }
-
-    public EpaAPI getEpaAPI() {
-        EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(xInsurantId);
+    public EpaAPI getEpaAPI(String insurantId) {
+        EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(insurantId);
         if (epaAPI != null) {
             return epaAPI;
         } else {
             for (EpaAPI api : epaBackendMap.values()) {
-                if (hasEpaRecord(api, xInsurantId)) {
-                    xInsurantid2ePAApi.put(xInsurantId, api);
+                if (hasEpaRecord(api, insurantId)) {
+                    xInsurantid2ePAApi.put(insurantId, api);
                     return api;
                 }
             }
-            throw new WebApplicationException(String.format("Insurant [%s] - ePA record is not found", xInsurantId));
+            throw new WebApplicationException(String.format("Insurant [%s] - ePA record is not found", insurantId));
         }
     }
 

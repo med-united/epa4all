@@ -1,9 +1,7 @@
 package de.servicehealth.epa4all.server.cetp;
 
 import de.health.service.cetp.AbstractCETPEventHandler;
-import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
-import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
@@ -11,46 +9,41 @@ import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jboss.logging.MDC;
 
-import java.security.cert.X509Certificate;
 import java.util.Base64;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 import static de.health.service.cetp.utils.Utils.printException;
 import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 public class CETPEventHandler extends AbstractCETPEventHandler {
 
     private static final Logger log = Logger.getLogger(CETPEventHandler.class.getName());
 
     private final InsuranceDataService insuranceDataService;
-    private final IKonnektorClient konnektorClient;
     private final MultiEpaService multiEpaService;
-    private final WebdavSmcbManager smcbManager;
+    private final WebdavSmcbManager webdavSmcbManager;
     private final AppConfig appConfig;
 
     public CETPEventHandler(
         CardlinkWebsocketClient cardlinkWebsocketClient,
         InsuranceDataService insuranceDataService,
-        IKonnektorClient konnektorClient,
+        WebdavSmcbManager webdavSmcbManager,
         MultiEpaService multiEpaService,
-        WebdavSmcbManager smcbManager,
         AppConfig appConfig
     ) {
         super(cardlinkWebsocketClient);
 
         this.insuranceDataService = insuranceDataService;
-        this.konnektorClient = konnektorClient;
+        this.webdavSmcbManager = webdavSmcbManager;
         this.multiEpaService = multiEpaService;
-        this.smcbManager = smcbManager;
         this.appConfig = appConfig;
     }
 
@@ -90,19 +83,18 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
             try {
                 String cardHandle = paramsMap.get("CardHandle");
-                String telematikId = getTelematikId();
+                String smcbHandle = insuranceDataService.getSmcbHandle(appConfig);
+                String telematikId = insuranceDataService.getTelematikId(appConfig, smcbHandle);
+                webdavSmcbManager.applyTelematikPath(telematikId);
 
                 InsuranceData insuranceData = insuranceDataService.getInsuranceData(
-                    telematikId, null, correlationId, cardHandle, null, appConfig
+                    telematikId, correlationId, cardHandle, appConfig
                 );
-                String xInsurantId = insuranceData.getXInsurantId();
-
-                // TODO refactor
-                multiEpaService.setXInsurantId(xInsurantId);
-                EpaAPI epaAPI = multiEpaService.getEpaAPI();
-                smcbManager.applyTelematikPath(telematikId);
-
-                byte[] bytes = epaAPI.getRenderClient().getPdfBytes(xInsurantId, USER_AGENT);
+                String xInsurantId = insuranceData.getInsurantId();
+                EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantId);
+                byte[] bytes = epaAPI.getRenderClient().getPdfBytes(
+                    Map.of(X_INSURANT_ID, xInsurantId, X_USER_AGENT, USER_AGENT)
+                );
                 String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                 Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
                 cardlinkWebsocketClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
@@ -120,12 +112,5 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             String msgFormat = "Ignored \"CARD/INSERTED\" values=%s";
             log.log(Level.INFO, String.format(msgFormat, paramsMap));
         }
-    }
-
-    private String getTelematikId() throws Exception {
-        List<Card> cards = konnektorClient.getCards(appConfig, SMC_B);
-        String smcbHandle = cards.getFirst().getCardHandle();
-        Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(appConfig, smcbHandle);
-        return WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
     }
 }
