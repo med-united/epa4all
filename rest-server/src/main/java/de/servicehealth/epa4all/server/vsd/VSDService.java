@@ -45,7 +45,7 @@ public class VSDService {
         if (context.getUserId() == null || context.getUserId().isEmpty()) {
             context.setUserId(UUID.randomUUID().toString());
         }
-        String subsInfo = getSubscriptionsInfo(correlationId, runtimeConfig);
+        String subsInfo = getSubscriptionsInfo(runtimeConfig);
         log.info(String.format(
             "[%s] readVSD for cardHandle=%s, smcbHandle=%s, subscriptions: %s", correlationId, egkHandle, smcbHandle, subsInfo
         ));
@@ -70,18 +70,14 @@ public class VSDService {
         return readVSD;
     }
 
-    private String getSubscriptionsInfo(
-        String correlationId,
-        UserRuntimeConfig runtimeConfig
-    ) {
+    private String getSubscriptionsInfo(UserRuntimeConfig runtimeConfig) {
         try {
             List<Subscription> subscriptions = konnektorClient.getSubscriptions(runtimeConfig);
             return subscriptions.stream()
                 .map(s -> String.format("[id=%s eventTo=%s topic=%s]", s.getSubscriptionId(), s.getEventTo(), s.getTopic()))
                 .collect(Collectors.joining(","));
         } catch (Throwable e) {
-            String msg = String.format("[%s] Could not get active getSubscriptions", correlationId);
-            log.log(Level.SEVERE, msg, e);
+            log.log(Level.SEVERE, "Could not get active getSubscriptions", e);
             return "not available";
         }
     }

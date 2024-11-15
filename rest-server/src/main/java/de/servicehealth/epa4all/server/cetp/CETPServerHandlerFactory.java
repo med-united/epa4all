@@ -8,7 +8,6 @@ import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -18,7 +17,6 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
     private final IdpClient idpClient;
     private final MultiEpaService multiEpaService;
-    private final WebdavSmcbManager webdavSmcbManager;
     private final InsuranceDataService insuranceDataService;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
 
@@ -26,13 +24,11 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     public CETPServerHandlerFactory(
         IdpClient idpClient,
         MultiEpaService multiEpaService,
-        WebdavSmcbManager webdavSmcbManager,
         InsuranceDataService insuranceDataService,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
         this.idpClient = idpClient;
         this.multiEpaService = multiEpaService;
-        this.webdavSmcbManager = webdavSmcbManager;
         this.insuranceDataService = insuranceDataService;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
     }
@@ -45,7 +41,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
             new EpaJwtConfigurator(appConfig, idpClient)
         );
         CETPEventHandler cetpEventHandler = new CETPEventHandler(
-            cardlinkWebsocketClient, insuranceDataService, webdavSmcbManager, multiEpaService, appConfig
+            cardlinkWebsocketClient, insuranceDataService, multiEpaService, appConfig
         );
         return new ChannelInboundHandler[] { cetpEventHandler };
     }

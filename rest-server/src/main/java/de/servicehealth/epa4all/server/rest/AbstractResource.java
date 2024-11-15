@@ -1,17 +1,27 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.health.service.config.api.UserRuntimeConfig;
+import de.service.health.api.epa4all.EpaAPI;
+import de.service.health.api.epa4all.MultiEpaService;
+import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
+import de.servicehealth.epa4all.server.filetracker.EpaFileTracker;
+import de.servicehealth.epa4all.server.filetracker.FileUpload;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
+import de.servicehealth.model.EntitlementRequestType;
+import de.servicehealth.model.ValidToResponseType;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
+import org.apache.cxf.jaxrs.client.WebClient;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 import static de.servicehealth.vau.VauClient.VAU_NP;
@@ -20,6 +30,8 @@ import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 public abstract class AbstractResource {
 
+    private static final Logger log = Logger.getLogger(AbstractResource.class.getName());
+
     @Inject
     InsuranceDataService insuranceDataService;
 
@@ -27,7 +39,16 @@ public abstract class AbstractResource {
     XDSDocumentService xdsDocumentService;
 
     @Inject
+    MultiEpaService multiEpaService;
+
+    @Inject
+    EpaFileTracker epaFileTracker;
+
+    @Inject
     IdpClient idpClient;
+
+    @Inject
+    Event<FileUpload> eventFileUpload;
 
     @Inject
     @FromHttpPath
@@ -41,12 +62,42 @@ public abstract class AbstractResource {
     @SMCBHandle
     String smcbHandle;
 
-    protected Map<String, Object> prepareRuntimeAttributes(InsuranceData insuranceData) throws Exception {
+    protected EpaContext prepareEpaContext(String kvnr, String correlationId) throws Exception {
+        InsuranceData insuranceData = insuranceDataService.getInsuranceDataOrReadVSD(
+            telematikId, kvnr, correlationId, smcbHandle, userRuntimeConfig
+        );
+        String insurantId = insuranceData.getInsurantId();
+        EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
+        String np = idpClient.getVauNpSync(userRuntimeConfig, insurantId, smcbHandle);
+        setEntitlement(userRuntimeConfig, insuranceData, epaAPI, smcbHandle, np);
+
+        return new EpaContext(insuranceData, prepareRuntimeAttributes(insuranceData, np));
+    }
+
+    private Map<String, Object> prepareRuntimeAttributes(InsuranceData insuranceData, String np) {
         Map<String, Object> attributes = new HashMap<>();
         String insurantId = insuranceData.getInsurantId();
         attributes.put(X_INSURANT_ID, insurantId);
         attributes.put(X_USER_AGENT, USER_AGENT);
-        attributes.put(VAU_NP, idpClient.getVauNpSync(userRuntimeConfig, insurantId, smcbHandle)); // TODO check if it is needed
+        attributes.put(VAU_NP, np); // TODO check if it is needed
         return attributes;
+    }
+
+    private void setEntitlement(
+        UserRuntimeConfig userRuntimeConfig,
+        InsuranceData insuranceData,
+        EpaAPI epaAPI,
+        String smcbHandle,
+        String np
+    ) throws Exception {
+        String insurantId = insuranceData.getInsurantId();
+        String pz = insuranceData.getPz();
+        EntitlementRequestType entitlementRequest = new EntitlementRequestType();
+        String entitlementPSJWT = idpClient.createEntitlementPSJWT(smcbHandle, insurantId, pz, userRuntimeConfig);
+        entitlementRequest.setJwt(entitlementPSJWT);
+        EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
+        WebClient.getConfig(entitlementsApi).getRequestContext().put(VAU_NP, np);
+        ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, USER_AGENT, entitlementRequest);
+        log.info(response.toString());
     }
 }

@@ -7,6 +7,7 @@ import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import de.servicehealth.epa4all.server.vsd.VSDService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,6 +17,7 @@ import jakarta.xml.bind.DatatypeConverter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.w3c.dom.Document;
 
+import java.io.File;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +27,7 @@ import java.util.logging.Logger;
 import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createDocument;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
+import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 
 @ApplicationScoped
 public class InsuranceDataService {
@@ -33,6 +36,7 @@ public class InsuranceDataService {
 
     private final WebdavSmcbManager webdavSmcbManager;
     private final IKonnektorClient konnektorClient;
+    private final FolderService folderService;
     private final VSDService vsdService;
 
     @Inject
@@ -42,10 +46,12 @@ public class InsuranceDataService {
     public InsuranceDataService(
         WebdavSmcbManager webdavSmcbManager,
         IKonnektorClient konnektorClient,
+        FolderService folderService,
         VSDService vsdService
     ) {
         this.webdavSmcbManager = webdavSmcbManager;
         this.konnektorClient = konnektorClient;
+        this.folderService = folderService;
         this.vsdService = vsdService;
     }
 
@@ -85,10 +91,10 @@ public class InsuranceDataService {
 
     public String getTelematikId(UserRuntimeConfig userRuntimeConfig, String smcbHandle) throws CetpFault {
         Pair<X509Certificate, Boolean> x509Certificate = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
-        return WebdavSmcbManager.extractTelematikIdFromCertificate(x509Certificate.getKey());
+        return extractTelematikIdFromCertificate(x509Certificate.getKey());
     }
 
-    public InsuranceData getInsuranceData(
+    public InsuranceData getInsuranceDataOrReadVSD(
         String telematikId,
         String correlationId,
         String egkHandle,
@@ -96,29 +102,39 @@ public class InsuranceDataService {
     ) throws Exception {
         String kvnr = getKvnr(runtimeConfig, egkHandle);
         String smcbHandle = getSmcbHandle(runtimeConfig);
-        return getInsuranceData(telematikId, kvnr, correlationId, smcbHandle, runtimeConfig);
+        return getInsuranceDataOrReadVSD(telematikId, kvnr, correlationId, smcbHandle, runtimeConfig);
     }
 
-    public InsuranceData getInsuranceData(
+    public InsuranceData getInsuranceDataOrReadVSD(
         String telematikId,
         String kvnr,
         String correlationId,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
-        InsuranceData localInsuranceData = webdavSmcbManager.getLocalInsuranceData(telematikId, kvnr);
+        InsuranceData localInsuranceData = getLocalInsuranceData(telematikId, kvnr);
         if (localInsuranceData != null) {
             return localInsuranceData;
         }
+        folderService.applyTelematikPath(telematikId);
+
         String egkHandle = getEgkHandle(runtimeConfig, kvnr);
         ReadVSDResponse readVSDResponse = vsdService.readVSD(correlationId, egkHandle, smcbHandle, runtimeConfig);
         String xInsurantId = extractInsurantId(readVSDResponse);
         if (kvnr == null || kvnr.equals(xInsurantId)) {
             // ReadVSDResponseEx must be sent synchronously to get valid local InsuranceData.
             readVSDResponseExEvent.fire(new ReadVSDResponseEx(telematikId, xInsurantId, readVSDResponse));
-            return webdavSmcbManager.getLocalInsuranceData(telematikId, xInsurantId);
+            return getLocalInsuranceData(telematikId, xInsurantId);
         }
         throw new IllegalStateException(String.format("Mismatch found: KVNR=%s, xInsurantId=%s", kvnr, xInsurantId));
+    }
+
+    public InsuranceData getLocalInsuranceData(String telematikId, String kvnr) {
+        if (kvnr == null) {
+            return null;
+        }
+        File localVSDFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        return webdavSmcbManager.getFileSystemInsuranceData(localVSDFolder, kvnr);
     }
 
     private String extractInsurantId(ReadVSDResponse readVSDResponse) throws Exception {

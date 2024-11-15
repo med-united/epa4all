@@ -93,8 +93,11 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
             headers.put(VAU_NON_PU_TRACING, List.of(vauNonPUTracing));
             headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + path));
 
-            String np = message.get(VAU_NP).toString();
-            headers.put(VAU_NP, List.of(np));
+            Object vauNpObj = message.get(VAU_NP);
+            if (vauNpObj != null) {
+                String np = vauNpObj.toString();
+                headers.put(VAU_NP, List.of(np));
+            }
         }
 
         super.setupConnection(message, a, csPolicy);

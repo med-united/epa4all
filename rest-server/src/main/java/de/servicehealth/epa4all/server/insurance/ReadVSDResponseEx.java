@@ -9,6 +9,6 @@ import lombok.Data;
 public class ReadVSDResponseEx {
 
     private String telematikId;
-    private String xInsurantId;
+    private String insurantId;
     private ReadVSDResponse readVSDResponse;
 }

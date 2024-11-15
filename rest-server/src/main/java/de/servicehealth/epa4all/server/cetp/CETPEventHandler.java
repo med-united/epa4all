@@ -8,7 +8,6 @@ import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import org.jboss.logging.MDC;
 
 import java.util.Base64;
@@ -29,20 +28,17 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
     private final InsuranceDataService insuranceDataService;
     private final MultiEpaService multiEpaService;
-    private final WebdavSmcbManager webdavSmcbManager;
     private final AppConfig appConfig;
 
     public CETPEventHandler(
         CardlinkWebsocketClient cardlinkWebsocketClient,
         InsuranceDataService insuranceDataService,
-        WebdavSmcbManager webdavSmcbManager,
         MultiEpaService multiEpaService,
         AppConfig appConfig
     ) {
         super(cardlinkWebsocketClient);
 
         this.insuranceDataService = insuranceDataService;
-        this.webdavSmcbManager = webdavSmcbManager;
         this.multiEpaService = multiEpaService;
         this.appConfig = appConfig;
     }
@@ -85,15 +81,14 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 String cardHandle = paramsMap.get("CardHandle");
                 String smcbHandle = insuranceDataService.getSmcbHandle(appConfig);
                 String telematikId = insuranceDataService.getTelematikId(appConfig, smcbHandle);
-                webdavSmcbManager.applyTelematikPath(telematikId);
 
-                InsuranceData insuranceData = insuranceDataService.getInsuranceData(
+                InsuranceData insuranceData = insuranceDataService.getInsuranceDataOrReadVSD(
                     telematikId, correlationId, cardHandle, appConfig
                 );
-                String xInsurantId = insuranceData.getInsurantId();
-                EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantId);
+                String insurantId = insuranceData.getInsurantId();
+                EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
                 byte[] bytes = epaAPI.getRenderClient().getPdfBytes(
-                    Map.of(X_INSURANT_ID, xInsurantId, X_USER_AGENT, USER_AGENT)
+                    Map.of(X_INSURANT_ID, insurantId, X_USER_AGENT, USER_AGENT)
                 );
                 String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                 Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);

@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.service.health.api.epa4all.EpaAPI;
-import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -24,14 +23,11 @@ public class Fhir extends AbstractResource {
 		@QueryParam("kvnr") String kvnr
 	) {
 		try {
-			String correlationId = UUID.randomUUID().toString();
+			String taskId = UUID.randomUUID().toString();
+			EpaContext epaContext = prepareEpaContext(kvnr, taskId);
+			EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
 
-			InsuranceData insuranceData = insuranceDataService.getInsuranceData(
-				telematikId, kvnr, correlationId, smcbHandle, userRuntimeConfig
-			);
-			EpaAPI epaAPI = xdsDocumentService.setEntitlementAndGetEpaAPI(userRuntimeConfig, insuranceData, smcbHandle);
-
-			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(prepareRuntimeAttributes(insuranceData));
+			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaContext.getRuntimeAttributes());
 			return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
 		} catch (Exception e) {
 			throw new WebApplicationException(e);
@@ -45,12 +41,11 @@ public class Fhir extends AbstractResource {
 		@QueryParam("kvnr") String kvnr
 	) {
 		try {
-			String correlationId = UUID.randomUUID().toString();
-			InsuranceData insuranceData = insuranceDataService.getInsuranceData(
-				telematikId, kvnr, correlationId, smcbHandle, userRuntimeConfig
-			);
-			EpaAPI epaAPI = xdsDocumentService.setEntitlementAndGetEpaAPI(userRuntimeConfig, insuranceData, smcbHandle);
-			byte[] html = epaAPI.getRenderClient().getXhtmlDocument(prepareRuntimeAttributes(insuranceData));
+			String taskId = UUID.randomUUID().toString();
+			EpaContext epaContext = prepareEpaContext(kvnr, taskId);
+			EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+
+			byte[] html = epaAPI.getRenderClient().getXhtmlDocument(epaContext.getRuntimeAttributes());
 			return Response.ok(html, "text/html").build();
 		} catch (Exception e) {
 			throw new WebApplicationException(e);

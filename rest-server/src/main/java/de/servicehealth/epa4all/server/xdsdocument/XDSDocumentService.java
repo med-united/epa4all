@@ -1,55 +1,83 @@
 package de.servicehealth.epa4all.server.xdsdocument;
 
-import de.health.service.config.api.UserRuntimeConfig;
-import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.api.EntitlementsApi;
-import de.servicehealth.epa4all.server.idp.IdpClient;
-import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.xds.ProvideAndRegisterSingleDocumentTypeBuilder;
 import de.servicehealth.epa4all.xds.author.AuthorPerson;
 import de.servicehealth.epa4all.xds.ebrim.FolderDefinition;
 import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
 import de.servicehealth.epa4all.xds.structure.StructureDefinitionService;
-import de.servicehealth.model.EntitlementRequestType;
-import de.servicehealth.model.ValidToResponseType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.Document;
+import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
-import org.apache.cxf.jaxrs.client.WebClient;
+import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
+import oasis.names.tc.ebxml_regrep.xsd.query._3.ResponseOptionType;
+import oasis.names.tc.ebxml_regrep.xsd.rim._3.AdhocQueryType;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
-import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
 
 @RequestScoped
 public class XDSDocumentService {
 
     private static final Logger log = Logger.getLogger(XDSDocumentService.class.getName());
 
-    private final IdpClient idpClient;
-    private final MultiEpaService multiEpaService;
     private final StructureDefinitionService structureDefinitionService;
     private final ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder;
 
     @Inject
     public XDSDocumentService(
-        IdpClient idpClient,
-        MultiEpaService multiEpaService,
         StructureDefinitionService structureDefinitionService,
         ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder
     ) {
-        this.idpClient = idpClient;
-        this.multiEpaService = multiEpaService;
         this.structureDefinitionService = structureDefinitionService;
         this.provideAndRegisterDocumentBuilder = provideAndRegisterDocumentBuilder;
     }
 
-    public ProvideAndRegisterDocumentSetRequestType prepareDocumentSetRequest(
+    public RetrieveDocumentSetRequestType prepareRetrieveDocumentSetRequestType(String uniqueId) {
+        RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
+        RetrieveDocumentSetRequestType.DocumentRequest documentRequest = new RetrieveDocumentSetRequestType.DocumentRequest();
+        documentRequest.setDocumentUniqueId(uniqueId);
+        documentRequest.setRepositoryUniqueId("1.2.276.0.76.3.1.315.3.2.1.1");
+        retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
+        return retrieveDocumentSetRequestType;
+    }
+
+    public AdhocQueryRequest prepareAdhocQueryRequest(String kvnr) {
+        AdhocQueryRequest adhocQueryRequest = new AdhocQueryRequest();
+            /* https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/adhocquery.xml
+              <query:ResponseOption returnType="LeafClass" returnComposedObjects="true"/>
+		      <rim:AdhocQuery id="urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d" home="urn:oid:1.2.276.0.76.3.1.405">
+		        <rim:Slot name="$XDSDocumentEntryPatientId">
+		          <rim:ValueList>
+		            <rim:Value>'X110473550^^^&amp;1.2.276.0.76.4.8&amp;ISO'</rim:Value>
+		          </rim:ValueList>
+		        </rim:Slot>
+		        <rim:Slot name="$XDSDocumentEntryStatus">
+		          <rim:ValueList>
+		            <rim:Value>('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')</rim:Value>
+		          </rim:ValueList>
+		        </rim:Slot>
+             */
+        ResponseOptionType responseOptionType = new ResponseOptionType();
+        responseOptionType.setReturnType("LeafClass");
+        responseOptionType.setReturnComposedObjects(true);
+
+        adhocQueryRequest.setResponseOption(responseOptionType);
+
+        AdhocQueryType adhocQueryType = new AdhocQueryType();
+        // FindDocuments
+        adhocQueryType.setId("urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d");
+        adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryPatientId", "'" + kvnr + "^^^&1.2.276.0.76.4.8&ISO'"));
+        adhocQueryType.getSlot().add(createSlotType("$XDSDocumentEntryStatus", "('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')"));
+        adhocQueryRequest.setAdhocQuery(adhocQueryType);
+        return adhocQueryRequest;
+    }
+
+    public Pair<ProvideAndRegisterDocumentSetRequestType, StructureDefinition> prepareDocumentSetRequest(
         byte[] documentBytes,
         String telematikId,
         String kvnr,
@@ -78,35 +106,6 @@ public class XDSDocumentService {
             contentType,
             kvnr
         );
-        return provideAndRegisterDocumentBuilder.build();
-    }
-
-    public EpaAPI setEntitlementAndGetEpaAPI(
-        UserRuntimeConfig userRuntimeConfig,
-        InsuranceData insuranceData,
-        String smcbHandle
-    ) throws Exception {
-        String insurantId = insuranceData.getInsurantId();
-        EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
-        setEntitlement(userRuntimeConfig, insuranceData, epaAPI, smcbHandle); // TODO decouple, implement entitlement management
-        return epaAPI;
-    }
-
-    private void setEntitlement(
-        UserRuntimeConfig userRuntimeConfig,
-        InsuranceData insuranceData,
-        EpaAPI epaAPI,
-        String smcbHandle
-    ) throws Exception {
-        String insurantId = insuranceData.getInsurantId();
-        String pz = insuranceData.getPz();
-        EntitlementRequestType entitlementRequest = new EntitlementRequestType();
-        String entitlementPSJWT = idpClient.createEntitlementPSJWT(smcbHandle, insurantId, pz, userRuntimeConfig);
-        entitlementRequest.setJwt(entitlementPSJWT);
-        EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
-        Map<String, String> map = Map.of(VAU_NP, idpClient.getVauNpSync(userRuntimeConfig, insurantId, smcbHandle));
-        WebClient.getConfig(entitlementsApi).getRequestContext().putAll(map);
-        ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, USER_AGENT, entitlementRequest);
-        log.info(response.toString());
+        return Pair.of(provideAndRegisterDocumentBuilder.build(), structure);
     }
 }
