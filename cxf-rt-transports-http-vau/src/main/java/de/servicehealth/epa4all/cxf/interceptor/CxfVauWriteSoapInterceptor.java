@@ -117,9 +117,6 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             message.put("org.apache.cxf.message.Message.ENCODING", null);
 
-            // if (os instanceof HTTPClientVauConduit.VauHttpClientWrappedOutputStream vwos) {
-            //    vwos.setFixedLengthStreamingMode(vauMessage.length);
-            //}
             try {
                 os.write(vauMessage, 0, vauMessage.length);
             } finally {
@@ -160,12 +157,6 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
         protected void doFlush() throws IOException {
             currentStream.flush();
-        }
-
-        protected void doClose() throws IOException {
-        }
-
-        protected void onWrite() throws IOException {
         }
     }
 }

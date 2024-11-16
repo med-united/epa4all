@@ -81,6 +81,8 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         message.put(ACCEPT, APPLICATION_OCTET_STREAM);
         message.put(REQUEST_URI, vauUri);
 
+        message.getExchange().put(VAU_CID, vauCid);
+
         Object map = message.get(PROTOCOL_HEADERS);
         if (map == null) {
             map = new HashMap<String, List<String>>();
@@ -94,13 +96,11 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
             headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + path));
             headers.put(VAU_CID, List.of(vauCid));
 
-            Object vauNpObj = message.get(VAU_NP);
-            if (vauNpObj != null) {
-                String np = vauNpObj.toString();
+            Object np = message.get(VAU_NP);
+            if (np != null) {
                 headers.put(VAU_NP, List.of(np));
             }
         }
-
         super.setupConnection(message, a, csPolicy);
     }
 

@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static de.servicehealth.vau.VauClient.VAU_CID;
 import static org.apache.cxf.phase.Phase.RECEIVE;
 
 public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message> {
@@ -43,7 +44,7 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
                 throw new Fault(body, log);
             }
             byte[] encryptedVauData = readContentFromMessage(message);
-            String vauCid = "";
+            String vauCid = (String) message.getExchange().get(VAU_CID);
             VauClient vauClient = vauFacade.getVauClient(vauCid);
             byte[] decryptedBytes = vauClient.decryptVauMessage(encryptedVauData);
             String fullRequest = new String(decryptedBytes);

@@ -61,6 +61,7 @@ public class VauFacade {
 
     public VauClient getVauClient(String vauCid) {
         return clients.stream()
+            .filter(vc -> vc.getVauInfo() != null)
             .filter(vc -> vc.getVauInfo().getVauCid().equals(vauCid))
             .findFirst()
             .orElse(null);

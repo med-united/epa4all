@@ -37,6 +37,7 @@ import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 public class InsuranceDataService {
 
     private static final Logger log = Logger.getLogger(InsuranceDataService.class.getName());
+    private static final String ENTITLEMENT_FILE = "entitlement-expiry";
 
     private final WebdavSmcbManager webdavSmcbManager;
     private final IKonnektorClient konnektorClient;
@@ -142,7 +143,7 @@ public class InsuranceDataService {
     public Instant getEntitlementExpirationTime(String telematikId, String kvnr) {
         try {
             File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-            File file = new File(localFolder, "entitlement.txt");
+            File file = new File(localFolder, ENTITLEMENT_FILE);
             String value = Files.readString(file.toPath()).trim();
             return Instant.parse(value);
         } catch (IOException e) {
@@ -152,7 +153,7 @@ public class InsuranceDataService {
 
     public void updateEntitlement(Instant validTo, String telematikId, String kvnr) throws IOException {
         File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-        File file = new File(localFolder, "entitlement.txt");
+        File file = new File(localFolder, ENTITLEMENT_FILE);
         saveDataToFile(validTo.toString().getBytes(), file);
     }
 

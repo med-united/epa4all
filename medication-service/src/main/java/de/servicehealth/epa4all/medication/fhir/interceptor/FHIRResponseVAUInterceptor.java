@@ -15,6 +15,7 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -42,9 +43,8 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
                 .toList();
             int responseCode = response.getStatusLine().getStatusCode();
 
-            // ((HttpClientContext) context).context.getAttribute("http.request")
-
-            String vauCid = ""; // TODO
+            String uri = ((HttpClientContext) context).getRequest().getRequestLine().getUri();
+            String vauCid = URI.create(uri).getPath();
 
             VauResponse vauResponse = vauResponseReader.read(vauCid, responseCode, originHeaders, bytes);
             Header[] headers = vauResponse.headers()

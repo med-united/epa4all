@@ -70,7 +70,7 @@ public class EpaFileTracker {
         uploadResultsMap.computeIfAbsent(taskId, (k) -> prepareFakeInProgressResponse(taskId));
 
         EpaContext epaContext = fileUpload.getEpaContext();
-        
+
         EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
         IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
         ((BindingProvider) documentManagementPortType).getRequestContext().putAll(epaContext.getRuntimeAttributes());
@@ -101,7 +101,6 @@ public class EpaFileTracker {
                     if (!file.exists()) {
                         saveDataToFile(documentBytes, file);
                     }
-
                     log.info(String.format("[%s/%s] uploaded successfully", folderName, fileName));
                 }
             } else {
@@ -112,7 +111,7 @@ public class EpaFileTracker {
 
             uploadResultsMap.computeIfPresent(taskId, (k, prev) -> response);
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("[%s] Error while uploading %s -> %s", taskId, fileUpload, e.getMessage()));
+            log.log(Level.SEVERE, String.format("[%s] Error while uploading %s", taskId, fileUpload), e);
             if (e instanceof FileUploadException uploadException) {
                 RegistryResponseType response = uploadException.getResponse();
                 uploadResultsMap.computeIfPresent(taskId, (k, prev) -> response);
