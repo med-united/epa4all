@@ -65,25 +65,24 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
                 originPayload = os.toByteArray();
             }
 
+            String path = evictHeader(httpHeaders, VAU_METHOD_PATH);
+
             String additionalHeaders = ((MultivaluedMap<String, String>) httpHeaders).entrySet()
                 .stream()
                 .filter(p -> !p.getKey().equals(CONTENT_TYPE))
                 .filter(p -> !p.getKey().equals(ACCEPT))
                 .map(p -> p.getKey() + ": " + p.getValue().getFirst())
                 .collect(Collectors.joining("\r\n"));
-            httpHeaders.remove(X_INSURANT_ID);
 
-            String np = evictHeader(httpHeaders, VAU_NP);
-            if (np != null) {
-                additionalHeaders += "\r\n" + VAU_NP + ": " + np;
-            }
+            httpHeaders.remove(X_INSURANT_ID);
+            httpHeaders.remove(VAU_NP);
+
             if (!additionalHeaders.isBlank()) {
                 additionalHeaders += "\r\n";
             }
 
             String keepAlive = additionalHeaders.contains("Keep-Alive") ? "" : "Connection: Keep-Alive\r\n";
 
-            String path = evictHeader(httpHeaders, VAU_METHOD_PATH);
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: epa-as-2.dev.epa4all.de\r\n"
                 + additionalHeaders + keepAlive
