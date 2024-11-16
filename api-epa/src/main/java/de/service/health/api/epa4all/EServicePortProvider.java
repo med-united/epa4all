@@ -4,6 +4,7 @@ import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadSoapInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteSoapInterceptor;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.XDSDocumentService;
@@ -32,25 +33,29 @@ import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_A
 @ApplicationScoped
 public class EServicePortProvider {
 
-    // TODO Feature
-
-    public IDocumentManagementPortType getDocumentManagementPortType(String documentManagementUrl, VauClient vauClient) throws Exception {
+    public IDocumentManagementPortType getDocumentManagementPortType(
+        String documentManagementUrl,
+        VauFacade vauFacade
+    ) throws Exception {
         IDocumentManagementPortType documentManagement = createXDSDocumentPortType(
-            documentManagementUrl, IDocumentManagementPortType.class, vauClient
+            documentManagementUrl, IDocumentManagementPortType.class, vauFacade
         );
         initPortType(documentManagement);
         return documentManagement;
     }
 
-    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(String documentManagementUrl, VauClient vauClient) throws Exception {
+    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(
+        String documentManagementUrl,
+        VauFacade vauFacade
+    ) throws Exception {
         IDocumentManagementInsurantPortType documentManagementInsurant = createXDSDocumentPortType(
-            documentManagementUrl, IDocumentManagementInsurantPortType.class, vauClient
+            documentManagementUrl, IDocumentManagementInsurantPortType.class, vauFacade
         );
         initPortType(documentManagementInsurant);
         return documentManagementInsurant;
     }
 
-    private <T> T createXDSDocumentPortType(String address, Class<T> clazz, VauClient vauClient) {
+    private <T> T createXDSDocumentPortType(String address, Class<T> clazz, VauFacade vauFacade) {
         JaxWsProxyFactoryBean jaxWsProxyFactory = new JaxWsProxyFactoryBean();
         jaxWsProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
         jaxWsProxyFactory.setServiceClass(XDSDocumentService.class);
@@ -67,11 +72,13 @@ public class EServicePortProvider {
         jaxWsProxyFactory.getOutInterceptors().addAll(
             List.of(
                 new LoggingOutInterceptor(),
-                new CxfVauSetupInterceptor(vauClient),
-                new CxfVauWriteSoapInterceptor(vauClient)
+                new CxfVauSetupInterceptor(vauFacade),
+                new CxfVauWriteSoapInterceptor(vauFacade)
             )
         );
-        jaxWsProxyFactory.getInInterceptors().addAll(List.of(new LoggingInInterceptor(), new CxfVauReadSoapInterceptor(vauClient)));
+        jaxWsProxyFactory.getInInterceptors().addAll(
+            List.of(new LoggingInInterceptor(), new CxfVauReadSoapInterceptor(vauFacade))
+        );
         return jaxWsProxyFactory.create(clazz);
     }
 

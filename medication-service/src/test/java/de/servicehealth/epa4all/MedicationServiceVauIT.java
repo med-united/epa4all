@@ -9,6 +9,7 @@ import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
+import de.servicehealth.vau.VauClient;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.http.client.fluent.Executor;
@@ -21,7 +22,7 @@ import java.io.File;
 import java.util.Map;
 
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
-import static de.servicehealth.utils.URLUtils.getBaseUrl;
+import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -38,7 +39,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
     public void medicationCreatedAndObtainedThroughVAUProxy() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
-            VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(medicationServiceApiUrl));
+            VauRestfulClientFactory.applyToFhirContext(ctx, vauFacade, getBaseUrl(medicationServiceApiUrl));
 
             IMedicationClient medicationClient = ctx.newRestfulClient(IMedicationClient.class, medicationServiceApiUrl);
             IGenericClient genericClient = ctx.newRestfulGenericClient(medicationServiceApiUrl);
@@ -63,7 +64,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
     public void documentsDownloadedThroughVAUProxy() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
-            Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(medicationServiceRenderUrl));
+            Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauFacade, getBaseUrl(medicationServiceRenderUrl));
             IRenderClient renderClient = new VauRenderClient(executor, medicationServiceRenderUrl);
             
             File file = renderClient.getPdfFile(

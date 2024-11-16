@@ -1,12 +1,13 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
+import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.interceptor.AttachmentInInterceptor;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 
-import javax.xml.stream.XMLInputFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,15 +25,13 @@ import static org.apache.cxf.phase.Phase.RECEIVE;
 
 public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message> {
 
-    private final VauClient vauClient;
+    private final VauFacade vauFacade;
     private static final Logger log = Logger.getLogger(CxfVauReadSoapInterceptor.class.getName());
 
-    XMLInputFactory factory = XMLInputFactory.newInstance();
-
-    public CxfVauReadSoapInterceptor(VauClient vauClient) {
+    public CxfVauReadSoapInterceptor(VauFacade vauFacade) {
         super(RECEIVE);
         addBefore(AttachmentInInterceptor.class.getName());
-        this.vauClient = vauClient;
+        this.vauFacade = vauFacade;
     }
 
     @SuppressWarnings("unchecked")
@@ -44,7 +43,9 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
                 throw new Fault(body, log);
             }
             byte[] encryptedVauData = readContentFromMessage(message);
-            byte[] decryptedBytes = vauClient.getVauStateMachine().decryptVauMessage(encryptedVauData);
+            String vauCid = "";
+            VauClient vauClient = vauFacade.getVauClient(vauCid);
+            byte[] decryptedBytes = vauClient.decryptVauMessage(encryptedVauData);
             String fullRequest = new String(decryptedBytes);
             log.info("Inner Response: " + fullRequest);
             message.put("org.apache.cxf.message.Message.ENCODING", Charset.defaultCharset().toString());
@@ -73,10 +74,9 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
 
     public byte[] readContentFromMessage(Message message) {
         InputStream is = message.getContent(InputStream.class);
-
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         try {
-            org.apache.cxf.helpers.IOUtils.copy(is, bout);
+            IOUtils.copy(is, bout);
         } catch (IOException ex) {
             log.log(Level.SEVERE, ex.getMessage(), ex);
         }

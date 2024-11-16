@@ -65,7 +65,7 @@ public class CardInsertedTest {
                 null,
                 null
             );
-            when(insuranceDataService.getInsuranceDataOrReadVSD(any(), any(), any(), any(), any())).thenReturn(insuranceData);
+            when(insuranceDataService.getInsuranceDataOrReadVSD(any(), any(), any(), any())).thenReturn(insuranceData);
 	
 	        AppConfig appConfig = new AppConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 	        CETPEventHandler cetpServerHandler = new CETPEventHandler(

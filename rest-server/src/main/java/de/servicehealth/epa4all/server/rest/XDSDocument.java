@@ -1,11 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.service.health.api.epa4all.EpaAPI;
-import de.servicehealth.epa4all.server.filetracker.FileUpload;
-import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
-import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.context.RequestScoped;
@@ -23,7 +19,6 @@ import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.InputStream;
 import java.util.Map;
@@ -43,14 +38,12 @@ public class XDSDocument extends AbstractResource {
         @QueryParam("kvnr") String kvnr
     ) {
         try {
-            AdhocQueryRequest request = xdsDocumentService.prepareAdhocQueryRequest(kvnr);
-
-            String taskId = UUID.randomUUID().toString();
-            EpaContext epaContext = prepareEpaContext(kvnr, taskId);
+            EpaContext epaContext = prepareEpaContext(kvnr);
             EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-
             IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
             attachVauAttributes((BindingProvider) documentManagementPortType, epaContext.getRuntimeAttributes());
+
+            AdhocQueryRequest request = xdsDocumentService.get().prepareAdhocQueryRequest(kvnr);
             return documentManagementPortType.documentRegistryRegistryStoredQuery(request);
         } catch (Exception e) {
             throw new WebApplicationException(e);
@@ -65,15 +58,13 @@ public class XDSDocument extends AbstractResource {
         @QueryParam("kvnr") String kvnr
     ) {
         try {
-            RetrieveDocumentSetRequestType retrieveDocumentSetRequest = xdsDocumentService.prepareRetrieveDocumentSetRequestType(uniqueId);
-
-            String taskId = UUID.randomUUID().toString();
-            EpaContext epaContext = prepareEpaContext(kvnr, taskId);
+            EpaContext epaContext = prepareEpaContext(kvnr);
             EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-
             IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
             attachVauAttributes((BindingProvider) documentManagementPortType, epaContext.getRuntimeAttributes());
-            return documentManagementPortType.documentRepositoryRetrieveDocumentSet(retrieveDocumentSetRequest);
+            
+            RetrieveDocumentSetRequestType requestType = xdsDocumentService.get().prepareRetrieveDocumentSetRequestType(uniqueId);
+            return documentManagementPortType.documentRepositoryRetrieveDocumentSet(requestType);
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
@@ -101,35 +92,22 @@ public class XDSDocument extends AbstractResource {
         InputStream is
     ) {
         try {
-            String taskId = UUID.randomUUID().toString();
-            byte[] documentBytes = is.readAllBytes();
+            EpaContext epaContext = prepareEpaContext(kvnr);
+
             String fileName = UUID.randomUUID() + "." + getExtension(contentType); // TODO get fileName
-            EpaContext epaContext = prepareEpaContext(kvnr, taskId);
 
-            UCPersoenlicheVersichertendatenXML versichertendaten = epaContext.getInsuranceData().getPersoenlicheVersichertendaten();
-            UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
-            String firstName = person.getVorname();
-            String lastName = person.getNachname();
-            String title = person.getTitel();
-
-            Pair<ProvideAndRegisterDocumentSetRequestType, StructureDefinition> pair = xdsDocumentService.prepareDocumentSetRequest(
-                documentBytes,
+            byte[] documentBytes = is.readAllBytes();
+            return fileUploader.submitFile(
+                xdsDocumentService.get(),
+                epaContext,
                 telematikId,
                 kvnr,
                 contentType,
                 languageCode,
-                firstName,
-                lastName,
-                title
+                fileName,
+                null,
+                documentBytes
             );
-
-            ProvideAndRegisterDocumentSetRequestType request = pair.getLeft();
-            StructureDefinition structureDefinition = pair.getRight();
-
-            eventFileUpload.fireAsync(new FileUpload(
-                taskId, contentType, languageCode, telematikId, kvnr, fileName, epaContext, documentBytes, request, structureDefinition
-            ));
-            return taskId;
         } catch (Exception e) {
             throw new WebApplicationException(e.getMessage(), e);
         }

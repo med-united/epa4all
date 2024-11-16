@@ -1,14 +1,16 @@
 package de.servicehealth.epa4all.server.filetracker;
 
 import de.servicehealth.epa4all.server.config.WebdavConfig;
-import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class FolderService {
@@ -74,6 +76,17 @@ public class FolderService {
 
     public File[] getInsurantMedFolderFiles(String telematikId, String insurantId, String folderName) {
         return getNestedFiles(getInsurantMedFolder(telematikId, insurantId, folderName));
+    }
+
+    public List<File> getInsurantMedFoldersFiles(String telematikId, String insurantId, Set<String> extSet) {
+        return Arrays.stream(getInsurantsMedFolders(telematikId, insurantId))
+            .filter(f -> !f.getName().equals("local"))
+            .flatMap(f -> {
+                File[] nestedFiles = getNestedFiles(f);
+                return nestedFiles == null ? Stream.empty() : Stream.of(nestedFiles);
+            })
+            .filter(f -> extSet == null || extSet.isEmpty() || extSet.stream().anyMatch(f.getName().toLowerCase()::endsWith))
+            .toList();
     }
 
     public File createFolder(String path, File fallbackFolder) {

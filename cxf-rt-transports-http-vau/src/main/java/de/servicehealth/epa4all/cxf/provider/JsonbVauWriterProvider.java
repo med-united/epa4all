@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.cxf.provider;
 
 import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.WebApplicationException;
@@ -21,6 +22,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
+import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
@@ -30,14 +32,14 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 @SuppressWarnings("rawtypes")
 public class JsonbVauWriterProvider implements MessageBodyWriter {
 
-    private final VauClient vauClient;
+    private final VauFacade vauFacade;
     private final JsonbBuilder jsonbBuilder;
 
     private static final Logger log = Logger.getLogger(JsonbVauWriterProvider.class.getName());
 
-    public JsonbVauWriterProvider(VauClient vauClient) {
+    public JsonbVauWriterProvider(VauFacade vauFacade) {
         jsonbBuilder = new JsonBindingBuilder();
-        this.vauClient = vauClient;
+        this.vauFacade = vauFacade;
     }
 
     @Override
@@ -66,6 +68,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
             }
 
             String path = evictHeader(httpHeaders, VAU_METHOD_PATH);
+            String vauCid = evictHeader(httpHeaders, VAU_CID);
 
             String additionalHeaders = ((MultivaluedMap<String, String>) httpHeaders).entrySet()
                 .stream()
@@ -93,6 +96,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
             log.info("REST Inner Request: " + new String(content));
 
+            VauClient vauClient = vauFacade.getVauClient(vauCid);
             byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
             entityStream.write(vauMessage);
             entityStream.close();

@@ -1,13 +1,12 @@
 package de.servicehealth.epa4all.auth;
 
-import de.gematik.vau.lib.VauClientStateMachine;
 import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.common.DockerAction;
 import de.servicehealth.epa4all.common.Utils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.model.GetNonce200Response;
-import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
@@ -25,9 +24,12 @@ public abstract class AbstractAuthTest {
     EpaConfig epaConfig;
 
     @Inject
+    VauFacade vauFacade;
+
+    @Inject
     ClientFactory clientFactory;
 
-    protected abstract <T> T buildApi(VauClient vauClient, Class<T> clazz, String url) throws Exception;
+    protected abstract <T> T buildApi(VauFacade vauFacade, Class<T> clazz, String url) throws Exception;
 
     private void runWithDocker(DockerAction action) throws Exception {
         Utils.runWithDocker(AUTHORIZATION_SERVICE, action);
@@ -40,11 +42,10 @@ public abstract class AbstractAuthTest {
     @Test
     public void getAuthNonceWorks() throws Exception {
         runWithDocker(() -> {
-            VauClient vauClient = new VauClient(new VauClientStateMachine());
             String authorizationServiceUrl = epaConfig.getAuthorizationServiceUrl();
             String backend = epaConfig.getEpaBackends().iterator().next();
             String backendUrl = getBackendUrl(backend, authorizationServiceUrl);
-            AuthorizationSmcBApi api = buildApi(vauClient, AuthorizationSmcBApi.class, backendUrl);
+            AuthorizationSmcBApi api = buildApi(vauFacade, AuthorizationSmcBApi.class, backendUrl);
 
             for (int i = 0; i < 10; i++) {
                 GetNonce200Response nonce = api.getNonce(xUseragent);

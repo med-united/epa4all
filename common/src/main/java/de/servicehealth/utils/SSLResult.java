@@ -11,6 +11,5 @@ import javax.net.ssl.SSLContext;
 public class SSLResult {
 
     private final SSLContext sslContext;
-    
     private final KeyManagerFactory keyManagerFactory;
 }

@@ -3,7 +3,6 @@ package de.service.health.api.epa4all;
 import ca.uhn.fhir.context.FhirContext;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import de.gematik.vau.lib.VauClientStateMachine;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.EntitlementsApi;
@@ -12,7 +11,7 @@ import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
-import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import io.quarkus.runtime.Startup;
@@ -20,6 +19,7 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.Getter;
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
-import static de.servicehealth.utils.URLUtils.getBaseUrl;
+import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 
 @ApplicationScoped
 @Startup
@@ -43,6 +43,7 @@ public class MultiEpaService {
 
     private final EpaConfig epaConfig;
     private final ClientFactory clientFactory;
+    private final Instance<VauFacade> vauFacadeInstance;
     private final EServicePortProvider eServicePortProvider;
 
     private final Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
@@ -54,9 +55,11 @@ public class MultiEpaService {
     public MultiEpaService(
         EpaConfig epaConfig,
         ClientFactory clientFactory,
+        Instance<VauFacade> vauFacadeInstance,
         EServicePortProvider eServicePortProvider
     ) {
         this.eServicePortProvider = eServicePortProvider;
+        this.vauFacadeInstance = vauFacadeInstance;
         this.clientFactory = clientFactory;
         this.epaConfig = epaConfig;
     }
@@ -70,34 +73,34 @@ public class MultiEpaService {
         epaConfig.getEpaBackends().forEach(backend ->
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
-                    VauClient vauClient = new VauClient(new VauClientStateMachine());
+                    VauFacade vauFacade = vauFacadeInstance.get();
 
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
-                    IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl, vauClient);
+                    IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl, vauFacade);
 
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
-                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = eServicePortProvider.getDocumentManagementInsurantPortType(documentManagementInsurantUrl, vauClient);
+                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = eServicePortProvider.getDocumentManagementInsurantPortType(documentManagementInsurantUrl, vauFacade);
 
                     AccountInformationApi accountInformationApi = clientFactory.createPlainClient(
                         AccountInformationApi.class, getBackendUrl(backend, epaConfig.getInformationServiceUrl())
                     );
                     AuthorizationSmcBApi authorizationSmcBApi = createProxyClient(
-                        AuthorizationSmcBApi.class, backend, epaConfig.getAuthorizationServiceUrl(), vauClient
+                        AuthorizationSmcBApi.class, backend, epaConfig.getAuthorizationServiceUrl(), vauFacade
                     );
                     EntitlementsApi entitlementsApi = createProxyClient(
-                        EntitlementsApi.class, backend, epaConfig.getEntitlementServiceUrl(), vauClient
+                        EntitlementsApi.class, backend, epaConfig.getEntitlementServiceUrl(), vauFacade
                     );
 
                     FhirContext ctx = FhirContext.forR4();
                     String medicationServiceApiUrl = epaConfig.getMedicationServiceApiUrl();
                     String backendUrl = getBackendUrl(backend, medicationServiceApiUrl);
-                    VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(backendUrl));
+                    VauRestfulClientFactory.applyToFhirContext(ctx, vauFacade, getBaseUrl(backendUrl));
                     IMedicationClient medicationClient = ctx.newRestfulClient(IMedicationClient.class, backendUrl);
 
                     ctx = FhirContext.forR4();
                     String medicationServiceRenderUrl = epaConfig.getMedicationServiceRenderUrl();
                     backendUrl = getBackendUrl(backend, medicationServiceRenderUrl);
-                    Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(backendUrl));
+                    Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauFacade, getBaseUrl(backendUrl));
                     IRenderClient renderClient = new VauRenderClient(executor, backendUrl);
 
                     return new EpaAPIAggregator(
@@ -116,8 +119,8 @@ public class MultiEpaService {
             }));
     }
 
-    private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl, VauClient vauClient) throws Exception {
-        return clientFactory.createProxyClient(vauClient, clazz, getBackendUrl(backend, serviceUrl));
+    private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl, VauFacade vauFacade) throws Exception {
+        return clientFactory.createProxyClient(vauFacade, clazz, getBackendUrl(backend, serviceUrl));
     }
 
     private String getBackendUrl(String backend, String serviceUrl) {

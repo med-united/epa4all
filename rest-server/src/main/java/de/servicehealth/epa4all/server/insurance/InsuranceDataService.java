@@ -18,13 +18,17 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.w3c.dom.Document;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
+import static de.health.service.cetp.utils.Utils.saveDataToFile;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createDocument;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
 import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
@@ -96,19 +100,17 @@ public class InsuranceDataService {
 
     public InsuranceData getInsuranceDataOrReadVSD(
         String telematikId,
-        String correlationId,
         String egkHandle,
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
         String kvnr = getKvnr(runtimeConfig, egkHandle);
         String smcbHandle = getSmcbHandle(runtimeConfig);
-        return getInsuranceDataOrReadVSD(telematikId, kvnr, correlationId, smcbHandle, runtimeConfig);
+        return getInsuranceDataOrReadVSD(telematikId, kvnr, smcbHandle, runtimeConfig);
     }
 
     public InsuranceData getInsuranceDataOrReadVSD(
         String telematikId,
         String kvnr,
-        String correlationId,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
@@ -119,7 +121,7 @@ public class InsuranceDataService {
         folderService.applyTelematikPath(telematikId);
 
         String egkHandle = getEgkHandle(runtimeConfig, kvnr);
-        ReadVSDResponse readVSDResponse = vsdService.readVSD(correlationId, egkHandle, smcbHandle, runtimeConfig);
+        ReadVSDResponse readVSDResponse = vsdService.readVSD(egkHandle, smcbHandle, runtimeConfig);
         String xInsurantId = extractInsurantId(readVSDResponse);
         if (kvnr == null || kvnr.equals(xInsurantId)) {
             // ReadVSDResponseEx must be sent synchronously to get valid local InsuranceData.
@@ -135,6 +137,23 @@ public class InsuranceDataService {
         }
         File localVSDFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
         return webdavSmcbManager.getFileSystemInsuranceData(localVSDFolder, kvnr);
+    }
+
+    public Instant getEntitlementExpirationTime(String telematikId, String kvnr) {
+        try {
+            File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+            File file = new File(localFolder, "entitlement.txt");
+            String value = Files.readString(file.toPath()).trim();
+            return Instant.parse(value);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public void updateEntitlement(Instant validTo, String telematikId, String kvnr) throws IOException {
+        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        File file = new File(localFolder, "entitlement.txt");
+        saveDataToFile(validTo.toString().getBytes(), file);
     }
 
     private String extractInsurantId(ReadVSDResponse readVSDResponse) throws Exception {

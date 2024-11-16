@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauResponse;
 import de.servicehealth.vau.VauResponseReader;
 import org.apache.commons.lang3.tuple.Pair;
@@ -29,9 +30,9 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static Logger log = Logger.getLogger(CxfVauReadInterceptor.class.getName());
 
-    public CxfVauReadInterceptor(VauClient vauClient) {
+    public CxfVauReadInterceptor(VauFacade vauFacade) {
         super(Phase.PROTOCOL);
-        vauResponseReader = new VauResponseReader(vauClient);
+        vauResponseReader = new VauResponseReader(vauFacade);
     }
 
     @Override
@@ -39,8 +40,11 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
         try {
             InputStream inputStream = message.getContent(InputStream.class);
             Integer responseCode = (Integer) message.get(RESPONSE_CODE);
+
+            String vauCid = "";
+
             VauResponse vauResponse = vauResponseReader.read(
-                responseCode, getProtocolHeaders(message), inputStream.readAllBytes()
+                vauCid, responseCode, getProtocolHeaders(message), inputStream.readAllBytes()
             );
             List<Pair<String, String>> headers = vauResponse.headers();
             Optional<Pair<String, String>> locationOpt = headers.stream()

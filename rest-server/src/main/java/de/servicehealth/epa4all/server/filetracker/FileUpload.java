@@ -18,6 +18,7 @@ public class FileUpload {
     private String telematikId;
     private String kvnr;
     private String fileName;
+    private String folderName;
     private EpaContext epaContext;
     private byte[] documentBytes;
     private ProvideAndRegisterDocumentSetRequestType request;

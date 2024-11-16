@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.medication.fhir.interceptor;
 
 import de.gematik.vau.lib.data.KdfKey2;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauInfo;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.Header;
@@ -40,6 +41,7 @@ import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_S2C;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_C2S_INFO;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
@@ -61,22 +63,24 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
     private final URI medicationBaseUri;
     private final SSLContext sslContext;
-    private final VauClient vauClient;
+    private final VauFacade vauFacade;
 
-    public FHIRRequestVAUInterceptor(URI medicationBaseUri, SSLContext sslContext, VauClient vauClient) {
+    public FHIRRequestVAUInterceptor(URI medicationBaseUri, SSLContext sslContext, VauFacade vauFacade) {
         this.medicationBaseUri = medicationBaseUri;
         this.sslContext = sslContext;
-        this.vauClient = vauClient;
+        this.vauFacade = vauFacade;
     }
 
     @Override
-    public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
+    public void process(HttpRequest request, HttpContext context) {
         if (request instanceof HttpEntityEnclosingRequest entityRequest) {
             try {
-                VauInfo vauInfo = initVau();
-                byte[] vauMessage = prepareVauMessage(entityRequest);
+                VauClient vauClient = initVauClient();
+                VauInfo vauInfo = vauClient.getVauInfo();
+
+                byte[] vauMessage = prepareVauMessage(entityRequest, vauClient);
                 entityRequest.setEntity(new ByteArrayEntity(vauMessage));
-                entityRequest.removeHeaders("x-insurantid");
+                entityRequest.removeHeaders(X_INSURANT_ID);
                 entityRequest.setHeader(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
                 entityRequest.setHeader(ACCEPT, APPLICATION_OCTET_STREAM);
                 entityRequest.setHeader(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
@@ -95,7 +99,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         return medicationBaseUri.getPort() < 0 ? "" : ":" + medicationBaseUri.getPort();
     }
 
-    private byte[] prepareVauMessage(HttpEntityEnclosingRequest request) throws IOException {
+    private byte[] prepareVauMessage(HttpEntityEnclosingRequest request, VauClient vauClient) throws IOException {
         Header[] headers = request.getAllHeaders();
         HttpEntity entity = request.getEntity();
         byte[] body = entity == null ? new byte[0] : entity.getContent().readAllBytes();
@@ -139,9 +143,10 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         }
     }
 
-    private VauInfo initVau() throws Exception {
+    private VauClient initVauClient() throws Exception {
+        VauClient vauClient = vauFacade.acquireVauClient();
         if (vauClient.getVauInfo() != null) {
-            return vauClient.getVauInfo();
+            return vauClient;
         }
 
         String host = medicationBaseUri.getHost();
@@ -197,7 +202,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         vauClient.getVauStateMachine().receiveMessage4(message4);
         vauClient.setVauInfo(vauInfo);
         
-        return vauInfo;
+        return vauClient;
     }
 
     private String getHeaderValue(HttpResponse httpResponse, String headerName) {

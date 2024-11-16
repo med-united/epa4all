@@ -20,15 +20,16 @@ import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
 
-@RequestScoped
 public class XDSDocumentService {
 
     private static final Logger log = Logger.getLogger(XDSDocumentService.class.getName());
 
-    private final StructureDefinitionService structureDefinitionService;
-    private final ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder;
+    private StructureDefinitionService structureDefinitionService;
+    private ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder;
 
-    @Inject
+    public XDSDocumentService() {
+    }
+
     public XDSDocumentService(
         StructureDefinitionService structureDefinitionService,
         ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder

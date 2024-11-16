@@ -10,7 +10,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 import java.io.ByteArrayInputStream;
-import java.util.UUID;
 
 @RequestScoped
 @Path("fhir")
@@ -23,8 +22,7 @@ public class Fhir extends AbstractResource {
 		@QueryParam("kvnr") String kvnr
 	) {
 		try {
-			String taskId = UUID.randomUUID().toString();
-			EpaContext epaContext = prepareEpaContext(kvnr, taskId);
+			EpaContext epaContext = prepareEpaContext(kvnr);
 			EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
 
 			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaContext.getRuntimeAttributes());
@@ -41,8 +39,7 @@ public class Fhir extends AbstractResource {
 		@QueryParam("kvnr") String kvnr
 	) {
 		try {
-			String taskId = UUID.randomUUID().toString();
-			EpaContext epaContext = prepareEpaContext(kvnr, taskId);
+			EpaContext epaContext = prepareEpaContext(kvnr);
 			EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
 
 			byte[] html = epaAPI.getRenderClient().getXhtmlDocument(epaContext.getRuntimeAttributes());

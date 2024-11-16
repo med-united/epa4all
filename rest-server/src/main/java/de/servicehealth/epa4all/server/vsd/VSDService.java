@@ -35,7 +35,6 @@ public class VSDService {
     }
 
     public ReadVSDResponse readVSD(
-        String correlationId,
         String egkHandle,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig
@@ -47,7 +46,7 @@ public class VSDService {
         }
         String subsInfo = getSubscriptionsInfo(runtimeConfig);
         log.info(String.format(
-            "[%s] readVSD for cardHandle=%s, smcbHandle=%s, subscriptions: %s", correlationId, egkHandle, smcbHandle, subsInfo
+            "readVSD for cardHandle=%s, smcbHandle=%s, subscriptions: %s", egkHandle, smcbHandle, subsInfo
         ));
 
         // TODO readEPrescriptionsMXBean.increaseVSDRead();

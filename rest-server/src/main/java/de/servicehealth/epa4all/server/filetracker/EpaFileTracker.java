@@ -13,6 +13,7 @@ import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
+import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.jboss.logmanager.Level;
 
@@ -63,14 +64,10 @@ public class EpaFileTracker {
     private void uploadFile(FileUpload fileUpload) {
         String taskId = fileUpload.getTaskId();
         if (uploadResultsMap.containsKey(taskId)) {
+            log.warning(String.format("Already in progress %s", fileUpload));
             return;
         }
-        uploadResultsMap.computeIfAbsent(taskId, (k) -> {
-            RegistryResponseType responseType = new RegistryResponseType();
-            responseType.setRequestId(taskId);
-            responseType.setStatus(String.format("InProgress, startedAt=%s", LocalDateTime.now().format(FORMATTER)));
-            return responseType;
-        });
+        uploadResultsMap.computeIfAbsent(taskId, (k) -> prepareFakeInProgressResponse(taskId));
 
         EpaContext epaContext = fileUpload.getEpaContext();
         
@@ -80,6 +77,7 @@ public class EpaFileTracker {
 
         try {
             String fileName = fileUpload.getFileName();
+            String folderName = fileUpload.getFolderName();
             String telematikId = fileUpload.getTelematikId();
             String insurantId = fileUpload.getKvnr();
             byte[] documentBytes = fileUpload.getDocumentBytes();
@@ -88,8 +86,8 @@ public class EpaFileTracker {
             StructureDefinition structureDefinition = fileUpload.getStructureDefinition();
 
             RegistryResponseType response = documentManagementPortType.documentRepositoryProvideAndRegisterDocumentSetB(request);
-            List<RegistryError> registryError = response.getRegistryErrorList().getRegistryError();
-            if (registryError.isEmpty()) {
+            RegistryErrorList registryErrorList = response.getRegistryErrorList();
+            if (registryErrorList == null) {
 
                 // NEW FILE: get fileName         | EXISTING FILE: existing fileName
                 // NEW FILE: select webdav folder | EXISTING FILE: existing folder
@@ -98,11 +96,16 @@ public class EpaFileTracker {
                 // sync checksum file
 
                 if (folderService.appendChecksumFor(telematikId, insurantId, documentBytes)) {
-                    File medFolder = getMedFolder(structureDefinition, telematikId, insurantId);
+                    File medFolder = getMedFolder(folderName, telematikId, insurantId, structureDefinition);
                     File file = new File(medFolder, fileName);
-                    saveDataToFile(documentBytes, file);
+                    if (!file.exists()) {
+                        saveDataToFile(documentBytes, file);
+                    }
+
+                    log.info(String.format("[%s/%s] uploaded successfully", folderName, fileName));
                 }
             } else {
+                List<RegistryError> registryError = registryErrorList.getRegistryError();
                 String msg = String.format("File upload failed: %s", registryError.getFirst().getErrorCode());
                 throw new FileUploadException(msg, response);
             }
@@ -110,45 +113,57 @@ public class EpaFileTracker {
             uploadResultsMap.computeIfPresent(taskId, (k, prev) -> response);
         } catch (Exception e) {
             log.log(Level.SEVERE, String.format("[%s] Error while uploading %s -> %s", taskId, fileUpload, e.getMessage()));
-
             if (e instanceof FileUploadException uploadException) {
                 RegistryResponseType response = uploadException.getResponse();
                 uploadResultsMap.computeIfPresent(taskId, (k, prev) -> response);
             } else {
                 uploadResultsMap.computeIfPresent(taskId, (k, prev) -> {
                     String startedAt = prev.getStatus().split(" ")[1];
-
-                    RegistryResponseType responseType = new RegistryResponseType();
-                    RegistryError registryError = new RegistryError();
-                    registryError.setErrorCode("Failed");
-                    registryError.setValue(e.getMessage());
-                    responseType.setStatus(String.format("Failed, %s failedAt=%s", startedAt, LocalDateTime.now().format(FORMATTER)));
-                    responseType.setRequestId(taskId);
-                    responseType.getRegistryErrorList().getRegistryError().add(registryError);
-                    return responseType;
+                    return prepareFakeFailedResponse(taskId, startedAt, e.getMessage());
                 });
             }
         }
     }
 
+    private RegistryResponseType prepareFakeInProgressResponse(String taskId) {
+        RegistryResponseType responseType = new RegistryResponseType();
+        responseType.setRequestId(taskId);
+        String startedAt = LocalDateTime.now().format(FORMATTER);
+        responseType.setStatus(String.format("InProgress, startedAt=%s", startedAt));
+        return responseType;
+    }
+
+    private RegistryResponseType prepareFakeFailedResponse(String taskId, String startedAt, String errorMessage) {
+        RegistryResponseType responseType = new RegistryResponseType();
+        RegistryError registryError = new RegistryError();
+        registryError.setErrorCode("Failed");
+        registryError.setValue(errorMessage);
+        String failedAt = LocalDateTime.now().format(FORMATTER);
+        responseType.setStatus(String.format("Failed, %s failedAt=%s", startedAt, failedAt));
+        responseType.setRequestId(taskId);
+        responseType.getRegistryErrorList().getRegistryError().add(registryError);
+        return responseType;
+    }
+
     @SuppressWarnings("unchecked")
     private File getMedFolder(
-        StructureDefinition structureDefinition,
+        String folderName,
         String telematikId,
-        String insurantId
+        String insurantId,
+        StructureDefinition definition
     ) {
-        Map<String, String> map = (Map<String, String>) structureDefinition.getMetadata().getValue();
-        String folderName = map.get("code");
-        File medFolder = folderService.getInsurantMedFolder(telematikId, insurantId, folderName);
+        Map<String, String> map = (Map<String, String>) definition.getMetadata().getValue();
+        String folderCode = folderName == null ? map.get("code") : folderName;
+        File medFolder = folderService.getInsurantMedFolder(telematikId, insurantId, folderCode);
         if (medFolder == null || !medFolder.exists()) {
             String insurantFolderPath = folderService.getInsurantFolder(telematikId, insurantId).getAbsolutePath();
             File otherFolder = folderService.getInsurantMedFolder(telematikId, insurantId, "other");
-            medFolder = folderService.createFolder(insurantFolderPath + File.separator + folderName, otherFolder);
+            medFolder = folderService.createFolder(insurantFolderPath + File.separator + folderCode, otherFolder);
         }
         return medFolder;
     }
 
     public RegistryResponseType getResult(String taskUuid) {
-        return uploadResultsMap.get(taskUuid);
+        return uploadResultsMap.remove(taskUuid);
     }
 }

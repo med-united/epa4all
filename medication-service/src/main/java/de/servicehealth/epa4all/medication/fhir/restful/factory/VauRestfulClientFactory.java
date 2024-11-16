@@ -9,6 +9,7 @@ import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRRequestVAUInterceptor;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRResponseVAUInterceptor;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -27,11 +28,11 @@ public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
 
     public static Executor applyToFhirContext(
         FhirContext ctx,
-        VauClient vauClient,
+        VauFacade vauFacade,
         String medicationServiceBaseUrl
     ) throws Exception {
         VauRestfulClientFactory vauClientFactory = new VauRestfulClientFactory(ctx);
-        CloseableHttpClient httpclient = vauClientFactory.initVauHttpClient(ctx, vauClient, medicationServiceBaseUrl);
+        CloseableHttpClient httpclient = vauClientFactory.initVauHttpClient(ctx, vauFacade, medicationServiceBaseUrl);
         return Executor.newInstance(httpclient);
     }
 
@@ -41,7 +42,7 @@ public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
 
     private CloseableHttpClient initVauHttpClient(
         FhirContext ctx,
-        VauClient vauClient,
+        VauFacade vauFacade,
         String medicationServiceBaseUrl
     ) throws Exception {
         ctx.setRestfulClientFactory(this);
@@ -49,8 +50,8 @@ public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
         SSLContext sslContext = createFakeSSLContext();
         URI medicationBaseUri = URI.create(medicationServiceBaseUrl);
 
-        FHIRRequestVAUInterceptor requestInterceptor = new FHIRRequestVAUInterceptor(medicationBaseUri, sslContext, vauClient);
-        FHIRResponseVAUInterceptor responseInterceptor = new FHIRResponseVAUInterceptor(vauClient);
+        FHIRRequestVAUInterceptor requestInterceptor = new FHIRRequestVAUInterceptor(medicationBaseUri, sslContext, vauFacade);
+        FHIRResponseVAUInterceptor responseInterceptor = new FHIRResponseVAUInterceptor(vauFacade);
         CloseableHttpClient vauHttpClient = buildHttpClient(sslContext, requestInterceptor, responseInterceptor);
 
         setHttpClient(vauHttpClient); // used for getNativeHttpClient()

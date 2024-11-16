@@ -4,7 +4,6 @@ import de.servicehealth.epa4all.xds.author.AuthorPerson;
 import de.servicehealth.epa4all.xds.classification.ss.AuthorPersonClassificationBuilder;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import lombok.Getter;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ClassificationType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExternalIdentifierType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.RegistryPackageType;
@@ -24,8 +23,6 @@ public class RegistryPackageBuilder {
     private static final String SS_CLASSIFICATION_NODE = "urn:uuid:a54d6aa5-d40d-43f9-88c5-b4633d873bdd";
 
     private String telematikId;
-
-    @Getter
     private String id;
 
     @Inject

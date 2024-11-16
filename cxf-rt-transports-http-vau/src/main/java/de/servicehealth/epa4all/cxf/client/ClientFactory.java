@@ -10,6 +10,7 @@ import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbWriterProvider;
 import de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -67,16 +68,16 @@ public class ClientFactory {
         return api;
     }
 
-    public <T> T createProxyClient(VauClient vauClient, Class<T> clazz, String url) throws Exception {
+    public <T> T createProxyClient(VauFacade vauFacade, Class<T> clazz, String url) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
-        JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauClient);
+        JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade);
         JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
         List<Object> providers = List.of(cborWriterProvider, jsonbVauWriterProvider, jsonbVauReaderProvider);
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
             WebClient.getConfig(api),
-            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauClient)),
-            List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauClient))
+            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade)),
+            List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
         );
         return api;
     }

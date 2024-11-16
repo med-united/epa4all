@@ -4,21 +4,23 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.api.EntitlementsApi;
+import de.servicehealth.epa4all.server.bulk.BulkUploader;
+import de.servicehealth.epa4all.server.bulk.FileUploader;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
 import de.servicehealth.epa4all.server.filetracker.EpaFileTracker;
-import de.servicehealth.epa4all.server.filetracker.FileUpload;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
+import de.servicehealth.epa4all.server.xdsdocument.HttpXDSDocumentService;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.ValidToResponseType;
-import jakarta.enterprise.event.Event;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.apache.cxf.jaxrs.client.WebClient;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -36,7 +38,7 @@ public abstract class AbstractResource {
     InsuranceDataService insuranceDataService;
 
     @Inject
-    XDSDocumentService xdsDocumentService;
+    Instance<HttpXDSDocumentService> xdsDocumentService;
 
     @Inject
     MultiEpaService multiEpaService;
@@ -45,10 +47,13 @@ public abstract class AbstractResource {
     EpaFileTracker epaFileTracker;
 
     @Inject
-    IdpClient idpClient;
+    FileUploader fileUploader;
 
     @Inject
-    Event<FileUpload> eventFileUpload;
+    BulkUploader bulkUploader;
+
+    @Inject
+    IdpClient idpClient;
 
     @Inject
     @FromHttpPath
@@ -62,15 +67,18 @@ public abstract class AbstractResource {
     @SMCBHandle
     String smcbHandle;
 
-    protected EpaContext prepareEpaContext(String kvnr, String correlationId) throws Exception {
+    protected EpaContext prepareEpaContext(String kvnr) throws Exception {
         InsuranceData insuranceData = insuranceDataService.getInsuranceDataOrReadVSD(
-            telematikId, kvnr, correlationId, smcbHandle, userRuntimeConfig
+            telematikId, kvnr, smcbHandle, userRuntimeConfig
         );
         String insurantId = insuranceData.getInsurantId();
         EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
-        String np = idpClient.getVauNpSync(userRuntimeConfig, insurantId, smcbHandle);
-        setEntitlement(userRuntimeConfig, insuranceData, epaAPI, smcbHandle, np);
-
+        Instant expirationTime = insuranceDataService.getEntitlementExpirationTime(telematikId, insurantId);
+        String np = idpClient.getVauNpSync(userRuntimeConfig, insurantId, smcbHandle); // TODO verify is it needed further
+        if (expirationTime == null || expirationTime.isBefore(Instant.now())) {
+            Instant entitlementValidTo = setEntitlement(userRuntimeConfig, insuranceData, epaAPI, smcbHandle, np);
+            insuranceDataService.updateEntitlement(entitlementValidTo, telematikId, insurantId);
+        }
         return new EpaContext(insuranceData, prepareRuntimeAttributes(insuranceData, np));
     }
 
@@ -83,7 +91,7 @@ public abstract class AbstractResource {
         return attributes;
     }
 
-    private void setEntitlement(
+    private Instant setEntitlement(
         UserRuntimeConfig userRuntimeConfig,
         InsuranceData insuranceData,
         EpaAPI epaAPI,
@@ -98,6 +106,6 @@ public abstract class AbstractResource {
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
         WebClient.getConfig(entitlementsApi).getRequestContext().put(VAU_NP, np);
         ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, USER_AGENT, entitlementRequest);
-        log.info(response.toString());
+        return Instant.ofEpochMilli(response.getValidTo().getTime());
     }
 }

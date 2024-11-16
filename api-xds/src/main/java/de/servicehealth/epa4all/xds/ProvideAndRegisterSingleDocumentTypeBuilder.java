@@ -12,7 +12,7 @@ import de.servicehealth.epa4all.xds.extrinsic.StableDocumentEntryBuilder;
 import de.servicehealth.epa4all.xds.registryobjectlist.RegistryObjectListTypeBuilder;
 import de.servicehealth.epa4all.xds.registrypackage.RegistryPackageBuilder;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
-import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.AssociationType1;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExtrinsicObjectType;
@@ -27,7 +27,7 @@ import static de.servicehealth.epa4all.xds.XDSUtils.generateOID;
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 
-@RequestScoped
+@Dependent
 public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegisterDocumentBuilder {
 
     @Inject
