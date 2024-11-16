@@ -61,12 +61,13 @@ public class EpaFileTracker {
     }
 
     private void uploadFile(FileUpload fileUpload) {
-        if (uploadResultsMap.containsKey(fileUpload.getTaskId())) {
+        String taskId = fileUpload.getTaskId();
+        if (uploadResultsMap.containsKey(taskId)) {
             return;
         }
-        uploadResultsMap.computeIfAbsent(fileUpload.getTaskId(), (k) -> {
+        uploadResultsMap.computeIfAbsent(taskId, (k) -> {
             RegistryResponseType responseType = new RegistryResponseType();
-            responseType.setRequestId(fileUpload.getTaskId());
+            responseType.setRequestId(taskId);
             responseType.setStatus(String.format("InProgress, startedAt=%s", LocalDateTime.now().format(FORMATTER)));
             return responseType;
         });
@@ -102,25 +103,31 @@ public class EpaFileTracker {
                     saveDataToFile(documentBytes, file);
                 }
             } else {
-                log.log(Level.SEVERE, String.format("File upload failed: %s", registryError.getFirst().getValue()));
+                String msg = String.format("File upload failed: %s", registryError.getFirst().getErrorCode());
+                throw new FileUploadException(msg, response);
             }
 
-            uploadResultsMap.computeIfPresent(fileUpload.getTaskId(), (k, prev) -> response);
+            uploadResultsMap.computeIfPresent(taskId, (k, prev) -> response);
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Error while uploading %s", fileUpload));
+            log.log(Level.SEVERE, String.format("[%s] Error while uploading %s -> %s", taskId, fileUpload, e.getMessage()));
 
-            uploadResultsMap.computeIfPresent(fileUpload.getTaskId(), (k, prev) -> {
-                String startedAt = prev.getStatus().split(" ")[1];
+            if (e instanceof FileUploadException uploadException) {
+                RegistryResponseType response = uploadException.getResponse();
+                uploadResultsMap.computeIfPresent(taskId, (k, prev) -> response);
+            } else {
+                uploadResultsMap.computeIfPresent(taskId, (k, prev) -> {
+                    String startedAt = prev.getStatus().split(" ")[1];
 
-                RegistryResponseType responseType = new RegistryResponseType();
-                RegistryError registryError = new RegistryError();
-                registryError.setErrorCode("Failed");
-                registryError.setValue(e.getMessage());
-                responseType.setStatus(String.format("Failed, %s failedAt=%s", startedAt, LocalDateTime.now().format(FORMATTER)));
-                responseType.setRequestId(fileUpload.getTaskId());
-                responseType.getRegistryErrorList().getRegistryError().add(registryError);
-                return responseType;
-            });
+                    RegistryResponseType responseType = new RegistryResponseType();
+                    RegistryError registryError = new RegistryError();
+                    registryError.setErrorCode("Failed");
+                    registryError.setValue(e.getMessage());
+                    responseType.setStatus(String.format("Failed, %s failedAt=%s", startedAt, LocalDateTime.now().format(FORMATTER)));
+                    responseType.setRequestId(taskId);
+                    responseType.getRegistryErrorList().getRegistryError().add(registryError);
+                    return responseType;
+                });
+            }
         }
     }
 

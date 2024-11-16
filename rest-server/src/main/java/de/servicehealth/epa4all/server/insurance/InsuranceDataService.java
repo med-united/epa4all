@@ -84,7 +84,7 @@ public class InsuranceDataService {
     public String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {
         List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
         Optional<Card> cardOpt = cards.stream()
-            .filter(c -> "Praxis SigmuntowskíTEST-ONLY".equals(c.getCardHolderName()))
+            .filter(c -> "VincenzkrankenhausTEST-ONLY".equals(c.getCardHolderName()))
             .findAny();
         return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
     }

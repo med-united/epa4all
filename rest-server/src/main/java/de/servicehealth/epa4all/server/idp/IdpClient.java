@@ -178,7 +178,9 @@ public class IdpClient {
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
         String nonce = idpFunc.getNonceSupplier().get();
 
-        Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
+        Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(
+            userRuntimeConfig, smcbHandle
+        );
         if (smcbAuthCertPair.getValue()) {
             // A_24884-01 - clientAttest signieren als PKCS#1-Signatur
             signatureType = "urn:ietf:rfc:3447";
