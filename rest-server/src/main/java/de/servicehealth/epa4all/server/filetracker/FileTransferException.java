@@ -4,11 +4,11 @@ import lombok.Getter;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
 @Getter
-public class FileUploadException extends Exception {
+public class FileTransferException extends Exception {
 
     private final RegistryResponseType response;
 
-    public FileUploadException(String message, RegistryResponseType response) {
+    public FileTransferException(String message, RegistryResponseType response) {
         super(message);
         this.response = response;
     }

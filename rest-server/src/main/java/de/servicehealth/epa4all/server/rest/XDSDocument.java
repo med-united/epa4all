@@ -16,12 +16,15 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
+import oasis.names.tc.ebxml_regrep.xsd.rim._3.IdentifiableType;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -40,14 +43,37 @@ public class XDSDocument extends AbstractResource {
     ) {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);
-            EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-            IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
-            attachVauAttributes((BindingProvider) documentManagementPortType, epaContext.getRuntimeAttributes());
-
-            AdhocQueryRequest request = xdsDocumentService.get().prepareAdhocQueryRequest(kvnr);
-            return documentManagementPortType.documentRegistryRegistryStoredQuery(request);
+            return queryDocumentsInfo(epaContext, kvnr);
         } catch (Exception e) {
             throw new WebApplicationException(e);
+        }
+    }
+
+    private AdhocQueryResponse queryDocumentsInfo(EpaContext epaContext, String kvnr) {
+        EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+        IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
+        attachVauAttributes((BindingProvider) documentManagementPortType, epaContext.getRuntimeAttributes());
+
+        AdhocQueryRequest request = xdsDocumentService.get().prepareAdhocQueryRequest(kvnr);
+        return documentManagementPortType.documentRegistryRegistryStoredQuery(request);
+    }
+
+    @GET
+    @Path("downloadAll/{konnektor : ([0-9a-zA-Z\\-]+)?}")
+    public String downloadAll(
+        @PathParam("konnektor") String konnektor,
+        @QueryParam("kvnr") String kvnr
+    ) {
+        try {
+            EpaContext epaContext = prepareEpaContext(kvnr);
+            AdhocQueryResponse adhocQueryResponse = queryDocumentsInfo(epaContext, kvnr);
+            List<JAXBElement<? extends IdentifiableType>> jaxbElements = adhocQueryResponse.getRegistryObjectList().getIdentifiable();
+            List<String> tasksIds = bulkTransfer.downloadInsurantFiles(
+                epaContext, telematikId, kvnr, jaxbElements
+            );
+            return String.join("\n", tasksIds);
+        } catch (Exception e) {
+            throw new WebApplicationException(e.getMessage(), e);
         }
     }
 
@@ -86,6 +112,7 @@ public class XDSDocument extends AbstractResource {
     public String post(
         @HeaderParam("Content-Type") String contentType,
         @HeaderParam("Lang-Code") String languageCode,
+        @HeaderParam("File-Name") String fileName,
         @PathParam("konnektor") String konnektor,
         @QueryParam("kvnr") String kvnr,
         InputStream is
@@ -93,7 +120,10 @@ public class XDSDocument extends AbstractResource {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);
 
-            String fileName = UUID.randomUUID() + "." + getExtension(contentType); // TODO get fileName
+            if (fileName == null) {
+                fileName = String.format("%s_%s.%s", kvnr, UUID.randomUUID(), getExtension(contentType));
+            }
+
             String folderName = null;
 
             byte[] documentBytes = is.readAllBytes();

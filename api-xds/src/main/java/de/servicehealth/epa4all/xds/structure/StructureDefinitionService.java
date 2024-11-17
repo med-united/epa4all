@@ -47,6 +47,13 @@ public class StructureDefinitionService {
 
     public StructureDefinitionService() {
         emptyStructureDefinition = new StructureDefinition();
+
+        FolderDefinition rootMetadata = new FolderDefinition();
+        rootMetadata.setValue(Map.of(
+            "code", "other"
+        ));
+        emptyStructureDefinition.setMetadata(rootMetadata);
+
         ArrayList<DocumentDefinition> elements = new ArrayList<>();
         DocumentDefinition documentDefinition = new DocumentDefinition();
         ArrayList<FolderDefinition> metadata = new ArrayList<>();

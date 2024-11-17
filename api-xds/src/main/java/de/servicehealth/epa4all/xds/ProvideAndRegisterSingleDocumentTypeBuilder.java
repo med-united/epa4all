@@ -45,6 +45,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
     private AuthorPerson authorPerson;
     private String telematikId;
     private String documentId;
+    private String fileName;
     private String contentType;
     private String languageCode;
     private String kvnr;
@@ -55,13 +56,15 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         AuthorPerson authorPerson,
         String telematikId,
         String documentId,
-        String languageCode,
+        String fileName,
         String contentType,
+        String languageCode,
         String kvnr
     ) {
         this.document = document;
         this.documentId = documentId;
         this.telematikId = telematikId;
+        this.fileName = fileName;
         this.contentType = contentType;
         this.languageCode = languageCode;
         this.authorPerson = authorPerson;
@@ -81,7 +84,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         String dePatientId = UUID.randomUUID().toString();
         String deUniqueId = UUID.randomUUID().toString(); // TODO perhaps we could store id for further document lookup
 
-        String uniqueIdValue = generateOID();
+        String uniqueIdValue = generateOID(); // TODO verify
 
         String patientExternalIdValue = kvnr + "^^^&1.2.276.0.76.4.8&ISO";
         RegistryPackageType registryPackageType = registryPackageBuilder
@@ -100,7 +103,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         } else if (isPdfCompliant(contentType)) {
             value = uniqueIdValue + ".pdf";
         } else {
-            value = UUID.randomUUID().toString();
+            value = uniqueIdValue;
         }
 
         ExtrinsicObjectType extrinsicObjectType = stableDocumentEntryBuilder
@@ -108,7 +111,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
             .withLanguageCode(languageCode)
             .withMimeType(contentType)
             .withUniqueId(value)
-            .withValue("Dokument " + uniqueIdValue)
+            .withValue("Dokument " + fileName)
             .withExternalIdentifiers(
                 new DEPatientIdExternalIdentifierBuilder(dePatientId).withRegistryObject(documentId).withValue(patientExternalIdValue).build(),
                 new DEUniqueIdExternalIdentifierBuilder(deUniqueId).withValue(uniqueIdValue).withRegistryObject(documentId).build()

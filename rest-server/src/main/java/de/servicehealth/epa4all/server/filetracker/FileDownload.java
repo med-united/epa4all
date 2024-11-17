@@ -7,16 +7,12 @@ import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
-@ToString(exclude = {"documentBytes"})
-public class FileUpload implements FileAction {
+@ToString
+public class FileDownload implements FileAction {
 
     private EpaContext epaContext;
     private String taskId;
-    private String contentType;
-    private String languageCode;
+    private String fileName;
     private String telematikId;
     private String kvnr;
-    private String fileName;
-    private String folderName;
-    private byte[] documentBytes;
 }

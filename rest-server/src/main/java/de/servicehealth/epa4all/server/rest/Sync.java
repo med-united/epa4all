@@ -11,8 +11,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RequestScoped
 @Path("sync")
@@ -28,7 +26,7 @@ public class Sync extends AbstractResource {
     ) {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);
-            List<String> tasksIds = bulkUploader.uploadInsurantFiles(epaContext, telematikId, kvnr, languageCode);
+            List<String> tasksIds = bulkTransfer.uploadInsurantFiles(epaContext, telematikId, kvnr, languageCode);
             return String.join("\n", tasksIds);
         } catch (Exception e) {
             throw new WebApplicationException(e.getMessage(), e);

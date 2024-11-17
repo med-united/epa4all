@@ -3,8 +3,6 @@ package de.servicehealth.epa4all.server.xdsdocument;
 import de.servicehealth.epa4all.xds.ProvideAndRegisterSingleDocumentTypeBuilder;
 import de.servicehealth.epa4all.xds.author.AuthorPerson;
 import de.servicehealth.epa4all.xds.ebrim.FolderDefinition;
-import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
-import de.servicehealth.epa4all.xds.structure.StructureDefinitionService;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.Document;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
@@ -12,7 +10,6 @@ import jakarta.enterprise.context.Dependent;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.ResponseOptionType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.AdhocQueryType;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -25,14 +22,9 @@ public class XDSDocumentService {
 
     private static final Logger log = Logger.getLogger(XDSDocumentService.class.getName());
 
-    private final StructureDefinitionService structureDefinitionService;
     private final ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder;
 
-    public XDSDocumentService(
-        StructureDefinitionService structureDefinitionService,
-        ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder
-    ) {
-        this.structureDefinitionService = structureDefinitionService;
+    public XDSDocumentService(ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder) {
         this.provideAndRegisterDocumentBuilder = provideAndRegisterDocumentBuilder;
     }
 
@@ -40,7 +32,7 @@ public class XDSDocumentService {
         RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
         RetrieveDocumentSetRequestType.DocumentRequest documentRequest = new RetrieveDocumentSetRequestType.DocumentRequest();
         documentRequest.setDocumentUniqueId(uniqueId);
-        documentRequest.setRepositoryUniqueId("1.2.276.0.76.3.1.315.3.2.1.1");
+        documentRequest.setRepositoryUniqueId("1.2.276.0.76.3.1.466.2.1.4.90.1");
         retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
         return retrieveDocumentSetRequestType;
     }
@@ -76,23 +68,23 @@ public class XDSDocumentService {
         return adhocQueryRequest;
     }
 
-    public Pair<ProvideAndRegisterDocumentSetRequestType, StructureDefinition> prepareDocumentSetRequest(
+    public ProvideAndRegisterDocumentSetRequestType prepareDocumentSetRequest(
+        List<FolderDefinition> folderDefinitions,
         byte[] documentBytes,
         String telematikId,
         String kvnr,
+        String fileName,
         String contentType,
         String languageCode,
         String firstName,
         String lastName,
         String title
-    ) throws Exception {
+    ) {
         Document document = new Document();
         document.setValue(documentBytes);
         String documentId = generateUrnUuid();
         document.setId(documentId);
 
-        StructureDefinition structure = structureDefinitionService.getStructureDefinition(contentType, documentBytes);
-        List<FolderDefinition> folderDefinitions = structure.getElements().getFirst().getMetadata();
         AuthorPerson authorPerson = new AuthorPerson("123456667", firstName, lastName, title, "PRA"); // TODO
 
         provideAndRegisterDocumentBuilder.init(
@@ -101,10 +93,11 @@ public class XDSDocumentService {
             authorPerson,
             telematikId,
             documentId,
-            languageCode,
+            fileName,
             contentType,
+            languageCode,
             kvnr
         );
-        return Pair.of(provideAndRegisterDocumentBuilder.build(), structure);
+        return provideAndRegisterDocumentBuilder.build();
     }
 }

@@ -6,7 +6,9 @@ import jakarta.inject.Inject;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -125,5 +127,17 @@ public class FolderService {
         File insurantFolder = getInsurantFolder(telematikId, insurantId);
         ChecksumFile checksumFile = new ChecksumFile(insurantFolder, insurantId);
         return checksumFile.appendChecksumFor(documentBytes);
+    }
+
+    public Set<String> getChecksums(String telematikId, String insurantId) {
+        Set<String> checksums = new HashSet<>();
+        try {
+            File insurantFolder = getInsurantFolder(telematikId, insurantId);
+            ChecksumFile checksumFile = new ChecksumFile(insurantFolder, insurantId);
+            checksums = checksumFile.getChecksums();
+        } catch (Exception e) {
+            log.log(Level.SEVERE, String.format("Error while getting unique checksums for %s", insurantId), e);
+        }
+        return checksums;
     }
 }

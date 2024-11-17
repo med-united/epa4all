@@ -4,7 +4,7 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.api.EntitlementsApi;
-import de.servicehealth.epa4all.server.bulk.BulkUploader;
+import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
@@ -51,7 +51,7 @@ public abstract class AbstractResource {
     EpaFileTracker epaFileTracker;
 
     @Inject
-    BulkUploader bulkUploader;
+    BulkTransfer bulkTransfer;
 
     @Inject
     IdpClient idpClient;

@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,10 +43,10 @@ public class ChecksumFile {
         return Files.readLines(file, StandardCharsets.ISO_8859_1);
     }
 
-    public List<String> getChecksums() throws Exception {
+    public Set<String> getChecksums() throws Exception {
         lock.readLock().lock();
         try {
-            return getChecksumLines();
+            return new HashSet<>(getChecksumLines().stream().filter(s -> !s.trim().isEmpty()).toList());
         } finally {
             lock.readLock().unlock();
         }
