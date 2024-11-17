@@ -1,10 +1,10 @@
 package de.servicehealth.epa4all.server.bulk;
 
+import de.servicehealth.epa4all.server.filetracker.FileUpload;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
-import de.servicehealth.epa4all.server.xdsdocument.RegularXDSDocumentService;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import org.jboss.logmanager.Level;
 
@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 @ApplicationScoped
@@ -20,19 +21,16 @@ public class BulkUploader {
 
     private static final Logger log = Logger.getLogger(BulkUploader.class.getName());
 
-    private final Instance<RegularXDSDocumentService> xdsDocumentService;
     private final FolderService folderService;
-    private final FileUploader fileUploader;
+    private final Event<FileUpload> eventFileUpload;
 
     @Inject
     public BulkUploader(
-        Instance<RegularXDSDocumentService> xdsDocumentService,
-        FolderService folderService,
-        FileUploader fileUploader
+        Event<FileUpload> eventFileUpload,
+        FolderService folderService
     ) {
-        this.xdsDocumentService = xdsDocumentService;
+        this.eventFileUpload = eventFileUpload;
         this.folderService = folderService;
-        this.fileUploader = fileUploader;
     }
 
     public List<String> uploadInsurantFiles(
@@ -41,7 +39,6 @@ public class BulkUploader {
         String kvnr,
         String languageCode
     ) {
-
         String insurantId = epaContext.getInsuranceData().getInsurantId();
         List<File> files = folderService.getInsurantMedFoldersFiles(telematikId, insurantId, Set.of(".xml", ".pdf"));
         return files.stream()
@@ -56,17 +53,11 @@ public class BulkUploader {
                     : "application/pdf";
                 try {
                     byte[] documentBytes = Files.readAllBytes(f.toPath());
-                    return fileUploader.submitFile(
-                        xdsDocumentService.get(),
-                        epaContext,
-                        telematikId,
-                        kvnr,
-                        contentType,
-                        languageCode,
-                        fileName,
-                        folderName,
-                        documentBytes
-                    );
+                    String taskId = UUID.randomUUID().toString();
+                    eventFileUpload.fireAsync(new FileUpload(
+                        epaContext, taskId, contentType, languageCode, telematikId, kvnr, fileName, folderName, documentBytes
+                    ));
+                    return taskId;
                 } catch (Exception e) {
                     String msg = String.format(
                         "[%s] Error while preparing file [%s/%s] to upload", kvnr, folderName, fileName

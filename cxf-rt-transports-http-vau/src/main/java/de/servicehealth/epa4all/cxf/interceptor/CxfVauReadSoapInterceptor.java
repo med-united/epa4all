@@ -48,7 +48,6 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
             VauClient vauClient = vauFacade.getVauClient(vauCid);
             byte[] decryptedBytes = vauClient.decryptVauMessage(encryptedVauData);
             String fullRequest = new String(decryptedBytes);
-            log.info("Inner Response: " + fullRequest);
             message.put("org.apache.cxf.message.Message.ENCODING", Charset.defaultCharset().toString());
             Map<String, String> headerMap = new HashMap<>();
             String header = fullRequest.substring(0, fullRequest.indexOf("\r\n\r\n"));

@@ -8,8 +8,7 @@ import de.servicehealth.epa4all.xds.structure.StructureDefinitionService;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.Document;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
+import jakarta.enterprise.context.Dependent;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.ResponseOptionType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.AdhocQueryType;
@@ -19,16 +18,15 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
+import static de.servicehealth.epa4all.xds.XDSUtils.generateUrnUuid;
 
+@Dependent
 public class XDSDocumentService {
 
     private static final Logger log = Logger.getLogger(XDSDocumentService.class.getName());
 
-    private StructureDefinitionService structureDefinitionService;
-    private ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder;
-
-    public XDSDocumentService() {
-    }
+    private final StructureDefinitionService structureDefinitionService;
+    private final ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder;
 
     public XDSDocumentService(
         StructureDefinitionService structureDefinitionService,
@@ -90,7 +88,7 @@ public class XDSDocumentService {
     ) throws Exception {
         Document document = new Document();
         document.setValue(documentBytes);
-        String documentId = "DocumentEntry-0";
+        String documentId = generateUrnUuid();
         document.setId(documentId);
 
         StructureDefinition structure = structureDefinitionService.getStructureDefinition(contentType, documentBytes);

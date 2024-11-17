@@ -5,17 +5,18 @@ import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.epa4all.server.bulk.BulkUploader;
-import de.servicehealth.epa4all.server.bulk.FileUploader;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
 import de.servicehealth.epa4all.server.filetracker.EpaFileTracker;
+import de.servicehealth.epa4all.server.filetracker.FileUpload;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.xdsdocument.HttpXDSDocumentService;
+import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.ValidToResponseType;
+import jakarta.enterprise.event.Event;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.apache.cxf.jaxrs.client.WebClient;
@@ -35,19 +36,19 @@ public abstract class AbstractResource {
     private static final Logger log = Logger.getLogger(AbstractResource.class.getName());
 
     @Inject
+    Instance<XDSDocumentService> xdsDocumentService;
+
+    @Inject
     InsuranceDataService insuranceDataService;
 
     @Inject
-    Instance<HttpXDSDocumentService> xdsDocumentService;
+    Event<FileUpload> eventFileUpload;
 
     @Inject
     MultiEpaService multiEpaService;
 
     @Inject
     EpaFileTracker epaFileTracker;
-
-    @Inject
-    FileUploader fileUploader;
 
     @Inject
     BulkUploader bulkUploader;

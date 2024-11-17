@@ -51,6 +51,7 @@ public class VauFacade {
                 .filter(VauClient::acquire)
                 .findFirst();
             if (vauClientOpt.isEmpty()) {
+                log.info(String.format("******** [%s] WAITING FOR VAU CLIENT ********", Thread.currentThread().getName()));
                 TimeUnit.MILLISECONDS.sleep(300);
             } else {
                 break;

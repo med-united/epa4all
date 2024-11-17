@@ -25,6 +25,10 @@ public class XDSUtils {
         "application/xds+xml"
     );
 
+    public static String generateUrnUuid() {
+        return String.format("urn:uuid:%s", UUID.randomUUID());
+    }
+
     public static boolean isXmlCompliant(String type) {
         return xmlCompliantMimeTypes.stream().anyMatch(t -> t.equalsIgnoreCase(type.trim())) || type.contains("xml");
     }

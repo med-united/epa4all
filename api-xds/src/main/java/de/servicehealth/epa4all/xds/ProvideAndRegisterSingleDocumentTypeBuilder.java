@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.generateOID;
+import static de.servicehealth.epa4all.xds.XDSUtils.generateUrnUuid;
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 
@@ -72,13 +73,13 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
     public ProvideAndRegisterDocumentSetRequestType build() {
         withDocument(document);
 
-        String submissionSetId = "submissionSet-0"; // TODO - should be set outside?
-        String associationId = "association-0";
+        String submissionSetId = generateUrnUuid();
+        String associationId = generateUrnUuid();
 
-        String ssPatientId = "ss-patientId-0";
-        String ssUniqueId = "ss-uniqueId-0";
-        String dePatientId = "de-patientId-0";
-        String deUniqueId = "de-uniqueId-0";
+        String ssPatientId = UUID.randomUUID().toString();
+        String ssUniqueId = UUID.randomUUID().toString();
+        String dePatientId = UUID.randomUUID().toString();
+        String deUniqueId = UUID.randomUUID().toString(); // TODO perhaps we could store id for further document lookup
 
         String uniqueIdValue = generateOID();
 

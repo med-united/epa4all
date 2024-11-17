@@ -64,7 +64,7 @@ public class ExtrinsicObjectTypeBuilder<T extends ExtrinsicObjectTypeBuilder<T>>
         extrinsicObjectType.setId(documentId);
         extrinsicObjectType.setMimeType(mimeType);
 
-        String numericISO8601Timestamp = getNumericISO8601Timestamp(LocalDateTime.now().minusDays(7)); // TODO get right date
+        String numericISO8601Timestamp = getNumericISO8601Timestamp(LocalDateTime.now().minusHours(6)); // TODO get right date
         extrinsicObjectType.getSlot().add(createSlotType("creationTime", numericISO8601Timestamp));
         extrinsicObjectType.getSlot().add(createSlotType("languageCode", languageCode));
         extrinsicObjectType.getSlot().add(createSlotType("URI", uniqueIdValue));

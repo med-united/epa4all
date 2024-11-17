@@ -1,8 +1,10 @@
 package de.servicehealth.epa4all.server.filetracker;
 
+import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
+import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
 import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
@@ -10,11 +12,13 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jboss.logmanager.Level;
 
 import java.io.File;
@@ -44,14 +48,17 @@ public class EpaFileTracker {
 
     private final FolderService folderService;
     private final MultiEpaService multiEpaService;
+    private final Instance<XDSDocumentService> xdsDocumentService;
 
     @Inject
     public EpaFileTracker(
         FolderService folderService,
-        MultiEpaService multiEpaService
+        MultiEpaService multiEpaService,
+        Instance<XDSDocumentService> xdsDocumentService
     ) {
         this.folderService = folderService;
         this.multiEpaService = multiEpaService;
+        this.xdsDocumentService = xdsDocumentService;
     }
 
     void onStart(@Observes StartupEvent ev) {
@@ -80,10 +87,29 @@ public class EpaFileTracker {
             String folderName = fileUpload.getFolderName();
             String telematikId = fileUpload.getTelematikId();
             String insurantId = fileUpload.getKvnr();
+            String contentType = fileUpload.getContentType();
+            String languageCode = fileUpload.getLanguageCode();
             byte[] documentBytes = fileUpload.getDocumentBytes();
 
-            ProvideAndRegisterDocumentSetRequestType request = fileUpload.getRequest();
-            StructureDefinition structureDefinition = fileUpload.getStructureDefinition();
+            UCPersoenlicheVersichertendatenXML versichertendaten = epaContext.getInsuranceData().getPersoenlicheVersichertendaten();
+            UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
+            String firstName = person.getVorname();
+            String lastName = person.getNachname();
+            String title = person.getTitel();
+
+            Pair<ProvideAndRegisterDocumentSetRequestType, StructureDefinition> pair = xdsDocumentService.get().prepareDocumentSetRequest(
+                documentBytes,
+                telematikId,
+                insurantId,
+                contentType,
+                languageCode,
+                firstName,
+                lastName,
+                title
+            );
+
+            ProvideAndRegisterDocumentSetRequestType request = pair.getLeft();
+            StructureDefinition structureDefinition = pair.getRight();
 
             RegistryResponseType response = documentManagementPortType.documentRepositoryProvideAndRegisterDocumentSetB(request);
             RegistryErrorList registryErrorList = response.getRegistryErrorList();

@@ -45,8 +45,6 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
     @Override
     public void handleMessage(Message message) throws Fault {
         try {
-            System.out.println(message);
-
             TreeMap<String, List<String>> httpHeaders = (TreeMap<String, List<String>>) message.get(PROTOCOL_HEADERS);
             List<String> vauPathHeaders = httpHeaders.remove(VAU_METHOD_PATH);
             List<String> vauCidHeaders = httpHeaders.remove(VAU_CID);
@@ -106,14 +104,8 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             ).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, fullString.getBytes());
-
-            String soapMessageAsString = new String(content);
-
-            log.info("Inner VAU Request:" + soapMessageAsString);
-
             VauClient vauClient = vauFacade.getVauClient(vauCid);
-            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(soapMessageAsString.getBytes());
-            // httpHeaders.put(CONTENT_LENGTH, List.of(String.valueOf(vauMessage.length)));
+            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
 
             message.put("org.apache.cxf.message.Message.ENCODING", null);
 

@@ -89,7 +89,6 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     Response response = client.post(ByteBuffer.wrap(message1));
                     byte[] message2 = getPayload(response);
-                    printHeaders(response);
 
                     String vauCid = getHeaderValue(response, VAU_CID);
                     String vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK1_S2C);
@@ -113,7 +112,6 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     response = client.post(ByteBuffer.wrap(message3));
                     byte[] message4 = getPayload(response);
-                    printHeaders(response);
 
                     vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK2_S2C_INFO);
                     vauDebugCS = getHeaderValue(response, VAU_DEBUG_SK2_C2S_INFO);

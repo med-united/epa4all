@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.service.health.api.epa4all.EpaAPI;
+import de.servicehealth.epa4all.server.filetracker.FileUpload;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -51,7 +52,7 @@ public class XDSDocument extends AbstractResource {
     }
 
     @GET
-    @Path("document/{konnektor : ([0-9a-zA-Z\\-]+)?}/{uniqueId : (/[0-9a-zA-Z\\-]+)?}")
+    @Path("document/{konnektor}/{uniqueId}")
     public RetrieveDocumentSetResponseType get(
         @PathParam("konnektor") String konnektor,
         @PathParam("uniqueId") String uniqueId,
@@ -73,9 +74,7 @@ public class XDSDocument extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_XML)
     @Path("result/{taskId}")
-    public RegistryResponseType getUploadResult(
-        @PathParam("taskId") String taskId
-    ) {
+    public RegistryResponseType getUploadResult(@PathParam("taskId") String taskId) {
         return epaFileTracker.getResult(taskId);
     }
 
@@ -95,19 +94,14 @@ public class XDSDocument extends AbstractResource {
             EpaContext epaContext = prepareEpaContext(kvnr);
 
             String fileName = UUID.randomUUID() + "." + getExtension(contentType); // TODO get fileName
+            String folderName = null;
 
             byte[] documentBytes = is.readAllBytes();
-            return fileUploader.submitFile(
-                xdsDocumentService.get(),
-                epaContext,
-                telematikId,
-                kvnr,
-                contentType,
-                languageCode,
-                fileName,
-                null,
-                documentBytes
-            );
+            String taskId = UUID.randomUUID().toString();
+            eventFileUpload.fireAsync(new FileUpload(
+                epaContext, taskId, contentType, languageCode, telematikId, kvnr, fileName, folderName, documentBytes
+            ));
+            return taskId;
         } catch (Exception e) {
             throw new WebApplicationException(e.getMessage(), e);
         }

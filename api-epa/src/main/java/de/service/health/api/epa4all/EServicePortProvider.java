@@ -3,22 +3,18 @@ package de.service.health.api.epa4all;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadSoapInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteSoapInterceptor;
-import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.XDSDocumentService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.soap.SOAPBinding;
-
-import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
 import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 import org.apache.cxf.ws.addressing.WSAddressingFeature;
 
 import javax.xml.namespace.QName;
@@ -26,36 +22,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static de.servicehealth.epa4all.cxf.client.ClientFactory.initConduit;
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
-import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
-import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_ALIVE;
 
 @ApplicationScoped
 public class EServicePortProvider {
 
-    public IDocumentManagementPortType getDocumentManagementPortType(
-        String documentManagementUrl,
-        VauFacade vauFacade
-    ) throws Exception {
-        IDocumentManagementPortType documentManagement = createXDSDocumentPortType(
-            documentManagementUrl, IDocumentManagementPortType.class, vauFacade
-        );
-        initPortType(documentManagement);
-        return documentManagement;
+    public IDocumentManagementPortType getDocumentManagementPortType(String url, VauFacade vauFacade) throws Exception {
+        return createXDSDocumentPortType(url, IDocumentManagementPortType.class, vauFacade);
     }
 
-    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(
-        String documentManagementUrl,
-        VauFacade vauFacade
-    ) throws Exception {
-        IDocumentManagementInsurantPortType documentManagementInsurant = createXDSDocumentPortType(
-            documentManagementUrl, IDocumentManagementInsurantPortType.class, vauFacade
-        );
-        initPortType(documentManagementInsurant);
-        return documentManagementInsurant;
+    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(String url, VauFacade vauFacade) throws Exception {
+        return createXDSDocumentPortType(url, IDocumentManagementInsurantPortType.class, vauFacade);
     }
 
-    private <T> T createXDSDocumentPortType(String address, Class<T> clazz, VauFacade vauFacade) {
+    private <T> T createXDSDocumentPortType(String address, Class<T> clazz, VauFacade vauFacade) throws Exception {
         JaxWsProxyFactoryBean jaxWsProxyFactory = new JaxWsProxyFactoryBean();
         jaxWsProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
         jaxWsProxyFactory.setServiceClass(XDSDocumentService.class);
@@ -79,25 +60,9 @@ public class EServicePortProvider {
         jaxWsProxyFactory.getInInterceptors().addAll(
             List.of(new LoggingInInterceptor(), new CxfVauReadSoapInterceptor(vauFacade))
         );
-        return jaxWsProxyFactory.create(clazz);
-    }
-
-    private void initPortType(Object portType) throws Exception {
+        T portType = jaxWsProxyFactory.create(clazz);
         Client client = ClientProxy.getClient(portType);
-
-        // TODO ClientFactory.initClient()
-
-        HTTPConduit conduit = (HTTPConduit) client.getConduit();
-        HTTPClientPolicy clientPolicy = conduit.getClient();
-        clientPolicy.setVersion("1.1");
-        clientPolicy.setAutoRedirect(false);
-        clientPolicy.setAllowChunking(false);
-        clientPolicy.setConnection(KEEP_ALIVE);
-
-        TLSClientParameters tlsParams = new TLSClientParameters();
-        // setDisableCNCheck and setHostnameVerifier should not be set
-        // to stick to HttpClientHTTPConduit (see HttpClientHTTPConduit.setupConnection)
-        tlsParams.setSslContext(createFakeSSLContext());
-        conduit.setTlsClientParameters(tlsParams);
+        initConduit((HTTPConduit) client.getConduit());
+        return portType;
     }
 }

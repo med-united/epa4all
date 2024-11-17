@@ -90,7 +90,10 @@ public class ClientFactory {
         config.getOutInterceptors().addAll(outInterceptors);
         config.getInInterceptors().addAll(inInterceptors);
 
-        HTTPConduit conduit = (HTTPConduit) config.getConduit();
+        initConduit((HTTPConduit) config.getConduit());
+    }
+
+    public static void initConduit(HTTPConduit conduit) throws Exception {
         HTTPClientPolicy client = conduit.getClient();
         client.setVersion("1.1");
         client.setAutoRedirect(false);
