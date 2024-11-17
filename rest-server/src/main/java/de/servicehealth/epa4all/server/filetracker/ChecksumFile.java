@@ -62,12 +62,12 @@ public class ChecksumFile {
             try (FileOutputStream os = new FileOutputStream(file, true)) {
                 String newLine = checksum + "\n";
                 os.write(newLine.getBytes());
-                return true;
-            } finally {
-                lock.writeLock().unlock();
             }
+            return true;
         } catch (Exception e) {
             log.log(Level.SEVERE, "Unable to append 'sha256checksums' file for " + insurantId);
+        } finally {
+            lock.writeLock().unlock();
         }
         return false;
     }

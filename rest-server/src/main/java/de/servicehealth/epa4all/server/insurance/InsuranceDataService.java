@@ -7,6 +7,7 @@ import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.filetracker.EntitlementFile;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import de.servicehealth.epa4all.server.vsd.VSDService;
@@ -37,7 +38,7 @@ import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 public class InsuranceDataService {
 
     private static final Logger log = Logger.getLogger(InsuranceDataService.class.getName());
-    private static final String ENTITLEMENT_FILE = "entitlement-expiry";
+
 
     private final WebdavSmcbManager webdavSmcbManager;
     private final IKonnektorClient konnektorClient;
@@ -143,9 +144,7 @@ public class InsuranceDataService {
     public Instant getEntitlementExpirationTime(String telematikId, String kvnr) {
         try {
             File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-            File file = new File(localFolder, ENTITLEMENT_FILE);
-            String value = Files.readString(file.toPath()).trim();
-            return Instant.parse(value);
+            return new EntitlementFile(localFolder, kvnr).getEntitlement();
         } catch (IOException e) {
             return null;
         }
@@ -153,8 +152,7 @@ public class InsuranceDataService {
 
     public void updateEntitlement(Instant validTo, String telematikId, String kvnr) throws IOException {
         File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-        File file = new File(localFolder, ENTITLEMENT_FILE);
-        saveDataToFile(validTo.toString().getBytes(), file);
+        new EntitlementFile(localFolder, kvnr).updateEntitlement(validTo);
     }
 
     private String extractInsurantId(ReadVSDResponse readVSDResponse) throws Exception {
