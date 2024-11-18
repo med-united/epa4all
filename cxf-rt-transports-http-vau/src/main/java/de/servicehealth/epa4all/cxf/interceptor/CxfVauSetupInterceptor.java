@@ -4,6 +4,7 @@ import de.gematik.vau.lib.data.KdfKey2;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauInfo;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -51,11 +52,11 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    private final VauClient vauClient;
+    private final VauFacade vauFacade;
 
-    public CxfVauSetupInterceptor(VauClient vauClient) {
+    public CxfVauSetupInterceptor(VauFacade vauFacade) {
         super(Phase.SETUP);
-        this.vauClient = vauClient;
+        this.vauFacade = vauFacade;
     }
 
     @Override
@@ -63,19 +64,20 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
         try {
             Conduit conduit = message.getExchange().getConduit(message);
             if (conduit instanceof HttpClientHTTPConduit) {
+                VauClient vauClient = vauFacade.acquireVauClient();
                 VauInfo vauInfo = vauClient.getVauInfo();
                 if (vauInfo != null) {
                     message.put(VAU_CID, vauInfo.getVauCid());
                     message.put(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
                 } else {
                     String vauUri = (String) message.get("org.apache.cxf.message.Message.BASE_PATH");
-                    if(vauUri == null) {
-                    	vauUri =(String)  message.get("org.apache.cxf.message.Message.ENDPOINT_ADDRESS");
+                    if (vauUri == null) {
+                        vauUri = (String) message.get("org.apache.cxf.message.Message.ENDPOINT_ADDRESS");
                     }
                     String uri = vauUri.replace("+vau", "");
                     URI uriObject = new URI(uri);
                     // Construct the base URI
-                    uri = uriObject.getScheme()+"://"+uriObject.getHost()+(uriObject.getPort() == -1 ? "" : ":"+uriObject.getPort());
+                    uri = uriObject.getScheme() + "://" + uriObject.getHost() + (uriObject.getPort() == -1 ? "" : ":" + uriObject.getPort());
 
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
                     WebClient client = WebClient.create(uri + "/VAU", providers);
@@ -87,7 +89,6 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     Response response = client.post(ByteBuffer.wrap(message1));
                     byte[] message2 = getPayload(response);
-                    printHeaders(response);
 
                     String vauCid = getHeaderValue(response, VAU_CID);
                     String vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK1_S2C);
@@ -111,8 +112,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     response = client.post(ByteBuffer.wrap(message3));
                     byte[] message4 = getPayload(response);
-                    printHeaders(response);
-                    
+
                     vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK2_S2C_INFO);
                     vauDebugCS = getHeaderValue(response, VAU_DEBUG_SK2_C2S_INFO);
                     contentLength = getHeaderValue(response, CONTENT_LENGTH);

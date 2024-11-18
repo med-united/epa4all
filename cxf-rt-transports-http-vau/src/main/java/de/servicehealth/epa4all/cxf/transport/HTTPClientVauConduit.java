@@ -23,6 +23,7 @@ import static com.google.common.net.HttpHeaders.CONNECTION;
 import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
+import static de.servicehealth.vau.VauClient.VAU_NP;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -80,6 +81,8 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         message.put(ACCEPT, APPLICATION_OCTET_STREAM);
         message.put(REQUEST_URI, vauUri);
 
+        message.getExchange().put(VAU_CID, vauCid);
+
         Object map = message.get(PROTOCOL_HEADERS);
         if (map == null) {
             map = new HashMap<String, List<String>>();
@@ -91,8 +94,13 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
             headers.put(ACCEPT, List.of(APPLICATION_OCTET_STREAM));
             headers.put(VAU_NON_PU_TRACING, List.of(vauNonPUTracing));
             headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + path));
-        }
+            headers.put(VAU_CID, List.of(vauCid));
 
+            Object np = message.get(VAU_NP);
+            if (np != null) {
+                headers.put(VAU_NP, List.of(np));
+            }
+        }
         super.setupConnection(message, a, csPolicy);
     }
 

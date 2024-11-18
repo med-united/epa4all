@@ -12,7 +12,7 @@ import de.servicehealth.epa4all.xds.extrinsic.StableDocumentEntryBuilder;
 import de.servicehealth.epa4all.xds.registryobjectlist.RegistryObjectListTypeBuilder;
 import de.servicehealth.epa4all.xds.registrypackage.RegistryPackageBuilder;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
-import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.AssociationType1;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExtrinsicObjectType;
@@ -24,10 +24,11 @@ import java.util.List;
 import java.util.UUID;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.generateOID;
+import static de.servicehealth.epa4all.xds.XDSUtils.generateUrnUuid;
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 
-@RequestScoped
+@Dependent
 public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegisterDocumentBuilder {
 
     @Inject
@@ -44,6 +45,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
     private AuthorPerson authorPerson;
     private String telematikId;
     private String documentId;
+    private String fileName;
     private String contentType;
     private String languageCode;
     private String kvnr;
@@ -54,13 +56,15 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         AuthorPerson authorPerson,
         String telematikId,
         String documentId,
-        String languageCode,
+        String fileName,
         String contentType,
+        String languageCode,
         String kvnr
     ) {
         this.document = document;
         this.documentId = documentId;
         this.telematikId = telematikId;
+        this.fileName = fileName;
         this.contentType = contentType;
         this.languageCode = languageCode;
         this.authorPerson = authorPerson;
@@ -72,15 +76,15 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
     public ProvideAndRegisterDocumentSetRequestType build() {
         withDocument(document);
 
-        String submissionSetId = "submissionSet-0"; // TODO - should be set outside?
-        String associationId = "association-0";
+        String submissionSetId = generateUrnUuid();
+        String associationId = generateUrnUuid();
 
-        String ssPatientId = "ss-patientId-0";
-        String ssUniqueId = "ss-uniqueId-0";
-        String dePatientId = "de-patientId-0";
-        String deUniqueId = "de-uniqueId-0";
+        String ssPatientId = UUID.randomUUID().toString();
+        String ssUniqueId = UUID.randomUUID().toString();
+        String dePatientId = UUID.randomUUID().toString();
+        String deUniqueId = UUID.randomUUID().toString(); // TODO perhaps we could store id for further document lookup
 
-        String uniqueIdValue = generateOID();
+        String uniqueIdValue = generateOID(); // TODO verify
 
         String patientExternalIdValue = kvnr + "^^^&1.2.276.0.76.4.8&ISO";
         RegistryPackageType registryPackageType = registryPackageBuilder
@@ -99,7 +103,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         } else if (isPdfCompliant(contentType)) {
             value = uniqueIdValue + ".pdf";
         } else {
-            value = UUID.randomUUID().toString();
+            value = uniqueIdValue;
         }
 
         ExtrinsicObjectType extrinsicObjectType = stableDocumentEntryBuilder
@@ -107,7 +111,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
             .withLanguageCode(languageCode)
             .withMimeType(contentType)
             .withUniqueId(value)
-            .withValue("Dokument " + uniqueIdValue)
+            .withValue("Dokument " + fileName)
             .withExternalIdentifiers(
                 new DEPatientIdExternalIdentifierBuilder(dePatientId).withRegistryObject(documentId).withValue(patientExternalIdValue).build(),
                 new DEUniqueIdExternalIdentifierBuilder(deUniqueId).withValue(uniqueIdValue).withRegistryObject(documentId).build()

@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.server;
 
 import de.gematik.ws.conn.eventservice.v7.Event;
-import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
@@ -14,8 +13,9 @@ import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.insurance.InsuranceData;
+import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
-import de.servicehealth.epa4all.server.vsds.VSDService;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -39,33 +39,37 @@ import static org.mockito.Mockito.when;
 public class CardInsertedTest {
 
     @Inject
+    EventMapper eventMapper;
+
+    @Inject
     DefaultUserConfig defaultUserConfig;
 
     @Inject
     KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
-    EventMapper eventMapper;
-
-    @Inject
-    WebdavSmcbManager smcbManager;
+    WebdavSmcbManager webdavSmcbManager;
 
     @Inject
     MultiEpaService multiEpaService;
-
-    @Inject
-    IKonnektorClient konnektorClient;
 
     @Test
     public void epaPdfDocumentIsSentToCardlink() throws Exception {
     	Utils.runWithDocker("information-service", () -> {
 	    	CardlinkWebsocketClient cardlinkWebsocketClient = mock(CardlinkWebsocketClient.class);
-	        VSDService vsdService = mock(VSDService.class);
-	        when(vsdService.getKVNR(any(), any(), any(), any())).thenReturn("Z123456789");
+            InsuranceDataService insuranceDataService = mock(InsuranceDataService.class);
+            InsuranceData insuranceData = new InsuranceData(
+                "pz",
+                "Z123456789",
+                null,
+                null,
+                null
+            );
+            when(insuranceDataService.getInsuranceDataOrReadVSD(any(), any(), any(), any())).thenReturn(insuranceData);
 	
 	        AppConfig appConfig = new AppConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 	        CETPEventHandler cetpServerHandler = new CETPEventHandler(
-	            cardlinkWebsocketClient, konnektorClient, multiEpaService, smcbManager, vsdService, appConfig
+	            cardlinkWebsocketClient, insuranceDataService, multiEpaService, appConfig
 	        );
 	        EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 	

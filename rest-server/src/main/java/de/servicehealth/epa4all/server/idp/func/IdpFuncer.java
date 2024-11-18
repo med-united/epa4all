@@ -30,8 +30,7 @@ public class IdpFuncer {
     }
 
     public IdpFunc init(String xInsurantId, UserRuntimeConfig userRuntimeConfig) {
-        multiEpaService.setXInsurantid(xInsurantId);
-        EpaAPI epaAPI = multiEpaService.getEpaAPI();
+        EpaAPI epaAPI = multiEpaService.getEpaAPI(xInsurantId);
         AuthorizationSmcBApi authorizationSmcBApi = epaAPI.getAuthorizationSmcBApi();
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         return new IdpFunc(

@@ -10,7 +10,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -21,11 +20,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class VauResponseReader {
 
-    private final VauClient vauClient;
+    private final VauFacade vauFacade;
     private final Gson gson;
 
-    public VauResponseReader(VauClient vauClient) {
-        this.vauClient = vauClient;
+    public VauResponseReader(VauFacade vauFacade) {
+        this.vauFacade = vauFacade;
         gson = new GsonBuilder()
             .registerTypeAdapter(Instant.class, new InstantDeSerializer())
             .disableHtmlEscaping()
@@ -65,13 +64,14 @@ public class VauResponseReader {
             .findFirst();
     }
 
-    public VauResponse read(int responseCode, List<Pair<String, String>> originHeaders, byte[] bytes) {
+    public VauResponse read(String vauCid, int responseCode, List<Pair<String, String>> originHeaders, byte[] bytes) {
         Optional<String> contentTypeOpt = findHeader(originHeaders, "content-type");
         String generalError = extractError(contentTypeOpt, bytes);
         if (generalError != null) {
             return new VauResponse(responseCode, generalError, generalError.getBytes(UTF_8), originHeaders);
         } else {
-            byte[] vauBytes = vauClient.getVauStateMachine().decryptVauMessage(bytes);
+            VauClient vauClient = vauFacade.getVauClient(vauCid);
+            byte[] vauBytes = vauClient.decryptVauMessage(bytes);
             if (responseCode >= 400 && contentTypeOpt.isPresent() && contentTypeOpt.get().contains("text/plain")) {
                 generalError = new String(vauBytes);
                 return new VauResponse(responseCode, generalError, generalError.getBytes(UTF_8), originHeaders);
@@ -93,9 +93,6 @@ public class VauResponseReader {
             byte[] payload = extractPayload(vauBytes, i, headers);
             return new VauResponse(status, null, payload, headers);
         }
-    }
-    public InputStream getUnencryptedInputStream(byte[] bytes) {
-    	return new ByteArrayInputStream(vauClient.getVauStateMachine().decryptVauMessage(bytes));
     }
 
     private byte[] extractPayload(byte[] vauBytes, int i, List<Pair<String, String>> headers) {

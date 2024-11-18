@@ -10,6 +10,7 @@ import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbWriterProvider;
 import de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -29,6 +30,7 @@ import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import java.util.List;
+import java.util.Map;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
@@ -66,16 +68,16 @@ public class ClientFactory {
         return api;
     }
 
-    public <T> T createProxyClient(VauClient vauClient, Class<T> clazz, String url) throws Exception {
+    public <T> T createProxyClient(VauFacade vauFacade, Class<T> clazz, String url) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
-        JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauClient);
+        JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade);
         JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
         List<Object> providers = List.of(cborWriterProvider, jsonbVauWriterProvider, jsonbVauReaderProvider);
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
             WebClient.getConfig(api),
-            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauClient)),
-            List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauClient))
+            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade)),
+            List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
         );
         return api;
     }
@@ -88,7 +90,10 @@ public class ClientFactory {
         config.getOutInterceptors().addAll(outInterceptors);
         config.getInInterceptors().addAll(inInterceptors);
 
-        HTTPConduit conduit = (HTTPConduit) config.getConduit();
+        initConduit((HTTPConduit) config.getConduit());
+    }
+
+    public static void initConduit(HTTPConduit conduit) throws Exception {
         HTTPClientPolicy client = conduit.getClient();
         client.setVersion("1.1");
         client.setAutoRedirect(false);

@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.medication.fhir.interceptor;
 
-import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauResponse;
 import de.servicehealth.vau.VauResponseReader;
 import org.apache.commons.lang3.tuple.Pair;
@@ -8,14 +8,14 @@ import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -30,8 +30,8 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
 	
     private final VauResponseReader vauResponseReader;
 
-    public FHIRResponseVAUInterceptor(VauClient vauClient) {
-        this.vauResponseReader = new VauResponseReader(vauClient);
+    public FHIRResponseVAUInterceptor(VauFacade vauFacade) {
+        this.vauResponseReader = new VauResponseReader(vauFacade);
     }
 
     @Override
@@ -42,7 +42,11 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
                 .map(h -> Pair.of(h.getName(), h.getValue()))
                 .toList();
             int responseCode = response.getStatusLine().getStatusCode();
-            VauResponse vauResponse = vauResponseReader.read(responseCode, originHeaders, bytes);
+
+            String uri = ((HttpClientContext) context).getRequest().getRequestLine().getUri();
+            String vauCid = URI.create(uri).getPath();
+
+            VauResponse vauResponse = vauResponseReader.read(vauCid, responseCode, originHeaders, bytes);
             Header[] headers = vauResponse.headers()
                 .stream()
                 .map(p -> (Header) new BasicHeader(p.getKey(), p.getValue()))

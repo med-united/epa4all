@@ -43,22 +43,29 @@ public class StructureDefinitionService {
     Map<String, String> pdfSchemasMap;
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final StructureDefinition fallbackStructureDefinition;
+    private final StructureDefinition emptyStructureDefinition;
 
     public StructureDefinitionService() {
-        fallbackStructureDefinition = new StructureDefinition();
+        emptyStructureDefinition = new StructureDefinition();
+
+        FolderDefinition rootMetadata = new FolderDefinition();
+        rootMetadata.setValue(Map.of(
+            "code", "other"
+        ));
+        emptyStructureDefinition.setMetadata(rootMetadata);
+
         ArrayList<DocumentDefinition> elements = new ArrayList<>();
         DocumentDefinition documentDefinition = new DocumentDefinition();
         ArrayList<FolderDefinition> metadata = new ArrayList<>();
         documentDefinition.setMetadata(metadata);
         elements.add(documentDefinition);
-        fallbackStructureDefinition.setElements(elements);
+        emptyStructureDefinition.setElements(elements);
     }
 
     public StructureDefinition getStructureDefinition(String contentType, byte[] documentBytes) throws Exception {
         String schemaFileName = extractSchemaFileName(contentType, documentBytes);
         if (schemaFileName == null) {
-            return fallbackStructureDefinition;
+            return emptyStructureDefinition;
         }
 
         File schemaFolder = new File(schemasFolderPath);
@@ -76,7 +83,15 @@ public class StructureDefinitionService {
 
     private String extractSchemaFileName(String contentType, byte[] documentBytes) throws Exception {
         if (isXmlCompliant(contentType)) {
-            Document xmlDocument = toXmlDocument(new String(documentBytes));
+            String xmlSource = new String(documentBytes);
+            if (xmlSource.contains("KBV_PR_EAU_Bundle")) {
+                return xmlSchemasMap.get("KBV_PR_EAU_Bundle");
+            } else if (xmlSource.contains("1.2.276.0.76.7.7")) {
+                return xmlSchemasMap.get("1.2.276.0.76.7.7");
+            } else if (xmlSource.contains("2.16.840.1.113883.6.1")) {
+                return xmlSchemasMap.get("2.16.840.1.113883.6.1");
+            }
+            Document xmlDocument = toXmlDocument(xmlSource);
             NodeList documentTypeCd = xmlDocument.getElementsByTagName("document_type_cd");
             if (documentTypeCd.getLength() > 0) {
                 Element element = (Element) documentTypeCd.item(0);

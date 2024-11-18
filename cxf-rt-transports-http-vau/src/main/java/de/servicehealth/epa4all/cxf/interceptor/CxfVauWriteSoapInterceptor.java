@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.InterceptorChain;
@@ -17,9 +18,12 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
+import static de.servicehealth.vau.VauClient.VAU_CID;
+import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -28,30 +32,25 @@ import static org.apache.cxf.phase.Phase.PRE_STREAM;
 
 public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message> {
 
-    private final VauClient vauClient;
+    private final VauFacade vauFacade;
     private static final Logger log = Logger.getLogger(CxfVauWriteSoapInterceptor.class.getName());
 
-    public CxfVauWriteSoapInterceptor(VauClient vauClient) {
+    public CxfVauWriteSoapInterceptor(VauFacade vauFacade) {
         super(PRE_STREAM);
         addBefore(StaxOutInterceptor.class.getName());
-        this.vauClient = vauClient;
+        this.vauFacade = vauFacade;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void handleMessage(Message message) throws Fault {
         try {
-            System.out.println(message);
-
             TreeMap<String, List<String>> httpHeaders = (TreeMap<String, List<String>>) message.get(PROTOCOL_HEADERS);
             List<String> vauPathHeaders = httpHeaders.remove(VAU_METHOD_PATH);
+            List<String> vauCidHeaders = httpHeaders.remove(VAU_CID);
 
-            // inbound message
-            // if(vauPathHeaders == null) {
-            //	return;
-            // }
             String path = (vauPathHeaders == null || vauPathHeaders.isEmpty()) ? "undefined" : vauPathHeaders.getFirst();
-
+            String vauCid = (vauCidHeaders == null || vauCidHeaders.isEmpty()) ? "undefined" : vauCidHeaders.getFirst();
             String additionalHeaders = httpHeaders.entrySet()
                 .stream()
                 .filter(p -> !p.getKey().equals(CONTENT_TYPE))
@@ -85,25 +84,31 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             Address address = (Address) message.get("http.connection.address");
             String fullString = new String(full);
 
+            String contentType = message.get(CONTENT_TYPE).toString();
+            String insurantId = message.get(X_INSURANT_ID).toString();
+            String userAgent = message.get(X_USER_AGENT).toString();
+            String np = message.get(VAU_NP).toString();
+
+            String headers = prepareContentHeaders(
+                insurantId,
+                np,
+                userAgent,
+                contentType,
+                fullString.getBytes().length
+            );
+
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: " + address.getURL().getHost() + "\r\n"
                 + additionalHeaders + keepAlive
-                + prepareContentHeaders(message.get(CONTENT_TYPE).toString(), fullString.getBytes().length)).getBytes();
+                + headers
+            ).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, fullString.getBytes());
-
-            String soapMessageAsString = new String(content);
-
-            log.info("Inner VAU Request:" + soapMessageAsString);
-
-            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(soapMessageAsString.getBytes());
-            // httpHeaders.put(CONTENT_LENGTH, List.of(String.valueOf(vauMessage.length)));
+            VauClient vauClient = vauFacade.getVauClient(vauCid);
+            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
 
             message.put("org.apache.cxf.message.Message.ENCODING", null);
 
-            // if (os instanceof HTTPClientVauConduit.VauHttpClientWrappedOutputStream vwos) {
-            //    vwos.setFixedLengthStreamingMode(vauMessage.length);
-            //}
             try {
                 os.write(vauMessage, 0, vauMessage.length);
             } finally {
@@ -116,15 +121,21 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
         }
     }
 
-    private String prepareContentHeaders(String contentType, int length) {
+    private String prepareContentHeaders(
+        String insurantId,
+        String np,
+        String userAgent,
+        String contentType,
+        int length
+    ) {
         String headers = "Content-Type: " + contentType;
         headers += "\r\nContent-Length: " + length;
-        headers += "\r\nx-useragent: " + USER_AGENT;
-        if (vauClient.getXInsurantId() != null) {
-            headers += "\r\nx-insurantid: " + vauClient.getXInsurantId();
+        headers += "\r\n" + X_USER_AGENT + ": " + userAgent;
+        if (insurantId != null) {
+            headers += "\r\n" + X_INSURANT_ID + ": " + insurantId;
         }
-        if (vauClient.getNp() != null) {
-            headers += "\r\nVAU-NP: " + vauClient.getNp();
+        if (np != null) {
+            headers += "\r\n" + VAU_NP + ": " + np;
         }
         headers += "\r\n\r\n";
         return headers;
@@ -138,12 +149,6 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
         protected void doFlush() throws IOException {
             currentStream.flush();
-        }
-
-        protected void doClose() throws IOException {
-        }
-
-        protected void onWrite() throws IOException {
         }
     }
 }

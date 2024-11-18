@@ -9,6 +9,7 @@ import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
+import de.servicehealth.vau.VauClient;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.http.client.fluent.Executor;
@@ -18,9 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
-import static de.servicehealth.utils.URLUtils.getBaseUrl;
+import static de.servicehealth.utils.ServerUtils.getBaseUrl;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,7 +39,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
     public void medicationCreatedAndObtainedThroughVAUProxy() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
-            VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(medicationServiceApiUrl));
+            VauRestfulClientFactory.applyToFhirContext(ctx, vauFacade, getBaseUrl(medicationServiceApiUrl));
 
             IMedicationClient medicationClient = ctx.newRestfulClient(IMedicationClient.class, medicationServiceApiUrl);
             IGenericClient genericClient = ctx.newRestfulGenericClient(medicationServiceApiUrl);
@@ -60,13 +64,17 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
     public void documentsDownloadedThroughVAUProxy() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
-            Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauClient, getBaseUrl(medicationServiceRenderUrl));
+            Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauFacade, getBaseUrl(medicationServiceRenderUrl));
             IRenderClient renderClient = new VauRenderClient(executor, medicationServiceRenderUrl);
             
-            File file = renderClient.getPdfFile("Z123456789", "CLIENTID1234567890AB/2.1.12-45");
+            File file = renderClient.getPdfFile(
+                Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45")
+            );
             assertTrue(file.exists());
 
-            byte[] xhtmlDocument = renderClient.getXhtmlDocument("Z123456789", "CLIENTID1234567890AB/2.1.12-45", null);
+            byte[] xhtmlDocument = renderClient.getXhtmlDocument(
+                Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45")
+            );
             assertTrue(new String(xhtmlDocument).contains("Verordnungsdatum"));
         }
     }

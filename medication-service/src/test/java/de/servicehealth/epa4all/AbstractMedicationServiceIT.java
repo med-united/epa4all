@@ -2,6 +2,7 @@ package de.servicehealth.epa4all;
 
 import de.gematik.vau.lib.VauClientStateMachine;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -33,7 +34,8 @@ public abstract class AbstractMedicationServiceIT {
     @ConfigProperty(name = "medication-service.render.url")
     String medicationServiceRenderUrl;
 
-    protected VauClient vauClient = new VauClient(new VauClientStateMachine());
+    @Inject
+    VauFacade vauFacade;
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @BeforeEach

@@ -1,10 +1,17 @@
 package de.servicehealth.utils;
 
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.isismtt.ISISMTTObjectIdentifiers;
+import org.bouncycastle.asn1.isismtt.x509.AdmissionSyntax;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -82,5 +89,23 @@ public class SSLUtils {
                 return new X509Certificate[0];
             }
         }};
+    }
+
+    public static String extractTelematikIdFromCertificate(X509Certificate cert) {
+        // https://oidref.com/1.3.36.8.3.3
+        byte[] admission = cert.getExtensionValue(ISISMTTObjectIdentifiers.id_isismtt_at_admission.toString());
+        try (ASN1InputStream input = new ASN1InputStream(admission)) {
+            ASN1Primitive p = input.readObject();
+            if (p != null) {
+                // Based on https://stackoverflow.com/a/20439748
+                DEROctetString derOctetString = (DEROctetString) p;
+                ASN1InputStream asnInputStream = new ASN1InputStream(new ByteArrayInputStream(derOctetString.getOctets()));
+                ASN1Primitive asn1 = asnInputStream.readObject();
+                AdmissionSyntax admissionSyntax = AdmissionSyntax.getInstance(asn1);
+                return admissionSyntax.getContentsOfAdmissions()[0].getProfessionInfos()[0].getRegistrationNumber();
+            }
+        } catch (IOException ignored) {
+        }
+        return null;
     }
 }

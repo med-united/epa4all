@@ -1,14 +1,13 @@
 package de.servicehealth.epa4all.medication.fhir.restful.extension;
 
 import java.io.File;
+import java.util.Map;
 
 public interface IRenderClient {
 
-    byte[] getPdfBytes(String xInsurantid, String xUseragent) throws Exception;
+    byte[] getPdfBytes(Map<String, Object> runtimeAttributes) throws Exception;
 
-    File getPdfFile(String xInsurantid, String xUseragent) throws Exception;
+    File getPdfFile(Map<String, Object> runtimeAttributes) throws Exception;
 
-    byte[] getXhtmlDocument(String xInsurantid, String xUseragent, String string) throws Exception;
-
-	byte[] getPdfBytes(String xInsurantid, String string, String np) throws Exception;
+    byte[] getXhtmlDocument(Map<String, Object> runtimeAttributes) throws Exception;
 }

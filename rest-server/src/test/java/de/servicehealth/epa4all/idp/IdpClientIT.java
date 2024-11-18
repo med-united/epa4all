@@ -41,7 +41,7 @@ public class IdpClientIT {
 
     @Test
     public void testGetVauNp() throws Exception {
-        idpClient.getVauNp(defaultUserConfig, (String np) -> {
+        idpClient.getVauNp(defaultUserConfig, "X110485291", "SMC-B-187", (String np) -> {
             System.out.println("NP: " + np);
             assertNotNull(np);
         });
@@ -49,7 +49,7 @@ public class IdpClientIT {
 
     @Test
     public void testGetBearerToken() throws Exception {
-        idpClient.getBearerToken(defaultUserConfig, (String token) -> {
+        idpClient.getBearerToken(defaultUserConfig, "X110485291", (String token) -> {
             System.out.println("Bearer " + token);
             assertNotNull(token);
         });

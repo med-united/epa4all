@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.cxf.provider;
 
 import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.ws.rs.WebApplicationException;
@@ -21,20 +22,24 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
+import static de.servicehealth.vau.VauClient.VAU_CID;
+import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 
+@SuppressWarnings("rawtypes")
 public class JsonbVauWriterProvider implements MessageBodyWriter {
 
-    private final VauClient vauClient;
+    private final VauFacade vauFacade;
     private final JsonbBuilder jsonbBuilder;
 
-    private static Logger log = Logger.getLogger(JsonbVauWriterProvider.class.getName());
+    private static final Logger log = Logger.getLogger(JsonbVauWriterProvider.class.getName());
 
-    public JsonbVauWriterProvider(VauClient vauClient) {
+    public JsonbVauWriterProvider(VauFacade vauFacade) {
         jsonbBuilder = new JsonBindingBuilder();
-        this.vauClient = vauClient;
+        this.vauFacade = vauFacade;
     }
 
     @Override
@@ -44,7 +49,15 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void writeTo(Object o, Class type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+    public void writeTo(
+        Object o,
+        Class type,
+        Type genericType,
+        Annotation[] annotations,
+        MediaType mediaType,
+        MultivaluedMap httpHeaders,
+        OutputStream entityStream
+    ) throws IOException, WebApplicationException {
         try (Jsonb build = jsonbBuilder.build()) {
 
             byte[] originPayload = new byte[0];
@@ -54,8 +67,8 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
                 originPayload = os.toByteArray();
             }
 
-            List<String> vauPathHeaders = (List<String>) httpHeaders.remove(VAU_METHOD_PATH);
-            String path = vauPathHeaders.isEmpty() ? "undefined" : vauPathHeaders.getFirst();
+            String path = evictHeader(httpHeaders, VAU_METHOD_PATH);
+            String vauCid = evictHeader(httpHeaders, VAU_CID);
 
             String additionalHeaders = ((MultivaluedMap<String, String>) httpHeaders).entrySet()
                 .stream()
@@ -63,12 +76,10 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
                 .filter(p -> !p.getKey().equals(ACCEPT))
                 .map(p -> p.getKey() + ": " + p.getValue().getFirst())
                 .collect(Collectors.joining("\r\n"));
-            httpHeaders.remove("x-insurantid");
 
+            httpHeaders.remove(X_INSURANT_ID);
+            httpHeaders.remove(VAU_NP);
 
-            if (vauClient.getNp() != null) {
-                additionalHeaders += "\r\nVAU-NP: " + vauClient.getNp();
-            }
             if (!additionalHeaders.isBlank()) {
                 additionalHeaders += "\r\n";
             }
@@ -85,6 +96,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
             log.info("REST Inner Request: " + new String(content));
 
+            VauClient vauClient = vauFacade.getVauClient(vauCid);
             byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
             entityStream.write(vauMessage);
             entityStream.close();
@@ -92,6 +104,12 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
         } catch (Exception e) {
             throw new IOException(e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String evictHeader(MultivaluedMap httpHeaders, String headerName) {
+        List<String> targetHeaders = (List<String>) httpHeaders.remove(headerName);
+        return targetHeaders == null || targetHeaders.isEmpty() ? null : targetHeaders.getFirst();
     }
 
     private String prepareContentHeaders(byte[] originPayload) {
