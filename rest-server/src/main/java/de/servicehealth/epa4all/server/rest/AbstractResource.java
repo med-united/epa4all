@@ -107,6 +107,11 @@ public abstract class AbstractResource {
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
         WebClient.getConfig(entitlementsApi).getRequestContext().put(VAU_NP, np);
         ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, USER_AGENT, entitlementRequest);
+        if(response.getValidTo() != null) {
         return Instant.ofEpochMilli(response.getValidTo().getTime());
+        } else {
+        	log.warning("response.getValidTo() is null. Returning now.");
+        	return Instant.now();
+        }
     }
 }
