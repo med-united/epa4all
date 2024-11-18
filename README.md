@@ -8,6 +8,7 @@
 ![Medikationsliste](doc/Screenshots/Medikationsliste.png?raw=true "Medikationsliste")
 ![Medikationsplan](doc/Screenshots/Medikationsplan.png?raw=true "Medikationsplan")
 ![Dokument](doc/Screenshots/Dokument.png?raw=true "Dokument")
+![Medication KI](doc/Screenshots/Medication_KI.png?raw=true "Medication KI")
 
 
 ## Testing Status
