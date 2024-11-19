@@ -1,5 +1,6 @@
-package de.servicehealth.epa4all.server.filetracker;
+package de.servicehealth.epa4all.server.filetracker.upload;
 
+import de.servicehealth.epa4all.server.filetracker.FileAction;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

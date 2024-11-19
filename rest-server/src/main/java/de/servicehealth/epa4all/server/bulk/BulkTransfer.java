@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.server.bulk;
 
-import de.servicehealth.epa4all.server.filetracker.FileDownload;
-import de.servicehealth.epa4all.server.filetracker.FileUpload;
+import de.servicehealth.epa4all.server.filetracker.download.FileDownload;
+import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -51,14 +51,16 @@ public class BulkTransfer {
         return jaxbElements.stream().map(e -> {
                 Optional<SlotType1> fileNameOpt = e.getValue().getSlot().stream().filter(s -> s.getName().equals("URI")).findFirst();
                 Optional<SlotType1> hashOpt = e.getValue().getSlot().stream().filter(s -> s.getName().equals("hash")).findFirst();
-                if (fileNameOpt.isPresent() && hashOpt.isPresent()) {
+                Optional<SlotType1> repositoryUniqueIdOpt = e.getValue().getSlot().stream().filter(s -> s.getName().equals("repositoryUniqueId")).findFirst();
+                if (fileNameOpt.isPresent() && hashOpt.isPresent() && repositoryUniqueIdOpt.isPresent()) {
                     String hash = hashOpt.get().getValueList().getValue().getFirst().toUpperCase();
                     if (checksums.contains(hash)) {
                         return null;
                     }
                     String taskId = UUID.randomUUID().toString();
                     String fileName = fileNameOpt.get().getValueList().getValue().getFirst();
-                    eventFileDownload.fireAsync(new FileDownload(epaContext, taskId, fileName, telematikId, kvnr));
+                    String repositoryUniqueId = repositoryUniqueIdOpt.get().getValueList().getValue().getFirst();
+                    eventFileDownload.fireAsync(new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, repositoryUniqueId));
                     return taskId;
                 } else {
                     return null;
