@@ -28,7 +28,7 @@
 | XDS Service (documentRepositoryRetrieveDocumentSet) | RISE | X110485291 | Works |
 | XDS Service (documentRepositoryProvideAndRegisterDocumentSetB) | IBM | X110486750 | Works  |
 | XDS Service (documentRepositoryProvideAndRegisterDocumentSetB)  | RISE | X110485291 | Works |
-| Fhir PDF | IBM | X110486750 | Works (but empty page) |
+| Fhir PDF | IBM | X110486750 | Works |
 | Fhir HTML | IBM | X110486750 | Works |
 | Fhir PDF | RISE | X110485291 | Works |
 | Fhir HTML | RISE | X110485291 | Works |
