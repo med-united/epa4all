@@ -22,7 +22,10 @@ public class XDSUtils {
         "application/hl7-v2+xml",
         "application/hl7-v3+xml",
         "application/x-cda+xml",
-        "application/xds+xml"
+        "application/xds+xml",
+        "application/hl7-v3",
+        "application/hl7-cda+xml",
+        "application/ccda+xml"
     );
 
     public static String generateUrnUuid() {

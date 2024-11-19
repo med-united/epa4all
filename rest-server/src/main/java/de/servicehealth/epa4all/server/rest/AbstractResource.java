@@ -8,8 +8,8 @@ import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
-import de.servicehealth.epa4all.server.filetracker.EpaFileTracker;
-import de.servicehealth.epa4all.server.filetracker.FileUpload;
+import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
+import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
@@ -42,13 +42,13 @@ public abstract class AbstractResource {
     InsuranceDataService insuranceDataService;
 
     @Inject
+    EpaFileDownloader epaFileDownloader;
+
+    @Inject
     Event<FileUpload> eventFileUpload;
 
     @Inject
     MultiEpaService multiEpaService;
-
-    @Inject
-    EpaFileTracker epaFileTracker;
 
     @Inject
     BulkTransfer bulkTransfer;
@@ -107,11 +107,11 @@ public abstract class AbstractResource {
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
         WebClient.getConfig(entitlementsApi).getRequestContext().put(VAU_NP, np);
         ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, USER_AGENT, entitlementRequest);
-        if(response.getValidTo() != null) {
-        return Instant.ofEpochMilli(response.getValidTo().getTime());
+        if (response.getValidTo() != null) {
+            return Instant.ofEpochMilli(response.getValidTo().getTime());
         } else {
-        	log.warning("response.getValidTo() is null. Returning now.");
-        	return Instant.now();
+            log.warning("response.getValidTo() is null. Returning now.");
+            return Instant.now();
         }
     }
 }

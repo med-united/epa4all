@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.service.health.api.epa4all.EpaAPI;
-import de.servicehealth.epa4all.server.filetracker.FileUpload;
+import de.servicehealth.epa4all.server.filetracker.download.FileDownload;
+import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -21,11 +21,13 @@ import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.IdentifiableType;
+import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
@@ -43,19 +45,10 @@ public class XDSDocument extends AbstractResource {
     ) {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);
-            return queryDocumentsInfo(epaContext, kvnr);
+            return getAdhocQueryResponse(kvnr, epaContext);
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
-    }
-
-    private AdhocQueryResponse queryDocumentsInfo(EpaContext epaContext, String kvnr) {
-        EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-        IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
-        attachVauAttributes((BindingProvider) documentManagementPortType, epaContext.getRuntimeAttributes());
-
-        AdhocQueryRequest request = xdsDocumentService.get().prepareAdhocQueryRequest(kvnr);
-        return documentManagementPortType.documentRegistryRegistryStoredQuery(request);
     }
 
     @GET
@@ -66,7 +59,7 @@ public class XDSDocument extends AbstractResource {
     ) {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);
-            AdhocQueryResponse adhocQueryResponse = queryDocumentsInfo(epaContext, kvnr);
+            AdhocQueryResponse adhocQueryResponse = getAdhocQueryResponse(kvnr, epaContext);
             List<JAXBElement<? extends IdentifiableType>> jaxbElements = adhocQueryResponse.getRegistryObjectList().getIdentifiable();
             List<String> tasksIds = bulkTransfer.downloadInsurantFiles(
                 epaContext, telematikId, kvnr, jaxbElements
@@ -86,22 +79,64 @@ public class XDSDocument extends AbstractResource {
     ) {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);
-            EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-            IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
-            attachVauAttributes((BindingProvider) documentManagementPortType, epaContext.getRuntimeAttributes());
-            
-            RetrieveDocumentSetRequestType requestType = xdsDocumentService.get().prepareRetrieveDocumentSetRequestType(uniqueId);
-            return documentManagementPortType.documentRepositoryRetrieveDocumentSet(requestType);
+            Optional<String> repositoryUniqueIdOpt = getAdhocQueryResponse(kvnr, epaContext).getRegistryObjectList().getIdentifiable()
+                .stream()
+                .filter(e -> {
+                    Optional<SlotType1> fileNameOpt = e.getValue().getSlot().stream().filter(s -> s.getName().equals("URI")).findFirst();
+                    return fileNameOpt.map(st -> st.getValueList().getValue().getFirst().contains(uniqueId)).isPresent();
+                })
+                .findFirst()
+                .flatMap(e -> e.getValue().getSlot()
+                    .stream()
+                    .filter(s -> s.getName().equals("repositoryUniqueId"))
+                    .findFirst().map(st -> st.getValueList().getValue().getFirst())
+                );
+
+            String repositoryUniqueId = repositoryUniqueIdOpt.orElse("undefined");
+            IDocumentManagementPortType documentManagementPortType = epaFileDownloader.getDocumentManagementPortType(epaContext);
+            RetrieveDocumentSetRequestType requestType = xdsDocumentService.get().prepareRetrieveDocumentSetRequestType(
+                uniqueId, repositoryUniqueId
+            );
+            RetrieveDocumentSetResponseType response = documentManagementPortType.documentRepositoryRetrieveDocumentSet(requestType);
+            handleDownloadResponse(response, uniqueId, epaContext, kvnr, repositoryUniqueId);
+            return response;
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
+    }
+
+    // TODO refactor to complete event approach
+    private void handleDownloadResponse(
+        RetrieveDocumentSetResponseType response,
+        String uniqueId,
+        EpaContext epaContext,
+        String kvnr,
+        String repositoryUniqueId
+    ) throws Exception {
+        String taskId = UUID.randomUUID().toString();
+        RetrieveDocumentSetResponseType.DocumentResponse documentResponse = response.getDocumentResponse().getFirst();
+        String mimeType = documentResponse.getMimeType();
+        String fileName = uniqueId;
+        if (isXmlCompliant(mimeType)) {
+            fileName = fileName + ".xml";
+        } else if (isPdfCompliant(mimeType)) {
+            fileName = fileName + ".pdf";
+        }
+        FileDownload fileDownload = new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, repositoryUniqueId);
+        epaFileDownloader.handleDownloadResponse(taskId, fileDownload, response);
+    }
+
+    private AdhocQueryResponse getAdhocQueryResponse(String kvnr, EpaContext epaContext) {
+        IDocumentManagementPortType documentManagementPortType = epaFileDownloader.getDocumentManagementPortType(epaContext);
+        AdhocQueryRequest request = xdsDocumentService.get().prepareAdhocQueryRequest(kvnr);
+        return documentManagementPortType.documentRegistryRegistryStoredQuery(request);
     }
 
     @GET
     @Produces(MediaType.APPLICATION_XML)
     @Path("result/{taskId}")
     public RegistryResponseType getUploadResult(@PathParam("taskId") String taskId) {
-        return epaFileTracker.getResult(taskId);
+        return epaFileDownloader.getResult(taskId);
     }
 
     // Based on: https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/provideandregister.xml

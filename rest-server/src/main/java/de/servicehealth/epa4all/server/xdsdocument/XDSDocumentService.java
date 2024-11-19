@@ -28,31 +28,18 @@ public class XDSDocumentService {
         this.provideAndRegisterDocumentBuilder = provideAndRegisterDocumentBuilder;
     }
 
-    public RetrieveDocumentSetRequestType prepareRetrieveDocumentSetRequestType(String uniqueId) {
+    public RetrieveDocumentSetRequestType prepareRetrieveDocumentSetRequestType(String uniqueId, String repositoryUniqueId) {
         RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();
         RetrieveDocumentSetRequestType.DocumentRequest documentRequest = new RetrieveDocumentSetRequestType.DocumentRequest();
         documentRequest.setDocumentUniqueId(uniqueId);
-        documentRequest.setRepositoryUniqueId("1.2.276.0.76.3.1.466.2.1.4.90.1");
+        documentRequest.setRepositoryUniqueId(repositoryUniqueId);
         retrieveDocumentSetRequestType.getDocumentRequest().add(documentRequest);
         return retrieveDocumentSetRequestType;
     }
 
+    // https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/adhocquery.xml
     public AdhocQueryRequest prepareAdhocQueryRequest(String kvnr) {
         AdhocQueryRequest adhocQueryRequest = new AdhocQueryRequest();
-            /* https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/adhocquery.xml
-              <query:ResponseOption returnType="LeafClass" returnComposedObjects="true"/>
-		      <rim:AdhocQuery id="urn:uuid:14d4debf-8f97-4251-9a74-a90016b0af0d" home="urn:oid:1.2.276.0.76.3.1.405">
-		        <rim:Slot name="$XDSDocumentEntryPatientId">
-		          <rim:ValueList>
-		            <rim:Value>'X110473550^^^&amp;1.2.276.0.76.4.8&amp;ISO'</rim:Value>
-		          </rim:ValueList>
-		        </rim:Slot>
-		        <rim:Slot name="$XDSDocumentEntryStatus">
-		          <rim:ValueList>
-		            <rim:Value>('urn:oasis:names:tc:ebxml-regrep:StatusType:Approved')</rim:Value>
-		          </rim:ValueList>
-		        </rim:Slot>
-             */
         ResponseOptionType responseOptionType = new ResponseOptionType();
         responseOptionType.setReturnType("LeafClass");
         responseOptionType.setReturnComposedObjects(true);
