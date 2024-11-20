@@ -11,6 +11,7 @@ import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
+import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
@@ -19,11 +20,11 @@ import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.Getter;
 import org.apache.http.client.fluent.Executor;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -41,9 +42,9 @@ public class MultiEpaService {
     @Getter
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
 
+    private final VauConfig vauConfig;
     private final EpaConfig epaConfig;
     private final ClientFactory clientFactory;
-    private final Instance<VauFacade> vauFacadeInstance;
     private final EServicePortProvider eServicePortProvider;
 
     private final Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
@@ -51,21 +52,28 @@ public class MultiEpaService {
         .expireAfterWrite(10, TimeUnit.MINUTES)
         .build();
 
+    @ConfigProperty(name = "startup-events.disabled", defaultValue = "false")
+    boolean startupEventsDisabled;
+
     @Inject
     public MultiEpaService(
+        VauConfig vauConfig,
         EpaConfig epaConfig,
         ClientFactory clientFactory,
-        Instance<VauFacade> vauFacadeInstance,
         EServicePortProvider eServicePortProvider
     ) {
         this.eServicePortProvider = eServicePortProvider;
-        this.vauFacadeInstance = vauFacadeInstance;
         this.clientFactory = clientFactory;
         this.epaConfig = epaConfig;
+        this.vauConfig = vauConfig;
     }
 
     // this must be started after ClientFactory
     void onStart(@Observes @Priority(5200) StartupEvent ev) {
+        if (startupEventsDisabled) {
+            log.warning(String.format("[%s] STARTUP events are disabled by config property", getClass().getSimpleName()));
+            return;
+        }
         initBackends();
     }
 
@@ -73,7 +81,7 @@ public class MultiEpaService {
         epaConfig.getEpaBackends().forEach(backend ->
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
-                    VauFacade vauFacade = vauFacadeInstance.get();
+                    VauFacade vauFacade = new VauFacade(vauConfig);
 
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
                     IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl, vauFacade);

@@ -1,31 +1,5 @@
 package de.servicehealth.epa4all.server.serviceport;
 
-import static de.servicehealth.utils.SSLUtils.createSSLContext;
-import static de.servicehealth.utils.SSLUtils.initSSLContext;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.apache.cxf.configuration.jsse.TLSClientParameters;
-import org.apache.cxf.endpoint.Client;
-import org.apache.cxf.frontend.ClientProxy;
-import org.apache.cxf.transport.http.HTTPConduit;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureService;
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureServicePortType;
 import de.gematik.ws.conn.cardservice.wsdl.v8_1.CardService;
@@ -40,22 +14,76 @@ import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.utils.SSLResult;
+import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.xml.ws.BindingProvider;
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.cxf.configuration.jsse.TLSClientParameters;
+import org.apache.cxf.endpoint.Client;
+import org.apache.cxf.frontend.ClientProxy;
+import org.apache.cxf.transport.http.HTTPConduit;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static de.servicehealth.utils.SSLUtils.createSSLContext;
+import static de.servicehealth.utils.SSLUtils.initSSLContext;
 
 @ApplicationScoped
 public class KServicePortProvider {
 
-    private static Logger log = Logger.getLogger(KServicePortProvider.class.getName());
+    private static final Logger log = Logger.getLogger(KServicePortProvider.class.getName());
 
     private final SSLContext defaultSSLContext;
 
-    Map<IUserConfigurations, Map<String, String>> userConfigurations2endpointMap = new HashMap<>();
+    @ConfigProperty(name = "startup-events.disabled", defaultValue = "false")
+    boolean startupEventsDisabled;
+
+    @Setter
+    @ConfigProperty(name = "ere.per.konnektor.config.folder")
+    String configFolder;
+
+    @Getter
+    @Setter
+    Map<String, Map<String, String>> userConfigurations2endpointMap = new HashMap<>();
+
+    // this must be started after MultiEpaService
+    void onStart(@Observes StartupEvent ev) {
+        if (startupEventsDisabled) {
+            log.warning(String.format("[%s] STARTUP events are disabled by config property", getClass().getSimpleName()));
+            return;
+        }
+        try {
+            Map<String, Map<String, String>> map = new ServicePortFile(new File(configFolder)).load();
+            userConfigurations2endpointMap.putAll(map);
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Error while loading 'service-ports' file");
+        }
+    }
 
     @Inject
     public KServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) throws Exception {
@@ -70,7 +98,9 @@ public class KServicePortProvider {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
         CertificateService certificateService = new CertificateService();
         CertificateServicePortType certificateServicePort = certificateService.getCertificateServicePort();
-        setEndpointAddress((BindingProvider) certificateServicePort, userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("certificateServiceEndpointAddress"), sslContext);
+        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
+        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("certificateServiceEndpointAddress");
+        setEndpointAddress((BindingProvider) certificateServicePort, url, sslContext);
 
         return certificateServicePort;
     }
@@ -79,8 +109,9 @@ public class KServicePortProvider {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
         CardService cardService = new CardService();
         CardServicePortType cardServicePort = cardService.getCardServicePort();
-
-        setEndpointAddress((BindingProvider) cardServicePort, userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("cardServiceEndpointAddress"), sslContext);
+        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
+        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("cardServiceEndpointAddress");
+        setEndpointAddress((BindingProvider) cardServicePort, url, sslContext);
 
         return cardServicePort;
     }
@@ -89,8 +120,9 @@ public class KServicePortProvider {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
         VSDService vsdService = new VSDService();
         VSDServicePortType cardServicePort = vsdService.getVSDServicePort();
-
-        setEndpointAddress((BindingProvider) cardServicePort, userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("vsdServiceEndpointAddress"), sslContext);
+        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
+        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("vsdServiceEndpointAddress");
+        setEndpointAddress((BindingProvider) cardServicePort, url, sslContext);
 
         return cardServicePort;
     }
@@ -99,18 +131,20 @@ public class KServicePortProvider {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
         AuthSignatureService authSignatureService = new AuthSignatureService();
         AuthSignatureServicePortType authSignatureServicePort = authSignatureService.getAuthSignatureServicePort();
-
-        setEndpointAddress((BindingProvider) authSignatureServicePort, userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("authSignatureServiceEndpointAddress"), sslContext);
+        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
+        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("authSignatureServiceEndpointAddress");
+        setEndpointAddress((BindingProvider) authSignatureServicePort, url, sslContext);
 
         return authSignatureServicePort;
     }
 
     public EventServicePortType getEventServicePort(UserRuntimeConfig userRuntimeConfig) {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         EventService eventService = new EventService();
         EventServicePortType eventServicePort = eventService.getEventServicePort();
-        setEndpointAddress((BindingProvider) eventServicePort, userConfigurations2endpointMap.get(userRuntimeConfig.getUserConfigurations()).get("eventServiceEndpointAddress"), sslContext);
+        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
+        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("eventServiceEndpointAddress");
+        setEndpointAddress((BindingProvider) eventServicePort, url, sslContext);
 
         return eventServicePort;
     }
@@ -124,7 +158,7 @@ public class KServicePortProvider {
     }
 
     private void lookupWebServiceURLsIfNecessary(SSLContext sslContext, IUserConfigurations userConfigurations) {
-        if (userConfigurations2endpointMap.containsKey(userConfigurations)) {
+        if (userConfigurations2endpointMap.containsKey(userConfigurations.getConnectorBaseURL())) {
             return;
         }
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
@@ -150,7 +184,7 @@ public class KServicePortProvider {
 
         String basicAuthUsername = userConfigurations.getBasicAuthUsername();
         String basicAuthPassword = userConfigurations.getBasicAuthPassword();
-        if (basicAuthUsername != null && !basicAuthUsername.equals("")) {
+        if (basicAuthUsername != null && !basicAuthUsername.isEmpty()) {
             builder.header("Authorization", "Basic " + Base64.getEncoder().encodeToString((basicAuthUsername + ":" + basicAuthPassword).getBytes()));
         }
         Invocation invocation = builder.buildGet();
@@ -207,7 +241,7 @@ public class KServicePortProvider {
                     }
                 }
             }
-            userConfigurations2endpointMap.put(userConfigurations, endpointMap);
+            userConfigurations2endpointMap.put(userConfigurations.getConnectorBaseURL(), endpointMap);
 
         } catch (ProcessingException | SAXException | IllegalArgumentException | IOException |
                  ParserConfigurationException e) {

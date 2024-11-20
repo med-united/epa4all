@@ -11,6 +11,7 @@ import de.servicehealth.epa4all.server.cdi.TelematikId;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
 import de.servicehealth.epa4all.server.idp.IdpClient;
+import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
@@ -19,7 +20,6 @@ import de.servicehealth.model.ValidToResponseType;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import org.apache.cxf.jaxrs.client.WebClient;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -51,6 +51,9 @@ public abstract class AbstractResource {
     MultiEpaService multiEpaService;
 
     @Inject
+    VauNpProvider vauNpProvider;
+
+    @Inject
     BulkTransfer bulkTransfer;
 
     @Inject
@@ -75,20 +78,25 @@ public abstract class AbstractResource {
         String insurantId = insuranceData.getInsurantId();
         EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
         Instant expirationTime = insuranceDataService.getEntitlementExpirationTime(telematikId, insurantId);
-        String np = idpClient.getVauNpSync(userRuntimeConfig, insurantId, smcbHandle); // TODO verify is it needed further
         if (expirationTime == null || expirationTime.isBefore(Instant.now())) {
-            Instant entitlementValidTo = setEntitlement(userRuntimeConfig, insuranceData, epaAPI, smcbHandle, np);
+            Instant entitlementValidTo = setEntitlement(userRuntimeConfig, insuranceData, epaAPI, smcbHandle);
             insuranceDataService.updateEntitlement(entitlementValidTo, telematikId, insurantId);
         }
-        return new EpaContext(insuranceData, prepareRuntimeAttributes(insuranceData, np));
+        return new EpaContext(insuranceData, prepareRuntimeAttributes(
+            insuranceData.getInsurantId(),
+            userRuntimeConfig.getConnectorBaseURL(),
+            epaAPI.getBackend())
+        );
     }
 
-    private Map<String, Object> prepareRuntimeAttributes(InsuranceData insuranceData, String np) {
+    private Map<String, Object> prepareRuntimeAttributes(String insurantId, String konnektor, String backend) {
         Map<String, Object> attributes = new HashMap<>();
-        String insurantId = insuranceData.getInsurantId();
         attributes.put(X_INSURANT_ID, insurantId);
         attributes.put(X_USER_AGENT, USER_AGENT);
-        attributes.put(VAU_NP, np); // TODO check if it is needed
+        String vauNp = vauNpProvider.getVauNp(konnektor, backend);
+        if (vauNp != null) {
+            attributes.put(VAU_NP, vauNp);
+        }
         return attributes;
     }
 
@@ -96,16 +104,16 @@ public abstract class AbstractResource {
         UserRuntimeConfig userRuntimeConfig,
         InsuranceData insuranceData,
         EpaAPI epaAPI,
-        String smcbHandle,
-        String np
-    ) throws Exception {
+        String smcbHandle
+    ) {
         String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
         EntitlementRequestType entitlementRequest = new EntitlementRequestType();
-        String entitlementPSJWT = idpClient.createEntitlementPSJWT(smcbHandle, insurantId, pz, userRuntimeConfig);
+        String entitlementPSJWT = idpClient.createEntitlementPSJWT(
+            smcbHandle, pz, userRuntimeConfig, epaAPI.getAuthorizationSmcBApi()
+        );
         entitlementRequest.setJwt(entitlementPSJWT);
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
-        WebClient.getConfig(entitlementsApi).getRequestContext().put(VAU_NP, np);
         ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, USER_AGENT, entitlementRequest);
         if (response.getValidTo() != null) {
             return Instant.ofEpochMilli(response.getValidTo().getTime());

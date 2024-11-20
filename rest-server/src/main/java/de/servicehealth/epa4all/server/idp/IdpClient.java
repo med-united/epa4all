@@ -6,13 +6,15 @@ import de.gematik.idp.client.data.AuthorizationRequest;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.field.CodeChallengeMethod;
-import de.health.service.cetp.IKonnektorClient;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.idp.action.AuthAction;
 import de.servicehealth.epa4all.server.idp.action.LoginAction;
 import de.servicehealth.epa4all.server.idp.action.VauNpAction;
 import de.servicehealth.epa4all.server.idp.func.IdpFunc;
 import de.servicehealth.epa4all.server.idp.func.IdpFuncer;
+import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -20,11 +22,14 @@ import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
+import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jose4j.jwt.JwtClaims;
 
+import java.io.File;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -56,14 +61,21 @@ public class IdpClient {
     IdpFuncer idpFuncer;
     IdpConfig idpConfig;
     ManagedExecutor managedExecutor;
-    IKonnektorClient konnektorClient;
+    KonnektorClient konnektorClient;
     AuthenticatorClient authenticatorClient;
     MultiKonnektorService multiKonnektorService;
 
     private DiscoveryDocumentResponse discoveryDocumentResponse;
 
+    @Setter
+    @ConfigProperty(name = "ere.per.konnektor.config.folder")
+    String configFolder;
+
     // A_24883-02 - clientAttest als ECDSA-Signatur
     private String signatureType = URN_BSI_TR_03111_ECDSA;
+
+    @ConfigProperty(name = "startup-events.disabled", defaultValue = "false")
+    boolean startupEventsDisabled;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -71,7 +83,7 @@ public class IdpClient {
         IdpFuncer idpFuncer,
         IdpConfig idpConfig,
         ManagedExecutor managedExecutor,
-        IKonnektorClient konnektorClient,
+        KonnektorClient konnektorClient,
         AuthenticatorClient authenticatorClient,
         MultiKonnektorService multiKonnektorService
     ) {
@@ -84,52 +96,72 @@ public class IdpClient {
     }
 
     void onStart(@Observes StartupEvent ev) {
-        // Do this async
-        managedExecutor.submit(() -> {
-            boolean worked = false;
-            while (!worked) {
+        if (startupEventsDisabled) {
+            log.warning(String.format("[%s] STARTUP events are disabled by config property", getClass().getSimpleName()));
+            return;
+        }
+        retrieveDiscoveryDocument();
+    }
+
+    private void retrieveDiscoveryDocument() {
+        try {
+            DiscoveryDocumentWrapper discoveryDocumentWrapper = new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(new File(configFolder)).load();
+            if (discoveryDocumentWrapper != null) {
+                discoveryDocumentResponse = discoveryDocumentWrapper.toDiscoveryDocumentResponse();
+                return;
+            }
+            log.log(Level.WARNING, "Cached discoveryDocumentResponse is not loaded.");
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Error while loading cached discoveryDocumentResponse", e);
+        }
+
+        boolean worked = false;
+        while (!worked) {
+            try {
+                log.info("Downloading: " + idpConfig.getDiscoveryDocumentUrl());
+                discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
+                    idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+                );
+                DiscoveryDocumentWrapper wrapper = new DiscoveryDocumentWrapper(discoveryDocumentResponse);
+                new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(new File(configFolder)).store(wrapper);
+                worked = true;
+            } catch (Exception ex) {
+                log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
                 try {
-                    log.info("Downloading: " + idpConfig.getDiscoveryDocumentUrl());
-                    discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
-                        idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-                    );
-                    worked = true;
-                } catch (Exception ex) {
-                    log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException e) {
-                        log.log(Level.SEVERE, "Could not wait.", e);
-                    }
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    log.log(Level.SEVERE, "Could not wait.", e);
                 }
             }
-        });
+        }
     }
 
     public void getVauNp(
+        AuthorizationSmcBApi authorizationSmcBApi,
         UserRuntimeConfig userRuntimeConfig,
-        String insurantId,
         String smcbHandle,
         Consumer<String> vauNPConsumer
     ) throws Exception {
-        IdpFunc idpFunc = idpFuncer.init(insurantId, userRuntimeConfig);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(authorizationSmcBApi, servicePorts);
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
             vauNPConsumer,
             idpFunc
         );
-        processVauNPAction(smcbHandle, userRuntimeConfig, authAction, idpFunc);
+        processVauNPAction(smcbHandle, servicePorts, authAction, idpFunc);
     }
 
     public String getVauNpSync(
+        AuthorizationSmcBApi authorizationSmcBApi,
         UserRuntimeConfig userRuntimeConfig,
-        String insurantId,
         String smcbHandle
     ) throws Exception {
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ThreadLocal<String> threadLocalString = new ThreadLocal<String>();
-        IdpFunc idpFunc = idpFuncer.init(insurantId, userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(authorizationSmcBApi, servicePorts);
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
@@ -139,39 +171,14 @@ public class IdpClient {
             },
             idpFunc
         );
-        processVauNPAction(smcbHandle, userRuntimeConfig, authAction, idpFunc);
+        processVauNPAction(smcbHandle, servicePorts, authAction, idpFunc);
         countDownLatch.await();
         return threadLocalString.get();
     }
 
-    public void getBearerToken(
-        UserRuntimeConfig userRuntimeConfig,
-        String insurantId,
-        Consumer<String> bearerConsumer
-    ) throws Exception {
-        IdpFunc idpFunc = idpFuncer.init(insurantId, userRuntimeConfig);
-        LoginAction authAction = new LoginAction(
-            idpConfig.getClientId(),
-            idpConfig.getAuthRequestRedirectUrl(),
-            authenticatorClient,
-            discoveryDocumentResponse,
-            bearerConsumer,
-            idpFunc
-        );
-        processBearerAction(userRuntimeConfig, authAction, idpFuncer);
-    }
-
-    public void processBearerAction(
-        UserRuntimeConfig userRuntimeConfig,
-        AuthAction authAction,
-        IdpFuncer idpFuncer
-    ) throws Exception {
-
-    }
-
-    public void processVauNPAction(
+    private void processVauNPAction(
         String smcbHandle,
-        UserRuntimeConfig userRuntimeConfig,
+        IKonnektorServicePortsAPI servicePorts,
         AuthAction authAction,
         IdpFunc idpFunc
     ) throws Exception {
@@ -179,7 +186,7 @@ public class IdpClient {
         String nonce = idpFunc.getNonceSupplier().get();
 
         Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(
-            userRuntimeConfig, smcbHandle
+            servicePorts, smcbHandle
         );
         if (smcbAuthCertPair.getValue()) {
             // A_24884-01 - clientAttest signieren als PKCS#1-Signatur
@@ -271,10 +278,11 @@ public class IdpClient {
      */
     public String createEntitlementPSJWT(
         String smcbHandle,
-        String insurantId,
         String auditEvidence,
-        UserRuntimeConfig userRuntimeConfig
-    ) throws Exception {
+        UserRuntimeConfig userRuntimeConfig,
+        AuthorizationSmcBApi authorizationSmcBApi
+    ) {
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
         claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
@@ -283,7 +291,33 @@ public class IdpClient {
         Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
 
-        IdpFunc idpFunc = idpFuncer.init(insurantId, userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(authorizationSmcBApi, servicePorts);
         return getSignedJwt(smcbAuthCert, claims, signatureType, smcbHandle, true, idpFunc);
+    }
+
+    public void getBearerToken(
+        AuthorizationSmcBApi authorizationSmcBApi,
+        UserRuntimeConfig userRuntimeConfig,
+        Consumer<String> bearerConsumer
+    ) throws Exception {
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+        IdpFunc idpFunc = idpFuncer.init(authorizationSmcBApi, servicePorts);
+        LoginAction authAction = new LoginAction(
+            idpConfig.getClientId(),
+            idpConfig.getAuthRequestRedirectUrl(),
+            authenticatorClient,
+            discoveryDocumentResponse,
+            bearerConsumer,
+            idpFunc
+        );
+        processBearerAction(userRuntimeConfig, authAction, idpFuncer);
+    }
+
+    public void processBearerAction(
+        UserRuntimeConfig userRuntimeConfig,
+        AuthAction authAction,
+        IdpFuncer idpFuncer
+    ) throws Exception {
+
     }
 }

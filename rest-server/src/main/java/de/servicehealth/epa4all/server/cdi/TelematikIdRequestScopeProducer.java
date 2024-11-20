@@ -1,8 +1,8 @@
 package de.servicehealth.epa4all.server.cdi;
 
+import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
-import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 public class TelematikIdRequestScopeProducer {
 
     @Inject
-    InsuranceDataService insuranceDataService;
+    IKonnektorClient konnektorClient;
 
     @Inject
     @FromHttpPath
@@ -21,7 +21,7 @@ public class TelematikIdRequestScopeProducer {
 
     private void initSmcbHandle() throws CetpFault {
         if (smcbHandle == null) {
-            smcbHandle = insuranceDataService.getSmcbHandle(userRuntimeConfig);
+            smcbHandle = konnektorClient.getSmcbHandle(userRuntimeConfig);
         }
     }
 
@@ -30,7 +30,7 @@ public class TelematikIdRequestScopeProducer {
     public String telematikId() {
         try {
             initSmcbHandle();
-            return insuranceDataService.getTelematikId(userRuntimeConfig, smcbHandle);
+            return konnektorClient.getTelematikId(userRuntimeConfig, smcbHandle);
         } catch (CetpFault e) {
             throw new RuntimeException(e);
         }

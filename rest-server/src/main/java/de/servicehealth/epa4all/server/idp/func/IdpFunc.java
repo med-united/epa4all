@@ -15,22 +15,22 @@ import java.util.function.Supplier;
 public class IdpFunc {
 
     private final Supplier<String> nonceSupplier;
-    private final Supplier<ContextType> contextSupplier;
+    private final Supplier<ContextType> ctxSupplier;
     private final Supplier<Response> authorizationResponseSupplier;
     private final Function<ExternalAuthenticate, ExternalAuthenticateResponse> extAuthFunc;
     private final Function<SendAuthCodeSCtype, SendAuthCodeSC200Response> sendAuthCodeFunc;
 
     public IdpFunc(
-        Supplier<String> nonceSupplier,
-        Supplier<ContextType> contextSupplier,
-        Supplier<Response> authorizationResponseSupplier,
+        Supplier<ContextType> ctxSupplier,
         Function<ExternalAuthenticate, ExternalAuthenticateResponse> extAuthFunc,
+        Supplier<String> nonceSupplier,
+        Supplier<Response> authorizationResponseSupplier,
         Function<SendAuthCodeSCtype, SendAuthCodeSC200Response> sendAuthCodeFunc
     ) {
-        this.nonceSupplier = nonceSupplier;
-        this.contextSupplier = contextSupplier;
-        this.authorizationResponseSupplier = authorizationResponseSupplier;
+        this.ctxSupplier = ctxSupplier;
         this.extAuthFunc = extAuthFunc;
+        this.nonceSupplier = nonceSupplier;
+        this.authorizationResponseSupplier = authorizationResponseSupplier;
         this.sendAuthCodeFunc = sendAuthCodeFunc;
     }
 }

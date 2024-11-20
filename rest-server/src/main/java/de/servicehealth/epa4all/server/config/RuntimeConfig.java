@@ -5,12 +5,12 @@ import de.health.service.config.api.IRuntimeConfig;
 import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
 
-public class AppConfig implements UserRuntimeConfig {
+public class RuntimeConfig implements UserRuntimeConfig {
 
     private final KonnektorDefaultConfig konnektorDefaultConfig;
     private IUserConfigurations userConfigurations;
 
-    public AppConfig(KonnektorDefaultConfig konnektorDefaultConfig, IUserConfigurations configurations) {
+    public RuntimeConfig(KonnektorDefaultConfig konnektorDefaultConfig, IUserConfigurations configurations) {
         this.konnektorDefaultConfig = konnektorDefaultConfig;
         this.userConfigurations = configurations;
     }
