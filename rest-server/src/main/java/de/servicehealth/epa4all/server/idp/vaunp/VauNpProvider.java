@@ -9,10 +9,7 @@ import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.startup.StartableService;
-import io.quarkus.runtime.StartupEvent;
-import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
@@ -33,8 +30,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static de.service.health.api.epa4all.MultiEpaService.MULTI_EPA_STARTUP_PRIORITY;
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.CXF_CLIENT_FACTORY_STARTUP_PRIORITY;
 import static de.servicehealth.utils.ServerUtils.terminateExecutor;
 
 @ApplicationScoped
@@ -65,8 +60,12 @@ public class VauNpProvider extends StartableService {
     @ConfigProperty(name = "ere.per.konnektor.config.folder")
     String configFolder;
 
-    private boolean sameConfigs(Map<VauNpKey, String> savedVauNpMap, ConcurrentHashMap<String, EpaAPI> epaBackendMap) {
-        for (String konnektor : konnektorsConfigs.keySet()) {
+    private boolean sameConfigs(
+        Map<String, KonnektorConfig> uniqueKonnektorsConfigs,
+        Map<VauNpKey, String> savedVauNpMap,
+        ConcurrentHashMap<String, EpaAPI> epaBackendMap
+    ) {
+        for (String konnektor : uniqueKonnektorsConfigs.keySet()) {
             for (String backend : epaBackendMap.keySet()) {
                 VauNpKey vauNpKey = new VauNpKey(konnektor, backend);
                 if (!savedVauNpMap.containsKey(vauNpKey)) {
@@ -79,7 +78,16 @@ public class VauNpProvider extends StartableService {
 
     @Override
     public int getPriority() {
-        return VAU_NP_PROVIDER_STARTUP_PRIORITY;
+        return VauNpProviderPriority;
+    }
+
+    private Map<String, KonnektorConfig> getUniqueKonnektorsConfigs() {
+        // removing cetp port
+        return konnektorsConfigs.entrySet()
+            .stream()
+            .map(e -> Pair.of(e.getKey().split("_")[1], e.getValue()))
+            .distinct()
+            .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
     public void onStart() {
@@ -91,25 +99,19 @@ public class VauNpProvider extends StartableService {
             throw new IllegalStateException("Konnektor config directory is corrupted");
         }
         try {
+            Map<String, KonnektorConfig> uniqueKonnektorsConfigs = getUniqueKonnektorsConfigs();
             VauNpFile vauNpFile = new VauNpFile(konnektorConfigFolder);
             Map<VauNpKey, String> savedVauNpMap = vauNpFile.get();
             ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
-            if (sameConfigs(savedVauNpMap, epaBackendMap)) {
+            if (sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
                 vauNpMap.putAll(savedVauNpMap);
             } else {
-                // removing cetp port
-                Map<String, KonnektorConfig> uniqueKonnectorsConfigs = konnektorsConfigs.entrySet()
-                    .stream()
-                    .map(e -> Pair.of(e.getKey().split("_")[1], e.getValue()))
-                    .distinct()
-                    .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
-
-                int k = uniqueKonnectorsConfigs.size();
+                int k = uniqueKonnektorsConfigs.size();
                 int b = epaBackendMap.size();
                 log.info(String.format("Gathering VauNP is started for %d konnektors and %d epa-backends", k, b));
 
                 List<Future<Pair<VauNpKey, String>>> futures = new ArrayList<>();
-                uniqueKonnectorsConfigs.forEach((konnektor, config) ->
+                uniqueKonnektorsConfigs.forEach((konnektor, config) ->
                     epaBackendMap.forEach((backend, api) ->
                         futures.add(scheduledThreadPool.submit(() -> getVauNp(config, api, konnektor, backend)))
                     )

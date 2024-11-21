@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.CXF_CLIENT_FACTORY_STARTUP_PRIORITY;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 
 @ApplicationScoped
@@ -65,7 +64,7 @@ public class MultiEpaService extends StartableService {
 
     @Override
     public int getPriority() {
-        return MULTI_EPA_STARTUP_PRIORITY;
+        return MultiEpaPriority;
     }
 
     @Override

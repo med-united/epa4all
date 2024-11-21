@@ -31,11 +31,7 @@ public class ChecksumFile {
         lock = new ReentrantReadWriteLock();
         file = new File(insurantFolder, CHECKSUM_FILE_NAME);
         if (!file.exists()) {
-            boolean created = file.createNewFile();
-            if (!created) {
-                String msg = String.format("Could not create %s for %s", CHECKSUM_FILE_NAME, insurantId);
-                throw new IllegalStateException(msg);
-            }
+            file.createNewFile();
         }
     }
 

@@ -38,7 +38,7 @@ public class ClientFactory extends StartableService {
 
     @Override
     public int getPriority() {
-        return CXF_CLIENT_FACTORY_STARTUP_PRIORITY;
+        return CxfClientFactoryPriority;
     }
 
     public void onStart() {

@@ -25,11 +25,7 @@ public abstract class MapDumpFile<K, V> {
         String fileName = getFileName();
         file = new File(folder, fileName);
         if (!file.exists()) {
-            boolean created = file.createNewFile();
-            if (!created) {
-                String msg = String.format("Could not create %s", fileName);
-                throw new IllegalStateException(msg);
-            }
+            file.createNewFile();
         }
     }
 

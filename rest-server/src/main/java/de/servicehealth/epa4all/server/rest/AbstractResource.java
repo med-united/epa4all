@@ -4,7 +4,6 @@ import de.health.service.check.HealthChecker;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
@@ -22,6 +21,7 @@ import jakarta.enterprise.event.Event;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -80,10 +80,12 @@ public abstract class AbstractResource {
         );
         String insurantId = insuranceData.getInsurantId();
         EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
-        Instant expirationTime = insuranceDataService.getEntitlementExpirationTime(telematikId, insurantId);
-        if (expirationTime == null || expirationTime.isBefore(Instant.now())) {
-            Instant entitlementValidTo = setEntitlement(userRuntimeConfig, insuranceData, epaAPI, smcbHandle);
-            insuranceDataService.updateEntitlement(entitlementValidTo, telematikId, insurantId);
+        String userAgent = multiEpaService.getEpaConfig().getUserAgent();
+        Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
+        if (validTo == null || validTo.isBefore(Instant.now())) {
+            setEntitlement(userRuntimeConfig, insuranceData, epaAPI, userAgent, smcbHandle);
+        } else {
+            log.info(String.format("[%s/%s] Entitlement is valid until %s", telematikId, kvnr, validTo));
         }
         return new EpaContext(insuranceData, prepareRuntimeAttributes(
             insuranceData.getInsurantId(),
@@ -103,30 +105,28 @@ public abstract class AbstractResource {
         return attributes;
     }
 
-    private Instant setEntitlement(
+    private void setEntitlement(
         UserRuntimeConfig userRuntimeConfig,
         InsuranceData insuranceData,
         EpaAPI epaAPI,
+        String userAgent,
         String smcbHandle
-    ) {
+    ) throws IOException {
         String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
+
         EntitlementRequestType entitlementRequest = new EntitlementRequestType();
         String entitlementPSJWT = idpClient.createEntitlementPSJWT(
             smcbHandle, pz, userRuntimeConfig, epaAPI.getAuthorizationSmcBApi()
         );
         entitlementRequest.setJwt(entitlementPSJWT);
-        EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
-        ValidToResponseType response = entitlementsApi.setEntitlementPs(
+        ValidToResponseType response = epaAPI.getEntitlementsApi().setEntitlementPs(
             insurantId,
-            multiEpaService.getEpaConfig().getUserAgent(),
+            userAgent,
             entitlementRequest
         );
         if (response.getValidTo() != null) {
-            return Instant.ofEpochMilli(response.getValidTo().getTime());
-        } else {
-            log.warning("response.getValidTo() is null. Returning now.");
-            return Instant.now();
+            insuranceDataService.updateEntitlement(response.getValidTo().toInstant(), telematikId, insurantId);
         }
     }
 }

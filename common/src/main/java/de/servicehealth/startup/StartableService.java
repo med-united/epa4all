@@ -7,9 +7,9 @@ import java.util.logging.Logger;
 
 public abstract class StartableService implements StartupEventListener {
 
-    public static final int CXF_CLIENT_FACTORY_STARTUP_PRIORITY = 1000;
-    public static final int MULTI_EPA_STARTUP_PRIORITY = CXF_CLIENT_FACTORY_STARTUP_PRIORITY + 1000;
-    public static final int VAU_NP_PROVIDER_STARTUP_PRIORITY = MULTI_EPA_STARTUP_PRIORITY + 1000;
+    public static final int CxfClientFactoryPriority = 1000;
+    public static final int MultiEpaPriority = 2000;
+    public static final int VauNpProviderPriority = 3000;
     
     private final Logger log = Logger.getLogger(getClass().getSimpleName());
 

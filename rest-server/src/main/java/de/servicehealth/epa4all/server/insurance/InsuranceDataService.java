@@ -89,13 +89,9 @@ public class InsuranceDataService {
         return webdavSmcbManager.getFileSystemInsuranceData(localVSDFolder, kvnr);
     }
 
-    public Instant getEntitlementExpirationTime(String telematikId, String kvnr) {
-        try {
-            File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-            return new EntitlementFile(localFolder, kvnr).getEntitlement();
-        } catch (IOException e) {
-            return null;
-        }
+    public Instant getEntitlementExpiry(String telematikId, String kvnr) throws IOException {
+        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        return new EntitlementFile(localFolder, kvnr).getEntitlement();
     }
 
     public void updateEntitlement(Instant validTo, String telematikId, String kvnr) throws IOException {

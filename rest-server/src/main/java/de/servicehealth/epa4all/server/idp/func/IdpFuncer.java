@@ -21,8 +21,8 @@ public class IdpFuncer {
 
     public IdpFunc init(
         String userAgent,
-        AuthorizationSmcBApi authorizationSmcBApi,
-        IKonnektorServicePortsAPI servicePorts
+        IKonnektorServicePortsAPI servicePorts,
+        AuthorizationSmcBApi authorizationSmcBApi
     ) {
         return new IdpFunc(
             servicePorts::getContextType,

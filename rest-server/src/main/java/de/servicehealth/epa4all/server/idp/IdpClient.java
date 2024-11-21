@@ -142,8 +142,8 @@ public class IdpClient extends StartableService {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         IdpFunc idpFunc = idpFuncer.init(
             multiEpaService.getEpaConfig().getUserAgent(),
-            authorizationSmcBApi,
-            servicePorts
+            servicePorts,
+            authorizationSmcBApi
         );
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
@@ -164,8 +164,8 @@ public class IdpClient extends StartableService {
         ThreadLocal<String> threadLocalString = new ThreadLocal<String>();
         IdpFunc idpFunc = idpFuncer.init(
             multiEpaService.getEpaConfig().getUserAgent(),
-            authorizationSmcBApi,
-            servicePorts
+            servicePorts,
+            authorizationSmcBApi
         );
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
@@ -293,13 +293,13 @@ public class IdpClient extends StartableService {
         claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
         claims.setClaim("auditEvidence", auditEvidence);
 
-        Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
+        Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(servicePorts, smcbHandle);
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
 
         IdpFunc idpFunc = idpFuncer.init(
             multiEpaService.getEpaConfig().getUserAgent(),
-            authorizationSmcBApi,
-            servicePorts
+            servicePorts,
+            authorizationSmcBApi
         );
         return getSignedJwt(smcbAuthCert, claims, signatureType, smcbHandle, true, idpFunc);
     }
@@ -312,8 +312,8 @@ public class IdpClient extends StartableService {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         IdpFunc idpFunc = idpFuncer.init(
             multiEpaService.getEpaConfig().getUserAgent(),
-            authorizationSmcBApi,
-            servicePorts
+            servicePorts,
+            authorizationSmcBApi
         );
         LoginAction authAction = new LoginAction(
             idpConfig.getClientId(),

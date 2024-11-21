@@ -26,11 +26,7 @@ public class DiscoveryDocumentFile<T extends Serializable> {
         lock = new ReentrantReadWriteLock();
         file = new File(configFolder, DISCOVERY_DOC_FILE_NAME);
         if (!file.exists()) {
-            boolean created = file.createNewFile();
-            if (!created) {
-                String msg = String.format("Could not create %s", DISCOVERY_DOC_FILE_NAME);
-                throw new IllegalStateException(msg);
-            }
+            file.createNewFile();
         }
     }
 
