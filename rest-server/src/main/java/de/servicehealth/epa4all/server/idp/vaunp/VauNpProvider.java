@@ -8,7 +8,7 @@ import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
-import de.servicehealth.epa4all.server.serviceport.KServicePortProvider;
+import de.servicehealth.startup.StartableService;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -33,8 +33,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static de.service.health.api.epa4all.MultiEpaService.MULTI_EPA_STARTUP_PRIORITY;
+import static de.servicehealth.epa4all.cxf.client.ClientFactory.CXF_CLIENT_FACTORY_STARTUP_PRIORITY;
+import static de.servicehealth.utils.ServerUtils.terminateExecutor;
+
 @ApplicationScoped
-public class VauNpProvider {
+public class VauNpProvider extends StartableService {
 
     private static final Logger log = Logger.getLogger(VauNpProvider.class.getName());
 
@@ -51,9 +55,6 @@ public class VauNpProvider {
     IKonnektorClient konnektorClient;
 
     @Inject
-    KServicePortProvider servicePortProvider;
-
-    @Inject
     KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
@@ -64,59 +65,7 @@ public class VauNpProvider {
     @ConfigProperty(name = "ere.per.konnektor.config.folder")
     String configFolder;
 
-    @ConfigProperty(name = "startup-events.disabled", defaultValue = "false")
-    boolean startupEventsDisabled;
-
-
-    // this must be started after MultiEpaService
-    void onStart(@Observes @Priority(7200) StartupEvent ev) {
-        if (startupEventsDisabled) {
-            log.warning(String.format("[%s] STARTUP events are disabled by config property", getClass().getSimpleName()));
-            return;
-        }
-        var konnektorConfigFolder = new File(configFolder);
-        if (!konnektorConfigFolder.exists() || !konnektorConfigFolder.isDirectory()) {
-            throw new IllegalStateException("Konnektor config directory is corrupted");
-        }
-        try {
-            VauNpFile vauNpFile = new VauNpFile(konnektorConfigFolder);
-            Map<VauNpKey, String> savedVauNpMap = vauNpFile.get();
-            ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
-            if (sameConfigs(savedVauNpMap, epaBackendMap)) {
-                vauNpMap.putAll(savedVauNpMap);
-            } else {
-                List<Future<Pair<VauNpKey, String>>> futures = new ArrayList<>();
-
-                // removing cetp port
-                konnektorsConfigs.entrySet()
-                    .stream()
-                    .map(e -> Pair.of(e.getKey().split("_")[1], e.getValue()))
-                    .distinct()
-                    .collect(Collectors.toMap(Pair::getKey, Pair::getValue))
-                    .forEach((konnektor, config) ->
-                        epaBackendMap.forEach((backend, api) ->
-                            futures.add(scheduledThreadPool.submit(() -> getVauNp(config, api, konnektor, backend)))
-                        )
-                    );
-                for (Future<Pair<VauNpKey, String>> future : futures) {
-                    Pair<VauNpKey, String> pair = future.get(60, TimeUnit.SECONDS);
-                    if (pair != null) {
-                        vauNpMap.put(pair.getKey(), pair.getValue());
-                    }
-                }
-                if (!vauNpMap.isEmpty()) {
-                    vauNpFile.store(vauNpMap);
-                }
-            }
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while VauNP map initialization", e);
-        }
-    }
-
-    private boolean sameConfigs(
-        Map<VauNpKey, String> savedVauNpMap,
-        ConcurrentHashMap<String, EpaAPI> epaBackendMap
-    ) {
+    private boolean sameConfigs(Map<VauNpKey, String> savedVauNpMap, ConcurrentHashMap<String, EpaAPI> epaBackendMap) {
         for (String konnektor : konnektorsConfigs.keySet()) {
             for (String backend : epaBackendMap.keySet()) {
                 VauNpKey vauNpKey = new VauNpKey(konnektor, backend);
@@ -128,6 +77,66 @@ public class VauNpProvider {
         return true;
     }
 
+    @Override
+    public int getPriority() {
+        return VAU_NP_PROVIDER_STARTUP_PRIORITY;
+    }
+
+    public void onStart() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() ->
+            terminateExecutor(scheduledThreadPool, "Vau-Np-Job", 6000))
+        );
+        var konnektorConfigFolder = new File(configFolder);
+        if (!konnektorConfigFolder.exists() || !konnektorConfigFolder.isDirectory()) {
+            throw new IllegalStateException("Konnektor config directory is corrupted");
+        }
+        try {
+            VauNpFile vauNpFile = new VauNpFile(konnektorConfigFolder);
+            Map<VauNpKey, String> savedVauNpMap = vauNpFile.get();
+            ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
+            if (sameConfigs(savedVauNpMap, epaBackendMap)) {
+                vauNpMap.putAll(savedVauNpMap);
+            } else {
+                // removing cetp port
+                Map<String, KonnektorConfig> uniqueKonnectorsConfigs = konnektorsConfigs.entrySet()
+                    .stream()
+                    .map(e -> Pair.of(e.getKey().split("_")[1], e.getValue()))
+                    .distinct()
+                    .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+
+                int k = uniqueKonnectorsConfigs.size();
+                int b = epaBackendMap.size();
+                log.info(String.format("Gathering VauNP is started for %d konnektors and %d epa-backends", k, b));
+
+                List<Future<Pair<VauNpKey, String>>> futures = new ArrayList<>();
+                uniqueKonnectorsConfigs.forEach((konnektor, config) ->
+                    epaBackendMap.forEach((backend, api) ->
+                        futures.add(scheduledThreadPool.submit(() -> getVauNp(config, api, konnektor, backend)))
+                    )
+                );
+                List<String> errorMessages = new ArrayList<>();
+                for (Future<Pair<VauNpKey, String>> future : futures) {
+                    Pair<VauNpKey, String> pair = future.get(60, TimeUnit.SECONDS);
+                    VauNpKey vauNpKey = pair.getKey();
+                    if (vauNpKey != null && pair.getValue() != null) {
+                        vauNpMap.put(vauNpKey, pair.getValue());
+                    } else {
+                        errorMessages.add(pair.getValue());
+                    }
+                }
+                String errors = errorMessages.isEmpty() ? "" : errorMessages.stream().collect(Collectors.joining("\n", "-> \n", ""));
+                log.info(String.format(
+                    "Gathering VauNP is STOPPED, %d vauNp values are collected %s", vauNpMap.size(), errors)
+                );
+                if (!vauNpMap.isEmpty()) {
+                    vauNpFile.store(vauNpMap);
+                }
+            }
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Error while VauNP map initialization", e);
+        }
+    }
+
     private Pair<VauNpKey, String> getVauNp(KonnektorConfig config, EpaAPI api, String konnektor, String backend) {
         try {
             RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
@@ -137,7 +146,8 @@ public class VauNpProvider {
             return Pair.of(new VauNpKey(konnektor, backend), vauNp);
         } catch (Exception e) {
             log.log(Level.SEVERE, String.format("Unable to getVauNP for %s and %s", konnektor, backend), e);
-            return null;
+            String message = e.getMessage();
+            return Pair.of(null, message);
         }
     }
 

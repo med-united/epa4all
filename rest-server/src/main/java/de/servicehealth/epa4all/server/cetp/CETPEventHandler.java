@@ -20,7 +20,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
@@ -96,10 +95,11 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 );
                 String insurantId = insuranceData.getInsurantId();
                 EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
+                String userAgent = multiEpaService.getEpaConfig().getUserAgent();
 
                 String vauNp = vauNpProvider.getVauNp(configurations.getConnectorBaseURL(), epaAPI.getBackend());
                 byte[] bytes = epaAPI.getRenderClient().getPdfBytes(
-                    Map.of(X_INSURANT_ID, insurantId, X_USER_AGENT, USER_AGENT, VAU_NP, vauNp)
+                    Map.of(X_INSURANT_ID, insurantId, X_USER_AGENT, userAgent, VAU_NP, vauNp)
                 );
                 String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                 Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);

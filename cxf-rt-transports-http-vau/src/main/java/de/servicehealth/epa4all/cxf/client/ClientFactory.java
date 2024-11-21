@@ -9,11 +9,9 @@ import de.servicehealth.epa4all.cxf.provider.JsonbVauReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbWriterProvider;
 import de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory;
-import de.servicehealth.vau.VauClient;
+import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauFacade;
-import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
@@ -30,23 +28,20 @@ import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import java.util.List;
-import java.util.Map;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_ALIVE;
 
 @ApplicationScoped
-public class ClientFactory {
+public class ClientFactory extends StartableService {
 
-    // PU epa.health/1.0.0 ServiceHealthGmbH/GEMIncenereS2QmFN83P
-    public static final String USER_AGENT = "GEMIncenereSud1PErUR/1.0.0";
-
-    void onStart(@Observes StartupEvent ev) {
-        initGlobalBus();
+    @Override
+    public int getPriority() {
+        return CXF_CLIENT_FACTORY_STARTUP_PRIORITY;
     }
 
-    private void initGlobalBus() {
+    public void onStart() {
         Bus globalBus = BusFactory.getDefaultBus();
         globalBus.setProperty("force.urlconnection.http.conduit", false);
         DestinationFactoryManager dfm = globalBus.getExtension(DestinationFactoryManager.class);

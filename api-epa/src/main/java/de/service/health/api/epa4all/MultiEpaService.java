@@ -11,40 +11,38 @@ import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
-import de.servicehealth.vau.VauConfig;
+import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import io.quarkus.runtime.Startup;
-import io.quarkus.runtime.StartupEvent;
-import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 import lombok.Getter;
 import org.apache.http.client.fluent.Executor;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
+import static de.servicehealth.epa4all.cxf.client.ClientFactory.CXF_CLIENT_FACTORY_STARTUP_PRIORITY;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 
 @ApplicationScoped
 @Startup
-public class MultiEpaService {
+public class MultiEpaService extends StartableService {
 
     private static final Logger log = Logger.getLogger(MultiEpaService.class.getName());
 
     @Getter
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
 
-    private final VauConfig vauConfig;
+    @Getter
     private final EpaConfig epaConfig;
     private final ClientFactory clientFactory;
+    private final Instance<VauFacade> vauFacadeInstance;
     private final EServicePortProvider eServicePortProvider;
 
     private final Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
@@ -52,36 +50,31 @@ public class MultiEpaService {
         .expireAfterWrite(10, TimeUnit.MINUTES)
         .build();
 
-    @ConfigProperty(name = "startup-events.disabled", defaultValue = "false")
-    boolean startupEventsDisabled;
-
     @Inject
     public MultiEpaService(
-        VauConfig vauConfig,
         EpaConfig epaConfig,
         ClientFactory clientFactory,
+        Instance<VauFacade> vauFacadeInstance,
         EServicePortProvider eServicePortProvider
     ) {
         this.eServicePortProvider = eServicePortProvider;
+        this.vauFacadeInstance = vauFacadeInstance;
         this.clientFactory = clientFactory;
         this.epaConfig = epaConfig;
-        this.vauConfig = vauConfig;
     }
 
-    // this must be started after ClientFactory
-    void onStart(@Observes @Priority(5200) StartupEvent ev) {
-        if (startupEventsDisabled) {
-            log.warning(String.format("[%s] STARTUP events are disabled by config property", getClass().getSimpleName()));
-            return;
-        }
-        initBackends();
+    @Override
+    public int getPriority() {
+        return MULTI_EPA_STARTUP_PRIORITY;
     }
 
-    private void initBackends() {
+    @Override
+    protected void onStart() {
         epaConfig.getEpaBackends().forEach(backend ->
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
-                    VauFacade vauFacade = new VauFacade(vauConfig);
+                    VauFacade vauFacade = vauFacadeInstance.get();
+                    vauFacade.setBackend(backend);
 
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
                     IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl, vauFacade);
@@ -153,7 +146,7 @@ public class MultiEpaService {
     private boolean hasEpaRecord(EpaAPI api, String xInsurantid) {
         boolean result = false;
         try {
-            api.getAccountInformationApi().getRecordStatus(xInsurantid, USER_AGENT);
+            api.getAccountInformationApi().getRecordStatus(xInsurantid, epaConfig.getUserAgent());
             result = true;
         } catch (Exception e) {
             log.info(String.format(

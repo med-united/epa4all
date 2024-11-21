@@ -13,6 +13,7 @@ import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.startup.StartableService;
 import de.servicehealth.utils.SSLResult;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -54,14 +55,11 @@ import static de.servicehealth.utils.SSLUtils.createSSLContext;
 import static de.servicehealth.utils.SSLUtils.initSSLContext;
 
 @ApplicationScoped
-public class KServicePortProvider {
+public class KServicePortProvider extends StartableService {
 
     private static final Logger log = Logger.getLogger(KServicePortProvider.class.getName());
 
     private final SSLContext defaultSSLContext;
-
-    @ConfigProperty(name = "startup-events.disabled", defaultValue = "false")
-    boolean startupEventsDisabled;
 
     @Setter
     @ConfigProperty(name = "ere.per.konnektor.config.folder")
@@ -72,11 +70,7 @@ public class KServicePortProvider {
     Map<String, Map<String, String>> userConfigurations2endpointMap = new HashMap<>();
 
     // this must be started after MultiEpaService
-    void onStart(@Observes StartupEvent ev) {
-        if (startupEventsDisabled) {
-            log.warning(String.format("[%s] STARTUP events are disabled by config property", getClass().getSimpleName()));
-            return;
-        }
+    public void onStart() {
         try {
             Map<String, Map<String, String>> map = new ServicePortFile(new File(configFolder)).load();
             userConfigurations2endpointMap.putAll(map);

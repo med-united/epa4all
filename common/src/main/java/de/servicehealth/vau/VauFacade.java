@@ -1,10 +1,13 @@
 package de.servicehealth.vau;
 
 import de.gematik.vau.lib.VauClientStateMachine;
+import de.servicehealth.registry.BeanRegistry;
 import io.vertx.core.impl.ConcurrentHashSet;
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,13 +24,26 @@ public class VauFacade {
 
     private static final Logger log = LoggerFactory.getLogger(VauFacade.class);
 
-    private final Set<VauClient> clients = new ConcurrentHashSet<>();
+    @Getter
+    private final Set<VauClient> vauClients = new ConcurrentHashSet<>();
+    
     private final ScheduledExecutorService executorService;
 
+    @Setter
+    @Getter
+    private String backend;
+
+    @Getter
+    private final boolean tracingEnabled;
+    private final BeanRegistry registry;
+
     @Inject
-    public VauFacade(VauConfig vauConfig) {
+    public VauFacade(BeanRegistry registry, VauConfig vauConfig) {
+        this.registry = registry;
+        this.registry.register(this);
+        tracingEnabled = vauConfig.isTracingEnabled();
         for (int i = 0; i < vauConfig.getVauPoolSize(); i++) {
-            clients.add(new VauClient(new VauClientStateMachine()));
+            vauClients.add(new VauClient(new VauClientStateMachine(vauConfig.getPuByte())));
         }
         executorService = Executors.newSingleThreadScheduledExecutor();
         Runtime.getRuntime().addShutdownHook(new Thread(() ->
@@ -35,7 +51,7 @@ public class VauFacade {
         );
         int vauReadTimeoutMs = vauConfig.getVauReadTimeoutSec() * 1000;
         executorService.scheduleWithFixedDelay(() -> {
-            for(VauClient vauClient: clients) {
+            for(VauClient vauClient: vauClients) {
                 if (vauClient.busy() && vauClient.getAcquiredAt().get() < System.currentTimeMillis() - vauReadTimeoutMs) {
                     log.warn(String.format("VauClient [%s] is force released", vauClient.getVauInfo().getVauCid()));
                     vauClient.forceRelease();
@@ -44,10 +60,15 @@ public class VauFacade {
         }, 10, 10, TimeUnit.SECONDS);
     }
 
+    @PreDestroy
+    void cleanup() {
+        registry.unregister(this);
+    }
+
     public VauClient acquireVauClient() throws InterruptedException {
         Optional<VauClient> vauClientOpt;
         while (true) {
-            vauClientOpt = clients.stream()
+            vauClientOpt = vauClients.stream()
                 .filter(VauClient::acquire)
                 .findFirst();
             if (vauClientOpt.isEmpty()) {
@@ -61,7 +82,7 @@ public class VauFacade {
     }
 
     public VauClient getVauClient(String vauCid) {
-        return clients.stream()
+        return vauClients.stream()
             .filter(vc -> vc.getVauInfo() != null)
             .filter(vc -> vc.getVauInfo().getVauCid().equals(vauCid))
             .findFirst()

@@ -4,6 +4,7 @@ import de.gematik.vau.lib.VauClientStateMachine;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -31,6 +32,7 @@ public class VauClient {
 
     @Getter
     private final AtomicLong acquiredAt;
+    private final AtomicBoolean broken;
 
     private final ReentrantLock lock;
 
@@ -38,6 +40,7 @@ public class VauClient {
         this.vauStateMachine = vauStateMachine;
 
         lock = new ReentrantLock();
+        broken = new AtomicBoolean(false);
         acquiredAt = new AtomicLong(0L);
     }
 
@@ -45,12 +48,17 @@ public class VauClient {
         try {
             return lock.tryLock();
         } finally {
+            broken.set(false);
             acquiredAt.set(System.currentTimeMillis());
         }
     }
 
     public boolean busy() {
         return lock.isLocked();
+    }
+
+    public boolean broken() {
+        return broken.get();
     }
 
     public void release() {
@@ -73,6 +81,7 @@ public class VauClient {
         try {
             lock.unlock();
         } finally {
+            broken.set(true);
             vauInfo = null;
             acquiredAt.set(0L);
         }

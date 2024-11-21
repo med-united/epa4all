@@ -7,6 +7,7 @@ import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.field.CodeChallengeMethod;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.service.health.api.epa4all.MultiEpaService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.idp.action.AuthAction;
@@ -16,9 +17,8 @@ import de.servicehealth.epa4all.server.idp.func.IdpFunc;
 import de.servicehealth.epa4all.server.idp.func.IdpFuncer;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
-import io.quarkus.runtime.StartupEvent;
+import de.servicehealth.startup.StartableService;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
@@ -47,7 +47,7 @@ import static de.servicehealth.epa4all.server.idp.action.AuthAction.URN_BSI_TR_0
 import static de.servicehealth.epa4all.server.idp.utils.IdpUtils.getSignedJwt;
 
 @ApplicationScoped
-public class IdpClient {
+public class IdpClient extends StartableService {
 
     private final static Logger log = Logger.getLogger(IdpClient.class.getName());
 
@@ -62,6 +62,7 @@ public class IdpClient {
     IdpConfig idpConfig;
     ManagedExecutor managedExecutor;
     KonnektorClient konnektorClient;
+    MultiEpaService multiEpaService;
     AuthenticatorClient authenticatorClient;
     MultiKonnektorService multiKonnektorService;
 
@@ -74,9 +75,6 @@ public class IdpClient {
     // A_24883-02 - clientAttest als ECDSA-Signatur
     private String signatureType = URN_BSI_TR_03111_ECDSA;
 
-    @ConfigProperty(name = "startup-events.disabled", defaultValue = "false")
-    boolean startupEventsDisabled;
-
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public IdpClient(
@@ -84,6 +82,7 @@ public class IdpClient {
         IdpConfig idpConfig,
         ManagedExecutor managedExecutor,
         KonnektorClient konnektorClient,
+        MultiEpaService multiEpaService,
         AuthenticatorClient authenticatorClient,
         MultiKonnektorService multiKonnektorService
     ) {
@@ -91,23 +90,21 @@ public class IdpClient {
         this.idpConfig = idpConfig;
         this.managedExecutor = managedExecutor;
         this.konnektorClient = konnektorClient;
+        this.multiEpaService = multiEpaService;
         this.authenticatorClient = authenticatorClient;
         this.multiKonnektorService = multiKonnektorService;
     }
 
-    void onStart(@Observes StartupEvent ev) {
-        if (startupEventsDisabled) {
-            log.warning(String.format("[%s] STARTUP events are disabled by config property", getClass().getSimpleName()));
-            return;
-        }
+    public void onStart() {
         retrieveDiscoveryDocument();
     }
 
     private void retrieveDiscoveryDocument() {
+        File configDirectory = new File(configFolder);
         try {
-            DiscoveryDocumentWrapper discoveryDocumentWrapper = new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(new File(configFolder)).load();
-            if (discoveryDocumentWrapper != null) {
-                discoveryDocumentResponse = discoveryDocumentWrapper.toDiscoveryDocumentResponse();
+            DiscoveryDocumentWrapper documentWrapper = new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(configDirectory).load();
+            if (documentWrapper != null) {
+                discoveryDocumentResponse = documentWrapper.toDiscoveryDocumentResponse();
                 return;
             }
             log.log(Level.WARNING, "Cached discoveryDocumentResponse is not loaded.");
@@ -123,7 +120,7 @@ public class IdpClient {
                     idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
                 );
                 DiscoveryDocumentWrapper wrapper = new DiscoveryDocumentWrapper(discoveryDocumentResponse);
-                new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(new File(configFolder)).store(wrapper);
+                new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(configDirectory).store(wrapper);
                 worked = true;
             } catch (Exception ex) {
                 log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
@@ -143,7 +140,11 @@ public class IdpClient {
         Consumer<String> vauNPConsumer
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
-        IdpFunc idpFunc = idpFuncer.init(authorizationSmcBApi, servicePorts);
+        IdpFunc idpFunc = idpFuncer.init(
+            multiEpaService.getEpaConfig().getUserAgent(),
+            authorizationSmcBApi,
+            servicePorts
+        );
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
@@ -161,7 +162,11 @@ public class IdpClient {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ThreadLocal<String> threadLocalString = new ThreadLocal<String>();
-        IdpFunc idpFunc = idpFuncer.init(authorizationSmcBApi, servicePorts);
+        IdpFunc idpFunc = idpFuncer.init(
+            multiEpaService.getEpaConfig().getUserAgent(),
+            authorizationSmcBApi,
+            servicePorts
+        );
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
@@ -291,7 +296,11 @@ public class IdpClient {
         Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
 
-        IdpFunc idpFunc = idpFuncer.init(authorizationSmcBApi, servicePorts);
+        IdpFunc idpFunc = idpFuncer.init(
+            multiEpaService.getEpaConfig().getUserAgent(),
+            authorizationSmcBApi,
+            servicePorts
+        );
         return getSignedJwt(smcbAuthCert, claims, signatureType, smcbHandle, true, idpFunc);
     }
 
@@ -301,7 +310,11 @@ public class IdpClient {
         Consumer<String> bearerConsumer
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
-        IdpFunc idpFunc = idpFuncer.init(authorizationSmcBApi, servicePorts);
+        IdpFunc idpFunc = idpFuncer.init(
+            multiEpaService.getEpaConfig().getUserAgent(),
+            authorizationSmcBApi,
+            servicePorts
+        );
         LoginAction authAction = new LoginAction(
             idpConfig.getClientId(),
             idpConfig.getAuthRequestRedirectUrl(),
