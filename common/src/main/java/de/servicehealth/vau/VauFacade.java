@@ -43,7 +43,7 @@ public class VauFacade {
         this.registry.register(this);
         tracingEnabled = vauConfig.isTracingEnabled();
         for (int i = 0; i < vauConfig.getVauPoolSize(); i++) {
-            vauClients.add(new VauClient(new VauClientStateMachine(vauConfig.getPuByte())));
+            vauClients.add(new VauClient(new VauClientStateMachine(vauConfig.isPu())));
         }
         executorService = Executors.newSingleThreadScheduledExecutor();
         Runtime.getRuntime().addShutdownHook(new Thread(() ->

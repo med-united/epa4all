@@ -8,8 +8,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class VauConfig {
 
-    @ConfigProperty(name = "epa.vau.puByte", defaultValue = "0x00")
-    byte puByte;
+    @ConfigProperty(name = "epa.vau.pu", defaultValue = "false")
+    boolean pu;
 
     @ConfigProperty(name = "epa.vau.tracing.enabled", defaultValue = "true")
     boolean tracingEnabled;
