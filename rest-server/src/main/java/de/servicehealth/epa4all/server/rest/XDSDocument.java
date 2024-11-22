@@ -17,7 +17,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.xml.bind.JAXBElement;
-import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.IdentifiableType;
@@ -26,7 +25,6 @@ import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -180,9 +178,5 @@ public class XDSDocument extends AbstractResource {
         } else {
             return "dat";
         }
-    }
-
-    private void attachVauAttributes(BindingProvider bindingProvider, Map<String, Object> runtimeAttributes) {
-        bindingProvider.getRequestContext().putAll(runtimeAttributes);
     }
 }

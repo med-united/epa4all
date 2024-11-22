@@ -25,9 +25,10 @@ public class EpaJwtConfigurator extends JwtConfigurator {
     @Override
     public void beforeRequest(Map<String, List<String>> headers) {
         try {
-            idpClient.getBearerToken(userRuntimeConfig, "TODO", token -> // TODO
-                headers.put("Authorization", List.of("Bearer " + token))
-            );
+            // TODO
+            // idpClient.getBearerToken(userRuntimeConfig, "TODO", token -> // TODO
+            //     headers.put("Authorization", List.of("Bearer " + token))
+            // );
         } catch (Exception e) {
             log.severe("Error while getting Bearer token -> " + e.getMessage());
         }

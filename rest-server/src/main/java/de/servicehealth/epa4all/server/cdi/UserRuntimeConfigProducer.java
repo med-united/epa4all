@@ -5,8 +5,8 @@ import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
-import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
@@ -44,7 +44,7 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
             Optional<String> configKey = konnektorsConfigs.keySet().stream().filter(s -> s.startsWith(konnektor)).findAny();
             if (configKey.isPresent()) {
                 IUserConfigurations userConfigurations = konnektorsConfigs.get(configKey.get()).getUserConfigurations();
-                return new AppConfig(konnektorDefaultConfig, userConfigurations);
+                return new RuntimeConfig(konnektorDefaultConfig, userConfigurations);
             }
         }
         return defaultUserConfig;

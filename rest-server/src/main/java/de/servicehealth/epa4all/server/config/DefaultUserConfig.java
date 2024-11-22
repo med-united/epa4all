@@ -199,7 +199,7 @@ public class DefaultUserConfig implements UserRuntimeConfig {
 
     @Override
     public UserRuntimeConfig copy() {
-        return new AppConfig(konnektorDefaultConfig, userConfigurations);
+        return new RuntimeConfig(konnektorDefaultConfig, userConfigurations);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package de.servicehealth.epa4all.idp;
 
+import de.service.health.api.epa4all.EpaAPI;
+import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import io.quarkus.test.junit.QuarkusTest;
@@ -22,6 +24,9 @@ public class IdpClientIT {
     IdpClient idpClient;
 
     @Inject
+    MultiEpaService multiEpaService;
+
+    @Inject
     DefaultUserConfig defaultUserConfig;
 
     @BeforeEach
@@ -41,7 +46,8 @@ public class IdpClientIT {
 
     @Test
     public void testGetVauNp() throws Exception {
-        idpClient.getVauNp(defaultUserConfig, "X110485291", "SMC-B-187", (String np) -> {
+        EpaAPI epaAPI = multiEpaService.getEpaAPI("X110485291");
+        idpClient.getVauNp(epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, "SMC-B-187", (String np) -> {
             System.out.println("NP: " + np);
             assertNotNull(np);
         });
@@ -49,7 +55,8 @@ public class IdpClientIT {
 
     @Test
     public void testGetBearerToken() throws Exception {
-        idpClient.getBearerToken(defaultUserConfig, "X110485291", (String token) -> {
+        EpaAPI epaAPI = multiEpaService.getEpaAPI("X110485291");
+        idpClient.getBearerToken(epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, (String token) -> {
             System.out.println("Bearer " + token);
             assertNotNull(token);
         });

@@ -122,11 +122,7 @@ public class WebdavSmcbManager {
         File localMedFolder = folderService.getInsurantMedFolder(telematikId, insurantId, "local");
         File readVSDResponseFile = new File(localMedFolder, "ReadVSDResponse.xml");
         if (!readVSDResponseFile.exists()) {
-            boolean created = readVSDResponseFile.createNewFile();
-            if (!created) {
-                String msg = String.format("ReadVSDResponse.xml was not created for [%s/%s]", telematikId, insurantId);
-                throw new IllegalStateException(msg);
-            }
+            readVSDResponseFile.createNewFile();
         }
         readVSDJaxbContext.createMarshaller().marshal(readVSDResponse, new FileOutputStream(readVSDResponseFile));
         try {

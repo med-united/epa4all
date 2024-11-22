@@ -7,6 +7,9 @@ import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
 import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
 import de.servicehealth.epa4all.xds.structure.StructureDefinitionService;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
+import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -27,6 +30,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.logging.Logger;
 
 import static de.health.service.cetp.utils.Utils.saveDataToFile;
+import static de.servicehealth.utils.ServerUtils.terminateExecutor;
 
 public abstract class EpaFileTracker<T extends FileAction> {
 
@@ -52,6 +56,12 @@ public abstract class EpaFileTracker<T extends FileAction> {
 
     public RegistryResponseType getResult(String taskId) {
         return resultsMap.remove(taskId);
+    }
+
+    void onStart(@Observes StartupEvent ev) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() ->
+            terminateExecutor(filesTransferExecutor, "Epa-File-Tracker-Job", 6000))
+        );
     }
 
     public void onTransfer(@ObservesAsync T fileAction) {

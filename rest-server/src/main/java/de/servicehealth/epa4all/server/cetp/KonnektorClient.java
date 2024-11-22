@@ -50,13 +50,20 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.SubscriptionManager.FAILED;
+import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 import static de.servicehealth.epa4all.server.idp.IdpClient.BOUNCY_CASTLE_PROVIDER;
+import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 
 @ApplicationScoped
 public class KonnektorClient implements IKonnektorClient {
+
+    private static final Logger log = Logger.getLogger(KonnektorClient.class.getName());
 
     private final Object emptyInput = new Object();
 
@@ -101,6 +108,43 @@ public class KonnektorClient implements IKonnektorClient {
         } catch (FaultMessage faultMessage) {
             throw new CetpFault(faultMessage.getMessage());
         }
+    }
+
+    public String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {
+        List<Card> cards = getCards(userRuntimeConfig, SMC_B);
+        Optional<Card> cardOpt = cards.stream()
+            .filter(c -> "VincenzkrankenhausTEST-ONLY".equals(c.getCardHolderName()))
+            .findAny();
+        return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
+    }
+
+    public String getTelematikId(UserRuntimeConfig userRuntimeConfig, String smcbHandle) {
+        Pair<X509Certificate, Boolean> x509Certificate = getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
+        return extractTelematikIdFromCertificate(x509Certificate.getKey());
+    }
+
+    public String getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) {
+        try {
+            List<Card> cards = getCards(userRuntimeConfig, CardType.EGK);
+            Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
+            return card.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
+        } catch (CetpFault e) {
+            log.log(Level.SEVERE, "Could not get card for insurantId: " + insurantId, e);
+        }
+        return null;
+    }
+
+    public String getKvnr(UserRuntimeConfig userRuntimeConfig, String egkHandle) {
+        try {
+            List<Card> cards = getCards(userRuntimeConfig, CardType.EGK);
+            Optional<Card> cardOpt = cards.stream()
+                .filter(c -> c.getCardHandle().equals(egkHandle))
+                .findAny();
+            return cardOpt.map(Card::getKvnr).orElse(null);
+        } catch (CetpFault e) {
+            log.log(Level.SEVERE, "Could not get card for egkHandle: " + egkHandle, e);
+        }
+        return null;
     }
 
     @Override
@@ -192,7 +236,15 @@ public class KonnektorClient implements IKonnektorClient {
         UserRuntimeConfig userRuntimeConfig,
         String smcbHandle
     ) {
-        Pair<ReadCardCertificateResponse, Boolean> certResponsePair = getReadCardCertificateResponse(userRuntimeConfig, smcbHandle);
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+        return getSmcbX509Certificate(servicePorts, smcbHandle);
+    }
+
+    public Pair<X509Certificate, Boolean> getSmcbX509Certificate(
+        IKonnektorServicePortsAPI servicePorts,
+        String smcbHandle
+    ) {
+        Pair<ReadCardCertificateResponse, Boolean> certResponsePair = getReadCardCertificateResponse(servicePorts, smcbHandle);
         if (certResponsePair == null) {
             throw new RuntimeException("Could not read card certificate");
         }
@@ -209,7 +261,7 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     private Pair<ReadCardCertificateResponse, Boolean> getReadCardCertificateResponse(
-        UserRuntimeConfig userRuntimeConfig,
+        IKonnektorServicePortsAPI servicePorts,
         String smcbHandle
     ) {
         // A_20666-02 - Auslesen des Authentisierungszertifikates
@@ -219,7 +271,6 @@ public class KonnektorClient implements IKonnektorClient {
         readCardCertificateRequest.setCertRefList(certRefList);
         readCardCertificateRequest.setCardHandle(smcbHandle);
 
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         ContextType contextType = servicePorts.getContextType();
         readCardCertificateRequest.setContext(contextType);
 
@@ -236,7 +287,7 @@ public class KonnektorClient implements IKonnektorClient {
                 try {
                     verifyPin(servicePorts, smcbHandle);
                     // try again
-                    getReadCardCertificateResponse(userRuntimeConfig, smcbHandle);
+                    getReadCardCertificateResponse(servicePorts, smcbHandle);
                 } catch (de.gematik.ws.conn.cardservice.wsdl.v8_1.FaultMessage e2) {
                     throw new RuntimeException("Could not verify pin", e2);
                 }

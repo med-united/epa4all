@@ -95,7 +95,7 @@ public class IdpUtils {
         base64Data.setMimeType("application/octet-stream");
         binaryDocumentType.setBase64Data(base64Data);
         externalAuthenticate.setBinaryString(binaryDocumentType);
-        externalAuthenticate.setContext(idpFunc.getContextSupplier().get());
+        externalAuthenticate.setContext(idpFunc.getCtxSupplier().get());
         externalAuthenticate.setCardHandle(smcbHandle);
         ExternalAuthenticate.OptionalInputs optionalInputs = new ExternalAuthenticate.OptionalInputs();
         // A_24883-02 - clientAttest als ECDSA-Signatur

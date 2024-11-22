@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.vau.VauClient.VAU_CID;
+import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
@@ -48,6 +49,10 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             TreeMap<String, List<String>> httpHeaders = (TreeMap<String, List<String>>) message.get(PROTOCOL_HEADERS);
             List<String> vauPathHeaders = httpHeaders.remove(VAU_METHOD_PATH);
             List<String> vauCidHeaders = httpHeaders.remove(VAU_CID);
+
+            if (!vauFacade.isTracingEnabled()) {
+                httpHeaders.remove(VAU_NON_PU_TRACING);
+            }
 
             String path = (vauPathHeaders == null || vauPathHeaders.isEmpty()) ? "undefined" : vauPathHeaders.getFirst();
             String vauCid = (vauCidHeaders == null || vauCidHeaders.isEmpty()) ? "undefined" : vauCidHeaders.getFirst();

@@ -33,4 +33,7 @@ public class EpaConfig {
 
     @ConfigProperty(name = "document-management-insurant-service.url")
     String documentManagementInsurantServiceUrl;
+
+    @ConfigProperty(name = "epa.user.agent", defaultValue = "GEMIncenereSud1PErUR/1.0.0")
+    String userAgent;
 }

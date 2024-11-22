@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server;
 
 import de.gematik.ws.conn.eventservice.v7.Event;
+import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
@@ -11,11 +12,11 @@ import de.servicehealth.epa4all.common.ProxyTestProfile;
 import de.servicehealth.epa4all.common.Utils;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
-import de.servicehealth.epa4all.server.config.AppConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -48,7 +49,7 @@ public class CardInsertedTest {
     KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
-    WebdavSmcbManager webdavSmcbManager;
+    IKonnektorClient konnektorClient;
 
     @Inject
     MultiEpaService multiEpaService;
@@ -66,10 +67,13 @@ public class CardInsertedTest {
                 null
             );
             when(insuranceDataService.getInsuranceDataOrReadVSD(any(), any(), any(), any())).thenReturn(insuranceData);
-	
-	        AppConfig appConfig = new AppConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
+
+            VauNpProvider vauNpProvider = mock(VauNpProvider.class);
+            when(vauNpProvider.getVauNp(any(), any())).thenReturn("vau-np");
+
+	        RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 	        CETPEventHandler cetpServerHandler = new CETPEventHandler(
-	            cardlinkWebsocketClient, insuranceDataService, multiEpaService, appConfig
+	            cardlinkWebsocketClient, insuranceDataService, konnektorClient, multiEpaService, vauNpProvider, runtimeConfig
 	        );
 	        EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 	

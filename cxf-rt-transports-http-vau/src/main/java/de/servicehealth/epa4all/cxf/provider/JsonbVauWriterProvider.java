@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.vau.VauClient.VAU_CID;
+import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
@@ -69,6 +70,10 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
             String path = evictHeader(httpHeaders, VAU_METHOD_PATH);
             String vauCid = evictHeader(httpHeaders, VAU_CID);
+
+            if (!vauFacade.isTracingEnabled()) {
+                httpHeaders.remove(VAU_NON_PU_TRACING);
+            }
 
             String additionalHeaders = ((MultivaluedMap<String, String>) httpHeaders).entrySet()
                 .stream()

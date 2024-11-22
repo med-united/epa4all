@@ -11,14 +11,12 @@ import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
+import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import io.quarkus.runtime.Startup;
-import io.quarkus.runtime.StartupEvent;
-import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -29,18 +27,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 
 @ApplicationScoped
 @Startup
-public class MultiEpaService {
+public class MultiEpaService extends StartableService {
 
     private static final Logger log = Logger.getLogger(MultiEpaService.class.getName());
 
     @Getter
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
 
+    @Getter
     private final EpaConfig epaConfig;
     private final ClientFactory clientFactory;
     private final Instance<VauFacade> vauFacadeInstance;
@@ -64,16 +62,18 @@ public class MultiEpaService {
         this.epaConfig = epaConfig;
     }
 
-    // this must be started after ClientFactory
-    void onStart(@Observes @Priority(5200) StartupEvent ev) {
-        initBackends();
+    @Override
+    public int getPriority() {
+        return MultiEpaPriority;
     }
 
-    private void initBackends() {
+    @Override
+    protected void onStart() {
         epaConfig.getEpaBackends().forEach(backend ->
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
                     VauFacade vauFacade = vauFacadeInstance.get();
+                    vauFacade.setBackend(backend);
 
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
                     IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl, vauFacade);
@@ -145,7 +145,7 @@ public class MultiEpaService {
     private boolean hasEpaRecord(EpaAPI api, String xInsurantid) {
         boolean result = false;
         try {
-            api.getAccountInformationApi().getRecordStatus(xInsurantid, USER_AGENT);
+            api.getAccountInformationApi().getRecordStatus(xInsurantid, epaConfig.getUserAgent());
             result = true;
         } catch (Exception e) {
             log.info(String.format(

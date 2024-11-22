@@ -1,11 +1,13 @@
 package de.servicehealth.epa4all.server.cetp;
 
 import de.health.service.cetp.AbstractCETPEventHandler;
+import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
-import de.servicehealth.epa4all.server.config.AppConfig;
+import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import org.jboss.logging.MDC;
@@ -18,7 +20,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.USER_AGENT;
+import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
@@ -27,20 +29,26 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private static final Logger log = Logger.getLogger(CETPEventHandler.class.getName());
 
     private final InsuranceDataService insuranceDataService;
+    private final IKonnektorClient konnektorClient;
     private final MultiEpaService multiEpaService;
-    private final AppConfig appConfig;
+    private final RuntimeConfig runtimeConfig;
+    private final VauNpProvider vauNpProvider;
 
     public CETPEventHandler(
         CardlinkWebsocketClient cardlinkWebsocketClient,
         InsuranceDataService insuranceDataService,
+        IKonnektorClient konnektorClient,
         MultiEpaService multiEpaService,
-        AppConfig appConfig
+        VauNpProvider vauNpProvider,
+        RuntimeConfig runtimeConfig
     ) {
         super(cardlinkWebsocketClient);
 
         this.insuranceDataService = insuranceDataService;
+        this.konnektorClient = konnektorClient;
         this.multiEpaService = multiEpaService;
-        this.appConfig = appConfig;
+        this.runtimeConfig = runtimeConfig;
+        this.vauNpProvider = vauNpProvider;
     }
 
     @Override
@@ -79,16 +87,19 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
             try {
                 String cardHandle = paramsMap.get("CardHandle");
-                String smcbHandle = insuranceDataService.getSmcbHandle(appConfig);
-                String telematikId = insuranceDataService.getTelematikId(appConfig, smcbHandle);
+                String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
+                String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
 
                 InsuranceData insuranceData = insuranceDataService.getInsuranceDataOrReadVSD(
-                    telematikId, correlationId, cardHandle, appConfig
+                    telematikId, correlationId, cardHandle, runtimeConfig
                 );
                 String insurantId = insuranceData.getInsurantId();
                 EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
+                String userAgent = multiEpaService.getEpaConfig().getUserAgent();
+
+                String vauNp = vauNpProvider.getVauNp(configurations.getConnectorBaseURL(), epaAPI.getBackend());
                 byte[] bytes = epaAPI.getRenderClient().getPdfBytes(
-                    Map.of(X_INSURANT_ID, insurantId, X_USER_AGENT, USER_AGENT)
+                    Map.of(X_INSURANT_ID, insurantId, X_USER_AGENT, userAgent, VAU_NP, vauNp)
                 );
                 String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                 Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
