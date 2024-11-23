@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
@@ -87,18 +88,21 @@ public abstract class AbstractResource {
         } else {
             log.info(String.format("[%s/%s] Entitlement is valid until %s", telematikId, kvnr, validTo));
         }
-        return new EpaContext(insuranceData, prepareRuntimeAttributes(
+        String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
+        Map<String, Object> runtimeAttributes = prepareRuntimeAttributes(
             insuranceData.getInsurantId(),
-            userRuntimeConfig.getConnectorBaseURL(),
-            epaAPI.getBackend())
+            konnektorUrl,
+            epaAPI.getBackend()
         );
+        return new EpaContext(insuranceData, runtimeAttributes);
     }
 
-    private Map<String, Object> prepareRuntimeAttributes(String insurantId, String konnektor, String backend) {
+    private Map<String, Object> prepareRuntimeAttributes(String insurantId, String konnektorUrl, String backend) {
         Map<String, Object> attributes = new HashMap<>();
         attributes.put(X_INSURANT_ID, insurantId);
         attributes.put(X_USER_AGENT, multiEpaService.getEpaConfig().getUserAgent());
-        String vauNp = vauNpProvider.getVauNp(konnektor, backend);
+        attributes.put(X_BACKEND, backend);
+        String vauNp = vauNpProvider.getVauNp(konnektorUrl, backend);
         if (vauNp != null) {
             attributes.put(VAU_NP, vauNp);
         }

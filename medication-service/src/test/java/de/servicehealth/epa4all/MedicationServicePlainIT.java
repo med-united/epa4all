@@ -4,7 +4,6 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import de.servicehealth.epa4all.common.PlainTestProfile;
-import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.PlainRenderClient;
 import io.quarkus.test.junit.QuarkusTest;
@@ -37,15 +36,12 @@ public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
 
-            IMedicationClient medicationClient = ctx.newRestfulClient(IMedicationClient.class, medicationServiceApiUrl);
             IGenericClient genericClient = ctx.newRestfulGenericClient(medicationServiceApiUrl);
             MethodOutcome methodOutcome = genericClient.create().resource(prepareMedication()).execute();
             Long id = methodOutcome.getId().getIdPartAsLong();
             assertNotNull(id);
 
             Medication medication = genericClient.read().resource(Medication.class).withId(id).execute();
-            assertNotNull(medication);
-            medication = medicationClient.get(methodOutcome.getId());
             assertNotNull(medication);
         }
     }
@@ -54,16 +50,16 @@ public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
     public void documentsFetched() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
             Executor executor = Executor.newInstance(HttpClients.custom().setSSLContext(createFakeSSLContext()).build());
-            IRenderClient renderClient = new PlainRenderClient(executor, medicationServiceRenderUrl);
-
-            File file = renderClient.getPdfFile(
+            IRenderClient renderClient = new PlainRenderClient(
+                executor,
+                medicationServiceRenderUrl,
                 Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45")
             );
+
+            File file = renderClient.getPdfFile();
             assertTrue(file.exists());
 
-            byte[] xhtmlDocument = renderClient.getXhtmlDocument(
-                Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45")
-            );
+            byte[] xhtmlDocument = renderClient.getXhtmlDocument();
             assertTrue(new String(xhtmlDocument).contains("Verordnungsdatum"));
         }
     }

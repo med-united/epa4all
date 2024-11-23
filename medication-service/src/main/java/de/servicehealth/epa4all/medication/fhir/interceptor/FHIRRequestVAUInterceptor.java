@@ -8,6 +8,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpMessage;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
@@ -40,7 +41,10 @@ import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_S2C;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_C2S_INFO;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
+import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
@@ -79,10 +83,14 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
                 byte[] vauMessage = prepareVauMessage(entityRequest, vauClient);
                 entityRequest.setEntity(new ByteArrayEntity(vauMessage));
-                entityRequest.removeHeaders(X_INSURANT_ID);
                 entityRequest.setHeader(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
                 entityRequest.setHeader(ACCEPT, APPLICATION_OCTET_STREAM);
-                entityRequest.setHeader(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
+
+                entityRequest.removeHeaders(X_INSURANT_ID);
+
+                if (vauFacade.isTracingEnabled()) {
+                    entityRequest.setHeader(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
+                }
 
                 String port = getMedicationPort();
                 String vauUri = medicationBaseUri.getScheme() + "://" + medicationBaseUri.getHost() + port + vauInfo.getVauCid();
@@ -99,20 +107,16 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
     }
 
     private byte[] prepareVauMessage(HttpEntityEnclosingRequest request, VauClient vauClient) throws IOException {
-        Header[] headers = request.getAllHeaders();
         HttpEntity entity = request.getEntity();
         byte[] body = entity == null ? new byte[0] : entity.getContent().readAllBytes();
-
-        String contentType = body.length == 0
-            ? "\r\n" // extra blank line
-            : "Content-Type: application/fhir+json; charset=UTF-8\r\nContent-Length: " + body.length + "\r\n\r\n";
 
         String method = body.length == 0 ? "GET" : "POST"; // TODO enhance
         String path = request.getRequestLine().getUri();
 
         boolean api = path.contains("api");
-        String additionalHeaders = Stream.of(headers)
+        String additionalHeaders = Stream.of(request.getAllHeaders())
             .filter(h -> !h.getName().equals(CONTENT_TYPE))
+            .filter(h -> !h.getName().equals(X_BACKEND))
             .filter(h -> !h.getName().equals(api ? ACCEPT : ""))
             .map(h -> h.getName() + ": " + h.getValue())
             .collect(Collectors.joining("\r\n"));
@@ -121,20 +125,27 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
             additionalHeaders += "\r\n";
         }
 
+        String backend = getHeaderValue(request, X_BACKEND);
+        request.removeHeader(request.getFirstHeader(X_BACKEND));
+        String contentType = body.length == 0
+            ? "\r\n" // extra blank line
+            : "Content-Type: application/fhir+json; charset=UTF-8\r\nContent-Length: " + body.length + "\r\n\r\n";
+
         byte[] httpRequest = (method + " " + path + " HTTP/1.1\r\n"
-            + "Host: medication-service:8080\r\n" // TODO
+            + "Host: " + backend + "\r\n"
             + additionalHeaders
             + prepareAcceptHeader(api, body)
-            + contentType).getBytes();
+            + contentType
+        ).getBytes();
 
         byte[] content = ArrayUtils.addAll(httpRequest, body);
-
+        log.info("FHIR REQUEST: " + new String(content));
         return vauClient.getVauStateMachine().encryptVauMessage(content);
     }
 
     private String prepareAcceptHeader(boolean api, byte[] body) {
         if (api) {
-           return body.length == 0
+           return body.length != 0
                ? "Accept: application/fhir+xml;q=1.0, application/fhir+json;q=1.0, application/xml+fhir;q=0.9, application/json+fhir;q=0.9\r\n"
                : "Accept: application/fhir+json;q=1.0, application/json+fhir;q=0.9\r\n";
         } else {
@@ -160,6 +171,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         Executor executor = newInstance(HttpClients.custom()
             .setDefaultRequestConfig(RequestConfig.custom().setRedirectsEnabled(false).build())
             .setSSLContext(sslContext)
+            .setSSLHostnameVerifier((h, s) -> true)
             .build());
 
         Response response = executor.execute(request1);
@@ -204,8 +216,8 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         return vauClient;
     }
 
-    private String getHeaderValue(HttpResponse httpResponse, String headerName) {
-        Header header = httpResponse.getFirstHeader(headerName);
+    private String getHeaderValue(HttpMessage httpMessage, String headerName) {
+        Header header = httpMessage.getFirstHeader(headerName);
         return header == null ? null : header.getValue();
     }
 

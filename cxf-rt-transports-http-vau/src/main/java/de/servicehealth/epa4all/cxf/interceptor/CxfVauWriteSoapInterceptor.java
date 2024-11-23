@@ -23,6 +23,7 @@ import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_ME
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
@@ -49,6 +50,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             TreeMap<String, List<String>> httpHeaders = (TreeMap<String, List<String>>) message.get(PROTOCOL_HEADERS);
             List<String> vauPathHeaders = httpHeaders.remove(VAU_METHOD_PATH);
             List<String> vauCidHeaders = httpHeaders.remove(VAU_CID);
+            List<String> backendHeaders = httpHeaders.remove(X_BACKEND);
 
             if (!vauFacade.isTracingEnabled()) {
                 httpHeaders.remove(VAU_NON_PU_TRACING);
@@ -56,6 +58,8 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             String path = (vauPathHeaders == null || vauPathHeaders.isEmpty()) ? "undefined" : vauPathHeaders.getFirst();
             String vauCid = (vauCidHeaders == null || vauCidHeaders.isEmpty()) ? "undefined" : vauCidHeaders.getFirst();
+            String backend = (backendHeaders == null || backendHeaders.isEmpty()) ? "undefined" : backendHeaders.getFirst();
+
             String additionalHeaders = httpHeaders.entrySet()
                 .stream()
                 .filter(p -> !p.getKey().equals(CONTENT_TYPE))

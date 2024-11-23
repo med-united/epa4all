@@ -1,51 +1,77 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.service.health.api.epa4all.EpaAPI;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.hl7.fhir.r4.model.Patient;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 
 @RequestScoped
 @Path("fhir")
 public class Fhir extends AbstractResource {
-	
-	@GET
-	@Path("pdf/{konnektor : ([0-9a-zA-Z\\-]+)?}")
-	public Response pdf(
-		@PathParam("konnektor") String konnektor,
-		@QueryParam("kvnr") String kvnr
-	) {
-		try {
-			EpaContext epaContext = prepareEpaContext(kvnr);
-			EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
 
-			byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaContext.getRuntimeAttributes());
-			return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
-		} catch (Exception e) {
-			throw new WebApplicationException(e);
-		}
-	}
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("medication/{konnektor : ([0-9a-zA-Z\\-]+)?}")
+    public Response medication(
+        @PathParam("konnektor") String konnektor,
+        @QueryParam("kvnr") String kvnr
+    ) {
+        try {
+            EpaContext epaContext = prepareEpaContext(kvnr);
+            EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+            IMedicationClient medicationClient = epaAPI.getMedicationClient(epaContext.getRuntimeAttributes());
 
-	@GET
-	@Path("xhtml/{konnektor : ([0-9a-zA-Z\\-]+)?}")
-	public Response get(
-		@PathParam("konnektor") String konnektor,
-		@QueryParam("kvnr") String kvnr
-	) {
-		try {
-			EpaContext epaContext = prepareEpaContext(kvnr);
-			EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+            List<Patient> patients = medicationClient.searchPatients(kvnr);
 
-			byte[] html = epaAPI.getRenderClient().getXhtmlDocument(epaContext.getRuntimeAttributes());
-			return Response.ok(html, "text/html").build();
-		} catch (Exception e) {
-			throw new WebApplicationException(e);
-		}
-	}
+            
+            return Response.ok(patients).build();
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
+    }
+
+    @GET
+    @Path("pdf/{konnektor : ([0-9a-zA-Z\\-]+)?}")
+    public Response pdf(
+        @PathParam("konnektor") String konnektor,
+        @QueryParam("kvnr") String kvnr
+    ) {
+        try {
+            EpaContext epaContext = prepareEpaContext(kvnr);
+            EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+
+            byte[] pdfBytes = epaAPI.getRenderClient(epaContext.getRuntimeAttributes()).getPdfBytes();
+            return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
+    }
+
+    @GET
+    @Path("xhtml/{konnektor : ([0-9a-zA-Z\\-]+)?}")
+    public Response get(
+        @PathParam("konnektor") String konnektor,
+        @QueryParam("kvnr") String kvnr
+    ) {
+        try {
+            EpaContext epaContext = prepareEpaContext(kvnr);
+            EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+
+            byte[] html = epaAPI.getRenderClient(epaContext.getRuntimeAttributes()).getXhtmlDocument();
+            return Response.ok(html, "text/html").build();
+        } catch (Exception e) {
+            throw new WebApplicationException(e);
+        }
+    }
 }
