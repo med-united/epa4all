@@ -50,7 +50,7 @@ public abstract class AbstractAuthTest {
             for (int i = 0; i < 10; i++) {
                 GetNonce200Response nonce = api.getNonce(xUseragent);
                 assertNotNull(nonce);
-                try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent)) {
+                try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent, "test:8080")) {
                     String query = response.getLocation().getQuery();
                     assertTrue(query.contains("redirect_uri"));
                 }

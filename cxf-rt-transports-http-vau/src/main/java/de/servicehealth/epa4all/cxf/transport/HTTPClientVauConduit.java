@@ -83,11 +83,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
         message.getExchange().put(VAU_CID, vauCid);
 
-        Object map = message.get(PROTOCOL_HEADERS);
-        if (map == null) {
-            map = new HashMap<String, List<String>>();
-            message.put(PROTOCOL_HEADERS, map);
-        }
+        Object map = message.computeIfAbsent(PROTOCOL_HEADERS, k -> new HashMap<String, List<String>>());
         if (map instanceof Map headers) {
             headers.put(CONNECTION, List.of(KEEP_ALIVE));
             headers.put(CONTENT_TYPE, List.of(APPLICATION_OCTET_STREAM));

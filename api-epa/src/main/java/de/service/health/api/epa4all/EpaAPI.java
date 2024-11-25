@@ -1,12 +1,14 @@
 package de.service.health.api.epa4all;
 
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.api.AccountInformationApi;
-import de.servicehealth.api.EntitlementsApi;
-import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
+
+import java.util.Map;
 
 public interface EpaAPI {
 
@@ -20,9 +22,9 @@ public interface EpaAPI {
 
     AuthorizationSmcBApi getAuthorizationSmcBApi();
 
-    IMedicationClient getMedicationClient();
-
     EntitlementsApi getEntitlementsApi();
 
-    IRenderClient getRenderClient();
+    IMedicationClient getMedicationClient(Map<String, Object> runtimeAttributes);
+
+    IRenderClient getRenderClient(Map<String, Object> runtimeAttributes);
 }

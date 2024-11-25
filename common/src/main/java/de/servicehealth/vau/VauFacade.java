@@ -53,7 +53,7 @@ public class VauFacade {
         executorService.scheduleWithFixedDelay(() -> {
             for(VauClient vauClient: vauClients) {
                 if (vauClient.busy() && vauClient.getAcquiredAt().get() < System.currentTimeMillis() - vauReadTimeoutMs) {
-                    log.warn(String.format("VauClient [%s] is force released", vauClient.getVauInfo().getVauCid()));
+                    log.warn(String.format("VauClient [VAU_CID='%s'] is force released", vauClient.getVauInfo().getVauCid()));
                     vauClient.forceRelease();
                 }
             }

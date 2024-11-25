@@ -36,7 +36,7 @@ public class VauResponseReader {
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    private String extractError(Optional<String> contentTypeOpt, byte[] bytes) {
+    private String extractError(Optional<String> contentTypeOpt, int responseCode, byte[] bytes) {
         if (contentTypeOpt.isPresent()) {
             String contentType = contentTypeOpt.get();
             if ("application/cbor".equals(contentType)) {
@@ -52,6 +52,9 @@ public class VauResponseReader {
                 } catch (IOException e) {
                     return null;
                 }
+            } else if (contentType.contains("text")) {
+                String source = new String(bytes);
+                return responseCode + " " + source.split(String.valueOf(responseCode))[1].split("<")[0].trim();
             }
         }
         return null;
@@ -66,7 +69,7 @@ public class VauResponseReader {
 
     public VauResponse read(String vauCid, int responseCode, List<Pair<String, String>> originHeaders, byte[] bytes) {
         Optional<String> contentTypeOpt = findHeader(originHeaders, "content-type");
-        String generalError = extractError(contentTypeOpt, bytes);
+        String generalError = extractError(contentTypeOpt, responseCode, bytes);
         if (generalError != null) {
             return new VauResponse(responseCode, generalError, generalError.getBytes(UTF_8), originHeaders);
         } else {

@@ -25,6 +25,7 @@ import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_ME
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -70,6 +71,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
             String path = evictHeader(httpHeaders, VAU_METHOD_PATH);
             String vauCid = evictHeader(httpHeaders, VAU_CID);
+            String backend = evictHeader(httpHeaders, X_BACKEND);
 
             if (!vauFacade.isTracingEnabled()) {
                 httpHeaders.remove(VAU_NON_PU_TRACING);
@@ -92,7 +94,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
             String keepAlive = additionalHeaders.contains("Keep-Alive") ? "" : "Connection: Keep-Alive\r\n";
 
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
-                + "Host: epa-as-2.dev.epa4all.de\r\n"
+                + "Host: " + backend + "\r\n"
                 + additionalHeaders + keepAlive
                 + "Accept: application/json\r\n"
                 + prepareContentHeaders(originPayload)).getBytes();

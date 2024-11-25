@@ -21,6 +21,7 @@ public class IdpFuncer {
 
     public IdpFunc init(
         String userAgent,
+        String backend,
         IKonnektorServicePortsAPI servicePorts,
         AuthorizationSmcBApi authorizationSmcBApi
     ) {
@@ -34,7 +35,7 @@ public class IdpFuncer {
                 }
             },
             () -> authorizationSmcBApi.getNonce(userAgent).getNonce(),
-            () -> authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(userAgent),
+            () -> authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(userAgent, backend),
             sendAuthCodeSC -> authorizationSmcBApi.sendAuthCodeSC(userAgent, sendAuthCodeSC)
         );
     }

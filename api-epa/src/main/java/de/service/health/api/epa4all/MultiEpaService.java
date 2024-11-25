@@ -4,12 +4,9 @@ import ca.uhn.fhir.context.FhirContext;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.api.AccountInformationApi;
-import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
-import de.servicehealth.epa4all.medication.fhir.restful.IMedicationClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauFacade;
@@ -91,27 +88,27 @@ public class MultiEpaService extends StartableService {
                         EntitlementsApi.class, backend, epaConfig.getEntitlementServiceUrl(), vauFacade
                     );
 
-                    FhirContext ctx = FhirContext.forR4();
-                    String medicationServiceApiUrl = epaConfig.getMedicationServiceApiUrl();
-                    String backendUrl = getBackendUrl(backend, medicationServiceApiUrl);
-                    VauRestfulClientFactory.applyToFhirContext(ctx, vauFacade, getBaseUrl(backendUrl));
-                    IMedicationClient medicationClient = ctx.newRestfulClient(IMedicationClient.class, backendUrl);
+                    FhirContext apiContext = FhirContext.forR4();
+                    VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(apiContext);
+                    String medicationApiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
+                    apiClientFactory.init(vauFacade, getBaseUrl(medicationApiUrl));
 
-                    ctx = FhirContext.forR4();
-                    String medicationServiceRenderUrl = epaConfig.getMedicationServiceRenderUrl();
-                    backendUrl = getBackendUrl(backend, medicationServiceRenderUrl);
-                    Executor executor = VauRestfulClientFactory.applyToFhirContext(ctx, vauFacade, getBaseUrl(backendUrl));
-                    IRenderClient renderClient = new VauRenderClient(executor, backendUrl);
+                    String medicationRenderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
+                    VauRestfulClientFactory renderClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
+                    renderClientFactory.init(vauFacade, getBaseUrl(medicationRenderUrl));
+                    Executor renderExecutor = Executor.newInstance(renderClientFactory.getVauHttpClient());
 
                     return new EpaAPIAggregator(
                         backend,
+                        apiContext,
+                        medicationApiUrl,
+                        renderExecutor,
+                        medicationRenderUrl,
                         documentManagementPortType,
                         documentManagementInsurantPortType,
                         accountInformationApi,
                         authorizationSmcBApi,
-                        entitlementsApi,
-                        medicationClient,
-                        renderClient
+                        entitlementsApi
                     );
                 } catch (Exception e) {
                     throw new RuntimeException(e);

@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class VauClient {
-    
+
     public static final String VAU_CID = "VAU-CID";
 
     public static final String VAU_DEBUG_SK1_C2S = "vau-debug-s_k1_c2s";
@@ -21,6 +21,7 @@ public class VauClient {
 
     public static final String X_INSURANT_ID = "x-insurantid";
     public static final String X_USER_AGENT = "x-useragent";
+    public static final String X_BACKEND = "x-backend";
     public static final String VAU_NP = "VAU-NP";
 
     @Getter
@@ -45,12 +46,12 @@ public class VauClient {
     }
 
     public boolean acquire() {
-        try {
-            return lock.tryLock();
-        } finally {
+        boolean acquired = lock.tryLock();
+        if (acquired) {
             broken.set(false);
             acquiredAt.set(System.currentTimeMillis());
         }
+        return acquired;
     }
 
     public boolean busy() {

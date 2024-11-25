@@ -4,6 +4,7 @@ import de.health.service.check.HealthChecker;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
@@ -28,6 +29,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
@@ -81,28 +83,39 @@ public abstract class AbstractResource {
         String insurantId = insuranceData.getInsurantId();
         EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
         String userAgent = multiEpaService.getEpaConfig().getUserAgent();
-        Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
-        if (validTo == null || validTo.isBefore(Instant.now())) {
-            setEntitlement(userRuntimeConfig, insuranceData, epaAPI, userAgent, smcbHandle);
-        } else {
-            log.info(String.format("[%s/%s] Entitlement is valid until %s", telematikId, kvnr, validTo));
-        }
-        return new EpaContext(insuranceData, prepareRuntimeAttributes(
-            insuranceData.getInsurantId(),
-            userRuntimeConfig.getConnectorBaseURL(),
-            epaAPI.getBackend())
+        resolveEntitlement(insuranceData, epaAPI, userAgent);
+        String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
+        Map<String, Object> runtimeAttributes = prepareRuntimeAttributes(
+            insurantId, userAgent, konnektorUrl, epaAPI.getBackend()
         );
+        return new EpaContext(insuranceData, runtimeAttributes);
     }
 
-    private Map<String, Object> prepareRuntimeAttributes(String insurantId, String konnektor, String backend) {
+    private Map<String, Object> prepareRuntimeAttributes(
+        String insurantId,
+        String userAgent,
+        String konnektorUrl,
+        String backend
+    ) {
         Map<String, Object> attributes = new HashMap<>();
         attributes.put(X_INSURANT_ID, insurantId);
-        attributes.put(X_USER_AGENT, multiEpaService.getEpaConfig().getUserAgent());
-        String vauNp = vauNpProvider.getVauNp(konnektor, backend);
+        attributes.put(X_USER_AGENT, userAgent);
+        attributes.put(X_BACKEND, backend);
+        String vauNp = vauNpProvider.getVauNp(konnektorUrl, backend);
         if (vauNp != null) {
             attributes.put(VAU_NP, vauNp);
         }
         return attributes;
+    }
+
+    private void resolveEntitlement(InsuranceData insuranceData, EpaAPI epaAPI, String userAgent) throws IOException {
+        String insurantId = insuranceData.getInsurantId();
+        Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
+        if (validTo == null || validTo.isBefore(Instant.now())) {
+            setEntitlement(userRuntimeConfig, insuranceData, epaAPI, userAgent, smcbHandle);
+        } else {
+            log.info(String.format("[%s/%s] Entitlement is valid until %s", telematikId, insurantId, validTo));
+        }
     }
 
     private void setEntitlement(
@@ -116,13 +129,16 @@ public abstract class AbstractResource {
         String pz = insuranceData.getPz();
 
         EntitlementRequestType entitlementRequest = new EntitlementRequestType();
-        String entitlementPSJWT = idpClient.createEntitlementPSJWT(
-            smcbHandle, pz, userRuntimeConfig, epaAPI.getAuthorizationSmcBApi()
+        entitlementRequest.setJwt(
+            idpClient.createEntitlementPSJWT(
+                epaAPI.getBackend(), smcbHandle, pz, userRuntimeConfig, epaAPI.getAuthorizationSmcBApi()
+            )
         );
-        entitlementRequest.setJwt(entitlementPSJWT);
-        ValidToResponseType response = epaAPI.getEntitlementsApi().setEntitlementPs(
+        EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
+        ValidToResponseType response = entitlementsApi.setEntitlementPs(
             insurantId,
             userAgent,
+            epaAPI.getBackend(),
             entitlementRequest
         );
         if (response.getValidTo() != null) {
