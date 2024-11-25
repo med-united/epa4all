@@ -2,8 +2,8 @@ package de.service.health.api.epa4all;
 
 import ca.uhn.fhir.context.FhirContext;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.api.AccountInformationApi;
-import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.GenericMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;

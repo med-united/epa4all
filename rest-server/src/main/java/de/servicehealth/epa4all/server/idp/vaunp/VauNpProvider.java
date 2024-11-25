@@ -6,6 +6,7 @@ import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.startup.StartableService;
@@ -143,7 +144,8 @@ public class VauNpProvider extends StartableService {
         try {
             RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
             String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-            String vauNp = idpClient.getVauNpSync(api.getAuthorizationSmcBApi(), runtimeConfig, smcbHandle);
+            AuthorizationSmcBApi authorizationSmcBApi = api.getAuthorizationSmcBApi();
+            String vauNp = idpClient.getVauNpSync(authorizationSmcBApi, runtimeConfig, smcbHandle, api.getBackend());
 
             return Pair.of(new VauNpKey(konnektor, backend), vauNp);
         } catch (Exception e) {

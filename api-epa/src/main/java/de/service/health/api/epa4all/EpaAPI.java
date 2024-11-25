@@ -1,8 +1,8 @@
 package de.service.health.api.epa4all;
 
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.api.AccountInformationApi;
-import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;

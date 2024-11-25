@@ -37,7 +37,7 @@ public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
             FhirContext ctx = FhirContext.forR4();
 
             IGenericClient genericClient = ctx.newRestfulGenericClient(medicationServiceApiUrl);
-            MethodOutcome methodOutcome = genericClient.create().resource(prepareMedication()).execute();
+            MethodOutcome methodOutcome = genericClient.create().resource(prepareMedication("1")).execute();
             Long id = methodOutcome.getId().getIdPartAsLong();
             assertNotNull(id);
 

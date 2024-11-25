@@ -11,6 +11,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.Patient;
 
 import java.io.ByteArrayInputStream;
@@ -30,12 +31,12 @@ public class Fhir extends AbstractResource {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);
             EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-            IMedicationClient medicationClient = epaAPI.getMedicationClient(epaContext.getRuntimeAttributes());
+            IMedicationClient client = epaAPI.getMedicationClient(epaContext.getRuntimeAttributes());
 
-            List<Patient> patients = medicationClient.searchPatients(kvnr);
+            Patient patient = client.searchPatients(kvnr).getLast();
+            List<Medication> medications = client.searchMedications(patient);
 
-            
-            return Response.ok(patients).build();
+            return Response.ok(medications).build();
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }

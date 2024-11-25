@@ -2,30 +2,28 @@ package de.servicehealth.epa4all;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.util.BundleUtil;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
-import de.servicehealth.epa4all.medication.fhir.interceptor.XHeadersInterceptor;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.GenericMedicationClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.http.client.fluent.Executor;
-import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.ContactPoint;
 import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Medication;
+import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.StringType;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -47,35 +45,41 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
     @Test
     public void medicationCreatedAndObtainedThroughVAUProxy() throws Exception {
         if (isDockerServiceRunning(MEDICATION_SERVICE)) {
-
             FhirContext ctx = FhirContext.forR4();
             VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(ctx);
             apiClientFactory.init(vauFacade, getBaseUrl(medicationServiceApiUrl));
 
             String kvnr = "X110485291";
 
-            IGenericClient medicationClient = ctx.newRestfulGenericClient(medicationServiceApiUrl);
-            medicationClient.registerInterceptor(new XHeadersInterceptor(Map.of(X_BACKEND, "medication-service:8080")));
-
-            MethodOutcome outcome = medicationClient.create().resource(preparePatient(kvnr)).execute();
+            Map<String, Object> runtimeAttributes = Map.of(X_BACKEND, "medication-service:8080");
+            IMedicationClient medicationClient = new GenericMedicationClient(ctx, medicationServiceApiUrl, runtimeAttributes);
+            MethodOutcome outcome = medicationClient.createResource(preparePatient(kvnr));
             Long id = outcome.getId().getIdPartAsLong();
             assertNotNull(id);
 
-            Bundle bundle = medicationClient.search()
-                .forResource(Patient.class)
-                .where(Patient.IDENTIFIER.exactly().identifier(kvnr))
-                .returnBundle(Bundle.class)
-                .execute();
-            
-            List<IBaseResource> patients = new ArrayList<>(BundleUtil.toListOfResources(ctx, bundle));
-
-            while (bundle.getLink(IBaseBundle.LINK_NEXT) != null) {
-                bundle = medicationClient.loadPage().next(bundle).execute();
-                patients.addAll(BundleUtil.toListOfResources(ctx, bundle));
-            }
-
+            List<Patient> patients = medicationClient.searchPatients(kvnr);
             assertFalse(patients.isEmpty());
             patients.forEach(p -> System.out.println(p.getIdElement()));
+
+            Patient patient = patients.getLast();
+            for (Identifier identifier : patient.getIdentifier()) {
+                System.out.println("Found Insurance ID: " + identifier.getValue());
+            }
+
+            String medIdentifier = "123";
+            outcome = medicationClient.createResource(prepareMedication(medIdentifier));
+
+            MedicationRequest medicationRequest = new MedicationRequest();
+            medicationRequest.setStatus(MedicationRequest.MedicationRequestStatus.ACTIVE);
+            medicationRequest.setIntent(MedicationRequest.MedicationRequestIntent.ORDER);
+            medicationRequest.setSubject(new Reference("Patient/" + patient.getIdPart()));
+            medicationRequest.setMedication(new Reference("Medication/" + outcome.getId().getIdPart()));
+
+            MethodOutcome methodOutcome = medicationClient.createResource(medicationRequest);
+            System.out.println(methodOutcome);
+
+            List<Medication> medications = medicationClient.searchMedications(patient);
+            assertFalse(medications.isEmpty());
         }
     }
 

@@ -47,7 +47,7 @@ public class IdpClientIT {
     @Test
     public void testGetVauNp() throws Exception {
         EpaAPI epaAPI = multiEpaService.getEpaAPI("X110485291");
-        idpClient.getVauNp(epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, "SMC-B-187", (String np) -> {
+        idpClient.getVauNp(epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, "SMC-B-187", "test:8080", (String np) -> {
             System.out.println("NP: " + np);
             assertNotNull(np);
         });
@@ -56,7 +56,7 @@ public class IdpClientIT {
     @Test
     public void testGetBearerToken() throws Exception {
         EpaAPI epaAPI = multiEpaService.getEpaAPI("X110485291");
-        idpClient.getBearerToken(epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, (String token) -> {
+        idpClient.getBearerToken("test:8080", epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, (String token) -> {
             System.out.println("Bearer " + token);
             assertNotNull(token);
         });

@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.Base64;
 import java.util.stream.Collectors;
@@ -41,10 +43,8 @@ import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_S2C;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_C2S_INFO;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
-import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
-import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
@@ -111,7 +111,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         byte[] body = entity == null ? new byte[0] : entity.getContent().readAllBytes();
 
         String method = body.length == 0 ? "GET" : "POST"; // TODO enhance
-        String path = request.getRequestLine().getUri();
+        String path = URLDecoder.decode(request.getRequestLine().getUri(), StandardCharsets.UTF_8);
 
         boolean api = path.contains("api");
         String additionalHeaders = Stream.of(request.getAllHeaders())
@@ -171,7 +171,6 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         Executor executor = newInstance(HttpClients.custom()
             .setDefaultRequestConfig(RequestConfig.custom().setRedirectsEnabled(false).build())
             .setSSLContext(sslContext)
-            .setSSLHostnameVerifier((h, s) -> true)
             .build());
 
         Response response = executor.execute(request1);
