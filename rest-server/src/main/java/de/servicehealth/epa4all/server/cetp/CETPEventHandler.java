@@ -7,9 +7,14 @@ import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
+import de.servicehealth.epa4all.server.filetracker.download.FileDownload;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.rest.EpaContext;
+import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
+import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.jboss.logging.MDC;
 
 import java.util.Base64;
@@ -20,6 +25,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
+import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
+import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
@@ -30,6 +37,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private static final Logger log = Logger.getLogger(CETPEventHandler.class.getName());
 
     private final InsuranceDataService insuranceDataService;
+    private final EpaFileDownloader epaFileDownloader;
     private final IKonnektorClient konnektorClient;
     private final MultiEpaService multiEpaService;
     private final RuntimeConfig runtimeConfig;
@@ -38,6 +46,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     public CETPEventHandler(
         CardlinkWebsocketClient cardlinkWebsocketClient,
         InsuranceDataService insuranceDataService,
+        EpaFileDownloader epaFileDownloader,
         IKonnektorClient konnektorClient,
         MultiEpaService multiEpaService,
         VauNpProvider vauNpProvider,
@@ -46,6 +55,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         super(cardlinkWebsocketClient);
 
         this.insuranceDataService = insuranceDataService;
+        this.epaFileDownloader = epaFileDownloader;
         this.konnektorClient = konnektorClient;
         this.multiEpaService = multiEpaService;
         this.runtimeConfig = runtimeConfig;
@@ -103,6 +113,10 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     X_INSURANT_ID, insurantId, X_USER_AGENT, userAgent, VAU_NP, vauNp, X_BACKEND, epaAPI.getBackend()
                 );
                 byte[] bytes = epaAPI.getRenderClient(xHeaders).getPdfBytes();
+
+                EpaContext epaContext = new EpaContext(insuranceData, Map.of());
+                handleDownloadResponse(bytes, telematikId, epaContext, insurantId);
+
                 String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                 Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
                 cardlinkWebsocketClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
@@ -120,5 +134,30 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             String msgFormat = "Ignored \"CARD/INSERTED\" values=%s";
             log.log(Level.INFO, String.format(msgFormat, paramsMap));
         }
+    }
+
+    private void handleDownloadResponse(
+        byte[] bytes,
+        String telematikId,
+        EpaContext epaContext,
+        String kvnr
+    ) throws Exception {
+        String taskId = UUID.randomUUID().toString();
+        String fileName = UUID.randomUUID() + ".pdf";
+        FileDownload fileDownload = new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, null);
+
+        RetrieveDocumentSetResponseType response = new RetrieveDocumentSetResponseType();
+        RegistryResponseType registryResponse = new RegistryResponseType();
+        registryResponse.setStatus("Success");
+        response.setRegistryResponse(registryResponse);
+
+        RetrieveDocumentSetResponseType.DocumentResponse documentResponse = new RetrieveDocumentSetResponseType.DocumentResponse();
+        documentResponse.setDocument(bytes);
+        documentResponse.setMimeType("application/pdf");
+        documentResponse.setDocumentUniqueId(UUID.randomUUID().toString());
+        
+        response.getDocumentResponse().add(documentResponse);
+
+        epaFileDownloader.handleDownloadResponse(taskId, fileDownload, response);
     }
 }

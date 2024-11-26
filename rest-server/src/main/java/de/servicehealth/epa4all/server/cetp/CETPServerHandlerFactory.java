@@ -7,6 +7,7 @@ import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
@@ -21,6 +22,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     private final VauNpProvider vauNpProvider;
     private final MultiEpaService multiEpaService;
     private final IKonnektorClient konnektorClient;
+    private final EpaFileDownloader epaFileDownloader;
     private final InsuranceDataService insuranceDataService;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
 
@@ -30,6 +32,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         VauNpProvider vauNpProvider,
         MultiEpaService multiEpaService,
         IKonnektorClient konnektorClient,
+        EpaFileDownloader epaFileDownloader,
         InsuranceDataService insuranceDataService,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
@@ -37,6 +40,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         this.vauNpProvider = vauNpProvider;
         this.multiEpaService = multiEpaService;
         this.konnektorClient = konnektorClient;
+        this.epaFileDownloader = epaFileDownloader;
         this.insuranceDataService = insuranceDataService;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
     }
@@ -49,7 +53,8 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
             new EpaJwtConfigurator(runtimeConfig, idpClient)
         );
         CETPEventHandler cetpEventHandler = new CETPEventHandler(
-            cardlinkWebsocketClient, insuranceDataService, konnektorClient, multiEpaService, vauNpProvider, runtimeConfig
+            cardlinkWebsocketClient, insuranceDataService, epaFileDownloader,
+            konnektorClient, multiEpaService, vauNpProvider, runtimeConfig
         );
         return new ChannelInboundHandler[] { cetpEventHandler };
     }

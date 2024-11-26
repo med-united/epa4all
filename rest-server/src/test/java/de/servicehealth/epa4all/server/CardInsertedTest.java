@@ -14,6 +14,7 @@ import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
@@ -49,6 +50,9 @@ public class CardInsertedTest {
     KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
+    EpaFileDownloader epaFileDownloader;
+
+    @Inject
     IKonnektorClient konnektorClient;
 
     @Inject
@@ -73,7 +77,8 @@ public class CardInsertedTest {
 
 	        RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 	        CETPEventHandler cetpServerHandler = new CETPEventHandler(
-	            cardlinkWebsocketClient, insuranceDataService, konnektorClient, multiEpaService, vauNpProvider, runtimeConfig
+	            cardlinkWebsocketClient, insuranceDataService, epaFileDownloader, konnektorClient,
+                multiEpaService, vauNpProvider, runtimeConfig
 	        );
 	        EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 	
