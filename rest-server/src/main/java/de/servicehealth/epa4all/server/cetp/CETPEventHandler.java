@@ -25,8 +25,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
-import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
-import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
@@ -102,7 +100,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
 
                 InsuranceData insuranceData = insuranceDataService.getInsuranceDataOrReadVSD(
-                    telematikId, correlationId, cardHandle, runtimeConfig
+                    telematikId, cardHandle, runtimeConfig
                 );
                 String insurantId = insuranceData.getInsurantId();
                 EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
