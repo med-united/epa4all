@@ -43,8 +43,9 @@ public class InterceptorUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static void addProtocolHeader(Message message, String name, Object value) {
+    public static void putProtocolHeader(Message message, String name, Object value) {
         TreeMap<String, Object> map = (TreeMap<String, Object>) message.get(PROTOCOL_HEADERS);
+        map.keySet().stream().filter(key -> key.equalsIgnoreCase(name)).toList().forEach(map::remove);
         map.put(name, List.of(value));
     }
 }

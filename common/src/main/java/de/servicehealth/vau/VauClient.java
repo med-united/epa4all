@@ -21,6 +21,7 @@ public class VauClient {
 
     public static final String X_INSURANT_ID = "x-insurantid";
     public static final String X_USER_AGENT = "x-useragent";
+    public static final String X_KONNEKTOR = "x-konnektor";
     public static final String X_BACKEND = "x-backend";
     public static final String VAU_NP = "VAU-NP";
 

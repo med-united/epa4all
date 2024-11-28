@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.cxf.provider;
 
+import de.servicehealth.epa4all.cxf.model.FhirResponse;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.JsonbConfig;
@@ -48,11 +49,15 @@ public abstract class AbstractJsonbReader implements MessageBodyReader {
     ) throws IOException, WebApplicationException {
         try (Jsonb build = jsonbBuilder.withConfig(config).build()) {
             byte[] bytes = getBytes(entityStream, httpHeaders);
-            String payload = new String(bytes, UTF_8);
-            if (payload.startsWith("[")) {
-                payload = String.format("{\"data\": %s }", payload);
+            if (type.isAssignableFrom(FhirResponse.class)) {
+                return new FhirResponse(bytes);
+            } else {
+                String payload = new String(bytes, UTF_8);
+                if (payload.startsWith("[")) {
+                    payload = String.format("{\"data\": %s }", payload);
+                }
+                return build.fromJson(payload, type);
             }
-            return build.fromJson(payload, type);
         } catch (Exception e) {
             throw new IOException(e.getMessage());
         }

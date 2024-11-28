@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.cxf.transport;
 
-import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
+import de.servicehealth.epa4all.cxf.model.EmptyRequest;
 import org.apache.cxf.Bus;
 import org.apache.cxf.binding.soap.Soap12;
 import org.apache.cxf.message.Message;
@@ -71,8 +71,8 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
                 method = POST_METHOD;
             } else {
                 message.put(EMPTY_REQUEST_PROPERTY, false);
-                message.setContent(List.class, new MessageContentsList(new EmptyBody()));
-                message.put(Type.class, EmptyBody.class);
+                message.setContent(List.class, new MessageContentsList(new EmptyRequest()));
+                message.put(Type.class, EmptyRequest.class);
                 message.put("proxy.method.parameter.body.index", -1);
             }
         }

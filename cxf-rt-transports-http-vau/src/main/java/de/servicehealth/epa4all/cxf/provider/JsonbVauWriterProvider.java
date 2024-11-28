@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.cxf.provider;
 
-import de.servicehealth.epa4all.cxf.interceptor.EmptyBody;
+import de.servicehealth.epa4all.cxf.model.EmptyRequest;
+import de.servicehealth.epa4all.cxf.model.FhirRequest;
 import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import jakarta.json.bind.Jsonb;
@@ -63,10 +64,16 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
         try (Jsonb build = jsonbBuilder.build()) {
 
             byte[] originPayload = new byte[0];
-            if (!type.isAssignableFrom(EmptyBody.class)) {
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                build.toJson(o, type, os);
-                originPayload = os.toByteArray();
+            if (!type.isAssignableFrom(EmptyRequest.class)) {
+                if (!type.isAssignableFrom(FhirRequest.class)) {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    build.toJson(o, type, os);
+                    originPayload = os.toByteArray();
+                } else {
+                    if (o instanceof FhirRequest fhirRequest) {
+                        originPayload = fhirRequest.getBody();
+                    }
+                }
             }
 
             String path = evictHeader(httpHeaders, VAU_METHOD_PATH);

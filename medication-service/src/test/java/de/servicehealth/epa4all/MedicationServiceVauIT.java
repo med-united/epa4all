@@ -27,7 +27,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
+import static de.servicehealth.epa4all.common.Utils.isDockerContainerRunning;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
@@ -44,7 +44,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
 
     @Test
     public void medicationCreatedAndObtainedThroughVAUProxy() throws Exception {
-        if (isDockerServiceRunning(MEDICATION_SERVICE)) {
+        if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
             VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(ctx);
             apiClientFactory.init(vauFacade, getBaseUrl(medicationServiceApiUrl));
@@ -94,7 +94,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
 
     @Test
     public void documentsDownloadedThroughVAUProxy() throws Exception {
-        if (isDockerServiceRunning(MEDICATION_SERVICE)) {
+        if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
             VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(ctx);
             apiClientFactory.init(vauFacade, getBaseUrl(medicationServiceRenderUrl));

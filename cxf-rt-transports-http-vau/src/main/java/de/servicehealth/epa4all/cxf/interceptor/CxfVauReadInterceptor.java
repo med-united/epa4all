@@ -1,10 +1,8 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
-import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauResponse;
 import de.servicehealth.vau.VauResponseReader;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
@@ -12,14 +10,14 @@ import org.apache.cxf.phase.Phase;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 
-import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.addProtocolHeader;
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.getProtocolHeaders;
+import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.putProtocolHeader;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 import static org.apache.cxf.message.Message.RESPONSE_CODE;
 
@@ -46,23 +44,29 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             VauResponse vauResponse = vauResponseReader.read(
                 vauCid, responseCode, getProtocolHeaders(message), inputStream.readAllBytes()
             );
-            List<Pair<String, String>> headers = vauResponse.headers();
-            Optional<Pair<String, String>> locationOpt = headers.stream()
-                .filter(p -> p.getKey().equals(LOCATION))
-                .findFirst();
+            restoreHeaders(vauResponse, message, Set.of(LOCATION, CONTENT_TYPE, CONTENT_LENGTH));
 
-            locationOpt.ifPresent(p -> addProtocolHeader(message, LOCATION, p.getValue()));
+            vauResponse.headers().stream()
+                .filter(p -> p.getKey().equals(CONTENT_TYPE))
+                .findFirst().ifPresent(p -> message.put(CONTENT_TYPE, p.getValue()));
+
             if (vauResponse.generalError() != null) {
-                addProtocolHeader(message, VAU_ERROR, vauResponse.generalError());
+                putProtocolHeader(message, VAU_ERROR, vauResponse.generalError());
             }
             byte[] payload = vauResponse.payload();
             if (payload != null) {
                 log.info("Response: " + new String(payload));
                 message.setContent(InputStream.class, new ByteArrayInputStream(payload));
-                addProtocolHeader(message, CONTENT_LENGTH, payload.length);
+                putProtocolHeader(message, CONTENT_LENGTH, payload.length);
             }
         } catch (Exception e) {
             throw new Fault(e);
         }
+    }
+
+    private void restoreHeaders(VauResponse vauResponse, Message message, Set<String> headersNames) {
+        vauResponse.headers().stream()
+            .filter(p -> headersNames.stream().anyMatch(headersName -> headersName.equalsIgnoreCase(p.getKey())))
+            .forEach(p -> putProtocolHeader(message, p.getKey(), p.getValue()));
     }
 }
