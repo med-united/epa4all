@@ -5,6 +5,8 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
+import de.service.health.api.epa4all.proxy.FhirProxyService;
+import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
@@ -24,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 
 @ApplicationScoped
@@ -88,6 +91,8 @@ public class MultiEpaService extends StartableService {
                         EntitlementsApi.class, backend, epaConfig.getEntitlementServiceUrl(), vauFacade
                     );
 
+                    IFhirProxy fhirProxy = new FhirProxyService(backend, epaConfig, vauFacade);
+
                     FhirContext apiContext = FhirContext.forR4();
                     VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(apiContext);
                     String medicationApiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
@@ -101,14 +106,15 @@ public class MultiEpaService extends StartableService {
                     return new EpaAPIAggregator(
                         backend,
                         apiContext,
-                        medicationApiUrl,
+                        medicationApiUrl.replace("+vau", ""),
                         renderExecutor,
-                        medicationRenderUrl,
+                        medicationRenderUrl.replace("+vau", ""),
                         documentManagementPortType,
                         documentManagementInsurantPortType,
                         accountInformationApi,
                         authorizationSmcBApi,
-                        entitlementsApi
+                        entitlementsApi,
+                        fhirProxy
                     );
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -118,10 +124,6 @@ public class MultiEpaService extends StartableService {
 
     private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl, VauFacade vauFacade) throws Exception {
         return clientFactory.createProxyClient(vauFacade, clazz, getBackendUrl(backend, serviceUrl));
-    }
-
-    private String getBackendUrl(String backend, String serviceUrl) {
-        return serviceUrl.replace("[epa-backend]", backend);
     }
 
     public EpaAPI getEpaAPI(String insurantId) {

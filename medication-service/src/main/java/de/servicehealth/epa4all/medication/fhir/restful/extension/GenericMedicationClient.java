@@ -23,10 +23,10 @@ public class GenericMedicationClient implements IMedicationClient {
     private final FhirContext ctx;
     private final IGenericClient medicationClient;
 
-    public GenericMedicationClient(FhirContext ctx, String medicationApiUrl, Map<String, Object> runtimeAttributes) {
+    public GenericMedicationClient(FhirContext ctx, String medicationApiUrl, Map<String, Object> xHeaders) {
         this.ctx = ctx;
         medicationClient = ctx.newRestfulGenericClient(medicationApiUrl);
-        medicationClient.registerInterceptor(new XHeadersInterceptor(runtimeAttributes));
+        medicationClient.registerInterceptor(new XHeadersInterceptor(xHeaders));
     }
 
     @Override

@@ -3,6 +3,7 @@ package de.service.health.api.epa4all;
 import ca.uhn.fhir.context.FhirContext;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
+import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.GenericMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
@@ -27,6 +28,7 @@ public class EpaAPIAggregator implements EpaAPI {
     private final AccountInformationApi accountInformationApi;
     private final AuthorizationSmcBApi authorizationSmcBApi;
     private final EntitlementsApi entitlementsApi;
+    private final IFhirProxy fhirProxy;
 
     public EpaAPIAggregator(
         String backend,
@@ -38,7 +40,8 @@ public class EpaAPIAggregator implements EpaAPI {
         IDocumentManagementInsurantPortType documentManagementInsurantPortType,
         AccountInformationApi accountInformationApi,
         AuthorizationSmcBApi authorizationSmcBApi,
-        EntitlementsApi entitlementsApi
+        EntitlementsApi entitlementsApi,
+        IFhirProxy fhirProxy
     ) {
         this.backend = backend;
         this.apiContext = apiContext;
@@ -51,6 +54,7 @@ public class EpaAPIAggregator implements EpaAPI {
         this.accountInformationApi = accountInformationApi;
         this.authorizationSmcBApi = authorizationSmcBApi;
         this.entitlementsApi = entitlementsApi;
+        this.fhirProxy = fhirProxy;
     }
 
     @Override
@@ -84,12 +88,17 @@ public class EpaAPIAggregator implements EpaAPI {
     }
 
     @Override
-    public IMedicationClient getMedicationClient(Map<String, Object> runtimeAttributes) {
-        return new GenericMedicationClient(apiContext, medicationApiUrl, runtimeAttributes);
+    public IFhirProxy getFhirProxy() {
+        return fhirProxy;
     }
 
     @Override
-    public IRenderClient getRenderClient(Map<String, Object> runtimeAttributes) {
-        return new VauRenderClient(renderExecutor, medicationRenderUrl, runtimeAttributes);
+    public IMedicationClient getMedicationClient(Map<String, Object> xHeaders) {
+        return new GenericMedicationClient(apiContext, medicationApiUrl, xHeaders);
+    }
+
+    @Override
+    public IRenderClient getRenderClient(Map<String, Object> xHeaders) {
+        return new VauRenderClient(renderExecutor, medicationRenderUrl, xHeaders);
     }
 }

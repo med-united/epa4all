@@ -2,6 +2,7 @@ package de.service.health.api.epa4all;
 
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
+import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
@@ -24,7 +25,9 @@ public interface EpaAPI {
 
     EntitlementsApi getEntitlementsApi();
 
-    IMedicationClient getMedicationClient(Map<String, Object> runtimeAttributes);
+    IFhirProxy getFhirProxy();
 
-    IRenderClient getRenderClient(Map<String, Object> runtimeAttributes);
+    IMedicationClient getMedicationClient(Map<String, Object> xHeaders);
+
+    IRenderClient getRenderClient(Map<String, Object> xHeaders);
 }

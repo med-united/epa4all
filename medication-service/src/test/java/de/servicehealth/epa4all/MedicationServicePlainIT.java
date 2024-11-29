@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Map;
 
-import static de.servicehealth.epa4all.common.Utils.isDockerServiceRunning;
+import static de.servicehealth.epa4all.common.Utils.isDockerContainerRunning;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
@@ -33,7 +33,7 @@ public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
 
     @Test
     public void medicationSemiCRUDWorks() throws Exception {
-        if (isDockerServiceRunning(MEDICATION_SERVICE)) {
+        if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
 
             IGenericClient genericClient = ctx.newRestfulGenericClient(medicationServiceApiUrl);
@@ -48,7 +48,7 @@ public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
 
     @Test
     public void documentsFetched() throws Exception {
-        if (isDockerServiceRunning(MEDICATION_SERVICE)) {
+        if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             Executor executor = Executor.newInstance(HttpClients.custom().setSSLContext(createFakeSSLContext()).build());
             IRenderClient renderClient = new PlainRenderClient(
                 executor,

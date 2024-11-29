@@ -4,6 +4,7 @@ import de.health.service.check.HealthChecker;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
@@ -83,15 +84,17 @@ public abstract class AbstractResource {
         String insurantId = insuranceData.getInsurantId();
         EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
         String userAgent = multiEpaService.getEpaConfig().getUserAgent();
-        resolveEntitlement(insuranceData, epaAPI, userAgent);
+
+        // TODO resolve
+        // resolveEntitlement(insuranceData, epaAPI, userAgent);
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
-        Map<String, Object> runtimeAttributes = prepareRuntimeAttributes(
+        Map<String, Object> xHeaders = prepareXHeaders(
             insurantId, userAgent, konnektorUrl, epaAPI.getBackend()
         );
-        return new EpaContext(insuranceData, runtimeAttributes);
+        return new EpaContext(insuranceData, xHeaders);
     }
 
-    private Map<String, Object> prepareRuntimeAttributes(
+    private Map<String, Object> prepareXHeaders(
         String insurantId,
         String userAgent,
         String konnektorUrl,
@@ -125,22 +128,17 @@ public abstract class AbstractResource {
         String userAgent,
         String smcbHandle
     ) throws IOException {
-        String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
+        String backend = epaAPI.getBackend();
+        AuthorizationSmcBApi authorizationSmcBApi = epaAPI.getAuthorizationSmcBApi();
+        String jwt = idpClient.createEntitlementPSJWT(backend, smcbHandle, pz, userRuntimeConfig, authorizationSmcBApi);
 
         EntitlementRequestType entitlementRequest = new EntitlementRequestType();
-        entitlementRequest.setJwt(
-            idpClient.createEntitlementPSJWT(
-                epaAPI.getBackend(), smcbHandle, pz, userRuntimeConfig, epaAPI.getAuthorizationSmcBApi()
-            )
-        );
+        entitlementRequest.setJwt(jwt);
+        
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
-        ValidToResponseType response = entitlementsApi.setEntitlementPs(
-            insurantId,
-            userAgent,
-            epaAPI.getBackend(),
-            entitlementRequest
-        );
+        String insurantId = insuranceData.getInsurantId();
+        ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, userAgent, backend, entitlementRequest);
         if (response.getValidTo() != null) {
             insuranceDataService.updateEntitlement(response.getValidTo().toInstant(), telematikId, insurantId);
         }

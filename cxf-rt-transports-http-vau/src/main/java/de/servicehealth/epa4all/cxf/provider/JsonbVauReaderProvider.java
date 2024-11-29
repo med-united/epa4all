@@ -9,7 +9,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.List;
 
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor.VAU_ERROR;
+import static de.servicehealth.vau.VauClient.VAU_ERROR;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 
 public class JsonbVauReaderProvider extends AbstractJsonbReader {

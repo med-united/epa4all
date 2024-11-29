@@ -30,11 +30,15 @@ public class ServerUtils {
     }
 
     public static String getBaseUrl(String url) {
-        URI uri = URI.create(url);
+        URI uri = URI.create(url.replace("+vau", ""));
         String scheme = uri.getScheme() == null ? "" : uri.getScheme() + "://";
         String host = uri.getHost();
         String port = uri.getPort() == -1 ? "" : ":" + uri.getPort();
         return scheme + host + port;
+    }
+
+    public static String getBackendUrl(String backend, String serviceUrl) {
+        return serviceUrl.replace("[epa-backend]", backend);
     }
 
     private ServerUtils() {

@@ -8,7 +8,6 @@ import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
 import de.servicehealth.epa4all.xds.structure.StructureDefinitionService;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import io.quarkus.runtime.StartupEvent;
-import jakarta.annotation.Priority;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.enterprise.inject.Instance;
@@ -117,7 +116,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
     public IDocumentManagementPortType getDocumentManagementPortType(EpaContext epaContext) {
         EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
         IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
-        ((BindingProvider) documentManagementPortType).getRequestContext().putAll(epaContext.getRuntimeAttributes());
+        ((BindingProvider) documentManagementPortType).getRequestContext().putAll(epaContext.getXHeaders());
         return documentManagementPortType;
     }
 

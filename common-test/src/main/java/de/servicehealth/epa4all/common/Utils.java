@@ -6,13 +6,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.fail;
-
 public class Utils {
 	
 	private static Logger log = Logger.getLogger(Utils.class.getName());
 
-    public static boolean isDockerServiceRunning(String containerName) throws Exception {
+    public static boolean isDockerContainerRunning(String containerName) throws Exception {
         ProcessBuilder processBuilder = new ProcessBuilder(
             "docker", "ps", "--filter", "name=" + containerName, "--format", "{{.Names}}"
         );
@@ -28,7 +26,7 @@ public class Utils {
     }
 
     public static void runWithDocker(String service, DockerAction action) throws Exception {
-        if (isDockerServiceRunning(service)) {
+        if (isDockerContainerRunning(service)) {
             action.execute();
         } else {
         	log.warning("Docker not running not executing tests.");
