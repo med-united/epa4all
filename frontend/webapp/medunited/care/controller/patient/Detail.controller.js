@@ -507,7 +507,7 @@ sap.ui.define([
 			this.oRouter.navTo(this.getEntityName().toLowerCase() + "-detail", {
 				"patient" : this._entity,
 				"layout": "ThreeColumnsEndExpanded",
-				"document": encodeURIComponent("/fhir/xhtml/1?kvnr="+sPatientId)
+				"document": encodeURIComponent("/fhir/xhtml?x-insurantid="+sPatientId)
 			});
 		}
 	});

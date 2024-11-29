@@ -34,7 +34,13 @@ public class Fhir extends AbstractResource {
         @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
         @QueryParam("x-insurantid") String xInsurantId
     ) {
-        return forward(true, fhirPath, uriInfo, xInsurantId, null);
+    	if(fhirPath != null && fhirPath.startsWith("fhir/xhtml")) {
+    		return xhtml(konnektor, xInsurantId);
+    	} else if(fhirPath != null && fhirPath.startsWith("fhir/pdf")) {
+        		return pdf(konnektor, xInsurantId);
+    	} else {
+    		return forward(true, fhirPath, uriInfo, xInsurantId, null);
+    	}
     }
 
     @POST
@@ -81,11 +87,9 @@ public class Fhir extends AbstractResource {
         }
     }
 
-    @GET
-    @Path("pdf/{konnektor : ([0-9a-zA-Z\\-.]+)?}")
     public Response pdf(
-        @PathParam("konnektor") String konnektor,
-        @QueryParam("kvnr") String kvnr
+        String konnektor,
+        String kvnr
     ) {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);
@@ -98,11 +102,9 @@ public class Fhir extends AbstractResource {
         }
     }
 
-    @GET
-    @Path("xhtml/{konnektor : ([0-9a-zA-Z\\-.]+)?}")
-    public Response get(
-        @PathParam("konnektor") String konnektor,
-        @QueryParam("kvnr") String kvnr
+    public Response xhtml(
+        String konnektor,
+        String kvnr
     ) {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);

@@ -61,7 +61,7 @@ public class ChecksumFile {
             }
             return true;
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Unable to append 'sha256checksums' file for " + insurantId);
+            log.log(Level.SEVERE, "Unable to append 'sha256checksums' file for " + insurantId, e);
         } finally {
             lock.writeLock().unlock();
         }
