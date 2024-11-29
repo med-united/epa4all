@@ -45,7 +45,7 @@ import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
 import static org.apache.http.HttpHeaders.CONNECTION;
