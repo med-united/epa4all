@@ -18,6 +18,7 @@ public class VauClient {
     public static final String VAU_DEBUG_SK2_S2C_INFO = "vau-debug-s_k2_s2c_keyconfirmation";
 
     public static final String VAU_NON_PU_TRACING = "VAU-nonPU-Tracing";
+    public static final String VAU_ERROR = "VAU_ERROR";
 
     public static final String X_INSURANT_ID = "x-insurantid";
     public static final String X_USER_AGENT = "x-useragent";

@@ -51,8 +51,8 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
 
             String kvnr = "X110485291";
 
-            Map<String, Object> runtimeAttributes = Map.of(X_BACKEND, "medication-service:8080");
-            IMedicationClient medicationClient = new GenericMedicationClient(ctx, medicationServiceApiUrl, runtimeAttributes);
+            Map<String, Object> xHeaders = Map.of(X_BACKEND, "medication-service:8080");
+            IMedicationClient medicationClient = new GenericMedicationClient(ctx, medicationServiceApiUrl, xHeaders);
             MethodOutcome outcome = medicationClient.createResource(preparePatient(kvnr));
             Long id = outcome.getId().getIdPartAsLong();
             assertNotNull(id);

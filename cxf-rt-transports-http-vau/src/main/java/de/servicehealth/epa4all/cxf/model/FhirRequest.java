@@ -7,5 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public class FhirRequest {
 
+    private final boolean isGet;
+    private final String accept;
+    private final String contentType;
     private final byte[] body;
 }

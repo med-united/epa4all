@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.time.Instant;
 import java.util.Map;
 
 @Getter
@@ -14,5 +13,9 @@ import java.util.Map;
 public class EpaContext {
 
     private InsuranceData insuranceData;
-    private Map<String, Object> runtimeAttributes;
+    private Map<String, Object> headers;
+
+    public Map<String, Object> getXHeaders() {
+        return headers;
+    }
 }

@@ -30,6 +30,7 @@ import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 
 @SuppressWarnings("rawtypes")
@@ -53,7 +54,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
     @SuppressWarnings("unchecked")
     @Override
     public void writeTo(
-        Object o,
+        Object obj,
         Class type,
         Type genericType,
         Annotation[] annotations,
@@ -61,22 +62,29 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
         MultivaluedMap httpHeaders,
         OutputStream entityStream
     ) throws IOException, WebApplicationException {
-        try (Jsonb build = jsonbBuilder.build()) {
 
+        boolean isFhir = type.isAssignableFrom(FhirRequest.class);
+        FhirRequest fhirRequest = isFhir ? (FhirRequest) obj : null;
+
+        try (Jsonb build = jsonbBuilder.build()) {
             byte[] originPayload = new byte[0];
             if (!type.isAssignableFrom(EmptyRequest.class)) {
-                if (!type.isAssignableFrom(FhirRequest.class)) {
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    build.toJson(o, type, os);
-                    originPayload = os.toByteArray();
+                if (isFhir) {
+                    originPayload = fhirRequest.getBody();
                 } else {
-                    if (o instanceof FhirRequest fhirRequest) {
-                        originPayload = fhirRequest.getBody();
-                    }
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    build.toJson(obj, type, os);
+                    originPayload = os.toByteArray();
                 }
             }
 
             String path = evictHeader(httpHeaders, VAU_METHOD_PATH);
+            if (path != null && fhirRequest != null) {
+                String fhirMethod = fhirRequest.isGet() ? "GET" : "POST";
+                String pathMethod = path.trim().split(" ")[0];
+                path = path.replace(pathMethod, fhirMethod);
+            }
+
             String vauCid = evictHeader(httpHeaders, VAU_CID);
             String backend = evictHeader(httpHeaders, X_BACKEND);
 
@@ -102,9 +110,10 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
 
             byte[] httpRequest = (path + " HTTP/1.1\r\n"
                 + "Host: " + backend + "\r\n"
-                + additionalHeaders + keepAlive
-                + "Accept: application/json\r\n"
-                + prepareContentHeaders(originPayload)).getBytes();
+                + additionalHeaders
+                + keepAlive
+                + prepareAcceptHeader(fhirRequest)
+                + prepareContentHeaders(fhirRequest, originPayload)).getBytes();
 
             byte[] content = ArrayUtils.addAll(httpRequest, originPayload);
 
@@ -126,8 +135,21 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
         return targetHeaders == null || targetHeaders.isEmpty() ? null : targetHeaders.getFirst();
     }
 
-    private String prepareContentHeaders(byte[] originPayload) {
+    private String prepareAcceptHeader(FhirRequest fhirRequest) {
+        if (fhirRequest == null) {
+            return "Accept: application/json\r\n";
+        } else {
+            return "Accept: " + fhirRequest.getAccept() + "\r\n";
+        }
+    }
+
+    private String prepareContentHeaders(FhirRequest fhirRequest, byte[] originPayload) {
         int length = originPayload == null ? 0 : originPayload.length;
-        return "Content-Type: application/json\r\nContent-Length: " + length + "\r\n\r\n";
+        String contentType = fhirRequest == null ? APPLICATION_JSON : fhirRequest.getContentType();
+        if (length == 0 || contentType.isEmpty()) {
+            return "\r\n";
+        } else {
+            return String.format("Content-Type: %s\r\nContent-Length: %d\r\n\r\n", contentType, length);
+        }
     }
 }

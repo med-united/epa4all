@@ -88,13 +88,13 @@ public abstract class AbstractResource {
         // TODO resolve
         // resolveEntitlement(insuranceData, epaAPI, userAgent);
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
-        Map<String, Object> runtimeAttributes = prepareRuntimeAttributes(
+        Map<String, Object> xHeaders = prepareXHeaders(
             insurantId, userAgent, konnektorUrl, epaAPI.getBackend()
         );
-        return new EpaContext(insuranceData, runtimeAttributes);
+        return new EpaContext(insuranceData, xHeaders);
     }
 
-    private Map<String, Object> prepareRuntimeAttributes(
+    private Map<String, Object> prepareXHeaders(
         String insurantId,
         String userAgent,
         String konnektorUrl,

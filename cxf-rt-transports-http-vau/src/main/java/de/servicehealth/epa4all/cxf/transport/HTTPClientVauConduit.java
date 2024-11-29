@@ -60,7 +60,10 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         String endpoint = (String) message.get(ENDPOINT_ADDRESS);
         endpoint = endpoint.replace(vauCid, "").replace("https:", "https+vau:");
         message.put(ENDPOINT_ADDRESS, endpoint);
-        String path = URI.create(endpoint).getPath();
+        URI endpointUri = URI.create(endpoint);
+        String path = endpointUri.getPath();
+        String query = endpointUri.getQuery();
+        String fullPath = path + (query == null || query.trim().isEmpty() ? "" : "?" + query);
 
         boolean post = POST_METHOD.equals(method);
         if (!post && !(soapVersion instanceof Soap12)) {
@@ -83,13 +86,13 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
         message.getExchange().put(VAU_CID, vauCid);
 
-        Object map = message.computeIfAbsent(PROTOCOL_HEADERS, k -> new HashMap<String, List<String>>());
+        Object map = message.computeIfAbsent(PROTOCOL_HEADERS, k -> new HashMap<>());
         if (map instanceof Map headers) {
             headers.put(CONNECTION, List.of(KEEP_ALIVE));
             headers.put(CONTENT_TYPE, List.of(APPLICATION_OCTET_STREAM));
             headers.put(ACCEPT, List.of(APPLICATION_OCTET_STREAM));
             headers.put(VAU_NON_PU_TRACING, List.of(vauNonPUTracing));
-            headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + path));
+            headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + fullPath));
             headers.put(VAU_CID, List.of(vauCid));
 
             Object np = message.get(VAU_NP);

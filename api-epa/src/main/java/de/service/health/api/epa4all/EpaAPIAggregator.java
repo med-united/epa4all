@@ -93,12 +93,12 @@ public class EpaAPIAggregator implements EpaAPI {
     }
 
     @Override
-    public IMedicationClient getMedicationClient(Map<String, Object> runtimeAttributes) {
-        return new GenericMedicationClient(apiContext, medicationApiUrl, runtimeAttributes);
+    public IMedicationClient getMedicationClient(Map<String, Object> xHeaders) {
+        return new GenericMedicationClient(apiContext, medicationApiUrl, xHeaders);
     }
 
     @Override
-    public IRenderClient getRenderClient(Map<String, Object> runtimeAttributes) {
-        return new VauRenderClient(renderExecutor, medicationRenderUrl, runtimeAttributes);
+    public IRenderClient getRenderClient(Map<String, Object> xHeaders) {
+        return new VauRenderClient(renderExecutor, medicationRenderUrl, xHeaders);
     }
 }

@@ -27,7 +27,7 @@ public interface EpaAPI {
 
     IFhirProxy getFhirProxy();
 
-    IMedicationClient getMedicationClient(Map<String, Object> runtimeAttributes);
+    IMedicationClient getMedicationClient(Map<String, Object> xHeaders);
 
-    IRenderClient getRenderClient(Map<String, Object> runtimeAttributes);
+    IRenderClient getRenderClient(Map<String, Object> xHeaders);
 }

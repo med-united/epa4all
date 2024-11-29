@@ -32,21 +32,28 @@ import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 
 public class FhirProxyService implements IFhirProxy {
 
-    private final WebClient webClient;
+    private final WebClient apiClient;
+    private final WebClient renderClient;
 
     public FhirProxyService(String backend, EpaConfig epaConfig, VauFacade vauFacade) throws Exception {
-        String url = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
+        String apiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
+        String renderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
 
+        apiClient = setup(apiUrl, vauFacade);
+        renderClient = setup(renderUrl, vauFacade);
+    }
+
+    private WebClient setup(String url, VauFacade vauFacade) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
         JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade);
         JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
         List<Object> providers = List.of(cborWriterProvider, jsonbVauWriterProvider, jsonbVauReaderProvider);
 
-        webClient = WebClient.create(url, providers);
-
+        WebClient webClient = WebClient.create(url, providers);
         HTTPConduit conduit = (HTTPConduit) webClient.getConfiguration().getConduit();
         HTTPClientPolicy policy = new HTTPClientPolicy();
 
+        // TODO move to properties
         policy.setConnectionTimeout(120000);
         policy.setReceiveTimeout(120000);
         conduit.setClient(policy);
@@ -56,21 +63,30 @@ public class FhirProxyService implements IFhirProxy {
             List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade)),
             List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
         );
+        return webClient;
     }
 
-    public Response forward(String fhirPath, UriInfo uriInfo, byte[] body, Map<String, Object> runtimeAttributes) {
-        FhirRequest fhirRequest = new FhirRequest(body);
+    public Response forward(boolean isGet, String fhirPath, UriInfo uriInfo, byte[] body, Map<String, Object> xHeaders) {
+        boolean isPdf = fhirPath.contains("fhir/pdf");
+        boolean isXhtml = fhirPath.contains("fhir/xhtml");
+        boolean isRender = isPdf || isXhtml;
 
-        MultivaluedMap<String, String> map = new MultivaluedHashMap<>();
-        runtimeAttributes.forEach((key, value) -> map.add(key, (String) value));
-        webClient.headers(map);
-
+        WebClient webClient = isRender ? renderClient : apiClient;
+        MultivaluedMap<String, String> map = new MultivaluedHashMap<>(xHeaders.entrySet()
+            .stream()
+            .collect(Collectors.toMap(Map.Entry::getKey, p -> (String) p.getValue()))
+        );
         String query = excludeParams(uriInfo.getRequestUri(), Set.of(X_INSURANT_ID, X_KONNEKTOR));
-        webClient
-            .replacePath(fhirPath.replace("fhir", ""))
-            .replaceQuery(query);
 
-        return webClient.post(fhirRequest);
+        String accept = isPdf ? "*/*" : isXhtml ? "text/html" : "application/fhir+json;q=1.0, application/json+fhir;q=0.9";
+        String contentType = body == null || body.length == 0 ? "" : "application/fhir+json; charset=UTF-8";
+        FhirRequest fhirRequest = new FhirRequest(isGet, accept, contentType, body);
+
+        return webClient
+            .headers(map)
+            .replacePath(fhirPath.replace("fhir", ""))
+            .replaceQuery(query)
+            .post(fhirRequest);
     }
 
     public String excludeParams(URI uri, Set<String> excluded) {

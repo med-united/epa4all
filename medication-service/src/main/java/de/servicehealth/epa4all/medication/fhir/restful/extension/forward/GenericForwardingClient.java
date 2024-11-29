@@ -12,7 +12,6 @@ import ca.uhn.fhir.rest.client.impl.RestfulClientFactory;
 import ca.uhn.fhir.rest.client.method.IClientResponseHandler;
 import ca.uhn.fhir.util.BundleUtil;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
-import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Medication;
@@ -100,10 +99,13 @@ public class GenericForwardingClient extends GenericClient implements IMedicatio
 
     private List<IBaseResource> loadResources(Bundle bundle) {
         List<IBaseResource> resources = new ArrayList<>(BundleUtil.toListOfResources(ctx, bundle));
-        while (bundle.getLink(IBaseBundle.LINK_NEXT) != null) {
-            bundle = loadPage().next(bundle).execute();
-            resources.addAll(BundleUtil.toListOfResources(ctx, bundle));
-        }
+
+        // TODO - modify external links before returning to the client
+
+        // while (bundle.getLink(IBaseBundle.LINK_NEXT) != null) {
+        //     bundle = loadPage().next(bundle).execute();
+        //     resources.addAll(BundleUtil.toListOfResources(ctx, bundle));
+        // }
         return resources;
     }
 

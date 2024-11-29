@@ -7,5 +7,5 @@ import java.util.Map;
 
 public interface IFhirProxy {
 
-    Response forward(String fhirPath, UriInfo uriInfo, byte[] body, Map<String, Object> runtimeAttributes);
+    Response forward(boolean isGet, String fhirPath, UriInfo uriInfo, byte[] body, Map<String, Object> xHeaders);
 }
