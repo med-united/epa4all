@@ -510,18 +510,20 @@ sap.ui.define([
 			this.oRouter.navTo(this.getEntityName().toLowerCase() + "-detail", {
 				"patient" : this._entity,
 				"layout": "ThreeColumnsEndExpanded",
-				"document": encodeURIComponent("/fhir/xhtml?x-insurantid="+sPatientId)
+				"document": encodeURIComponent("/fhir/xhtml?kvnr="+sPatientId)
 			});
 		},
 		onUploadDocuments: function(oEvent) {
-			fetch("../xds-document/downloadAll")
+			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
+			fetch("../xds-document/downloadAll/8585?kvnr="+sPatientId)
 				.then(o => o.text())
 				.then((text) => {
 					MessageToast.show(text);
 				});
 		},
 		onDownloadDocuments: function(oEvent) {
-			fetch("../sync/upload")
+			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
+			fetch("../sync/upload/8585?kvnr="+sPatientId)
 				.then(o => o.text())
 				.then((text) => {
 					MessageToast.show(text);
