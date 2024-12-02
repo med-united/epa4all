@@ -16,7 +16,7 @@ public class JsonbVauReaderProvider extends AbstractJsonbReader {
 
     @Override
     public boolean isReadable(Class type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return mediaType.equals(APPLICATION_OCTET_STREAM_TYPE);
+        return mediaType.getSubtype().contains("json");
     }
 
     @SuppressWarnings("rawtypes")
