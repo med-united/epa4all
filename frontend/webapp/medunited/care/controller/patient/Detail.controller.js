@@ -36,6 +36,7 @@ sap.ui.define([
 			if(sDocument) {
 				const me = this;
 				const sDecodedDocument = decodeURIComponent(sDocument);
+				const oFlexibleColumnLayout = me.getOwnerComponent().getRootControl().byId("fcl");
 				this.getOwnerComponent().runAsOwner(() => {
 					let sViewer;
 					if(sDecodedDocument.endsWith(".pdf")) {
@@ -45,7 +46,8 @@ sap.ui.define([
 					} else {
 						sViewer = "HtmlViewer";
 					}
-					oFlexibleColumnLayout.getEndColumnPage()[0].setBusy(true);
+											
+					oFlexibleColumnLayout.getEndColumnPages()[0].setBusy(true);
 					XMLView.create({
 					    viewName: "medunited.care.view.patient.viewer."+sViewer
 					}).then((oView) => {
@@ -70,7 +72,6 @@ sap.ui.define([
 								.then(o => o.text())
 								.then((text) => oView.byId("html").setContent(text));
 						}
-						const oFlexibleColumnLayout = me.getOwnerComponent().getRootControl().byId("fcl");
 						
 						oFlexibleColumnLayout.removeAllEndColumnPages();
 					    oFlexibleColumnLayout.addEndColumnPage(oView);

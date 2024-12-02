@@ -85,12 +85,12 @@ public abstract class AbstractResource {
         EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
         String userAgent = multiEpaService.getEpaConfig().getUserAgent();
 
-        // TODO resolve
-        resolveEntitlement(insuranceData, epaAPI, userAgent);
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         Map<String, Object> xHeaders = prepareXHeaders(
             insurantId, userAgent, konnektorUrl, epaAPI.getBackend()
         );
+        // TODO resolve
+        resolveEntitlement(insuranceData, epaAPI, userAgent);
         return new EpaContext(insuranceData, xHeaders);
     }
 
