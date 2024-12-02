@@ -2,11 +2,12 @@ sap.ui.define([
 	"medunited/base/controller/AbstractDetailController",
 	"../../utils/Formatter",
 	"sap/m/MessageBox",
+	"sap/m/MessageToast",
 	"sap/ui/core/Fragment",
 	"sap/base/security/URLListValidator",
 	"sap/ui/core/mvc/XMLView",
 	'medunited/care/utils/PropertyExtractor'
-], function (AbstractDetailController, Formatter, MessageBox, Fragment, URLListValidator, XMLView, PropertyExtractor) {
+], function (AbstractDetailController, Formatter, MessageBox, MessageToast, Fragment, URLListValidator, XMLView, PropertyExtractor) {
 	"use strict";
 
 	return AbstractDetailController.extend("medunited.care.controller.patient.Detail", {
@@ -44,6 +45,7 @@ sap.ui.define([
 					} else {
 						sViewer = "HtmlViewer";
 					}
+					oFlexibleColumnLayout.getEndColumnPage()[0].setBusy(true);
 					XMLView.create({
 					    viewName: "medunited.care.view.patient.viewer."+sViewer
 					}).then((oView) => {
@@ -502,13 +504,27 @@ sap.ui.define([
 			}
 			return medicationStatementsOfPatient;
 		},
-		onSeeMedicationPlan: function() {
+		onSeeMedicationPlan: function(oEvent) {
 			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
 			this.oRouter.navTo(this.getEntityName().toLowerCase() + "-detail", {
 				"patient" : this._entity,
 				"layout": "ThreeColumnsEndExpanded",
 				"document": encodeURIComponent("/fhir/xhtml?x-insurantid="+sPatientId)
 			});
+		},
+		onUploadDocuments: function(oEvent) {
+			fetch("../xds-document/downloadAll")
+				.then(o => o.text())
+				.then((text) => {
+					MessageToast.show(text);
+				});
+		},
+		onDownloadDocuments: function(oEvent) {
+			fetch("../sync/upload")
+				.then(o => o.text())
+				.then((text) => {
+					MessageToast.show(text);
+				});
 		}
 	});
 }, true);

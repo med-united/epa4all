@@ -33,7 +33,12 @@
 						</IconTabHeader>
 					</tnt:ToolHeader>
 				</customHeader>
-				<f:FlexibleColumnLayout id="fcl" stateChange="onStateChanged" layout="{Layout>/layout}" backgroundDesign="Solid"/>
+				<f:FlexibleColumnLayout id="fcl" stateChange="onStateChanged" layout="{Layout>/layout}" backgroundDesign="Solid">
+					<f:endColumnPages>
+						<!--  first end column page for busy indicator -->
+						<Page></Page>
+					</f:endColumnPages>
+				</f:FlexibleColumnLayout>
 			</Page>
 		</Page>
 	</App>
