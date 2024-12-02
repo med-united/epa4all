@@ -104,7 +104,9 @@ public class VauNpProvider extends StartableService {
             VauNpFile vauNpFile = new VauNpFile(konnektorConfigFolder);
             Map<VauNpKey, String> savedVauNpMap = vauNpFile.get();
             ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
-            if (sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
+            // for the moment always create a VAU NP
+            if (false && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
+            	log.info("Using saved NP");
                 vauNpMap.putAll(savedVauNpMap);
             } else {
                 int k = uniqueKonnektorsConfigs.size();
@@ -158,8 +160,8 @@ public class VauNpProvider extends StartableService {
     public String getVauNp(String konnektorBaseUrl, String epaBackend) {
         URI uri = URI.create(konnektorBaseUrl);
         String host = uri.getHost();
-        String port = uri.getPort() == -1 ? "" : ":" + uri.getPort();
+        // String port = uri.getPort() == -1 ? "" : ":" + uri.getPort();
 
-        return vauNpMap.get(new VauNpKey(host + port, epaBackend));
+        return vauNpMap.get(new VauNpKey(host, epaBackend));
     }
 }
