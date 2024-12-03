@@ -83,10 +83,10 @@ public class VauNpProvider extends StartableService {
     }
 
     private Map<String, KonnektorConfig> getUniqueKonnektorsConfigs() {
-        // removing cetp port
+        // removing ports
         return konnektorsConfigs.entrySet()
             .stream()
-            .map(e -> Pair.of(e.getKey().split("_")[1], e.getValue()))
+            .map(e -> Pair.of(e.getKey().split("_")[1].split(":")[0], e.getValue()))
             .distinct()
             .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
@@ -104,8 +104,7 @@ public class VauNpProvider extends StartableService {
             VauNpFile vauNpFile = new VauNpFile(konnektorConfigFolder);
             Map<VauNpKey, String> savedVauNpMap = vauNpFile.get();
             ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
-            // for the moment always create a VAU NP
-            if (false && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
+            if (sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
             	log.info("Using saved NP");
                 vauNpMap.putAll(savedVauNpMap);
             } else {
@@ -159,9 +158,6 @@ public class VauNpProvider extends StartableService {
 
     public String getVauNp(String konnektorBaseUrl, String epaBackend) {
         URI uri = URI.create(konnektorBaseUrl);
-        String host = uri.getHost();
-        // String port = uri.getPort() == -1 ? "" : ":" + uri.getPort();
-
-        return vauNpMap.get(new VauNpKey(host, epaBackend));
+        return vauNpMap.get(new VauNpKey(uri.getHost(), epaBackend));
     }
 }
