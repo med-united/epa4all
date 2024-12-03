@@ -104,7 +104,7 @@ public class VauNpProvider extends StartableService {
             VauNpFile vauNpFile = new VauNpFile(konnektorConfigFolder);
             Map<VauNpKey, String> savedVauNpMap = vauNpFile.get();
             ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
-            if (sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
+            if (!savedVauNpMap.isEmpty() && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
             	log.info("Using saved NP");
                 vauNpMap.putAll(savedVauNpMap);
             } else {
