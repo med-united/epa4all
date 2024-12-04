@@ -19,7 +19,6 @@ import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
-import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -76,9 +75,9 @@ public class FhirProxyService implements IFhirProxy {
             .stream()
             .collect(Collectors.toMap(Map.Entry::getKey, p -> (String) p.getValue()))
         );
-        String query = excludeParams(uriInfo.getRequestUri(), Set.of(X_INSURANT_ID, X_KONNEKTOR));
+        String query = excludeQueryParams(uriInfo.getRequestUri().getQuery(), Set.of(X_INSURANT_ID, X_KONNEKTOR));
 
-        String accept = isPdf ? "*/*" : isXhtml ? "text/html" : "application/fhir+json;q=1.0, application/json+fhir;q=0.9";
+        String accept = isPdf ? "Accept: */*" : isXhtml ? "Accept: text/html" : "Accept-Charset: utf-8\r\nAccept-Encoding: gzip\r\nAccept: application/fhir+json;q=1.0, application/json+fhir;q=0.9";
         String contentType = body == null || body.length == 0 ? "" : "application/fhir+json; charset=UTF-8";
         FhirRequest fhirRequest = new FhirRequest(isGet, accept, contentType, body);
 
@@ -89,8 +88,7 @@ public class FhirProxyService implements IFhirProxy {
             .post(fhirRequest);
     }
 
-    public String excludeParams(URI uri, Set<String> excluded) {
-        String query = uri.getQuery();
+    public String excludeQueryParams(String query, Set<String> excluded) {
         if (query == null || query.isEmpty()) {
             return null;
         }

@@ -139,7 +139,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter {
         if (fhirRequest == null) {
             return "Accept: application/json\r\n";
         } else {
-            return "Accept: " + fhirRequest.getAccept() + "\r\n";
+            return fhirRequest.getAccept() + "\r\n";
         }
     }
 
