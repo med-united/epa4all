@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.integration.entitlement;
 
 import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.api.EntitlementsEPaFdVApi;

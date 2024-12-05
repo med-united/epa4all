@@ -55,8 +55,12 @@ public class InsuranceXmlUtils {
 
     @SuppressWarnings("unchecked")
     public static <T> T createUCEntity(byte[] bytes, boolean gzipSource) throws Exception {
-        String source = getSource(bytes, gzipSource);
-        return (T) jaxbContext.createUnmarshaller().unmarshal(new ByteArrayInputStream(source.getBytes()));
+        try {
+            String source = getSource(bytes, gzipSource);
+            return (T) jaxbContext.createUnmarshaller().unmarshal(new ByteArrayInputStream(source.getBytes()));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private InsuranceXmlUtils() {

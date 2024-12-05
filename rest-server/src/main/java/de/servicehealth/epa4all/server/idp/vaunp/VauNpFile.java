@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class VauNpFile extends MapDumpFile<VauNpKey, String> {
 
-    private static final String VAU_NP_FILE_NAME = "vau-np";
+    public static final String VAU_NP_FILE_NAME = "vau-np";
 
     public VauNpFile(File configFolder) throws IOException {
         super(configFolder);

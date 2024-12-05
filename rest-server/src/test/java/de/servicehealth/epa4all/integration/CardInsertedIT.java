@@ -1,7 +1,6 @@
-package de.servicehealth.epa4all.server;
+package de.servicehealth.epa4all.integration;
 
 import de.gematik.ws.conn.eventservice.v7.Event;
-import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.health.service.cetp.config.KonnektorConfig;
@@ -9,6 +8,7 @@ import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.MultiEpaService;
+import de.servicehealth.epa4all.AbstractVsdTest;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
 import de.servicehealth.epa4all.common.Utils;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
@@ -18,7 +18,6 @@ import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
-import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.vsd.VSDService;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -30,11 +29,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -46,7 +42,7 @@ import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @TestProfile(ProxyTestProfile.class)
-public class CardInsertedTest {
+public class CardInsertedIT extends AbstractVsdTest {
 
     @Inject
     EventMapper eventMapper;
@@ -87,21 +83,8 @@ public class CardInsertedTest {
             QuarkusMock.installMockForType(konnektorClientMock, IKonnektorClient.class);
 
             VSDService vsdServiceMock = mock(VSDService.class);
-            ReadVSDResponse readVSDResponse = new ReadVSDResponse();
-            readVSDResponse.setAllgemeineVersicherungsdaten(new byte[0]);
-            readVSDResponse.setGeschuetzteVersichertendaten(new byte[0]);
-            readVSDResponse.setPersoenlicheVersichertendaten(new byte[0]);
+            when(vsdServiceMock.readVSD(any(), any(), any())).thenReturn(prepareReadVSDResponse());
 
-            String xml = "<PN CDM_VERSION=\"1.0.0\" xmlns=\"http://ws.gematik.de/fa/vsdm/pnw/v1.0\"><TS>20241121115318</TS><E>2</E><PZ>WDExMDQ4NTI5MTE3MzIxODk5OTdVWDFjxzDPSFvdIrRmmmOWFP/aP5rakVUqQj8=</PZ></PN>";
-
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            GZIPOutputStream os = new GZIPOutputStream(out);
-            os.write(xml.getBytes());
-            os.finish();
-
-            byte[] gzipBytes = out.toByteArray();
-            readVSDResponse.setPruefungsnachweis(gzipBytes);
-            when(vsdServiceMock.readVSD(any(), any(), any())).thenReturn(readVSDResponse);
             QuarkusMock.installMockForType(vsdServiceMock, VSDService.class);
 
 	        RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());

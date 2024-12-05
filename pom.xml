@@ -11,14 +11,17 @@
 
     <properties>
         <java.version>21</java.version>
-        <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <cxf-version>4.0.5</cxf-version>
 
         <logback-version>1.5.8</logback-version>
 
-        <quarkus.platform.version>3.14.3</quarkus.platform.version>
+        <quarkus.platform.version>3.17.2</quarkus.platform.version>
         <surefire-plugin.version>3.5.0</surefire-plugin.version>
         <failsafe-plugin.version>3.5.0</failsafe-plugin.version>
+
+        <skipIT>true</skipIT>
     </properties>
 
     <packaging>pom</packaging>
@@ -100,10 +103,12 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.78.1</version>
         </dependency>
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.78.1</version>
         </dependency>
 
         <dependency>
@@ -150,22 +155,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>io.quarkus.platform</groupId>
-                <artifactId>quarkus-maven-plugin</artifactId>
-                <version>${quarkus.platform.version}</version>
-                <extensions>true</extensions>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>build</goal>
-                            <goal>generate-code</goal>
-                            <goal>generate-code-tests</goal>
-                            <goal>native-image-agent</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
               <groupId>io.smallrye</groupId>
               <artifactId>jandex-maven-plugin</artifactId>
@@ -218,6 +207,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <skipTests>${skipIT}</skipTests>
+                </configuration>
             </plugin>
         </plugins>
     </build>

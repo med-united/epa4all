@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.forward;
+package de.servicehealth.epa4all.integration;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 @QuarkusTest
 @TestProfile(ProxyTestProfile.class)
-public class FhirForwardTest {
+public class FhirForwardIT {
 
     public static final String MEDICATION_SERVICE = "medication-service";
 

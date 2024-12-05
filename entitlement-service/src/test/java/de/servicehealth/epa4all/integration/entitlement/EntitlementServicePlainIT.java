@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.integration.entitlement;
 
 import de.servicehealth.epa4all.common.PlainTestProfile;
 import de.servicehealth.vau.VauFacade;

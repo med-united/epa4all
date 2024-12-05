@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.integration.info;
 
 import de.servicehealth.epa4all.common.ProxyTestProfile;
 import io.quarkus.test.junit.QuarkusTest;
