@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.auth;
+package de.servicehealth.epa4all.integration.auth;
 
 import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public abstract class AbstractAuthTest {
+public abstract class AbstractAuthIT {
 
     public static final String AUTHORIZATION_SERVICE = "authorization-service";
 

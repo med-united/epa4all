@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.integration.fhir;
 
 import de.servicehealth.vau.VauFacade;
 import jakarta.inject.Inject;

@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.idp;
+package de.servicehealth.epa4all.integration;
 
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;

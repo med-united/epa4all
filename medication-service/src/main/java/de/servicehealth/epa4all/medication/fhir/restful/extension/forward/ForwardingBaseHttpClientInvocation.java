@@ -39,7 +39,7 @@ public class ForwardingBaseHttpClientInvocation extends BaseHttpClientInvocation
 
         if (httpRequest instanceof ApacheHttpRequest apacheRequest) {
             String uri = apacheRequest.getUri();
-            log.info("Forwarded HTTP request URI = " + uri);
+            log.info("[CLIENT] Forwarded HTTP request URI = " + uri);
 
             return apacheRequest;
         } else if (httpRequest instanceof BaseHttpRequest baseRequest) {

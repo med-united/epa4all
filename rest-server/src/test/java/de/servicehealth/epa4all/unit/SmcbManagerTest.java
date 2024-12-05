@@ -1,7 +1,8 @@
-package de.servicehealth.epa4all.server.smcb;
+package de.servicehealth.epa4all.unit;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -16,7 +17,8 @@ class SmcbManagerTest {
 	void testExtractTelematikIdFromCertificate() {
 		try {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509", BOUNCY_CASTLE_PROVIDER);
-            X509Certificate cert = (X509Certificate) certFactory.generateCertificate(getClass().getResourceAsStream("/certs/SMC-B/Bad_ApothekeTESTONLY-80276883110000116352-aut-rsa.cer"));
+            InputStream inputStream = getClass().getResourceAsStream("/certs/SMC-B/Bad_ApothekeTESTONLY-80276883110000116352-aut-rsa.cer");
+            X509Certificate cert = (X509Certificate) certFactory.generateCertificate(inputStream);
             assertEquals("3-SMC-B-Testkarte-883110000116352", extractTelematikIdFromCertificate(cert));
 		} catch (CertificateException e) {
             throw new RuntimeException(e);

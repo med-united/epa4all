@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.integration.info;
 
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.ConsentDecisionsApi;
