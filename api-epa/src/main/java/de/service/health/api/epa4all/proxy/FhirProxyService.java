@@ -75,7 +75,7 @@ public class FhirProxyService implements IFhirProxy {
             .stream()
             .collect(Collectors.toMap(Map.Entry::getKey, p -> (String) p.getValue()))
         );
-        String query = excludeQueryParams(uriInfo.getRequestUri().getQuery(), Set.of(X_INSURANT_ID, X_KONNEKTOR));
+        String query = excludeQueryParams(uriInfo.getRequestUri().getQuery(), Set.of("subject", X_INSURANT_ID, X_KONNEKTOR));
 
         String accept = isPdf ? "Accept: */*" : isXhtml ? "Accept: text/html" : "Accept-Charset: utf-8\r\nAccept-Encoding: gzip\r\nAccept: application/fhir+json;q=1.0, application/json+fhir;q=0.9";
         String contentType = body == null || body.length == 0 ? "" : "application/fhir+json; charset=UTF-8";

@@ -22,12 +22,14 @@ sap.ui.define([
 		},
 		_onMatched: function (oEvent) {
 			AbstractDetailController.prototype._onMatched.apply(this, arguments);
+			
 			const oWebdavModel = this.getView().getModel();
 			const iPatientModelOffest = oEvent.getParameter("arguments").patient;
 			const sDocument = oEvent.getParameter("arguments").document;
 			const sWebDavPath = "/response/"+iPatientModelOffest;
-			this.getView().bindElement(sWebDavPath);
 			const sPatientId = oWebdavModel.getProperty(sWebDavPath+"/propstat/prop/displayname");
+
+			this.getView().bindElement(sWebDavPath);
 			
 			oWebdavModel.loadFolderForContext("/response/"+iPatientModelOffest, "/"+sPatientId);
 			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/PersoenlicheVersichertendaten.xml");
