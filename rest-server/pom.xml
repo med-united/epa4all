@@ -16,6 +16,7 @@
     <properties>
         <cxf-version>4.0.5</cxf-version>
         <!-- automatically run annotation processors within the incremental compilation -->
+        <!-- <jvm.args>-Djavax.net.debug=all</jvm.args> -->
         <m2e.apt.activation>jdt_apt</m2e.apt.activation>
     </properties>
 

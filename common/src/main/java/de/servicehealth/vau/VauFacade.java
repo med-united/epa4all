@@ -13,11 +13,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import static de.servicehealth.utils.ServerUtils.terminateExecutor;
 
 @Dependent
 public class VauFacade {
@@ -37,6 +36,25 @@ public class VauFacade {
     private final boolean tracingEnabled;
     private final BeanRegistry registry;
 
+    
+    public static void terminateExecutor(ExecutorService executorService, String executorName, int awaitMillis) {
+        if (executorService != null) {
+            log.info(String.format("[%s] Terminating", executorName));
+            executorService.shutdown();
+            try {
+                if (!executorService.awaitTermination(awaitMillis, TimeUnit.MILLISECONDS)) {
+                    executorService.shutdownNow();
+                    if (!executorService.awaitTermination(awaitMillis, TimeUnit.MILLISECONDS)) {
+                        log.info(String.format("[%s] Is not terminated", executorName));
+                    }
+                }
+            } catch (InterruptedException ex) {
+                executorService.shutdownNow();
+               Thread.currentThread().interrupt();
+            }
+        }
+    }
+    
     @Inject
     public VauFacade(BeanRegistry registry, VauConfig vauConfig) {
         this.registry = registry;
