@@ -39,7 +39,7 @@ sap.ui.define([
 				const oFlexibleColumnLayout = me.getOwnerComponent().getRootControl().byId("fcl");
 				this.getOwnerComponent().runAsOwner(() => {
 					let sViewer;
-					if(sDecodedDocument.endsWith(".pdf")) {
+					if(sDecodedDocument.indexOf("pdf") != null) {
 						sViewer = "PdfViewer";
 					} else if(sDecodedDocument.endsWith(".xml")) {
 						sViewer = "CodeViewer";
@@ -510,12 +510,12 @@ sap.ui.define([
 			this.oRouter.navTo(this.getEntityName().toLowerCase() + "-detail", {
 				"patient" : this._entity,
 				"layout": "ThreeColumnsEndExpanded",
-				"document": encodeURIComponent("/fhir/xhtml?kvnr="+sPatientId)
+				"document": encodeURIComponent("/fhir/pdf?x-insurantid="+sPatientId)
 			});
 		},
 		onUploadDocuments: function(oEvent) {
 			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
-			fetch("../xds-document/downloadAll/8585?kvnr="+sPatientId)
+			fetch("../xds-document/downloadAll/?x-insurantid="+sPatientId)
 				.then(o => o.text())
 				.then((text) => {
 					MessageToast.show(text);
@@ -523,7 +523,7 @@ sap.ui.define([
 		},
 		onDownloadDocuments: function(oEvent) {
 			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
-			fetch("../sync/upload/8585?kvnr="+sPatientId)
+			fetch("../sync/upload/?x-insurantid="+sPatientId)
 				.then(o => o.text())
 				.then((text) => {
 					MessageToast.show(text);
