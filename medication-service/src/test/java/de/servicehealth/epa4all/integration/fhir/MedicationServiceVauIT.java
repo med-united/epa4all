@@ -3,10 +3,9 @@ package de.servicehealth.epa4all.integration.fhir;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.GenericMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRenderClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -51,8 +50,10 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
 
             String kvnr = "X110485291";
 
-            Map<String, Object> xHeaders = Map.of(X_BACKEND, "medication-service:8080");
-            IMedicationClient medicationClient = new GenericMedicationClient(ctx, medicationServiceApiUrl, xHeaders);
+            IMedicationClient medicationClient = apiClientFactory
+                .newGenericClient(medicationServiceApiUrl)
+                .withXHeaders(Map.of(X_BACKEND, "medication-service:8080"));
+            
             MethodOutcome outcome = medicationClient.createResource(preparePatient(kvnr));
             Long id = outcome.getId().getIdPartAsLong();
             assertNotNull(id);
@@ -78,7 +79,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
             MethodOutcome methodOutcome = medicationClient.createResource(medicationRequest);
             System.out.println(methodOutcome);
 
-            List<Medication> medications = medicationClient.searchMedications(patient);
+            List<Medication> medications = medicationClient.searchMedications();
             assertFalse(medications.isEmpty());
         }
     }
@@ -100,16 +101,14 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
             apiClientFactory.init(vauFacade, getBaseUrl(medicationServiceRenderUrl));
 
             Executor executor = Executor.newInstance(apiClientFactory.getVauHttpClient());
-            IRenderClient renderClient = new VauRenderClient(
-                executor,
-                medicationServiceRenderUrl,
-                Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45")
-            );
-            
-            File file = renderClient.getPdfFile();
+            IRenderClient renderClient = new VauRenderClient(executor, medicationServiceRenderUrl);
+
+            Map<String, String> xHeaders = Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45");
+
+            File file = renderClient.getPdfFile(xHeaders);
             assertTrue(file.exists());
 
-            byte[] xhtmlDocument = renderClient.getXhtmlDocument();
+            byte[] xhtmlDocument = renderClient.getXhtmlDocument(xHeaders);
             assertTrue(new String(xhtmlDocument).contains("Verordnungsdatum"));
         }
     }

@@ -31,10 +31,10 @@ public class Direct extends AbstractResource {
         try {
             EpaContext epaContext = prepareEpaContext(kvnr);
             EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-            IMedicationClient client = epaAPI.getMedicationClient(epaContext.getXHeaders());
+            IMedicationClient client = epaAPI.getMedicationClient().withXHeaders(epaContext.getXHeaders());
 
             Patient patient = client.searchPatients(kvnr).getLast();
-            List<Medication> medications = client.searchMedications(patient);
+            List<Medication> medications = client.searchMedications();
 
             return Response.ok(medications).build();
         } catch (Exception e) {
@@ -52,7 +52,7 @@ public class Direct extends AbstractResource {
             EpaContext epaContext = prepareEpaContext(kvnr);
             EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
 
-            byte[] pdfBytes = epaAPI.getRenderClient(epaContext.getXHeaders()).getPdfBytes();
+            byte[] pdfBytes = epaAPI.getRenderClient().getPdfBytes(epaContext.getXHeaders());
             return Response.ok(new ByteArrayInputStream(pdfBytes), "application/pdf").build();
         } catch (Exception e) {
             throw new WebApplicationException(e);
@@ -69,7 +69,7 @@ public class Direct extends AbstractResource {
             EpaContext epaContext = prepareEpaContext(kvnr);
             EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
 
-            byte[] html = epaAPI.getRenderClient(epaContext.getXHeaders()).getXhtmlDocument();
+            byte[] html = epaAPI.getRenderClient().getXhtmlDocument(epaContext.getXHeaders());
             return Response.ok(html, "text/html").build();
         } catch (Exception e) {
             throw new WebApplicationException(e);

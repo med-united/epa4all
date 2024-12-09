@@ -38,6 +38,7 @@ public class VauNpProvider extends StartableService {
     private final Map<VauNpKey, String> vauNpMap = new HashMap<>();
     
     @Inject
+    @Setter
     ManagedExecutor scheduledThreadPool;
 
     IdpClient idpClient;

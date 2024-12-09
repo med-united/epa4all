@@ -13,9 +13,9 @@ import java.util.Map;
 public class EpaContext {
 
     private InsuranceData insuranceData;
-    private Map<String, Object> headers;
+    private Map<String, String> headers;
 
-    public Map<String, Object> getXHeaders() {
+    public Map<String, String> getXHeaders() {
         return headers;
     }
 }

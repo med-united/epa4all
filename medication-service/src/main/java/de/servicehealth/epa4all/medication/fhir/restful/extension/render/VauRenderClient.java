@@ -1,16 +1,15 @@
-package de.servicehealth.epa4all.medication.fhir.restful.extension;
+package de.servicehealth.epa4all.medication.fhir.restful.extension.render;
 
 import org.apache.http.Header;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
 
 import java.net.URI;
-import java.util.Map;
 
 public class VauRenderClient extends AbstractRenderClient {
 
-    public VauRenderClient(Executor executor, String medicationRenderUrl, Map<String, Object> xHeaders) {
-        super(executor, medicationRenderUrl, xHeaders);
+    public VauRenderClient(Executor executor, String medicationRenderUrl) {
+        super(executor, medicationRenderUrl);
     }
 
     @Override

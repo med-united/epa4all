@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.medication.fhir.restful.extension.forward;
+package de.servicehealth.epa4all.medication.fhir.restful.extension;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.apache.ApacheRestfulClientFactory;

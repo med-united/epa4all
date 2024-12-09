@@ -14,7 +14,7 @@ import java.io.File;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static de.servicehealth.epa4all.medication.fhir.restful.extension.AbstractRenderClient.PDF_EXT;
+import static de.servicehealth.epa4all.medication.fhir.restful.extension.render.AbstractRenderClient.PDF_EXT;
 
 public abstract class AbstractMedicationServiceIT {
 

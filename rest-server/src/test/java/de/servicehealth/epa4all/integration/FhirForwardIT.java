@@ -3,8 +3,8 @@ package de.servicehealth.epa4all.integration;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.forward.ForwardingRestfulClientFactory;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.forward.GenericForwardingClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.ForwardingRestfulClientFactory;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -47,7 +47,7 @@ public class FhirForwardIT {
 
             forwardingClientFactory.setServerValidationMode(NEVER);
             String forwardUrl = "http://localhost:8889/fhir";
-            GenericForwardingClient forwardingClient = forwardingClientFactory.newGenericClient(forwardUrl);
+            IMedicationClient forwardingClient = forwardingClientFactory.newGenericClient(forwardUrl);
 
             String kvnr = "X110485291";
             
@@ -71,7 +71,7 @@ public class FhirForwardIT {
             methodOutcome = forwardingClient.createResource(medicationRequest);
             assertInstanceOf(MedicationRequest.class, methodOutcome.getResource());
 
-            List<Medication> medications = forwardingClient.searchMedications(patient);
+            List<Medication> medications = forwardingClient.searchMedications();
             assertFalse(medications.isEmpty());
         }
     }

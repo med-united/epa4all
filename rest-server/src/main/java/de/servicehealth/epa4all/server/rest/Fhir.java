@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.service.health.api.epa4all.EpaAPI;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -12,14 +11,10 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
-import org.hl7.fhir.r4.model.Medication;
-import org.hl7.fhir.r4.model.Patient;
-
-import java.io.ByteArrayInputStream;
-import java.util.List;
 
 @RequestScoped
 @Path("{fhirPath: fhir/.*}")
@@ -31,24 +26,12 @@ public class Fhir extends AbstractResource {
     public Response proxy(
         @PathParam("fhirPath") String fhirPath,
         @Context UriInfo uriInfo,
+        @Context HttpHeaders httpHeaders,
         @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
         @QueryParam("x-insurantid") String xInsurantId,
         @QueryParam("subject") String subject
     ) {
-    	// Use fhir compatible variables
-    	if(subject != null) {
-    		xInsurantId = subject;
-    	}
-    	if(fhirPath != null && fhirPath.startsWith("fhir/xhtml")) {
-    		return xhtml(konnektor, xInsurantId);
-    	} else if(fhirPath != null && fhirPath.startsWith("fhir/pdf")) {
-        	return pdf(konnektor, xInsurantId);
-    	} else {
-    		Response response = forward(true, fhirPath, uriInfo, xInsurantId, null);
-    		// Add JSON as content type. This is needed for UI5 so it can correctly
-    		// parse the data
-    		return Response.fromResponse(response).type(MediaType.APPLICATION_JSON_PATCH_JSON_TYPE).build();
-    	}
+        return forward(true, fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null);
     }
 
     @POST
@@ -57,18 +40,33 @@ public class Fhir extends AbstractResource {
     public Response proxy(
         @PathParam("fhirPath") String fhirPath,
         @Context UriInfo uriInfo,
+        @Context HttpHeaders httpHeaders,
         @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
         @QueryParam("x-insurantid") String xInsurantId,
+        @QueryParam("subject") String subject,
         byte[] body
     ) {
-        return forward(false, fhirPath, uriInfo, xInsurantId, body);
+        return forward(false, fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body);
     }
 
-    private Response forward(boolean isGet, String fhirPath, UriInfo uriInfo, String xInsurantId, byte[] body) {
+    private Response forward(
+        boolean isGet,
+        String fhirPath,
+        UriInfo uriInfo,
+        HttpHeaders headers,
+        String xInsurantId,
+        String subject,
+        byte[] body
+    ) {
         try {
+            // Use fhir compatible variables
+            if (subject != null) {
+                xInsurantId = subject;
+            }
+
             EpaContext epaContext = prepareEpaContext(xInsurantId);
             EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-            return epaAPI.getFhirProxy().forward(isGet, fhirPath, uriInfo, body, epaContext.getXHeaders());
+            return epaAPI.getFhirProxy().forward(isGet, fhirPath, uriInfo, headers, body, epaContext.getXHeaders());
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }

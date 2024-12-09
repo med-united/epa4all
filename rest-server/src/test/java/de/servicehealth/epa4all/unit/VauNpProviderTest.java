@@ -7,6 +7,8 @@ import de.service.health.api.epa4all.MultiEpaService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
+import io.smallrye.context.SmallRyeManagedExecutor;
+import io.smallrye.context.SmallRyeThreadContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,6 +63,11 @@ public class VauNpProviderTest {
         when(idpClient.getVauNpSync(any(), any(), eq(smcbHandle), eq(epaBackend))).thenReturn(vauNp);
 
         VauNpProvider vauNpProvider = new VauNpProvider(idpClient, multiEpaService, konnektorClient, null);
+        vauNpProvider.setScheduledThreadPool(
+            new SmallRyeManagedExecutor(
+                3, 3, SmallRyeThreadContext.builder().build(), SmallRyeManagedExecutor.newThreadPoolExecutor(3, 3), "point"
+            )
+        );
         vauNpProvider.setKonnektorsConfigs(Map.of("8588_192.168.178.42", new KonnektorConfig()));
         vauNpProvider.setConfigFolder(TEST_FOLDER.getAbsolutePath());
         vauNpProvider.onStart();
