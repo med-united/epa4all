@@ -71,6 +71,7 @@ public class FhirProxyService implements IFhirProxy {
 
     public Response forward(
         boolean isGet,
+        boolean ui5,
         String fhirPath,
         UriInfo uriInfo,
         HttpHeaders headers,
@@ -108,7 +109,8 @@ public class FhirProxyService implements IFhirProxy {
         } else {
             // Add JSON as content type. This is needed for UI5 so it can correctly
             // parse the data
-            MediaType type = isXhtml ? MediaType.TEXT_HTML_TYPE : MediaType.APPLICATION_JSON_PATCH_JSON_TYPE;
+            MediaType type = isXhtml ? MediaType.TEXT_HTML_TYPE
+                : ui5 ? MediaType.APPLICATION_JSON_PATCH_JSON_TYPE : MediaType.APPLICATION_JSON_TYPE;
             return Response.fromResponse(response).type(type).build();
         }
     }

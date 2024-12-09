@@ -10,6 +10,7 @@ public interface IFhirProxy {
 
     Response forward(
         boolean isGet,
+        boolean ui5,
         String fhirPath,
         UriInfo uriInfo,
         HttpHeaders headers,

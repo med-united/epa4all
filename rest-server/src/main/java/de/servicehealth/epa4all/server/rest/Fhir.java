@@ -29,9 +29,10 @@ public class Fhir extends AbstractResource {
         @Context HttpHeaders httpHeaders,
         @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
         @QueryParam("x-insurantid") String xInsurantId,
-        @QueryParam("subject") String subject
+        @QueryParam("subject") String subject,
+        @QueryParam("ui5") String ui5
     ) {
-        return forward(true, fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null);
+        return forward(true, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null);
     }
 
     @POST
@@ -44,13 +45,15 @@ public class Fhir extends AbstractResource {
         @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
         @QueryParam("x-insurantid") String xInsurantId,
         @QueryParam("subject") String subject,
+        @QueryParam("ui5") String ui5,
         byte[] body
     ) {
-        return forward(false, fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body);
+        return forward(false, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body);
     }
 
     private Response forward(
         boolean isGet,
+        boolean ui5,
         String fhirPath,
         UriInfo uriInfo,
         HttpHeaders headers,
@@ -66,7 +69,7 @@ public class Fhir extends AbstractResource {
 
             EpaContext epaContext = prepareEpaContext(xInsurantId);
             EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-            return epaAPI.getFhirProxy().forward(isGet, fhirPath, uriInfo, headers, body, epaContext.getXHeaders());
+            return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, uriInfo, headers, body, epaContext.getXHeaders());
         } catch (Exception e) {
             throw new WebApplicationException(e);
         }
