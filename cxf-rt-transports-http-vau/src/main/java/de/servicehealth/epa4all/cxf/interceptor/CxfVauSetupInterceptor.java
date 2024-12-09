@@ -42,6 +42,7 @@ import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.HOST;
 import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
+import static org.apache.cxf.helpers.HttpHeaderHelper.CONNECTION;
 
 public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
@@ -150,7 +151,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private MetadataMap<String, String> prepareVauOutboundHeaders(String uri, int length) {
         MetadataMap<String, String> headers = new MetadataMap<>();
-        headers.add("Connection", "Keep-Alive");
+        headers.add(CONNECTION, "Keep-Alive");
         headers.add(ACCEPT, "application/octet-stream, application/json, application/cbor, application/*+json, */*");
         headers.add(ACCEPT_ENCODING, "gzip, x-gzip, deflate");
         headers.add(CONTENT_TYPE, "application/cbor");
