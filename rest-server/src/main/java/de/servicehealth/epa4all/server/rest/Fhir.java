@@ -32,9 +32,23 @@ public class Fhir extends AbstractResource {
         @PathParam("fhirPath") String fhirPath,
         @Context UriInfo uriInfo,
         @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
-        @QueryParam("x-insurantid") String xInsurantId
+        @QueryParam("x-insurantid") String xInsurantId,
+        @QueryParam("subject") String subject
     ) {
-        return forward(true, fhirPath, uriInfo, xInsurantId, null);
+    	// Use fhir compatible variables
+    	if(subject != null) {
+    		xInsurantId = subject;
+    	}
+    	if(fhirPath != null && fhirPath.startsWith("fhir/xhtml")) {
+    		return xhtml(konnektor, xInsurantId);
+    	} else if(fhirPath != null && fhirPath.startsWith("fhir/pdf")) {
+        	return pdf(konnektor, xInsurantId);
+    	} else {
+    		Response response = forward(true, fhirPath, uriInfo, xInsurantId, null);
+    		// Add JSON as content type. This is needed for UI5 so it can correctly
+    		// parse the data
+    		return Response.fromResponse(response).type(MediaType.APPLICATION_JSON_PATCH_JSON_TYPE).build();
+    	}
     }
 
     @POST

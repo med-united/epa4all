@@ -8,8 +8,10 @@ sap.ui.define([
 	"sap/fhir/model/r4/lib/FHIRRequestor",
 	"sap/fhir/model/r4/SubmitMode",
 	"sap/fhir/model/r4/lib/HTTPMethod",
-	"sap/fhir/model/r4/lib/RequestHandle"
-], function (UIComponent, JSONModel, FlexibleColumnLayoutSemanticHelper, FHIRListBinding, FHIRModel, FHIRUtils, FHIRRequestor, SubmitMode, HTTPMethod, RequestHandle) {
+	"sap/fhir/model/r4/lib/RequestHandle",
+	"sap/base/util/merge",
+	"sap/base/util/each"
+], function (UIComponent, JSONModel, FlexibleColumnLayoutSemanticHelper, FHIRListBinding, FHIRModel, FHIRUtils, FHIRRequestor, SubmitMode, HTTPMethod, RequestHandle, merge, each) {
 	"use strict";
 
 	return UIComponent.extend("medunited.care.Component", {
@@ -52,6 +54,41 @@ sap.ui.define([
 				}
 				return oRequestInfo;
 			};
+			
+			FHIRRequestor.prototype._buildQueryParameters = function(mParameters, oBindingInfo, sMethod) {
+					var aQuery;
+					sMethod = sMethod ? sMethod : HTTPMethod.GET;
+					mParameters = mParameters ? mParameters : {};
+
+					if (!oBindingInfo){
+						// what should happen with next link
+						return "";
+					}
+
+					if (!oBindingInfo.getResourceId() && sMethod === HTTPMethod.GET) {
+						mParameters = merge(mParameters, this.oDefaultQueryParams);
+					}
+
+					if (!this._isFormatSupported(mParameters._format)) {
+						// RISE ePA does not support the _format Parameter
+						// mParameters._format = "json";
+					}
+
+					aQuery = [];
+
+					each(mParameters, function(sKey, vValue) {
+						if (vValue && Array.isArray(vValue)) {
+							vValue.forEach(function(sItem) {
+								aQuery.push(this._encodePair(sKey, sItem));
+							}.bind(this));
+						} else if (vValue) {
+							aQuery.push(this._encodePair(sKey, vValue));
+						}
+					}.bind(this));
+
+					return "?" + aQuery.join("&");
+				};
+			
 			// Copied from: https://github.com/SAP/openui5-fhir/blob/v2.2.8/src/sap/fhir/model/r4/FHIRListBinding.js#L180
 			// Directly use sNextLink
 			FHIRListBinding.prototype.getContexts = function (iStartIndex, iLength) {
@@ -163,6 +200,15 @@ sap.ui.define([
 
 				this._buildContexts(iLength);
 				return this.aContexts;
+			};
+			
+			FHIRListBinding.prototype._isValueSet = function() {
+				if (this.aKeys && this.aKeys.length > 0 && this.aKeys[0] !== undefined) {
+					return this.aKeys[0].indexOf("ValueSet") > -1;
+				} else if (this.sPath.indexOf("ValueSet") > -1 || this._isValueSetHardCoded() || this._getValueSetUriFromStructureDefinition()) {
+					return true;
+				}
+				return false;
 			};
 
 			FHIRRequestor.prototype._request = function (sMethod, sPath, bForceDirectCall, mParameters, sGroupId, mHeaders, oPayload, fnSuccess, fnError, oBinding, bManualSubmit) {

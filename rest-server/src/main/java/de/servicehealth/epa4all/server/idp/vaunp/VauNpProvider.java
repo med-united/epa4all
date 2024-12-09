@@ -15,6 +15,7 @@ import jakarta.inject.Inject;
 import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.logmanager.Level;
 
 import java.io.File;
@@ -24,14 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import static de.servicehealth.utils.ServerUtils.terminateExecutor;
 
 @ApplicationScoped
 public class VauNpProvider extends StartableService {
@@ -39,7 +36,9 @@ public class VauNpProvider extends StartableService {
     private static final Logger log = Logger.getLogger(VauNpProvider.class.getName());
 
     private final Map<VauNpKey, String> vauNpMap = new HashMap<>();
-    private final ExecutorService scheduledThreadPool = Executors.newFixedThreadPool(5);
+    
+    @Inject
+    ManagedExecutor scheduledThreadPool;
 
     IdpClient idpClient;
     MultiEpaService multiEpaService;
@@ -99,9 +98,6 @@ public class VauNpProvider extends StartableService {
     }
 
     public void onStart() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() ->
-            terminateExecutor(scheduledThreadPool, "Vau-Np-Job", 6000))
-        );
         var konnektorConfigFolder = new File(configFolder);
         if (!konnektorConfigFolder.exists() || !konnektorConfigFolder.isDirectory()) {
             throw new IllegalStateException("Konnektor config directory is corrupted");
@@ -111,7 +107,8 @@ public class VauNpProvider extends StartableService {
             VauNpFile vauNpFile = new VauNpFile(konnektorConfigFolder);
             Map<VauNpKey, String> savedVauNpMap = vauNpFile.get();
             ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
-            if (!savedVauNpMap.isEmpty() && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
+            // Saving NPs for connections is not working. Before re-enabling this please test it carefully
+            if (false && !savedVauNpMap.isEmpty() && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
             	log.info("Using saved NP");
                 vauNpMap.putAll(savedVauNpMap);
             } else {

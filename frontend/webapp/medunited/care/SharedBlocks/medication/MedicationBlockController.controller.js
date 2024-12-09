@@ -45,6 +45,7 @@ sap.ui.define([
             this.oRouter.getRoute("patient-detail").attachPatternMatched(this.onPatientRouteMatched, this);
         },
         onDataReceivedAsureStructure: function(oEvent) {
+			/*
             const oData = oEvent.getParameter("data");
 			if(!oData.entry || oData.entry.length == 0) {
 				return;
@@ -89,16 +90,21 @@ sap.ui.define([
                 }
                 dLastDouble = oMedicationStatement.resource.extension[2].valueDecimal+1;
             }
-            this.sortMedicationBySecondExtension();
+            this.sortMedicationBySecondExtension();*/
         },
         onPatientRouteMatched: function (oEvent) {
-            var sPatientId = oEvent.getParameter("arguments").patient;
-            this.filterMedicationTableToPatient(sPatientId);
+            var iPatientModelOffest = oEvent.getParameter("arguments").patient;
+            this.filterMedicationTableToPatient(iPatientModelOffest);
         },
 
-        filterMedicationTableToPatient: function (sPatientId) {
+        filterMedicationTableToPatient: function (iPatientModelOffest) {
             var aFilters = [];
-            aFilters.push(new FHIRFilter({ path: "subject", operator: FHIRFilterOperator.StartsWith, value1: "Patient/" + sPatientId, valueType: FHIRFilterType.string }));
+			
+			const oWebdavModel = this.getView().getModel();
+			const sWebDavPath = "/response/"+iPatientModelOffest;
+			const sPatientId = oWebdavModel.getProperty(sWebDavPath+"/propstat/prop/displayname");
+			
+            aFilters.push(new FHIRFilter({ path: "subject", operator: FHIRFilterOperator.Equals, value1: sPatientId, valueType: FHIRFilterType.string }));
             const oTable = this.getView().byId("medicationTable");
             const oBinding = oTable.getBinding("items");
             oBinding.filter(aFilters);
@@ -322,19 +328,19 @@ sap.ui.define([
             
         },
         sortMedicationBySecondExtension : function() {
-            // set the rank property and update the model to refresh the bindings
+         /*   // set the rank property and update the model to refresh the bindings
             const oMedicationTable = this.byId("medicationTable");
             const oBinding = oMedicationTable.getBinding("items");
             const aKeys = oMedicationTable.getItems().sort(function compareFn(a, b) {
                 const aValueDecimal = a.getBindingContext().getProperty("extension/2/valueDecimal");
                 const bValueDecimal = b.getBindingContext().getProperty("extension/2/valueDecimal");
                 return bValueDecimal - aValueDecimal;
-            }).map((oItem) => oItem.getBindingContext().getPath().substr(1));
+            }).map((oItem) => oItem.getBindingContext("fhir").getPath().substr(1));
     
             oBinding.aKeys = aKeys;
             oBinding.aKeysServerState = aKeys;
             oBinding._fireChange({reason: ChangeReason.Change});
-
+			*/
         }
     });
 });

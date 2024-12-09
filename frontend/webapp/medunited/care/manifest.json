@@ -9,15 +9,8 @@
 		"title": "{{appTitle}}",
 		"dataSources": {
 			"fhir": {
-				"uri": "https://hapi.fhir.org/baseR4/",
-				"type": "FHIR",
-				"settings": {
-					"groupProperties": {
-						"patientDetails": {
-							"submit": "Batch"
-						}
-					}
-				}
+				"uri": "http://localhost:8090/fhir/",
+				"type": "FHIR"
 			},
 			"webdav": {
 				"uri": "http://localhost:8090/webdav/3-SMC-B-Testkarte-883110000116352",
@@ -67,13 +60,7 @@
 				"type": "sap.fhir.model.r4.FHIRModel",
 				"dataSource": "fhir",
 				"settings": {
-					"groupProperties": {
-						"patientDetails": {
-							"submit": "Transaction"
-						}
-					},
 					"defaultQueryParameters": {
-						"_total": "accurate"
 					}
 				}
 			},

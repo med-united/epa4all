@@ -16,6 +16,8 @@ import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
+
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.logmanager.Level;
 
 import java.io.File;
@@ -29,15 +31,14 @@ import java.util.concurrent.ThreadFactory;
 import java.util.logging.Logger;
 
 import static de.health.service.cetp.utils.Utils.saveDataToFile;
-import static de.servicehealth.utils.ServerUtils.terminateExecutor;
 
 public abstract class EpaFileTracker<T extends FileAction> {
 
     private static final Logger log = Logger.getLogger(EpaFileTracker.class.getName());
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    private static final ThreadFactory threadFactory = Thread.ofVirtual().name("upload-file-", 0).factory();
-    private static final ExecutorService filesTransferExecutor = Executors.newThreadPerTaskExecutor(threadFactory);
+    @Inject
+    ManagedExecutor filesTransferExecutor;
     private static final Map<String, RegistryResponseType> resultsMap = new ConcurrentHashMap<>();
 
     @Inject
@@ -57,13 +58,8 @@ public abstract class EpaFileTracker<T extends FileAction> {
         return resultsMap.remove(taskId);
     }
 
-    void onStart(@Observes StartupEvent ev) {
-        Runtime.getRuntime().addShutdownHook(new Thread(() ->
-            terminateExecutor(filesTransferExecutor, "Epa-File-Tracker-Job", 6000))
-        );
-    }
-
     public void onTransfer(@ObservesAsync T fileAction) {
+    	// this is already in an own thread to technically no need to start an own
         filesTransferExecutor.submit(() -> transferFile(fileAction));
     }
 

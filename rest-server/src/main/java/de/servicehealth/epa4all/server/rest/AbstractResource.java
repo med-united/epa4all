@@ -89,8 +89,7 @@ public abstract class AbstractResource {
         Map<String, Object> xHeaders = prepareXHeaders(
             insurantId, userAgent, konnektorUrl, epaAPI.getBackend()
         );
-        // TODO resolve
-        resolveEntitlement(insuranceData, epaAPI, userAgent);
+        resolveEntitlement(xHeaders.get(VAU_NP).toString(), insuranceData, epaAPI, userAgent);
         return new EpaContext(insuranceData, xHeaders);
     }
 
@@ -111,11 +110,11 @@ public abstract class AbstractResource {
         return attributes;
     }
 
-    private void resolveEntitlement(InsuranceData insuranceData, EpaAPI epaAPI, String userAgent) throws IOException {
+    private void resolveEntitlement(String vauNp, InsuranceData insuranceData, EpaAPI epaAPI, String userAgent) throws IOException {
         String insurantId = insuranceData.getInsurantId();
         Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
         if (validTo == null || validTo.isBefore(Instant.now())) {
-            setEntitlement(userRuntimeConfig, insuranceData, epaAPI, userAgent, smcbHandle);
+            setEntitlement(userRuntimeConfig, insuranceData, epaAPI, vauNp, userAgent, smcbHandle);
         } else {
             log.info(String.format("[%s/%s] Entitlement is valid until %s", telematikId, insurantId, validTo));
         }
@@ -125,6 +124,7 @@ public abstract class AbstractResource {
         UserRuntimeConfig userRuntimeConfig,
         InsuranceData insuranceData,
         EpaAPI epaAPI,
+        String vauNp,
         String userAgent,
         String smcbHandle
     ) throws IOException {
@@ -138,7 +138,7 @@ public abstract class AbstractResource {
         
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
         String insurantId = insuranceData.getInsurantId();
-        ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, userAgent, backend, entitlementRequest);
+        ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, userAgent, backend, vauNp, entitlementRequest);
         if (response.getValidTo() != null) {
             insuranceDataService.updateEntitlement(response.getValidTo().toInstant(), telematikId, insurantId);
         }

@@ -1,0 +1,761 @@
+{
+    "resourceType": "Bundle",
+    "type": "searchset",
+    "total": 8,
+    "link": [
+        {
+            "relation": "self",
+            "url": "/epa/medication/api/v1/fhir/MedicationRequest?_include=MedicationRequest:medication&_count=25&_offset=0"
+        }
+    ],
+    "entry": [
+        {
+            "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/f1d16a71-9a98-4fba-9d58-51a522f334f4",
+            "resource": {
+                "resourceType": "Medication",
+                "id": "f1d16a71-9a98-4fba-9d58-51a522f334f4",
+                "meta": {
+                    "versionId": "0",
+                    "lastUpdated": "2024-11-18T20:56:32.415+01:00",
+                    "profile": [
+                        "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication|1.0.3"
+                    ]
+                },
+                "extension": [
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/drug-category-extension",
+                        "valueCoding": {
+                            "system": "https://gematik.de/fhir/epa-medication/CodeSystem/epa-drug-category-cs",
+                            "code": "00"
+                        }
+                    },
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-id-vaccine-extension",
+                        "valueBoolean": false
+                    },
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/rx-prescription-process-identifier-extension",
+                        "valueIdentifier": {
+                            "system": "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+                            "value": "160.000.103.009.543.42_authoredOn[20240018]"
+                        }
+                    }
+                ],
+                "identifier": [
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/epa-medication-unique-identifier",
+                        "value": "A55ECBD78DEBCE53BB627857358DC25038863ACE531E2DD2189ECA2C9C48103F"
+                    },
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-originator-process-identifier",
+                        "value": "37992601-3715-4acd-be30-c00e7bc50e90_160.000.103.009.543.42"
+                    }
+                ],
+                "code": {
+                    "text": "100mg Amoxicillin N2"
+                },
+                "status": "inactive"
+            },
+            "search": {
+                "mode": "include"
+            }
+        },
+        {
+            "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/01ba2c64-1e04-46e9-a462-ccec201f4486",
+            "resource": {
+                "resourceType": "MedicationRequest",
+                "id": "01ba2c64-1e04-46e9-a462-ccec201f4486",
+                "meta": {
+                    "versionId": "0",
+                    "lastUpdated": "2024-11-18T20:56:32.498+01:00",
+                    "profile": [
+                        "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication-request|1.0.3"
+                    ]
+                },
+                "extension": [
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/multiple-prescription-extension",
+                        "extension": [
+                            {
+                                "url": "indicator",
+                                "valueBoolean": false
+                            }
+                        ]
+                    }
+                ],
+                "identifier": [
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+                        "value": "160.000.103.009.543.42_authoredOn[20240018]"
+                    },
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-originator-process-identifier",
+                        "value": "b4ad2286-2979-446b-89d3-82c0c530c16b_160.000.103.009.543.42"
+                    }
+                ],
+                "status": "active",
+                "intent": "filler-order",
+                "medicationReference": {
+                    "reference": "Medication/f1d16a71-9a98-4fba-9d58-51a522f334f4"
+                },
+                "subject": {
+                    "identifier": {
+                        "system": "http://fhir.de/sid/gkv/kvid-10",
+                        "value": "X110485291"
+                    }
+                },
+                "authoredOn": "2024-11-18",
+                "requester": {
+                    "reference": "PractitionerRole/a494939b-6f52-4d77-a17d-d909f92c1752"
+                },
+                "dosageInstruction": [
+                    {
+                        "text": "1-1-1"
+                    }
+                ],
+                "dispenseRequest": {
+                    "quantity": {
+                        "value": 1,
+                        "system": "http://unitsofmeasure.org",
+                        "code": "{Package}"
+                    }
+                },
+                "substitution": {
+                    "allowedBoolean": true
+                }
+            },
+            "search": {
+                "mode": "match"
+            }
+        },
+        {
+            "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/ecedf7a3-3253-4b3d-9c1f-6c26058cab4b",
+            "resource": {
+                "resourceType": "Medication",
+                "id": "ecedf7a3-3253-4b3d-9c1f-6c26058cab4b",
+                "meta": {
+                    "versionId": "0",
+                    "lastUpdated": "2024-11-18T20:56:38.612+01:00",
+                    "profile": [
+                        "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication|1.0.3"
+                    ]
+                },
+                "extension": [
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/drug-category-extension",
+                        "valueCoding": {
+                            "system": "https://gematik.de/fhir/epa-medication/CodeSystem/epa-drug-category-cs",
+                            "code": "00"
+                        }
+                    },
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-id-vaccine-extension",
+                        "valueBoolean": false
+                    },
+                    {
+                        "url": "http://fhir.de/StructureDefinition/normgroesse",
+                        "valueCode": "N1"
+                    },
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/rx-prescription-process-identifier-extension",
+                        "valueIdentifier": {
+                            "system": "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+                            "value": "160.000.103.009.545.36_authoredOn[20240018]"
+                        }
+                    }
+                ],
+                "identifier": [
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/epa-medication-unique-identifier",
+                        "value": "CAEFDCBD82CF8546249472C3C9AB136BB657E9CB3AAF5ADD369DD60045E0126F"
+                    },
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-originator-process-identifier",
+                        "value": "ea05a4f7-5302-4a75-9b51-c4bcfc55a54c_160.000.103.009.545.36"
+                    }
+                ],
+                "status": "inactive",
+                "form": {
+                    "text": "Filmtabletten"
+                },
+                "amount": {
+                    "numerator": {
+                        "extension": [
+                            {
+                                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-packaging-size-extension",
+                                "valueString": "1"
+                            }
+                        ],
+                        "unit": "Paket",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "{Package}"
+                    },
+                    "denominator": {
+                        "value": 1
+                    }
+                },
+                "ingredient": [
+                    {
+                        "itemCodeableConcept": {
+                            "coding": [
+                                {
+                                    "system": "http://fhir.de/CodeSystem/ask",
+                                    "code": "22686"
+                                }
+                            ],
+                            "text": "Ramipril"
+                        },
+                        "strength": {
+                            "numerator": {
+                                "value": 1,
+                                "unit": "Paket",
+                                "_system": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_code": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                }
+                            },
+                            "denominator": {
+                                "value": 1,
+                                "_system": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_code": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "search": {
+                "mode": "include"
+            }
+        },
+        {
+            "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/386d8f09-c9cd-4795-bcb2-675be0cf19ea",
+            "resource": {
+                "resourceType": "MedicationRequest",
+                "id": "386d8f09-c9cd-4795-bcb2-675be0cf19ea",
+                "meta": {
+                    "versionId": "0",
+                    "lastUpdated": "2024-11-18T20:56:38.712+01:00",
+                    "profile": [
+                        "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication-request|1.0.3"
+                    ]
+                },
+                "extension": [
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/multiple-prescription-extension",
+                        "extension": [
+                            {
+                                "url": "indicator",
+                                "valueBoolean": false
+                            }
+                        ]
+                    }
+                ],
+                "identifier": [
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+                        "value": "160.000.103.009.545.36_authoredOn[20240018]"
+                    },
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-originator-process-identifier",
+                        "value": "3e9e3df5-e0ea-47cb-8dee-f5cac448ed93_160.000.103.009.545.36"
+                    }
+                ],
+                "status": "active",
+                "intent": "filler-order",
+                "medicationReference": {
+                    "reference": "Medication/ecedf7a3-3253-4b3d-9c1f-6c26058cab4b"
+                },
+                "subject": {
+                    "identifier": {
+                        "system": "http://fhir.de/sid/gkv/kvid-10",
+                        "value": "X110485291"
+                    }
+                },
+                "authoredOn": "2024-11-18",
+                "requester": {
+                    "reference": "PractitionerRole/a494939b-6f52-4d77-a17d-d909f92c1752"
+                },
+                "dosageInstruction": [
+                    {
+                        "text": "1-1-1"
+                    }
+                ],
+                "dispenseRequest": {
+                    "quantity": {
+                        "value": 1,
+                        "system": "http://unitsofmeasure.org",
+                        "code": "{Package}"
+                    }
+                }
+            },
+            "search": {
+                "mode": "match"
+            }
+        },
+        {
+            "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/cb85bbf4-48d7-4b95-a099-198fa82ffcb2",
+            "resource": {
+                "resourceType": "Medication",
+                "id": "cb85bbf4-48d7-4b95-a099-198fa82ffcb2",
+                "meta": {
+                    "versionId": "0",
+                    "lastUpdated": "2024-11-18T21:01:30.535+01:00",
+                    "profile": [
+                        "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication|1.0.3"
+                    ]
+                },
+                "extension": [
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/drug-category-extension",
+                        "valueCoding": {
+                            "system": "https://gematik.de/fhir/epa-medication/CodeSystem/epa-drug-category-cs",
+                            "code": "00"
+                        }
+                    },
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-id-vaccine-extension",
+                        "valueBoolean": false
+                    },
+                    {
+                        "url": "http://fhir.de/StructureDefinition/normgroesse",
+                        "valueCode": "N2"
+                    },
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/rx-prescription-process-identifier-extension",
+                        "valueIdentifier": {
+                            "system": "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+                            "value": "160.000.103.009.544.39_authoredOn[20240018]"
+                        }
+                    }
+                ],
+                "identifier": [
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/epa-medication-unique-identifier",
+                        "value": "90BE59094D6F957962C086EBA8717134B07186C65E21BFB1FBEC3D3BDA0C7DCF"
+                    },
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-originator-process-identifier",
+                        "value": "5719a338-27cb-4d54-8eb6-b8bd86751c54_160.000.103.009.544.39"
+                    }
+                ],
+                "code": {
+                    "coding": [
+                        {
+                            "system": "http://fhir.de/CodeSystem/ifa/pzn",
+                            "code": "00027950"
+                        }
+                    ],
+                    "text": "Ibuprofen Atid 600mg 10 ST"
+                },
+                "status": "inactive",
+                "form": {
+                    "coding": [
+                        {
+                            "system": "https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_KBV_DARREICHUNGSFORM",
+                            "code": "FTA"
+                        }
+                    ]
+                },
+                "amount": {
+                    "numerator": {
+                        "extension": [
+                            {
+                                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-packaging-size-extension",
+                                "valueString": "1"
+                            }
+                        ],
+                        "unit": "Paket",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "{Package}"
+                    },
+                    "denominator": {
+                        "value": 1
+                    }
+                }
+            },
+            "search": {
+                "mode": "include"
+            }
+        },
+        {
+            "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/bab7d782-5f88-401f-b602-990d98c43428",
+            "resource": {
+                "resourceType": "MedicationRequest",
+                "id": "bab7d782-5f88-401f-b602-990d98c43428",
+                "meta": {
+                    "versionId": "0",
+                    "lastUpdated": "2024-11-18T21:01:30.555+01:00",
+                    "profile": [
+                        "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication-request|1.0.3"
+                    ]
+                },
+                "extension": [
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/multiple-prescription-extension",
+                        "extension": [
+                            {
+                                "url": "indicator",
+                                "valueBoolean": false
+                            }
+                        ]
+                    }
+                ],
+                "identifier": [
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+                        "value": "160.000.103.009.544.39_authoredOn[20240018]"
+                    },
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-originator-process-identifier",
+                        "value": "bf386d3d-779d-43fc-99a6-57451c4ab88a_160.000.103.009.544.39"
+                    }
+                ],
+                "status": "active",
+                "intent": "filler-order",
+                "medicationReference": {
+                    "reference": "Medication/cb85bbf4-48d7-4b95-a099-198fa82ffcb2"
+                },
+                "subject": {
+                    "identifier": {
+                        "system": "http://fhir.de/sid/gkv/kvid-10",
+                        "value": "X110485291"
+                    }
+                },
+                "authoredOn": "2024-11-18",
+                "requester": {
+                    "reference": "PractitionerRole/a494939b-6f52-4d77-a17d-d909f92c1752"
+                },
+                "dosageInstruction": [
+                    {
+                        "text": "1-1-1"
+                    }
+                ],
+                "dispenseRequest": {
+                    "quantity": {
+                        "value": 1,
+                        "system": "http://unitsofmeasure.org",
+                        "code": "{Package}"
+                    }
+                },
+                "substitution": {
+                    "allowedBoolean": true
+                }
+            },
+            "search": {
+                "mode": "match"
+            }
+        },
+        {
+            "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/d1a944a6-02ea-4b4a-af6e-06fa02bd2814",
+            "resource": {
+                "resourceType": "Medication",
+                "id": "d1a944a6-02ea-4b4a-af6e-06fa02bd2814",
+                "meta": {
+                    "versionId": "0",
+                    "lastUpdated": "2024-11-20T09:36:02.336+01:00",
+                    "profile": [
+                        "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication|1.0.3"
+                    ]
+                },
+                "extension": [
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/drug-category-extension",
+                        "valueCoding": {
+                            "system": "https://gematik.de/fhir/epa-medication/CodeSystem/epa-drug-category-cs",
+                            "code": "00"
+                        }
+                    },
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-id-vaccine-extension",
+                        "valueBoolean": false
+                    },
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-formulation-packaging-extension",
+                        "valueString": "Flasche"
+                    },
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/rx-prescription-process-identifier-extension",
+                        "valueIdentifier": {
+                            "system": "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+                            "value": "160.000.103.009.546.33_authoredOn[20240018]"
+                        }
+                    }
+                ],
+                "identifier": [
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/epa-medication-unique-identifier",
+                        "value": "3CAA7D996E35A9883FFA1D2C7BC1891B62EAFA4684BA38A5A840D77810867806"
+                    },
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-originator-process-identifier",
+                        "value": "e6a89206-dbd5-4457-b8fd-7056454f45eb_160.000.103.009.546.33"
+                    }
+                ],
+                "code": {
+                    "text": "Mundwasser"
+                },
+                "status": "inactive",
+                "form": {
+                    "text": "Flasche"
+                },
+                "amount": {
+                    "numerator": {
+                        "extension": [
+                            {
+                                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-total-quantity-formulation-extension",
+                                "valueString": "1"
+                            }
+                        ],
+                        "unit": "Paket",
+                        "system": "http://unitsofmeasure.org",
+                        "code": "{Package}"
+                    },
+                    "denominator": {
+                        "value": 1
+                    }
+                },
+                "ingredient": [
+                    {
+                        "extension": [
+                            {
+                                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-ingredient-darreichungsform-extension",
+                                "valueString": "Fl\u00fcssig"
+                            }
+                        ],
+                        "itemCodeableConcept": {
+                            "text": "Sterilwasser 500 ML"
+                        },
+                        "strength": {
+                            "extension": [
+                                {
+                                    "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-ingredient-amount-extension",
+                                    "valueString": "Freitext"
+                                }
+                            ],
+                            "numerator": {
+                                "_value": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_system": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_code": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                }
+                            },
+                            "denominator": {
+                                "_value": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_system": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_code": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "extension": [
+                            {
+                                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-ingredient-darreichungsform-extension",
+                                "valueString": "\u00d6l"
+                            }
+                        ],
+                        "itemCodeableConcept": {
+                            "text": "Eucalyptus Oel 20 ML"
+                        },
+                        "strength": {
+                            "extension": [
+                                {
+                                    "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-ingredient-amount-extension",
+                                    "valueString": "Freitext"
+                                }
+                            ],
+                            "numerator": {
+                                "_value": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_system": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_code": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                }
+                            },
+                            "denominator": {
+                                "_value": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_system": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                },
+                                "_code": {
+                                    "extension": [
+                                        {
+                                            "url": "http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                                            "valueCode": "unknown"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "search": {
+                "mode": "include"
+            }
+        },
+        {
+            "fullUrl": "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/b273862c-9c9c-46f8-a7f9-f72e94a97108",
+            "resource": {
+                "resourceType": "MedicationRequest",
+                "id": "b273862c-9c9c-46f8-a7f9-f72e94a97108",
+                "meta": {
+                    "versionId": "0",
+                    "lastUpdated": "2024-11-20T09:36:02.403+01:00",
+                    "profile": [
+                        "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication-request|1.0.3"
+                    ]
+                },
+                "extension": [
+                    {
+                        "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/multiple-prescription-extension",
+                        "extension": [
+                            {
+                                "url": "indicator",
+                                "valueBoolean": false
+                            }
+                        ]
+                    }
+                ],
+                "identifier": [
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+                        "value": "160.000.103.009.546.33_authoredOn[20240018]"
+                    },
+                    {
+                        "system": "https://gematik.de/fhir/epa-medication/sid/rx-originator-process-identifier",
+                        "value": "1d20738c-412d-4b64-b4da-edbea52e3902_160.000.103.009.546.33"
+                    }
+                ],
+                "status": "active",
+                "intent": "filler-order",
+                "medicationReference": {
+                    "reference": "Medication/d1a944a6-02ea-4b4a-af6e-06fa02bd2814"
+                },
+                "subject": {
+                    "identifier": {
+                        "system": "http://fhir.de/sid/gkv/kvid-10",
+                        "value": "X110485291"
+                    }
+                },
+                "authoredOn": "2024-11-18",
+                "requester": {
+                    "reference": "PractitionerRole/a494939b-6f52-4d77-a17d-d909f92c1752"
+                },
+                "dosageInstruction": [
+                    {
+                        "patientInstruction": "1-1-1"
+                    }
+                ],
+                "dispenseRequest": {
+                    "quantity": {
+                        "value": 1,
+                        "system": "http://unitsofmeasure.org",
+                        "code": "{Package}"
+                    }
+                },
+                "substitution": {
+                    "allowedBoolean": true
+                }
+            },
+            "search": {
+                "mode": "match"
+            }
+        }
+    ]
+}
