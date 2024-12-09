@@ -19,4 +19,10 @@ public class VauConfig {
 
     @ConfigProperty(name = "epa.vau.read.timeout.sec", defaultValue = "10")
     int vauReadTimeoutSec;
+
+    @ConfigProperty(name = "epa.vau.connection.timeout.ms", defaultValue = "10000")
+    int connectionTimeoutMs;
+
+    @ConfigProperty(name = "epa.vau.request.timeout.ms", defaultValue = "60000")
+    int requestTimeoutMs;
 }

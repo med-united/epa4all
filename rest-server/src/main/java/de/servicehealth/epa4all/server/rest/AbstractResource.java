@@ -84,26 +84,19 @@ public abstract class AbstractResource {
         String insurantId = insuranceData.getInsurantId();
         EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
         String userAgent = multiEpaService.getEpaConfig().getUserAgent();
-
+        String backend = epaAPI.getBackend();
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
-        Map<String, Object> xHeaders = prepareXHeaders(
-            insurantId, userAgent, konnektorUrl, epaAPI.getBackend()
-        );
-        resolveEntitlement(xHeaders.get(VAU_NP).toString(), insuranceData, epaAPI, userAgent);
-        return new EpaContext(insuranceData, xHeaders);
+        String vauNp = vauNpProvider.getVauNp(konnektorUrl, backend);
+
+        resolveEntitlement(vauNp, insuranceData, epaAPI, userAgent);
+        return new EpaContext(insuranceData, prepareXHeaders(insurantId, userAgent, backend, vauNp));
     }
 
-    private Map<String, Object> prepareXHeaders(
-        String insurantId,
-        String userAgent,
-        String konnektorUrl,
-        String backend
-    ) {
-        Map<String, Object> attributes = new HashMap<>();
+    private Map<String, String> prepareXHeaders(String insurantId, String userAgent, String backend, String vauNp) {
+        Map<String, String> attributes = new HashMap<>();
         attributes.put(X_INSURANT_ID, insurantId);
         attributes.put(X_USER_AGENT, userAgent);
         attributes.put(X_BACKEND, backend);
-        String vauNp = vauNpProvider.getVauNp(konnektorUrl, backend);
         if (vauNp != null) {
             attributes.put(VAU_NP, vauNp);
         }
@@ -138,7 +131,9 @@ public abstract class AbstractResource {
         
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
         String insurantId = insuranceData.getInsurantId();
-        ValidToResponseType response = entitlementsApi.setEntitlementPs(insurantId, userAgent, backend, vauNp, entitlementRequest);
+        ValidToResponseType response = entitlementsApi.setEntitlementPs(
+            insurantId, userAgent, backend, vauNp, entitlementRequest
+        );
         if (response.getValidTo() != null) {
             insuranceDataService.updateEntitlement(response.getValidTo().toInstant(), telematikId, insurantId);
         }

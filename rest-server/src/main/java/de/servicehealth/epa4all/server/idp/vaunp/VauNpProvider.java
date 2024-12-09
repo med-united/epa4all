@@ -38,20 +38,15 @@ public class VauNpProvider extends StartableService {
     private final Map<VauNpKey, String> vauNpMap = new HashMap<>();
     
     @Inject
+    @Setter
     ManagedExecutor scheduledThreadPool;
 
-    @Inject
     IdpClient idpClient;
-
-    @Inject
     MultiEpaService multiEpaService;
-
-    @Inject
     IKonnektorClient konnektorClient;
-
-    @Inject
     KonnektorDefaultConfig konnektorDefaultConfig;
 
+    @Setter
     @Inject
     @KonnektorsConfigs
     Map<String, KonnektorConfig> konnektorsConfigs;
@@ -59,6 +54,19 @@ public class VauNpProvider extends StartableService {
     @Setter
     @ConfigProperty(name = "ere.per.konnektor.config.folder")
     String configFolder;
+
+    @Inject
+    public VauNpProvider(
+        IdpClient idpClient,
+        MultiEpaService multiEpaService,
+        IKonnektorClient konnektorClient,
+        KonnektorDefaultConfig konnektorDefaultConfig
+    ) {
+        this.idpClient = idpClient;
+        this.multiEpaService = multiEpaService;
+        this.konnektorClient = konnektorClient;
+        this.konnektorDefaultConfig = konnektorDefaultConfig;
+    }
 
     private boolean sameConfigs(
         Map<String, KonnektorConfig> uniqueKonnektorsConfigs,

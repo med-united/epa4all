@@ -107,10 +107,10 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 String userAgent = multiEpaService.getEpaConfig().getUserAgent();
 
                 String vauNp = vauNpProvider.getVauNp(configurations.getConnectorBaseURL(), epaAPI.getBackend());
-                Map<String, Object> xHeaders = Map.of(
+                Map<String, String> xHeaders = Map.of(
                     X_INSURANT_ID, insurantId, X_USER_AGENT, userAgent, VAU_NP, vauNp, X_BACKEND, epaAPI.getBackend()
                 );
-                byte[] bytes = epaAPI.getRenderClient(xHeaders).getPdfBytes();
+                byte[] bytes = epaAPI.getRenderClient().getPdfBytes(xHeaders);
 
                 EpaContext epaContext = new EpaContext(insuranceData, Map.of());
                 handleDownloadResponse(bytes, telematikId, epaContext, insurantId);

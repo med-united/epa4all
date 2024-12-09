@@ -1,28 +1,19 @@
 package de.service.health.api.epa4all;
 
-import ca.uhn.fhir.context.FhirContext;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.GenericMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.IRenderClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.VauRenderClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRenderClient;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
-import org.apache.http.client.fluent.Executor;
-
-import java.util.Map;
 
 public class EpaAPIAggregator implements EpaAPI {
 
     private final String backend;
-    private final FhirContext apiContext;
-    private final String medicationApiUrl;
-    private final Executor renderExecutor;
-    private final String medicationRenderUrl;
-
+    private final IRenderClient renderClient;
+    private final IMedicationClient medicationClient;
     private final IDocumentManagementPortType documentManagementPortType;
     private final IDocumentManagementInsurantPortType documentManagementInsurantPortType;
     private final AccountInformationApi accountInformationApi;
@@ -32,10 +23,8 @@ public class EpaAPIAggregator implements EpaAPI {
 
     public EpaAPIAggregator(
         String backend,
-        FhirContext apiContext,
-        String medicationApiUrl,
-        Executor renderExecutor,
-        String medicationRenderUrl,
+        IRenderClient renderClient,
+        IMedicationClient medicationClient,
         IDocumentManagementPortType documentManagementPortType,
         IDocumentManagementInsurantPortType documentManagementInsurantPortType,
         AccountInformationApi accountInformationApi,
@@ -44,11 +33,8 @@ public class EpaAPIAggregator implements EpaAPI {
         IFhirProxy fhirProxy
     ) {
         this.backend = backend;
-        this.apiContext = apiContext;
-        this.medicationApiUrl = medicationApiUrl;
-        this.renderExecutor = renderExecutor;
-        this.medicationRenderUrl = medicationRenderUrl;
-
+        this.renderClient = renderClient;
+        this.medicationClient = medicationClient;
         this.documentManagementPortType = documentManagementPortType;
         this.documentManagementInsurantPortType = documentManagementInsurantPortType;
         this.accountInformationApi = accountInformationApi;
@@ -93,12 +79,12 @@ public class EpaAPIAggregator implements EpaAPI {
     }
 
     @Override
-    public IMedicationClient getMedicationClient(Map<String, Object> xHeaders) {
-        return new GenericMedicationClient(apiContext, medicationApiUrl, xHeaders);
+    public IMedicationClient getMedicationClient() {
+        return medicationClient;
     }
 
     @Override
-    public IRenderClient getRenderClient(Map<String, Object> xHeaders) {
-        return new VauRenderClient(renderExecutor, medicationRenderUrl, xHeaders);
+    public IRenderClient getRenderClient() {
+        return renderClient;
     }
 }

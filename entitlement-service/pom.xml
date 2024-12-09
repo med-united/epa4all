@@ -14,10 +14,6 @@
 
     <name>entitlement-service</name>
 
-    <properties>
-        <cxf-version>4.0.5</cxf-version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.swagger</groupId>
