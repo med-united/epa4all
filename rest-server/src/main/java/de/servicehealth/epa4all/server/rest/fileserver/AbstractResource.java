@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.logging.Logger;
 
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static org.jugs.webdav.jaxrs.Headers.DAV;
 
 public class AbstractResource implements WebDavResource {
@@ -55,7 +56,7 @@ public class AbstractResource implements WebDavResource {
     public Response get(UriInfo uriInfo) {
         logRequest("GET", uriInfo);
         Response.ResponseBuilder builder = Response.ok();
-        builder.header("Content-Type", MediaType.TEXT_HTML);
+        builder.header(CONTENT_TYPE, MediaType.TEXT_HTML);
         try {
             if (!resource.exists()) {
                 log.severe(String.format("Resource '%s' does not exist (404).", resource));
@@ -96,7 +97,7 @@ public class AbstractResource implements WebDavResource {
 
     private Response.ResponseBuilder buildFileContent() throws IOException {
         Response.ResponseBuilder builder = Response.ok();
-        builder.header("Content-Type", MediaType.APPLICATION_OCTET_STREAM);
+        builder.header(CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM);
         byte[] content = FileUtils.readFileToByteArray(resource);
         builder.entity(content);
         return builder;

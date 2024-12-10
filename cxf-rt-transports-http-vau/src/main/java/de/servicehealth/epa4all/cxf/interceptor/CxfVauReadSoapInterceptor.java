@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.servicehealth.vau.VauClient.VAU_CID;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static org.apache.cxf.phase.Phase.RECEIVE;
 
 public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message> {
@@ -58,7 +59,7 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
             if (headers instanceof Map) {
                 Map<String, List<String>> headersMap = (Map<String, List<String>>) headers;
                 for (Entry<String, String> entry : headerMap.entrySet()) {
-                    if (entry.getKey().equals("Content-Type")) {
+                    if (entry.getKey().equalsIgnoreCase(CONTENT_TYPE)) {
                         message.put(Message.CONTENT_TYPE, entry.getValue());
                     }
                     headersMap.put(entry.getKey().toLowerCase(), List.of(entry.getValue()));

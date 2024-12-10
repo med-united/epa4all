@@ -57,7 +57,7 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
         byte[] payload = vauResponse.payload();
         if (payload != null) {
             Optional<Header> contentTypeOpt = Stream.of(headers)
-                .filter(h -> h.getName().equals(CONTENT_TYPE))
+                .filter(h -> h.getName().equalsIgnoreCase(CONTENT_TYPE))
                 .findFirst();
 
             AbstractHttpEntity entity = new ByteArrayEntity(payload);

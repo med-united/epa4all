@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.servicehealth.vau.VauClient.VAU_NP;
@@ -78,6 +79,18 @@ public abstract class AbstractResource {
     String smcbHandle;
 
     protected EpaContext prepareEpaContext(String kvnr) throws Exception {
+        EpaContext epaContext;
+        try {
+            epaContext = buildEpaContext(kvnr);
+        } catch (Exception e) {
+            log.log(Level.SEVERE, String.format("[%s] Error while building of the EPA Context", kvnr), e);
+            insuranceDataService.cleanUpInsuranceData(telematikId, kvnr);
+            epaContext = buildEpaContext(kvnr);
+        }
+        return epaContext;
+    }
+
+    protected EpaContext buildEpaContext(String kvnr) throws Exception {
         InsuranceData insuranceData = insuranceDataService.getInsuranceDataOrReadVSD(
             telematikId, kvnr, smcbHandle, userRuntimeConfig
         );
@@ -128,7 +141,7 @@ public abstract class AbstractResource {
 
         EntitlementRequestType entitlementRequest = new EntitlementRequestType();
         entitlementRequest.setJwt(jwt);
-        
+
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
         String insurantId = insuranceData.getInsurantId();
         ValidToResponseType response = entitlementsApi.setEntitlementPs(

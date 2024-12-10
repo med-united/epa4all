@@ -52,15 +52,13 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             if (payload != null) {
 
                 vauResponse.headers().stream()
-                    .filter(p -> p.getKey().equals(CONTENT_TYPE))
+                    .filter(p -> p.getKey().equalsIgnoreCase(CONTENT_TYPE))
                     .findFirst().ifPresent(p -> {
                         String contentType = p.getValue();
                         message.put(CONTENT_TYPE, contentType);
                         if (!contentType.contains("pdf")) {
                             String content = new String(payload);
-                            if (contentType.contains("html") || contentType.contains("xml")) {
-                                content = content.substring(0, 100) + " ********* ";
-                            }
+                            content = content.substring(0, Math.min(100, content.length())) + " ********* ";
                             log.info("Response PAYLOAD: " + content);
                         }
                     });

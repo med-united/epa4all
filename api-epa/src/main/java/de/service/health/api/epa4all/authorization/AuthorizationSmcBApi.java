@@ -1,12 +1,17 @@
 package de.service.health.api.epa4all.authorization;
 
 import de.servicehealth.model.ErrorType;
+import de.servicehealth.model.GetNonce200Response;
+import de.servicehealth.model.SendAuthCodeSC200Response;
+import de.servicehealth.model.SendAuthCodeSCtype;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
@@ -47,5 +52,35 @@ public interface AuthorizationSmcBApi extends de.servicehealth.api.Authorization
     Response sendAuthorizationRequestSCWithResponse(
         @HeaderParam(X_USER_AGENT) String xUseragent,
         @HeaderParam(X_BACKEND) String xBackend
+    );
+
+    @GET
+    @Path("/getNonce")
+    @Produces({ "application/json" })
+    @ApiOperation(value = "(getNonce) Generate nonce (random value) for an authorization request", tags={  })
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "Ok.", response = GetNonce200Response.class),
+        @ApiResponse(code = 400, message = "Bad Request", response = ErrorType.class),
+        @ApiResponse(code = 500, message = "Internal Server Error", response = ErrorType.class) })
+    GetNonce200Response getNonce(
+        @HeaderParam(X_USER_AGENT) String xUseragent,
+        @HeaderParam(X_BACKEND) String xBackend
+    );
+
+    @POST
+    @Path("/send_authcode_sc")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @ApiOperation(value = "(sendAuthCodeSC) Send authorization code", tags={  })
+    @ApiResponses(value = {
+        @ApiResponse(code = 200, message = "OK, Successful login", response = SendAuthCodeSC200Response.class),
+        @ApiResponse(code = 400, message = "Bad Request", response = ErrorType.class),
+        @ApiResponse(code = 403, message = "Forbidden.", response = ErrorType.class),
+        @ApiResponse(code = 409, message = "Conflict.", response = ErrorType.class),
+        @ApiResponse(code = 500, message = "Internal Server Error", response = ErrorType.class) })
+    SendAuthCodeSC200Response sendAuthCodeSC(
+        @HeaderParam(X_USER_AGENT) String xUseragent,
+        @HeaderParam(X_BACKEND) String xBackend,
+        SendAuthCodeSCtype sendAuthCodeSCtype
     );
 }

@@ -6,7 +6,7 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.filetracker.EntitlementFile;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
-import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
+import de.servicehealth.epa4all.server.smcb.VSDResponseFile;
 import de.servicehealth.epa4all.server.vsd.VSDService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -27,7 +27,6 @@ public class InsuranceDataService {
 
     private static final Logger log = Logger.getLogger(InsuranceDataService.class.getName());
 
-    private final WebdavSmcbManager webdavSmcbManager;
     private final IKonnektorClient konnektorClient;
     private final FolderService folderService;
     private final VSDService vsdService;
@@ -35,13 +34,11 @@ public class InsuranceDataService {
 
     @Inject
     public InsuranceDataService(
-        WebdavSmcbManager webdavSmcbManager,
         IKonnektorClient konnektorClient,
         FolderService folderService,
         VSDService vsdService,
         Event<ReadVSDResponseEx> readVSDResponseExEvent
     ) {
-        this.webdavSmcbManager = webdavSmcbManager;
         this.konnektorClient = konnektorClient;
         this.folderService = folderService;
         this.vsdService = vsdService;
@@ -86,7 +83,14 @@ public class InsuranceDataService {
             return null;
         }
         File localVSDFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-        return webdavSmcbManager.getFileSystemInsuranceData(localVSDFolder, kvnr);
+        return localVSDFolder == null ? null : new VSDResponseFile(localVSDFolder).load(kvnr);
+    }
+
+    public void cleanUpInsuranceData(String telematikId, String kvnr) {
+        File localVSDFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        if (localVSDFolder != null) {
+            new VSDResponseFile(localVSDFolder).cleanUp();
+        }
     }
 
     public Instant getEntitlementExpiry(String telematikId, String kvnr) throws IOException {

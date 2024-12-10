@@ -50,7 +50,6 @@ public class CborVauErrorResponseBuilder extends AbstractVauResponseBuilder {
             } catch (IOException ignored) {
             }
         }
-        log.info(String.format("handling responseCode = %d, error: %s", responseCode, error));
         return error != null
             ? new VauResponse(responseCode, error, error.getBytes(UTF_8), headers)
             : super.build(vauCid, responseCode, headers, vauFacade.getVauClient(vauCid).decryptVauMessage(bytes));

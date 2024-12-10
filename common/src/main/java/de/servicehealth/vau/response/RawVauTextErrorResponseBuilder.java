@@ -20,7 +20,6 @@ public class RawVauTextErrorResponseBuilder extends AbstractVauResponseBuilder {
             String source = new String(bytes);
             error = responseCode + " " + source.split(String.valueOf(responseCode))[1].split("<")[0].trim();
         }
-        log.info(String.format("handling responseCode = %d, error: %s", responseCode, error));
         return error != null
             ? new VauResponse(responseCode, error, error.getBytes(UTF_8), headers)
             : super.build(vauCid, responseCode, headers, bytes);

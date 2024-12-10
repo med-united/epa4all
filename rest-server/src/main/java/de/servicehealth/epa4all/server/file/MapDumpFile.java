@@ -69,4 +69,8 @@ public abstract class MapDumpFile<K, V> {
             lock.writeLock().unlock();
         }
     }
+
+    public void cleanUp() {
+        store(Map.of());
+    }
 }
