@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("CdiInjectionPointsInspection")
 @ApplicationScoped
 public class VauNpProvider extends StartableService {
 
@@ -99,17 +100,23 @@ public class VauNpProvider extends StartableService {
     }
 
     public void onStart() {
+        reload(false);
+    }
+
+    public void reload(boolean cleanup) {
         var konnektorConfigFolder = new File(configFolder);
         if (!konnektorConfigFolder.exists() || !konnektorConfigFolder.isDirectory()) {
             throw new IllegalStateException("Konnektor config directory is corrupted");
         }
         try {
-            Map<String, KonnektorConfig> uniqueKonnektorsConfigs = getUniqueKonnektorsConfigs();
             VauNpFile vauNpFile = new VauNpFile(konnektorConfigFolder);
+            if (cleanup) {
+                vauNpFile.cleanUp();
+            }
+            Map<String, KonnektorConfig> uniqueKonnektorsConfigs = getUniqueKonnektorsConfigs();
             Map<VauNpKey, String> savedVauNpMap = vauNpFile.get();
             ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
-            // Saving NPs for connections is not working. Before re-enabling this please test it carefully
-            if (false && !savedVauNpMap.isEmpty() && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
+            if (!savedVauNpMap.isEmpty() && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
             	log.info("Using saved NP");
                 vauNpMap.putAll(savedVauNpMap);
             } else {
@@ -120,7 +127,7 @@ public class VauNpProvider extends StartableService {
                 List<Future<Pair<VauNpKey, String>>> futures = new ArrayList<>();
                 uniqueKonnektorsConfigs.forEach((konnektor, config) ->
                     epaBackendMap.forEach((backend, api) ->
-                        futures.add(scheduledThreadPool.submit(() -> getVauNp(config, api, konnektor, backend)))
+                        futures.add(scheduledThreadPool.submit(() -> getVauNp(config, api, konnektor)))
                     )
                 );
                 List<String> errorMessages = new ArrayList<>();
@@ -146,12 +153,13 @@ public class VauNpProvider extends StartableService {
         }
     }
 
-    private Pair<VauNpKey, String> getVauNp(KonnektorConfig config, EpaAPI api, String konnektor, String backend) {
+    private Pair<VauNpKey, String> getVauNp(KonnektorConfig config, EpaAPI api, String konnektor) {
+        String backend = api.getBackend();
         try {
             RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
             String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
             AuthorizationSmcBApi authorizationSmcBApi = api.getAuthorizationSmcBApi();
-            String vauNp = idpClient.getVauNpSync(authorizationSmcBApi, runtimeConfig, smcbHandle, api.getBackend());
+            String vauNp = idpClient.getVauNpSync(authorizationSmcBApi, runtimeConfig, smcbHandle, backend);
 
             return Pair.of(new VauNpKey(konnektor, backend), vauNp);
         } catch (Exception e) {

@@ -34,9 +34,9 @@ public class IdpFuncer {
                     throw new RuntimeException("Could not external authenticate", e);
                 }
             },
-            () -> authorizationSmcBApi.getNonce(userAgent).getNonce(),
+            () -> authorizationSmcBApi.getNonce(userAgent, backend).getNonce(),
             () -> authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(userAgent, backend),
-            sendAuthCodeSC -> authorizationSmcBApi.sendAuthCodeSC(userAgent, sendAuthCodeSC)
+            sendAuthCodeSC -> authorizationSmcBApi.sendAuthCodeSC(userAgent, backend, sendAuthCodeSC)
         );
     }
 }

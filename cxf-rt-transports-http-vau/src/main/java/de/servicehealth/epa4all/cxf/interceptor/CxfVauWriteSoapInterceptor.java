@@ -62,8 +62,8 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             String additionalHeaders = httpHeaders.entrySet()
                 .stream()
-                .filter(p -> !p.getKey().equals(CONTENT_TYPE))
-                .filter(p -> !p.getKey().equals(ACCEPT))
+                .filter(p -> !p.getKey().equalsIgnoreCase(CONTENT_TYPE))
+                .filter(p -> !p.getKey().equalsIgnoreCase(ACCEPT))
                 .map(p -> p.getKey() + ": " + p.getValue().getFirst())
                 .collect(Collectors.joining("\r\n"));
 

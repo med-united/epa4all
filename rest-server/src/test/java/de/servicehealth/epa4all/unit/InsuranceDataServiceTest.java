@@ -11,17 +11,13 @@ import de.servicehealth.epa4all.server.insurance.ReadVSDResponseEx;
 import de.servicehealth.epa4all.server.smcb.WebdavSmcbManager;
 import de.servicehealth.epa4all.server.vsd.VSDService;
 import jakarta.enterprise.event.Event;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Set;
-import java.util.stream.Stream;
 
-import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,23 +34,23 @@ public class InsuranceDataServiceTest extends AbstractVsdTest {
         TEST_FOLDER.mkdir();
     }
 
-    @AfterEach
-    public void afterEach() {
-        File[] files = TEST_FOLDER.listFiles();
-        if (files != null) {
-            Stream.of(files).forEach(f -> {
-                if (f.isDirectory()) {
-                    try {
-                        deleteDirectory(f);
-                    } catch (IOException e) {
-                        System.out.println(e.getMessage());
-                    }
-                } else {
-                    f.delete();
-                }
-            });
-        }
-    }
+    // @AfterEach
+    // public void afterEach() {
+    //     File[] files = TEST_FOLDER.listFiles();
+    //     if (files != null) {
+    //         Stream.of(files).forEach(f -> {
+    //             if (f.isDirectory()) {
+    //                 try {
+    //                     deleteDirectory(f);
+    //                 } catch (IOException e) {
+    //                     System.out.println(e.getMessage());
+    //                 }
+    //             } else {
+    //                 f.delete();
+    //             }
+    //         });
+    //     }
+    // }
 
     @Test
     public void firesReadVSDResponseWhichCreatesLocalInsuranceFiles() throws Exception {
@@ -96,7 +92,6 @@ public class InsuranceDataServiceTest extends AbstractVsdTest {
         }).when(readVSDResponseExEvent).fire(eq(readVSDResponseEx));
 
         InsuranceDataService insuranceDataService = new InsuranceDataService(
-            webdavSmcbManager,
             konnektorClient,
             folderService,
             vsdService,

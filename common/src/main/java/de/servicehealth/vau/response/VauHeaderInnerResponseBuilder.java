@@ -32,7 +32,6 @@ public class VauHeaderInnerResponseBuilder extends AbstractVauResponseBuilder {
         int status = getStatus(headerBytes);
         List<Pair<String, String>> innerHeaders = getInnerHeaders(headerBytes);
         String error = findHeaderValue(innerHeaders, VAU_ERROR).orElse(null);
-        log.info(String.format("handling responseCode = %d, error: %s", responseCode, error));
         if (error != null) {
             return new VauResponse(status, error, error.getBytes(UTF_8), innerHeaders);
         } else {

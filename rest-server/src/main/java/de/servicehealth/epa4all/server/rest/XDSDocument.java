@@ -30,6 +30,7 @@ import java.util.UUID;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 
 @RequestScoped
 @Path("xds-document")
@@ -143,7 +144,7 @@ public class XDSDocument extends AbstractResource {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("{konnektor : ([0-9a-zA-Z\\-]+)?}")
     public String post(
-        @HeaderParam("Content-Type") String contentType,
+        @HeaderParam(CONTENT_TYPE) String contentType,
         @HeaderParam("Lang-Code") String languageCode,
         @HeaderParam("File-Name") String fileName,
         @PathParam("konnektor") String konnektor,

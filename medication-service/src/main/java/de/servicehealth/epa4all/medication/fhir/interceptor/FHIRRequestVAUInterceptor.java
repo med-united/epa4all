@@ -115,9 +115,9 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         boolean api = path.contains("api");
         String additionalHeaders = Stream.of(request.getAllHeaders())
-            .filter(h -> !h.getName().equals(CONTENT_TYPE))
-            .filter(h -> !h.getName().equals(X_BACKEND))
-            .filter(h -> !h.getName().equals(api ? ACCEPT : ""))
+            .filter(h -> !h.getName().equalsIgnoreCase(CONTENT_TYPE))
+            .filter(h -> !h.getName().equalsIgnoreCase(X_BACKEND))
+            .filter(h -> !h.getName().equalsIgnoreCase(api ? ACCEPT : ""))
             .map(h -> h.getName() + ": " + h.getValue())
             .collect(Collectors.joining("\r\n"));
 
