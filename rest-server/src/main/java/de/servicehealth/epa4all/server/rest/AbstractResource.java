@@ -101,7 +101,11 @@ public abstract class AbstractResource {
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         String vauNp = vauNpProvider.getVauNp(konnektorUrl, backend);
 
-        resolveEntitlement(vauNp, insuranceData, epaAPI, userAgent);
+        if (vauNp != null) {
+            resolveEntitlement(vauNp, insuranceData, epaAPI, userAgent);
+        } else {
+            log.warning("No VAU NP found for: " + epaAPI.getBackend() + " Skipping entitlement.");
+        }
         return new EpaContext(insuranceData, prepareXHeaders(insurantId, userAgent, backend, vauNp));
     }
 
