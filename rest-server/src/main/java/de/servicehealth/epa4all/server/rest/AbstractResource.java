@@ -89,7 +89,11 @@ public abstract class AbstractResource {
         Map<String, Object> xHeaders = prepareXHeaders(
             insurantId, userAgent, konnektorUrl, epaAPI.getBackend()
         );
-        resolveEntitlement(xHeaders.get(VAU_NP).toString(), insuranceData, epaAPI, userAgent);
+        if(xHeaders.containsKey(VAU_NP)) {        	
+        	resolveEntitlement(xHeaders.get(VAU_NP).toString(), insuranceData, epaAPI, userAgent);
+        } else {
+        	log.warning("No VAU NP found for: "+epaAPI.getBackend()+" Skipping entitlement.");
+        }
         return new EpaContext(insuranceData, xHeaders);
     }
 
