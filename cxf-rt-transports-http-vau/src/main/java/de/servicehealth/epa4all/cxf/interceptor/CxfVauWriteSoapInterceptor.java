@@ -93,10 +93,10 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             Address address = (Address) message.get("http.connection.address");
             String fullString = new String(full);
 
-            String contentType = message.get(CONTENT_TYPE).toString();
-            String insurantId = message.get(X_INSURANT_ID).toString();
-            String userAgent = message.get(X_USER_AGENT).toString();
-            String np = message.get(VAU_NP).toString();
+            String contentType = String.valueOf(message.get(CONTENT_TYPE));
+            String insurantId = String.valueOf(message.get(X_INSURANT_ID));
+            String userAgent = String.valueOf(message.get(X_USER_AGENT));
+            String np = String.valueOf(message.get(VAU_NP));
 
             String headers = prepareContentHeaders(
                 insurantId,

@@ -31,21 +31,21 @@ public class InsuranceDataService {
     private final IKonnektorClient konnektorClient;
     private final FolderService folderService;
     private final VSDService vsdService;
-
-    @Inject
-    Event<ReadVSDResponseEx> readVSDResponseExEvent;
+    private final Event<ReadVSDResponseEx> readVSDResponseExEvent;
 
     @Inject
     public InsuranceDataService(
         WebdavSmcbManager webdavSmcbManager,
         IKonnektorClient konnektorClient,
         FolderService folderService,
-        VSDService vsdService
+        VSDService vsdService,
+        Event<ReadVSDResponseEx> readVSDResponseExEvent
     ) {
         this.webdavSmcbManager = webdavSmcbManager;
         this.konnektorClient = konnektorClient;
         this.folderService = folderService;
         this.vsdService = vsdService;
+        this.readVSDResponseExEvent = readVSDResponseExEvent;
     }
 
     public InsuranceData getInsuranceDataOrReadVSD(

@@ -9,8 +9,11 @@ import de.service.health.api.epa4all.proxy.FhirProxyService;
 import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.GenericDirectClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
 import de.servicehealth.startup.StartableService;
+import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
@@ -39,6 +42,9 @@ public class MultiEpaService extends StartableService {
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
 
     @Getter
+    private final VauConfig vauConfig;
+
+    @Getter
     private final EpaConfig epaConfig;
     private final ClientFactory clientFactory;
     private final Instance<VauFacade> vauFacadeInstance;
@@ -51,6 +57,7 @@ public class MultiEpaService extends StartableService {
 
     @Inject
     public MultiEpaService(
+        VauConfig vauConfig,
         EpaConfig epaConfig,
         ClientFactory clientFactory,
         Instance<VauFacade> vauFacadeInstance,
@@ -60,6 +67,7 @@ public class MultiEpaService extends StartableService {
         this.vauFacadeInstance = vauFacadeInstance;
         this.clientFactory = clientFactory;
         this.epaConfig = epaConfig;
+        this.vauConfig = vauConfig;
     }
 
     @Override
@@ -91,24 +99,23 @@ public class MultiEpaService extends StartableService {
                         EntitlementsApi.class, backend, epaConfig.getEntitlementServiceUrl(), vauFacade
                     );
 
-                    IFhirProxy fhirProxy = new FhirProxyService(backend, epaConfig, vauFacade);
+                    IFhirProxy fhirProxy = new FhirProxyService(backend, epaConfig, vauConfig, vauFacade);
 
-                    FhirContext apiContext = FhirContext.forR4();
-                    VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(apiContext);
+                    VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
                     String medicationApiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
                     apiClientFactory.init(vauFacade, getBaseUrl(medicationApiUrl));
+                    GenericDirectClient medicationClient = apiClientFactory.newGenericClient(medicationApiUrl.replace("+vau", ""));
 
                     String medicationRenderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
                     VauRestfulClientFactory renderClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
                     renderClientFactory.init(vauFacade, getBaseUrl(medicationRenderUrl));
                     Executor renderExecutor = Executor.newInstance(renderClientFactory.getVauHttpClient());
-
+                    VauRenderClient renderClient = new VauRenderClient(renderExecutor, medicationRenderUrl.replace("+vau", ""));
+                    
                     return new EpaAPIAggregator(
                         backend,
-                        apiContext,
-                        medicationApiUrl.replace("+vau", ""),
-                        renderExecutor,
-                        medicationRenderUrl.replace("+vau", ""),
+                        renderClient,
+                        medicationClient,
                         documentManagementPortType,
                         documentManagementInsurantPortType,
                         accountInformationApi,

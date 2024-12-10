@@ -8,6 +8,7 @@ import ca.uhn.fhir.rest.client.api.IHttpClient;
 import ca.uhn.fhir.rest.client.api.ServerValidationModeEnum;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRRequestVAUInterceptor;
 import de.servicehealth.epa4all.medication.fhir.interceptor.FHIRResponseVAUInterceptor;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.GenericDirectClient;
 import de.servicehealth.vau.VauFacade;
 import lombok.Getter;
 import org.apache.http.client.config.RequestConfig;
@@ -90,5 +91,12 @@ public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
             theRequestType,
             theHeaders
         );
+    }
+
+    @Override
+    public synchronized GenericDirectClient newGenericClient(String theServerBase) {
+        validateConfigured();
+        IHttpClient httpClient = getHttpClient(theServerBase);
+        return new GenericDirectClient(getFhirContext(), httpClient, theServerBase, this);
     }
 }
