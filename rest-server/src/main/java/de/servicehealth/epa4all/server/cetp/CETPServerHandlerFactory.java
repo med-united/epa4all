@@ -11,6 +11,7 @@ import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.vsd.VsdConfig;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -18,6 +19,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
+    private final VsdConfig vsdConfig;
     private final IdpClient idpClient;
     private final VauNpProvider vauNpProvider;
     private final MultiEpaService multiEpaService;
@@ -29,6 +31,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     @Inject
     public CETPServerHandlerFactory(
         IdpClient idpClient,
+        VsdConfig vsdConfig,
         VauNpProvider vauNpProvider,
         MultiEpaService multiEpaService,
         IKonnektorClient konnektorClient,
@@ -37,6 +40,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
         this.idpClient = idpClient;
+        this.vsdConfig = vsdConfig;
         this.vauNpProvider = vauNpProvider;
         this.multiEpaService = multiEpaService;
         this.konnektorClient = konnektorClient;
@@ -54,7 +58,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         );
         CETPEventHandler cetpEventHandler = new CETPEventHandler(
             cardlinkWebsocketClient, insuranceDataService, epaFileDownloader,
-            konnektorClient, multiEpaService, vauNpProvider, runtimeConfig
+            konnektorClient, multiEpaService, vauNpProvider, runtimeConfig, vsdConfig
         );
         return new ChannelInboundHandler[] { cetpEventHandler };
     }

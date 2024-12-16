@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.filetracker;
+package de.servicehealth.epa4all.server.entitlement;
 
 import de.servicehealth.epa4all.server.file.MapDumpFile;
 import org.apache.commons.lang3.tuple.Pair;

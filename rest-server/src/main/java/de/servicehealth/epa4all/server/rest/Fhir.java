@@ -9,7 +9,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
@@ -31,7 +30,7 @@ public class Fhir extends AbstractResource {
         @QueryParam("x-insurantid") String xInsurantId,
         @QueryParam("subject") String subject,
         @QueryParam("ui5") String ui5
-    ) {
+    ) throws Exception {
         return forward(true, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null);
     }
 
@@ -47,7 +46,7 @@ public class Fhir extends AbstractResource {
         @QueryParam("subject") String subject,
         @QueryParam("ui5") String ui5,
         byte[] body
-    ) {
+    ) throws Exception {
         return forward(false, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body);
     }
 
@@ -60,18 +59,14 @@ public class Fhir extends AbstractResource {
         String xInsurantId,
         String subject,
         byte[] body
-    ) {
-        try {
-            // Use fhir compatible variables
-            if (subject != null) {
-                xInsurantId = subject;
-            }
-
-            EpaContext epaContext = prepareEpaContext(xInsurantId);
-            EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-            return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, uriInfo, headers, body, epaContext.getXHeaders());
-        } catch (Exception e) {
-            throw new WebApplicationException(e);
+    ) throws Exception {
+        // Use fhir compatible variables
+        if (subject != null) {
+            xInsurantId = subject;
         }
+
+        EpaContext epaContext = prepareEpaContext(xInsurantId);
+        EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+        return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, uriInfo, headers, body, epaContext.getXHeaders());
     }
 }
