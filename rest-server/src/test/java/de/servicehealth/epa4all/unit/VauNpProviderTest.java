@@ -72,6 +72,6 @@ public class VauNpProviderTest {
         vauNpProvider.setConfigFolder(TEST_FOLDER.getAbsolutePath());
         vauNpProvider.onStart();
 
-        assertEquals(vauNp, vauNpProvider.getVauNp(konnektorBaseUrl, epaBackend));
+        assertEquals(vauNp, vauNpProvider.getVauNp(smcbHandle, konnektorBaseUrl, epaBackend));
     }
 }

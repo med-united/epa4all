@@ -13,6 +13,7 @@ import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
+import de.servicehealth.epa4all.server.vsd.VsdConfig;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.jboss.logging.MDC;
@@ -40,6 +41,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private final MultiEpaService multiEpaService;
     private final RuntimeConfig runtimeConfig;
     private final VauNpProvider vauNpProvider;
+    private final VsdConfig vsdConfig;
 
     public CETPEventHandler(
         CardlinkWebsocketClient cardlinkWebsocketClient,
@@ -48,7 +50,8 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         IKonnektorClient konnektorClient,
         MultiEpaService multiEpaService,
         VauNpProvider vauNpProvider,
-        RuntimeConfig runtimeConfig
+        RuntimeConfig runtimeConfig,
+        VsdConfig vsdConfig
     ) {
         super(cardlinkWebsocketClient);
 
@@ -58,6 +61,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         this.multiEpaService = multiEpaService;
         this.runtimeConfig = runtimeConfig;
         this.vauNpProvider = vauNpProvider;
+        this.vsdConfig = vsdConfig;
     }
 
     @Override
@@ -95,18 +99,26 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             String ctId = paramsMap.get("CtID");
             Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
             try {
-                String cardHandle = paramsMap.get("CardHandle");
+                String egkHandle = paramsMap.get("CardHandle");
                 String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
                 String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
 
-                InsuranceData insuranceData = insuranceDataService.getInsuranceDataOrReadVSD(
-                    telematikId, cardHandle, runtimeConfig
-                );
+                InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, egkHandle, runtimeConfig);
+                if (insuranceData == null) {
+                    if (vsdConfig.isUseExternalPnw()) {
+                        log.warning(String.format(
+                            "PNW is not found for EGK=%s, ReadVSD is disabled, use external PNW call", egkHandle
+                        ));
+                        return;
+                    } else {
+                        insuranceData = insuranceDataService.readVsd(telematikId, egkHandle, null, smcbHandle, runtimeConfig);
+                    }
+                }
                 String insurantId = insuranceData.getInsurantId();
                 EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
                 String userAgent = multiEpaService.getEpaConfig().getUserAgent();
 
-                String vauNp = vauNpProvider.getVauNp(configurations.getConnectorBaseURL(), epaAPI.getBackend());
+                String vauNp = vauNpProvider.getVauNp(smcbHandle, configurations.getConnectorBaseURL(), epaAPI.getBackend());
                 Map<String, String> xHeaders = Map.of(
                     X_INSURANT_ID, insurantId, X_USER_AGENT, userAgent, VAU_NP, vauNp, X_BACKEND, epaAPI.getBackend()
                 );
@@ -153,7 +165,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         documentResponse.setDocument(bytes);
         documentResponse.setMimeType("application/pdf");
         documentResponse.setDocumentUniqueId(UUID.randomUUID().toString());
-        
+
         response.getDocumentResponse().add(documentResponse);
 
         epaFileDownloader.handleDownloadResponse(taskId, fileDownload, response);

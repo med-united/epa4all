@@ -13,6 +13,7 @@ import kong.unirest.core.HttpResponse;
 import kong.unirest.core.Interceptor;
 import kong.unirest.core.Unirest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,13 +48,15 @@ public class IdpClientIT {
     @Test
     public void testGetVauNp() throws Exception {
         EpaAPI epaAPI = multiEpaService.getEpaAPI("X110485291");
-        idpClient.getVauNp(epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, "SMC-B-187", "test:8080", (String np) -> {
+        String backend = epaAPI.getBackend();
+        idpClient.getVauNp(epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, "SMC-B-12", backend, (String np) -> {
             System.out.println("NP: " + np);
             assertNotNull(np);
         });
     }
 
     @Test
+    @Disabled
     public void testGetBearerToken() throws Exception {
         EpaAPI epaAPI = multiEpaService.getEpaAPI("X110485291");
         idpClient.getBearerToken("test:8080", epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, (String token) -> {

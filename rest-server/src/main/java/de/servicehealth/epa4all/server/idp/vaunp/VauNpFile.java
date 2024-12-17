@@ -23,15 +23,16 @@ public class VauNpFile extends MapDumpFile<VauNpKey, String> {
     @Override
     protected Pair<VauNpKey, String> deserialize(String line) {
         String[] parts = line.split("_");
-        String konnektor = parts[0].trim();
-        String epaBackend = parts[1].trim();
-        String vauNp = parts[2].trim();
-        return Pair.of(new VauNpKey(konnektor, epaBackend), vauNp);
+        String smcbHandle = parts[0].trim();
+        String konnektor = parts[1].trim();
+        String epaBackend = parts[2].trim();
+        String vauNp = parts[3].trim();
+        return Pair.of(new VauNpKey(smcbHandle, konnektor, epaBackend), vauNp);
     }
 
     @Override
     protected String serialize(Map.Entry<VauNpKey, String> entry) {
-        VauNpKey vauNpKey = entry.getKey();
-        return vauNpKey.getKonnektor() + "_" + vauNpKey.getEpaBackend() + "_" + entry.getValue();
+        VauNpKey key = entry.getKey();
+        return key.getSmcbHandle() + "_" + key.getKonnektor() + "_" + key.getEpaBackend() + "_" + entry.getValue();
     }
 }

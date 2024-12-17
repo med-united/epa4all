@@ -1,11 +1,14 @@
 package de.servicehealth.epa4all.server.smcb;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
+import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
+import jakarta.xml.bind.DatatypeConverter;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,9 +21,11 @@ import java.util.logging.Logger;
 import static de.health.service.cetp.utils.Utils.unzipAndSaveDataToFile;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
 
-public class VSDResponseFile {
+public class VsdResponseFile {
 
     private static final Logger log = Logger.getLogger(WebdavSmcbManager.class.getName());
+
+    public static final String UNDEFINED_PZ = "undefined";
 
     public static final String ALLGEMEINE_VERSICHERUNGSDATEN_XML = "AllgemeineVersicherungsdaten.xml";
     public static final String PERSOENLICHE_VERSICHERTENDATEN_XML = "PersoenlicheVersichertendaten.xml";
@@ -46,7 +51,7 @@ public class VSDResponseFile {
     private final File persoenlicheVersichertendatenFile;
     private final File geschuetzteVersichertendatenFile;
 
-    public VSDResponseFile(File localMedFolder) {
+    public VsdResponseFile(File localMedFolder) {
         if (localMedFolder == null || !localMedFolder.isDirectory()) {
             throw new IllegalArgumentException("Local med folder is corrupted");
         }
@@ -91,24 +96,74 @@ public class VSDResponseFile {
                 byte[] geschuetzteVersichertendaten = Files.readAllBytes(geschuetzteVersichertendatenFile.toPath());
                 byte[] pruefungsnachweis = Files.readAllBytes(pruefungsnachweisFile.toPath());
 
-                Document doc = InsuranceXmlUtils.createDocument(pruefungsnachweis, false);
-                String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
-
                 return new InsuranceData(
-                    pz,
+                    extractPz(pruefungsnachweis, false),
                     kvnr,
                     createUCEntity(persoenlicheVersichertendaten, false),
                     createUCEntity(geschuetzteVersichertendaten, false),
                     createUCEntity(allgemeineVersicherungsdaten, false)
                 );
             } catch (Exception e) {
-                log.log(Level.SEVERE, String.format("Error while reading insurance data for KVNR=%s", kvnr));
+                String msg = String.format("Error while reading insurance data for KVNR=%s", kvnr);
+                log.log(Level.SEVERE, msg, e);
                 return null;
             } finally {
                 lock.readLock().unlock();
             }
         } else {
             return null;
+        }
+    }
+
+    public static String extractInsurantId(ReadVSDResponse readVSDResponse) throws Exception {
+        boolean gzipSource = true;
+        byte[] persoenlicheVersichertendaten = readVSDResponse.getPersoenlicheVersichertendaten();
+        UCPersoenlicheVersichertendatenXML patient = createUCEntity(persoenlicheVersichertendaten, gzipSource);
+        return extractInsurantId(patient, readVSDResponse.getPruefungsnachweis(), gzipSource);
+    }
+
+    private static class PruefungsnachweisNodes {
+        Node eNode;
+        Node pzNode;
+
+        public PruefungsnachweisNodes(Node eNode, Node pzNode) {
+            this.eNode = eNode;
+            this.pzNode = pzNode;
+        }
+    }
+
+    private static PruefungsnachweisNodes getPruefungsnachweisNodes(
+        byte[] pruefungsnachweis,
+        boolean gzipSource
+    ) throws Exception {
+        Document doc = InsuranceXmlUtils.createDocument(pruefungsnachweis, gzipSource);
+        Node eNode = doc.getElementsByTagName("E").item(0);
+        Node pzNode = doc.getElementsByTagName("PZ").item(0);
+        return new PruefungsnachweisNodes(eNode, pzNode);
+    }
+
+    public static String extractPz(
+        byte[] pruefungsnachweis,
+        boolean gzipSource
+    ) throws Exception {
+        PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis, gzipSource);
+        return nodes.eNode.getTextContent().equals("3") && nodes.pzNode == null
+            ? UNDEFINED_PZ
+            : nodes.pzNode.getTextContent();
+    }
+
+    private static String extractInsurantId(
+        UCPersoenlicheVersichertendatenXML patient,
+        byte[] pruefungsnachweis,
+        boolean gzipSource
+    ) throws Exception {
+        PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis, gzipSource);
+        if (nodes.eNode.getTextContent().equals("3") && nodes.pzNode == null) {
+            return patient.getVersicherter().getVersichertenID();
+        } else {
+            byte[] base64Binary = DatatypeConverter.parseBase64Binary(nodes.pzNode.getTextContent());
+            String base64PN = new String(base64Binary);
+            return base64PN.substring(0, 10);
         }
     }
 

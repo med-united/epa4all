@@ -9,6 +9,7 @@ import lombok.Getter;
 @EqualsAndHashCode
 public class VauNpKey {
 
+    private String smcbHandle;
     private String konnektor;
     private String epaBackend;
 }

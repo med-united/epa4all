@@ -1,26 +1,23 @@
 package de.servicehealth.epa4all.server.insurance;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
-import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.IKonnektorClient;
+import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
-import de.servicehealth.epa4all.server.filetracker.EntitlementFile;
+import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
-import de.servicehealth.epa4all.server.smcb.VSDResponseFile;
-import de.servicehealth.epa4all.server.vsd.VSDService;
+import de.servicehealth.epa4all.server.smcb.VsdResponseFile;
+import de.servicehealth.epa4all.server.vsd.VsdService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
-import jakarta.xml.bind.DatatypeConverter;
-import org.w3c.dom.Document;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.logging.Logger;
 
-import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createDocument;
-import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
+import static de.servicehealth.epa4all.server.smcb.VsdResponseFile.extractInsurantId;
 
 @ApplicationScoped
 public class InsuranceDataService {
@@ -29,14 +26,14 @@ public class InsuranceDataService {
 
     private final IKonnektorClient konnektorClient;
     private final FolderService folderService;
-    private final VSDService vsdService;
+    private final VsdService vsdService;
     private final Event<ReadVSDResponseEx> readVSDResponseExEvent;
 
     @Inject
     public InsuranceDataService(
         IKonnektorClient konnektorClient,
         FolderService folderService,
-        VSDService vsdService,
+        VsdService vsdService,
         Event<ReadVSDResponseEx> readVSDResponseExEvent
     ) {
         this.konnektorClient = konnektorClient;
@@ -45,51 +42,50 @@ public class InsuranceDataService {
         this.readVSDResponseExEvent = readVSDResponseExEvent;
     }
 
-    public InsuranceData getInsuranceDataOrReadVSD(
+    public InsuranceData getLocalInsuranceData(
         String telematikId,
         String egkHandle,
         UserRuntimeConfig runtimeConfig
-    ) throws Exception {
+    ) throws CetpFault {
         String kvnr = konnektorClient.getKvnr(runtimeConfig, egkHandle);
-        String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-        return getInsuranceDataOrReadVSD(telematikId, kvnr, smcbHandle, runtimeConfig);
+        return getLocalInsuranceData(telematikId, kvnr);
     }
 
-    public InsuranceData getInsuranceDataOrReadVSD(
+    public InsuranceData getLocalInsuranceData(String telematikId, String kvnr) {
+        File localVsdFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        return localVsdFolder == null ? null : new VsdResponseFile(localVsdFolder).load(kvnr);
+    }
+
+    public InsuranceData readVsd(
         String telematikId,
+        String egkHandle,
         String kvnr,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
-        InsuranceData localInsuranceData = getLocalInsuranceData(telematikId, kvnr);
-        if (localInsuranceData != null) {
-            return localInsuranceData;
-        }
         folderService.applyTelematikPath(telematikId);
 
-        String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
-        ReadVSDResponse readVSDResponse = vsdService.readVSD(egkHandle, smcbHandle, runtimeConfig);
-        String xInsurantId = extractInsurantId(readVSDResponse);
-        if (kvnr == null || kvnr.equals(xInsurantId)) {
-            // ReadVSDResponseEx must be sent synchronously to get valid local InsuranceData.
-            readVSDResponseExEvent.fire(new ReadVSDResponseEx(telematikId, xInsurantId, readVSDResponse));
-            return getLocalInsuranceData(telematikId, xInsurantId);
+        if (egkHandle == null) {
+            egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
         }
-        throw new IllegalStateException(String.format("Mismatch found: KVNR=%s, xInsurantId=%s", kvnr, xInsurantId));
-    }
+        
+        ReadVSDResponse readVSDResponse = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig);
+        String insurantId = extractInsurantId(readVSDResponse);
 
-    public InsuranceData getLocalInsuranceData(String telematikId, String kvnr) {
-        if (kvnr == null) {
-            return null;
+        // ReadVSDResponseEx must be sent synchronously to get valid local InsuranceData.
+        readVSDResponseExEvent.fire(new ReadVSDResponseEx(telematikId, insurantId, readVSDResponse));
+        InsuranceData localInsuranceData = getLocalInsuranceData(telematikId, insurantId);
+        if (localInsuranceData == null) {
+            String msg = String.format("Unable to read VSD: KVNR=%s, EGK=%s, SMCB=%s", insurantId, egkHandle, smcbHandle);
+            throw new CetpFault(msg);
         }
-        File localVSDFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-        return localVSDFolder == null ? null : new VSDResponseFile(localVSDFolder).load(kvnr);
+        return localInsuranceData;
     }
 
     public void cleanUpInsuranceData(String telematikId, String kvnr) {
         File localVSDFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
         if (localVSDFolder != null) {
-            new VSDResponseFile(localVSDFolder).cleanUp();
+            new VsdResponseFile(localVSDFolder).cleanUp();
         }
     }
 
@@ -101,23 +97,5 @@ public class InsuranceDataService {
     public void updateEntitlement(Instant validTo, String telematikId, String kvnr) throws IOException {
         File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
         new EntitlementFile(localFolder, kvnr).updateEntitlement(validTo);
-    }
-
-    private String extractInsurantId(ReadVSDResponse readVSDResponse) throws Exception {
-        Document doc = createDocument(readVSDResponse.getPruefungsnachweis(), true);
-        String e = doc.getElementsByTagName("E").item(0).getTextContent();
-
-        if (e.equals("3")) {
-            byte[] bytes = readVSDResponse.getPersoenlicheVersichertendaten();
-            UCPersoenlicheVersichertendatenXML patient = createUCEntity(bytes, true);
-            String versichertenId = patient.getVersicherter().getVersichertenID();
-            log.fine("VSDM result: " + e + " VersichertenID: " + versichertenId);
-            return versichertenId;
-        } else {
-            String pz = doc.getElementsByTagName("PZ").item(0).getTextContent();
-            byte[] base64Binary = DatatypeConverter.parseBase64Binary(pz);
-            String base64PN = new String(base64Binary);
-            return base64PN.substring(0, 10);
-        }
     }
 }

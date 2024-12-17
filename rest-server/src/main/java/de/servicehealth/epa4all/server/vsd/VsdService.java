@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.vsd;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSD;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
+import de.gematik.ws.conn.vsds.vsdservice.v5.VSDStatusType;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.eventservice.Subscription;
 import de.health.service.config.api.UserRuntimeConfig;
@@ -11,22 +12,27 @@ import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import javax.xml.datatype.DatatypeFactory;
+import java.io.ByteArrayOutputStream;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPOutputStream;
 
 @ApplicationScoped
-public class VSDService {
+public class VsdService {
 
-    private static final Logger log = Logger.getLogger(VSDService.class.getName());
+    private static final Logger log = Logger.getLogger(VsdService.class.getName());
 
     private final MultiKonnektorService multiKonnektorService;
     private final IKonnektorClient konnektorClient;
 
     @Inject
-    public VSDService(
+    public VsdService(
         MultiKonnektorService multiKonnektorService,
         IKonnektorClient konnektorClient
     ) {
@@ -34,7 +40,37 @@ public class VSDService {
         this.konnektorClient = konnektorClient;
     }
 
-    public ReadVSDResponse readVSD(
+    public static ReadVSDResponse buildSyntheticVSDResponse(String xml, byte[] bytes) throws Exception {
+        ReadVSDResponse readVSDResponse = new ReadVSDResponse();
+        readVSDResponse.setAllgemeineVersicherungsdaten(new byte[0]);
+        readVSDResponse.setGeschuetzteVersichertendaten(new byte[0]);
+        readVSDResponse.setPersoenlicheVersichertendaten(new byte[0]);
+
+        byte[] gzipBytes;
+        if (xml != null) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            GZIPOutputStream os = new GZIPOutputStream(out);
+            os.write(xml.getBytes());
+            os.finish();
+
+            gzipBytes = out.toByteArray();
+        } else {
+            gzipBytes = bytes;
+        }
+        readVSDResponse.setPruefungsnachweis(gzipBytes);
+
+        VSDStatusType vsdStatus = new VSDStatusType();
+        vsdStatus.setStatus("0");
+        vsdStatus.setVersion("5.2.0");
+        DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
+        GregorianCalendar gregorianCalendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        vsdStatus.setTimestamp(datatypeFactory.newXMLGregorianCalendar(gregorianCalendar));
+        readVSDResponse.setVSDStatus(vsdStatus);
+
+        return readVSDResponse;
+    }
+
+    public ReadVSDResponse readVsd(
         String egkHandle,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig

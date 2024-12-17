@@ -43,7 +43,7 @@ public class WebdavSmcbManager {
 
             // 2. Store VDS response into "local" folder
             File localMedFolder = folderService.getInsurantMedFolder(telematikId, insurantId, "local");
-            new VSDResponseFile(localMedFolder).store(readVSDResponseEx.getReadVSDResponse());
+            new VsdResponseFile(localMedFolder).store(readVSDResponseEx.getReadVSDResponse());
         } catch (Exception e) {
             log.log(Level.WARNING, "Could not save ReadVSDResponse", e);
         }
