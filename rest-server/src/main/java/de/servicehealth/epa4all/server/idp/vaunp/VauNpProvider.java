@@ -4,6 +4,7 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.cetp.domain.fault.CetpFault;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.MultiEpaService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
@@ -37,7 +38,7 @@ public class VauNpProvider extends StartableService {
     private static final Logger log = Logger.getLogger(VauNpProvider.class.getName());
 
     private final Map<VauNpKey, String> vauNpMap = new HashMap<>();
-    
+
     @Inject
     @Setter
     ManagedExecutor scheduledThreadPool;
@@ -74,10 +75,20 @@ public class VauNpProvider extends StartableService {
         Map<VauNpKey, String> savedVauNpMap,
         ConcurrentHashMap<String, EpaAPI> epaBackendMap
     ) {
-        for (String konnektor : uniqueKonnektorsConfigs.keySet()) {
+        for (Map.Entry<String, KonnektorConfig> entry : uniqueKonnektorsConfigs.entrySet()) {
             for (String backend : epaBackendMap.keySet()) {
-                VauNpKey vauNpKey = new VauNpKey(konnektor, backend);
-                if (!savedVauNpMap.containsKey(vauNpKey)) {
+                try {
+                    RuntimeConfig runtimeConfig = new RuntimeConfig(
+                        konnektorDefaultConfig, entry.getValue().getUserConfigurations()
+                    );
+                    String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
+                    VauNpKey vauNpKey = new VauNpKey(smcbHandle, entry.getKey(), backend);
+                    if (!savedVauNpMap.containsKey(vauNpKey)) {
+                        return false;
+                    }
+                } catch (CetpFault e) {
+                    String msg = String.format("Error while getting SMC-B handle: Konnektor=%s", entry.getKey());
+                    log.log(Level.SEVERE, msg, e);
                     return false;
                 }
             }
@@ -117,7 +128,7 @@ public class VauNpProvider extends StartableService {
             Map<VauNpKey, String> savedVauNpMap = vauNpFile.get();
             ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
             if (!savedVauNpMap.isEmpty() && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
-            	log.info("Using saved NP");
+                log.info("Using saved NP");
                 vauNpMap.putAll(savedVauNpMap);
             } else {
                 int k = uniqueKonnektorsConfigs.size();
@@ -140,9 +151,9 @@ public class VauNpProvider extends StartableService {
                         errorMessages.add(pair.getValue());
                     }
                 }
-                String errors = errorMessages.isEmpty() ? "" : errorMessages.stream().collect(Collectors.joining("\n", "-> \n", ""));
+                String errors = errorMessages.isEmpty() ? "" : errorMessages.stream().collect(Collectors.joining("\n", " ERRORS: -> \n", ""));
                 log.info(String.format(
-                    "Gathering VauNP is STOPPED, %d vauNp values are collected %s", vauNpMap.size(), errors)
+                    "Gathering VauNP is STOPPED, vauNp values collected count: %d %s", vauNpMap.size(), errors)
                 );
                 if (!vauNpMap.isEmpty()) {
                     vauNpFile.store(vauNpMap);
@@ -161,7 +172,7 @@ public class VauNpProvider extends StartableService {
             AuthorizationSmcBApi authorizationSmcBApi = api.getAuthorizationSmcBApi();
             String vauNp = idpClient.getVauNpSync(authorizationSmcBApi, runtimeConfig, smcbHandle, backend);
 
-            return Pair.of(new VauNpKey(konnektor, backend), vauNp);
+            return Pair.of(new VauNpKey(smcbHandle, konnektor, backend), vauNp);
         } catch (Exception e) {
             log.log(Level.SEVERE, String.format("Unable to getVauNP for %s and %s", konnektor, backend), e);
             String message = e.getMessage();
@@ -169,8 +180,8 @@ public class VauNpProvider extends StartableService {
         }
     }
 
-    public String getVauNp(String konnektorBaseUrl, String epaBackend) {
+    public String getVauNp(String smcbHandle, String konnektorBaseUrl, String epaBackend) {
         URI uri = URI.create(konnektorBaseUrl);
-        return vauNpMap.get(new VauNpKey(uri.getHost(), epaBackend));
+        return vauNpMap.get(new VauNpKey(smcbHandle, uri.getHost(), epaBackend));
     }
 }

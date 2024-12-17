@@ -12,8 +12,9 @@ import de.servicehealth.model.ValidToResponseType;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import java.io.IOException;
 import java.util.logging.Logger;
+
+import static de.servicehealth.epa4all.server.smcb.VsdResponseFile.UNDEFINED_PZ;
 
 @ApplicationScoped
 public class EntitlementService {
@@ -37,8 +38,13 @@ public class EntitlementService {
         String vauNp,
         String userAgent,
         String smcbHandle
-    ) throws IOException {
+    ) throws Exception {
+        String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
+        if (UNDEFINED_PZ.equalsIgnoreCase(pz)) {
+            String msg = String.format("AuditEvidence is not defined for KVNR=%s, skipping the request", insurantId);
+            throw new AuditEvidenceException(msg);
+        }
         String backend = epaAPI.getBackend();
         AuthorizationSmcBApi authorizationSmcBApi = epaAPI.getAuthorizationSmcBApi();
         String jwt = idpClient.createEntitlementPSJWT(backend, smcbHandle, pz, userRuntimeConfig, authorizationSmcBApi);
@@ -47,7 +53,6 @@ public class EntitlementService {
         entitlementRequest.setJwt(jwt);
 
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
-        String insurantId = insuranceData.getInsurantId();
         ValidToResponseType response = entitlementsApi.setEntitlementPs(
             insurantId, userAgent, backend, vauNp, entitlementRequest
         );

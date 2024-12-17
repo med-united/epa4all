@@ -8,6 +8,7 @@ import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
+import de.servicehealth.epa4all.server.entitlement.AuditEvidenceException;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
@@ -20,6 +21,7 @@ import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.client.ResponseProcessingException;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -82,11 +84,16 @@ public abstract class AbstractResource {
     String smcbHandle;
 
     protected EpaContext prepareEpaContext(String kvnr) throws Exception {
+        String errMsg = String.format("[%s] Error while building of the EPA Context", kvnr);
         EpaContext epaContext;
         try {
             epaContext = buildEpaContext(kvnr);
+        } catch (AuditEvidenceException e) {
+            log.log(Level.SEVERE, errMsg, e);
+            insuranceDataService.cleanUpInsuranceData(telematikId, kvnr);
+            throw e;
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("[%s] Error while building of the EPA Context", kvnr), e);
+            log.log(Level.SEVERE, errMsg, e instanceof ResponseProcessingException ? e.getCause() : e);
             insuranceDataService.cleanUpInsuranceData(telematikId, kvnr);
             epaContext = buildEpaContext(kvnr);
         }
@@ -103,12 +110,14 @@ public abstract class AbstractResource {
         String userAgent = multiEpaService.getEpaConfig().getUserAgent();
         String backend = epaAPI.getBackend();
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
-        String vauNp = vauNpProvider.getVauNp(konnektorUrl, backend);
+        String vauNp = vauNpProvider.getVauNp(smcbHandle, konnektorUrl, backend);
 
         if (vauNp != null) {
             Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
             if (validTo == null || validTo.isBefore(Instant.now())) {
-                entitlementService.setEntitlement(userRuntimeConfig, insuranceData, epaAPI, telematikId, vauNp, userAgent, smcbHandle);
+                entitlementService.setEntitlement(
+                    userRuntimeConfig, insuranceData, epaAPI, telematikId, vauNp, userAgent, smcbHandle
+                );
             } else {
                 log.info(String.format("[%s/%s] Entitlement is valid until %s", telematikId, insurantId, validTo));
             }

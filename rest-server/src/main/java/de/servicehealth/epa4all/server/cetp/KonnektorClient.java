@@ -36,6 +36,7 @@ import de.servicehealth.epa4all.server.cetp.mapper.status.StatusMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionResultMapper;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
+import de.servicehealth.epa4all.server.serviceport.KonnektorKey;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.epa4all.server.vsd.VsdConfig;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -52,6 +53,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.SubscriptionManager.FAILED;
@@ -61,6 +63,8 @@ import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 
 @ApplicationScoped
 public class KonnektorClient implements IKonnektorClient {
+
+    private final ConcurrentHashMap<KonnektorKey, String> smcbMap = new ConcurrentHashMap<>();
 
     private final Object emptyInput = new Object();
 
@@ -116,19 +120,33 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {
-        List<Card> cards = getCards(userRuntimeConfig, SMC_B);
-        if (vsdConfig.isHandlesTestMode()) {
-            Optional<Card> cardOpt = cards.stream()
-                .filter(c -> vsdConfig.getTestSmcbCardholderName().equals(c.getCardHolderName()))
-                .findAny();
-            return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
-        } else {
-            String primaryIccsn = vsdConfig.getPrimaryIccsn();
-            return cards.stream()
-                .filter(c -> primaryIccsn.equals(c.getIccsn()))
-                .findAny()
-                .map(Card::getCardHandle)
-                .orElseThrow(() -> new CetpFault(String.format("Could not get SMC-B card for ICCSN: %s", primaryIccsn)));
+        try {
+            return smcbMap.computeIfAbsent(new KonnektorKey(userRuntimeConfig), konnektorKey -> {
+                try {
+                    List<Card> cards = getCards(userRuntimeConfig, SMC_B);
+                    if (vsdConfig.isHandlesTestMode()) {
+                        Optional<Card> cardOpt = cards.stream()
+                            .filter(c -> vsdConfig.getTestSmcbCardholderName().equals(c.getCardHolderName()))
+                            .findAny();
+                        return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
+                    } else {
+                        String primaryIccsn = vsdConfig.getPrimaryIccsn();
+                        return cards.stream()
+                            .filter(c -> primaryIccsn.equals(c.getIccsn()))
+                            .findAny()
+                            .map(Card::getCardHandle)
+                            .orElseThrow(() -> new CetpFault(String.format("Could not get SMC-B card for ICCSN: %s", primaryIccsn)));
+                    }
+                } catch (CetpFault e) {
+                    throw new IllegalStateException(e);
+                }
+            });
+        } catch (IllegalStateException e) {
+            if (e.getCause() instanceof CetpFault cetpFault) {
+                throw cetpFault;
+            } else {
+                throw new CetpFault(e.getMessage());
+            }
         }
     }
 

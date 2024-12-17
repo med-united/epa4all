@@ -36,7 +36,12 @@ public class VauHeaderInnerResponseBuilder extends AbstractVauResponseBuilder {
             return new VauResponse(status, error, error.getBytes(UTF_8), innerHeaders);
         } else {
             byte[] payload = extractPayload(bytes, i, innerHeaders);
-            return new VauResponse(status, null, payload, innerHeaders);
+            if (status >= 400) {
+                error = payload == null ? "no error description" : new String(payload);
+                return new VauResponse(status, error, error.getBytes(UTF_8), innerHeaders);
+            } else {
+                return new VauResponse(status, null, payload, innerHeaders);
+            }
         }
     }
 

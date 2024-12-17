@@ -152,7 +152,7 @@ public abstract class AbstractVsdTest {
 
     protected void receiveCardInsertedEvent(CardlinkWebsocketClient cardlinkWebsocketClient) throws Exception {
         VauNpProvider vauNpProvider = mock(VauNpProvider.class);
-        when(vauNpProvider.getVauNp(any(), any())).thenReturn("vau-np");
+        when(vauNpProvider.getVauNp(any(), any(), any())).thenReturn("vau-np");
 
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
