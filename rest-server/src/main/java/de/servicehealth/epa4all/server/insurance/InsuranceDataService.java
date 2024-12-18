@@ -70,7 +70,7 @@ public class InsuranceDataService {
         }
         
         ReadVSDResponse readVSDResponse = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig);
-        String insurantId = extractInsurantId(readVSDResponse);
+        String insurantId = extractInsurantId(readVSDResponse, false);
 
         // ReadVSDResponseEx must be sent synchronously to get valid local InsuranceData.
         readVSDResponseExEvent.fire(new ReadVSDResponseEx(telematikId, insurantId, readVSDResponse));

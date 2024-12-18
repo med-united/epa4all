@@ -116,13 +116,19 @@ public abstract class AbstractResource {
             Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
             if (validTo == null || validTo.isBefore(Instant.now())) {
                 entitlementService.setEntitlement(
-                    userRuntimeConfig, insuranceData, epaAPI, telematikId, vauNp, userAgent, smcbHandle
+                    userRuntimeConfig,
+                    insuranceData,
+                    epaAPI,
+                    telematikId,
+                    vauNp,
+                    userAgent,
+                    smcbHandle
                 );
             } else {
                 log.info(String.format("[%s/%s] Entitlement is valid until %s", telematikId, insurantId, validTo));
             }
         } else {
-            log.warning("No VAU NP found for: " + epaAPI.getBackend() + " Skipping entitlement.");
+            log.warning(String.format("[%s] VAU session is not found, skipping setEntitlement", backend));
         }
         return new EpaContext(insuranceData, prepareXHeaders(insurantId, userAgent, backend, vauNp));
     }

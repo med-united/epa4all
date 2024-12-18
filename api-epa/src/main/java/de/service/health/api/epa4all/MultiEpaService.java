@@ -76,7 +76,7 @@ public class MultiEpaService extends StartableService {
     }
 
     @Override
-    protected void onStart() {
+    protected void onStart() throws Exception {
         epaConfig.getEpaBackends().forEach(backend ->
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {

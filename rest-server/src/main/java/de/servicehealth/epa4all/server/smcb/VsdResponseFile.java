@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.smcb;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
+import de.servicehealth.epa4all.server.entitlement.AuditEvidenceException;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
 import jakarta.xml.bind.DatatypeConverter;
@@ -18,8 +19,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static de.health.service.cetp.utils.Utils.unzipAndSaveDataToFile;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
+import static de.servicehealth.utils.ServerUtils.unzipAndSaveDataToFile;
 
 public class VsdResponseFile {
 
@@ -87,6 +88,13 @@ public class VsdResponseFile {
         });
     }
 
+    public static String extractPz(byte[] pruefungsnachweis) throws Exception {
+        PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis);
+        return nodes.eNode.getTextContent().equals("3") && nodes.pzNode == null
+            ? UNDEFINED_PZ
+            : nodes.pzNode.getTextContent();
+    }
+
     public InsuranceData load(String kvnr) {
         if (readVSDResponseFile.exists()) {
             lock.readLock().lock();
@@ -97,11 +105,11 @@ public class VsdResponseFile {
                 byte[] pruefungsnachweis = Files.readAllBytes(pruefungsnachweisFile.toPath());
 
                 return new InsuranceData(
-                    extractPz(pruefungsnachweis, false),
+                    extractPz(pruefungsnachweis),
                     kvnr,
-                    createUCEntity(persoenlicheVersichertendaten, false),
-                    createUCEntity(geschuetzteVersichertendaten, false),
-                    createUCEntity(allgemeineVersicherungsdaten, false)
+                    createUCEntity(persoenlicheVersichertendaten),
+                    createUCEntity(geschuetzteVersichertendaten),
+                    createUCEntity(allgemeineVersicherungsdaten)
                 );
             } catch (Exception e) {
                 String msg = String.format("Error while reading insurance data for KVNR=%s", kvnr);
@@ -115,11 +123,10 @@ public class VsdResponseFile {
         }
     }
 
-    public static String extractInsurantId(ReadVSDResponse readVSDResponse) throws Exception {
-        boolean gzipSource = true;
+    public static String extractInsurantId(ReadVSDResponse readVSDResponse, boolean forcePz) throws Exception {
         byte[] persoenlicheVersichertendaten = readVSDResponse.getPersoenlicheVersichertendaten();
-        UCPersoenlicheVersichertendatenXML patient = createUCEntity(persoenlicheVersichertendaten, gzipSource);
-        return extractInsurantId(patient, readVSDResponse.getPruefungsnachweis(), gzipSource);
+        UCPersoenlicheVersichertendatenXML patient = createUCEntity(persoenlicheVersichertendaten);
+        return extractInsurantId(patient, readVSDResponse.getPruefungsnachweis(), forcePz);
     }
 
     private static class PruefungsnachweisNodes {
@@ -132,32 +139,22 @@ public class VsdResponseFile {
         }
     }
 
-    private static PruefungsnachweisNodes getPruefungsnachweisNodes(
-        byte[] pruefungsnachweis,
-        boolean gzipSource
-    ) throws Exception {
-        Document doc = InsuranceXmlUtils.createDocument(pruefungsnachweis, gzipSource);
+    private static PruefungsnachweisNodes getPruefungsnachweisNodes(byte[] pruefungsnachweis) throws Exception {
+        Document doc = InsuranceXmlUtils.createDocument(pruefungsnachweis);
         Node eNode = doc.getElementsByTagName("E").item(0);
         Node pzNode = doc.getElementsByTagName("PZ").item(0);
         return new PruefungsnachweisNodes(eNode, pzNode);
     }
 
-    public static String extractPz(
-        byte[] pruefungsnachweis,
-        boolean gzipSource
-    ) throws Exception {
-        PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis, gzipSource);
-        return nodes.eNode.getTextContent().equals("3") && nodes.pzNode == null
-            ? UNDEFINED_PZ
-            : nodes.pzNode.getTextContent();
-    }
-
     private static String extractInsurantId(
         UCPersoenlicheVersichertendatenXML patient,
         byte[] pruefungsnachweis,
-        boolean gzipSource
+        boolean forcePz
     ) throws Exception {
-        PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis, gzipSource);
+        PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis);
+        if (forcePz && nodes.pzNode == null) {
+            throw new AuditEvidenceException("[Pruefungsnachweis] AuditEvidence is not defined");
+        }
         if (nodes.eNode.getTextContent().equals("3") && nodes.pzNode == null) {
             return patient.getVersicherter().getVersichertenID();
         } else {

@@ -7,7 +7,6 @@ import de.gematik.idp.client.data.AuthenticationResponse;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.client.data.TokenRequest;
 import de.servicehealth.epa4all.server.idp.func.IdpFunc;
-import de.servicehealth.epa4all.server.idp.func.IdpFuncer;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.security.cert.X509Certificate;

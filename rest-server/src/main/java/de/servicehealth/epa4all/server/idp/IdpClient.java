@@ -14,7 +14,6 @@ import de.servicehealth.epa4all.server.idp.action.AuthAction;
 import de.servicehealth.epa4all.server.idp.action.LoginAction;
 import de.servicehealth.epa4all.server.idp.action.VauNpAction;
 import de.servicehealth.epa4all.server.idp.func.IdpFunc;
-import de.servicehealth.epa4all.server.idp.func.IdpFuncer;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.startup.StartableService;
@@ -22,14 +21,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import kong.unirest.core.HttpResponse;
-import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jose4j.jwt.JwtClaims;
 
-import java.io.File;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -58,7 +54,6 @@ public class IdpClient extends StartableService {
         Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
     }
 
-    IdpFuncer idpFuncer;
     IdpConfig idpConfig;
     ManagedExecutor managedExecutor;
     KonnektorClient konnektorClient;
@@ -68,17 +63,12 @@ public class IdpClient extends StartableService {
 
     private DiscoveryDocumentResponse discoveryDocumentResponse;
 
-    @Setter
-    @ConfigProperty(name = "ere.per.konnektor.config.folder")
-    String configFolder;
-
     // A_24883-02 - clientAttest als ECDSA-Signatur
     private String signatureType = URN_BSI_TR_03111_ECDSA;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public IdpClient(
-        IdpFuncer idpFuncer,
         IdpConfig idpConfig,
         ManagedExecutor managedExecutor,
         KonnektorClient konnektorClient,
@@ -86,7 +76,6 @@ public class IdpClient extends StartableService {
         AuthenticatorClient authenticatorClient,
         MultiKonnektorService multiKonnektorService
     ) {
-        this.idpFuncer = idpFuncer;
         this.idpConfig = idpConfig;
         this.managedExecutor = managedExecutor;
         this.konnektorClient = konnektorClient;
@@ -95,21 +84,16 @@ public class IdpClient extends StartableService {
         this.multiKonnektorService = multiKonnektorService;
     }
 
-    public void onStart() {
+    public void onStart() throws Exception {
         retrieveDiscoveryDocument();
     }
 
-    private void retrieveDiscoveryDocument() {
-        File configDirectory = new File(configFolder);
-        try {
-            DiscoveryDocumentWrapper documentWrapper = new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(configDirectory).load();
-            if (documentWrapper != null) {
-                discoveryDocumentResponse = documentWrapper.toDiscoveryDocumentResponse();
-                return;
-            }
-            log.log(Level.WARNING, "Cached discoveryDocumentResponse is not loaded.");
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while loading cached discoveryDocumentResponse", e);
+    private void retrieveDiscoveryDocument() throws Exception {
+        DiscoveryDocumentFile<DiscoveryDocumentWrapper> documentFile = new DiscoveryDocumentFile<>(configDirectory);
+        DiscoveryDocumentWrapper documentWrapper = documentFile.load();
+        if (documentWrapper != null) {
+            discoveryDocumentResponse = documentWrapper.toDiscoveryDocumentResponse();
+            return;
         }
 
         boolean worked = false;
@@ -141,7 +125,7 @@ public class IdpClient extends StartableService {
         Consumer<String> vauNPConsumer
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
-        IdpFunc idpFunc = idpFuncer.init(
+        IdpFunc idpFunc = IdpFunc.init(
             multiEpaService.getEpaConfig().getUserAgent(),
             backend,
             servicePorts,
@@ -165,7 +149,7 @@ public class IdpClient extends StartableService {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ThreadLocal<String> threadLocalString = new ThreadLocal<String>();
-        IdpFunc idpFunc = idpFuncer.init(
+        IdpFunc idpFunc = IdpFunc.init(
             multiEpaService.getEpaConfig().getUserAgent(),
             backend,
             servicePorts,
@@ -301,7 +285,7 @@ public class IdpClient extends StartableService {
         Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(servicePorts, smcbHandle);
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
 
-        IdpFunc idpFunc = idpFuncer.init(
+        IdpFunc idpFunc = IdpFunc.init(
             multiEpaService.getEpaConfig().getUserAgent(),
             backend,
             servicePorts,
@@ -317,7 +301,7 @@ public class IdpClient extends StartableService {
         Consumer<String> bearerConsumer
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
-        IdpFunc idpFunc = idpFuncer.init(
+        IdpFunc idpFunc = IdpFunc.init(
             multiEpaService.getEpaConfig().getUserAgent(),
             backend,
             servicePorts,
@@ -331,13 +315,12 @@ public class IdpClient extends StartableService {
             bearerConsumer,
             idpFunc
         );
-        processBearerAction(userRuntimeConfig, authAction, idpFuncer);
+        processBearerAction(userRuntimeConfig, authAction);
     }
 
     public void processBearerAction(
         UserRuntimeConfig userRuntimeConfig,
-        AuthAction authAction,
-        IdpFuncer idpFuncer
+        AuthAction authAction
     ) throws Exception {
 
     }

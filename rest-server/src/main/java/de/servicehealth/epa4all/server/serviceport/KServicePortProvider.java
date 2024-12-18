@@ -15,9 +15,7 @@ import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.utils.SSLResult;
-import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -30,7 +28,6 @@ import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -41,14 +38,12 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.servicehealth.utils.SSLUtils.createSSLContext;
@@ -61,22 +56,14 @@ public class KServicePortProvider extends StartableService {
 
     private final SSLContext defaultSSLContext;
 
-    @Setter
-    @ConfigProperty(name = "ere.per.konnektor.config.folder")
-    String configFolder;
-
     @Getter
     @Setter
     Map<String, Map<String, String>> userConfigurations2endpointMap = new HashMap<>();
 
     // this must be started after MultiEpaService
-    public void onStart() {
-        try {
-            Map<String, Map<String, String>> map = new ServicePortFile(new File(configFolder)).load();
-            userConfigurations2endpointMap.putAll(map);
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while loading 'service-ports' file");
-        }
+    public void onStart() throws Exception {
+        Map<String, Map<String, String>> map = new ServicePortFile(configDirectory).load();
+        userConfigurations2endpointMap.putAll(map);
     }
 
     @Inject

@@ -3,13 +3,21 @@ package de.servicehealth.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class ServerUtils {
 
     private static final Logger log = LoggerFactory.getLogger(ServerUtils.class);
+
+    private ServerUtils() {
+    }
 
     public static String getBaseUrl(String url) {
         URI uri = URI.create(url.replace("+vau", ""));
@@ -23,6 +31,40 @@ public class ServerUtils {
         return serviceUrl.replace("[epa-backend]", backend);
     }
 
-    private ServerUtils() {
+    public static void unzipAndSaveDataToFile(byte[] bytes, File outputFile) throws IOException {
+        if (!outputFile.exists()) {
+            outputFile.createNewFile();
+        }
+        try (FileOutputStream os = new FileOutputStream(outputFile)) {
+            os.write(decompress(bytes));
+        }
+    }
+
+    public static byte[] compress(byte[] bytes) {
+        try {
+            new GZIPInputStream(new ByteArrayInputStream(bytes));
+            return bytes;
+        } catch (Exception e) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            try (GZIPOutputStream gzipOut = new GZIPOutputStream(os)) {
+                gzipOut.write(bytes);
+                gzipOut.finish();
+
+                return os.toByteArray();
+            } catch (Exception ignored) {
+                return bytes;
+            }
+        }
+    }
+
+    public static byte[] decompress(final byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            return new byte[0];
+        }
+        try (GZIPInputStream gzipIn = new GZIPInputStream(new ByteArrayInputStream(bytes))) {
+            return gzipIn.readAllBytes();
+        } catch (Exception e) {
+            return bytes;
+        }
     }
 }

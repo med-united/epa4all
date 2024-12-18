@@ -26,14 +26,13 @@ public class Vsd extends AbstractResource {
     @Path("pnw")
     public Response proxy(
         @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
-        byte[] gzipBodyBase64Encoded
+        byte[] base64EncodedBody
     ) throws Exception {
         folderService.applyTelematikPath(telematikId);
 
-        byte[] pruefungsnachweis = Base64.getDecoder().decode(gzipBodyBase64Encoded);
-
+        byte[] pruefungsnachweis = Base64.getDecoder().decode(base64EncodedBody);
         ReadVSDResponse readVSDResponse = buildSyntheticVSDResponse(null, pruefungsnachweis);
-        String insurantId = extractInsurantId(readVSDResponse);
+        String insurantId = extractInsurantId(readVSDResponse, true);
         readVSDResponseExEvent.fire(new ReadVSDResponseEx(telematikId, insurantId, readVSDResponse));
 
         // call to getLocalInsuranceData *AFTER* we set it by synthetic ReadVSDResponse

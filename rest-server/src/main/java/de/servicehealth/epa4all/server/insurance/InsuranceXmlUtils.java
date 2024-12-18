@@ -14,7 +14,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.GZIPInputStream;
+
+import static de.servicehealth.utils.ServerUtils.decompress;
 
 public class InsuranceXmlUtils {
 
@@ -42,24 +43,16 @@ public class InsuranceXmlUtils {
         );
     }
 
-    private static String getSource(byte[] bytes, boolean gzipSource) throws IOException {
-        return gzipSource
-            ? new String(new GZIPInputStream(new ByteArrayInputStream(bytes)).readAllBytes())
-            : new String(new ByteArrayInputStream(bytes).readAllBytes());
-    }
-
-    public static Document createDocument(byte[] bytes, boolean gzipSource) throws IOException, SAXException {
-        String source = getSource(bytes, gzipSource);
-        return documentBuilder.parse(new ByteArrayInputStream(source.getBytes()));
+    public static Document createDocument(byte[] bytes) throws IOException, SAXException {
+        return documentBuilder.parse(new ByteArrayInputStream(decompress(bytes)));
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T createUCEntity(byte[] bytes, boolean gzipSource) throws Exception {
+    public static <T> T createUCEntity(byte[] bytes) throws Exception {
         if (bytes == null || bytes.length == 0) {
             return null;
         }
-        String source = getSource(bytes, gzipSource);
-        return (T) jaxbContext.createUnmarshaller().unmarshal(new ByteArrayInputStream(source.getBytes()));
+        return (T) jaxbContext.createUnmarshaller().unmarshal(new ByteArrayInputStream(decompress(bytes)));
     }
 
     private InsuranceXmlUtils() {

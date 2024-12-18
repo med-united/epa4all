@@ -3,12 +3,10 @@ package de.servicehealth.vau.response;
 import de.servicehealth.vau.VauResponse;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
-import java.util.zip.GZIPInputStream;
 
+import static de.servicehealth.utils.ServerUtils.decompress;
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.cxf.helpers.HttpHeaderHelper.CONTENT_ENCODING;
@@ -61,20 +59,13 @@ public class VauHeaderInnerResponseBuilder extends AbstractVauResponseBuilder {
             byte[] payload = new byte[vauBytes.length - i - 4];
             System.arraycopy(vauBytes, i + 4, payload, 0, vauBytes.length - i - 4);
 
-            return
-                findHeaderValue(headers, CONTENT_ENCODING)
-                    .map(contentEncoding -> {
-                        if (contentEncoding.contains("gzip")) {
-                            try (GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(payload))) {
-                                return gzipInputStream.readAllBytes();
-                            } catch (IOException e) {
-                                return payload;
-                            }
-                        } else {
-                            return payload;
-                        }
-                    })
-                    .orElse(payload);
+            return findHeaderValue(headers, CONTENT_ENCODING).map(contentEncoding -> {
+                if (contentEncoding.contains("gzip")) {
+                    return decompress(payload);
+                } else {
+                    return payload;
+                }
+            }).orElse(payload);
         } else {
             return null;
         }

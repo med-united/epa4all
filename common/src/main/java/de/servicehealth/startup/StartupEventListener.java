@@ -6,5 +6,5 @@ public interface StartupEventListener {
 
     int getPriority();
 
-    void onStart(StartupEvent ev);
+    void onStart(StartupEvent ev) throws Exception;
 }

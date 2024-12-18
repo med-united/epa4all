@@ -13,7 +13,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import javax.xml.datatype.DatatypeFactory;
-import java.io.ByteArrayOutputStream;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.TimeZone;
@@ -21,7 +20,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPOutputStream;
+
+import static de.servicehealth.utils.ServerUtils.compress;
 
 @ApplicationScoped
 public class VsdService {
@@ -46,17 +46,7 @@ public class VsdService {
         readVSDResponse.setGeschuetzteVersichertendaten(new byte[0]);
         readVSDResponse.setPersoenlicheVersichertendaten(new byte[0]);
 
-        byte[] gzipBytes;
-        if (xml != null) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            GZIPOutputStream os = new GZIPOutputStream(out);
-            os.write(xml.getBytes());
-            os.finish();
-
-            gzipBytes = out.toByteArray();
-        } else {
-            gzipBytes = bytes;
-        }
+        byte[] gzipBytes = xml != null ? compress(xml.getBytes()) : compress(bytes);
         readVSDResponse.setPruefungsnachweis(gzipBytes);
 
         VSDStatusType vsdStatus = new VSDStatusType();

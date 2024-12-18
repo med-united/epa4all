@@ -9,7 +9,6 @@ import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.token.IdpJwe;
 import de.gematik.idp.token.JsonWebToken;
 import de.servicehealth.epa4all.server.idp.func.IdpFunc;
-import de.servicehealth.epa4all.server.idp.func.IdpFuncer;
 import org.jose4j.jwt.JwtClaims;
 
 import java.security.cert.X509Certificate;
