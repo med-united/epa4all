@@ -90,6 +90,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     Response response = client.post(ByteBuffer.wrap(message1));
                     byte[] message2 = getPayload(response);
+                    log.info("Message2 : " + new String(message2));
 
                     String vauCid = getHeaderValue(response, VAU_CID);
                     String vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK1_S2C);
@@ -129,6 +130,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                 }
             }
         } catch (Exception e) {
+            log.error("Error while creating VAU session", e);
             throw new Fault(e);
         }
     }
