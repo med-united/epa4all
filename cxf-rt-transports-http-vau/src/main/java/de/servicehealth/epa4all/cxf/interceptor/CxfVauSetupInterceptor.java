@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
 import de.gematik.vau.lib.data.KdfKey2;
-import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
@@ -81,14 +80,14 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     uri = uriObject.getScheme() + "://" + uriObject.getHost() + (uriObject.getPort() == -1 ? "" : ":" + uriObject.getPort());
 
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
-                    WebClient client = WebClient.create(uri + "/VAU", providers);
-                    ClientFactory.initClient(client.getConfiguration(), List.of(), List.of());
+                    WebClient client1 = WebClient.create(uri + "/VAU", providers);
+                    // ClientFactory.initClient(client.getConfiguration(), List.of(), List.of());
 
                     byte[] message1 = vauClient.getVauStateMachine().generateMessage1();
 
-                    client.headers(prepareVauOutboundHeaders(uri, message1.length));
+                    client1.headers(prepareVauOutboundHeaders(uri, message1.length));
 
-                    Response response = client.post(ByteBuffer.wrap(message1));
+                    Response response = client1.post(ByteBuffer.wrap(message1));
                     byte[] message2 = getPayload(response);
                     log.info("Message2 : " + new String(message2));
 
@@ -108,11 +107,11 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     // TODO path|query params for VAU endpoint as well
                     // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
 
-                    client = WebClient.create(uri + vauCid, providers);
-                    ClientFactory.initClient(client.getConfiguration(), List.of(), List.of());
-                    client.headers(prepareVauOutboundHeaders(uri, message3.length));
+                    WebClient client2 = WebClient.create(uri + vauCid, providers);
+                    // ClientFactory.initClient(client2.getConfiguration(), List.of(), List.of());
+                    client2.headers(prepareVauOutboundHeaders(uri, message3.length));
 
-                    response = client.post(ByteBuffer.wrap(message3));
+                    response = client2.post(ByteBuffer.wrap(message3));
                     byte[] message4 = getPayload(response);
 
                     vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK2_S2C_INFO);
