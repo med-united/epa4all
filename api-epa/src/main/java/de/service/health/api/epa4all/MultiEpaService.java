@@ -83,11 +83,17 @@ public class MultiEpaService extends StartableService {
                     VauFacade vauFacade = vauFacadeInstance.get();
                     vauFacade.setBackend(backend);
 
+                    String epaUserAgent = epaConfig.getEpaUserAgent();
+
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
-                    IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(documentManagementUrl, vauFacade);
+                    IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(
+                        documentManagementUrl, epaUserAgent, vauFacade
+                    );
 
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
-                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = eServicePortProvider.getDocumentManagementInsurantPortType(documentManagementInsurantUrl, vauFacade);
+                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = eServicePortProvider.getDocumentManagementInsurantPortType(
+                        documentManagementInsurantUrl, epaUserAgent, vauFacade
+                    );
 
                     AccountInformationApi accountInformationApi = clientFactory.createPlainClient(
                         AccountInformationApi.class, getBackendUrl(backend, epaConfig.getInformationServiceUrl())
@@ -103,14 +109,16 @@ public class MultiEpaService extends StartableService {
 
                     VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
                     String medicationApiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
-                    apiClientFactory.init(vauFacade, getBaseUrl(medicationApiUrl));
+                    apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationApiUrl));
                     GenericDirectClient medicationClient = apiClientFactory.newGenericClient(medicationApiUrl.replace("+vau", ""));
 
                     String medicationRenderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
                     VauRestfulClientFactory renderClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
-                    renderClientFactory.init(vauFacade, getBaseUrl(medicationRenderUrl));
+                    renderClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationRenderUrl));
                     Executor renderExecutor = Executor.newInstance(renderClientFactory.getVauHttpClient());
-                    VauRenderClient renderClient = new VauRenderClient(renderExecutor, medicationRenderUrl.replace("+vau", ""));
+                    VauRenderClient renderClient = new VauRenderClient(
+                        renderExecutor, epaUserAgent, medicationRenderUrl.replace("+vau", "")
+                    );
                     
                     return new EpaAPIAggregator(
                         backend,
@@ -130,7 +138,7 @@ public class MultiEpaService extends StartableService {
     }
 
     private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl, VauFacade vauFacade) throws Exception {
-        return clientFactory.createProxyClient(vauFacade, clazz, getBackendUrl(backend, serviceUrl));
+        return clientFactory.createProxyClient(vauFacade, epaConfig.getEpaUserAgent(), clazz, getBackendUrl(backend, serviceUrl));
     }
 
     public EpaAPI getEpaAPI(String insurantId) {
@@ -151,7 +159,7 @@ public class MultiEpaService extends StartableService {
     private boolean hasEpaRecord(EpaAPI api, String xInsurantid) {
         boolean result = false;
         try {
-            api.getAccountInformationApi().getRecordStatus(xInsurantid, epaConfig.getUserAgent());
+            api.getAccountInformationApi().getRecordStatus(xInsurantid, epaConfig.getEpaUserAgent());
             result = true;
         } catch (Exception e) {
             log.info(String.format(

@@ -33,13 +33,15 @@ public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
         super(ctx);
     }
 
-    public void init(VauFacade vauFacade, String medicationServiceBaseUrl) throws Exception {
+    public void init(VauFacade vauFacade, String epaUserAgent, String medicationServiceBaseUrl) throws Exception {
         getFhirContext().setRestfulClientFactory(this);
 
         SSLContext sslContext = createFakeSSLContext();
         URI medicationBaseUri = URI.create(medicationServiceBaseUrl);
 
-        FHIRRequestVAUInterceptor requestInterceptor = new FHIRRequestVAUInterceptor(medicationBaseUri, sslContext, vauFacade);
+        FHIRRequestVAUInterceptor requestInterceptor = new FHIRRequestVAUInterceptor(
+            medicationBaseUri, epaUserAgent, sslContext, vauFacade
+        );
         FHIRResponseVAUInterceptor responseInterceptor = new FHIRResponseVAUInterceptor(vauFacade);
         vauHttpClient = buildHttpClient(sslContext, requestInterceptor, responseInterceptor);
 

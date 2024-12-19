@@ -1,7 +1,5 @@
 package de.servicehealth.epa4all.server.idp;
 
-import de.servicehealth.epa4all.server.filetracker.ChecksumFile;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,7 +13,7 @@ import java.util.logging.Logger;
 
 public class DiscoveryDocumentFile<T extends Serializable> {
 
-    private static final Logger log = Logger.getLogger(ChecksumFile.class.getName());
+    private static final Logger log = Logger.getLogger(DiscoveryDocumentFile.class.getName());
 
     private static final String DISCOVERY_DOC_FILE_NAME = "discovery-doc";
 
@@ -36,7 +34,7 @@ public class DiscoveryDocumentFile<T extends Serializable> {
         try (ObjectInputStream is = new ObjectInputStream(new FileInputStream(file))) {
             return (T) is.readObject();
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Unable to store '%s' file", DISCOVERY_DOC_FILE_NAME), e);
+            log.log(Level.SEVERE, String.format("Unable to read '%s' file: %s", DISCOVERY_DOC_FILE_NAME, e.getMessage()));
         } finally {
             lock.readLock().unlock();
         }
@@ -48,7 +46,7 @@ public class DiscoveryDocumentFile<T extends Serializable> {
         try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file))) {
             os.writeObject(serializable);
         } catch (IOException e) {
-            log.log(Level.SEVERE, String.format("Unable to store '%s' file", DISCOVERY_DOC_FILE_NAME), e);
+            log.log(Level.SEVERE, String.format("Unable to store '%s' file: %s", DISCOVERY_DOC_FILE_NAME, e.getMessage()));
         } finally {
             lock.writeLock().unlock();
         }

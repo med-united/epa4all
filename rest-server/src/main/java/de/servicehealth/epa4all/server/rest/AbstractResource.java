@@ -107,7 +107,7 @@ public abstract class AbstractResource {
         }
         String insurantId = insuranceData.getInsurantId();
         EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
-        String userAgent = multiEpaService.getEpaConfig().getUserAgent();
+        String userAgent = multiEpaService.getEpaConfig().getEpaUserAgent();
         String backend = epaAPI.getBackend();
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         String vauNp = vauNpProvider.getVauNp(smcbHandle, konnektorUrl, backend);

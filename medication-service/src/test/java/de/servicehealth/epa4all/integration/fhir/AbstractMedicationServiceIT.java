@@ -20,6 +20,8 @@ public abstract class AbstractMedicationServiceIT {
 
     public static final String MEDICATION_SERVICE = "medication-service";
 
+    protected String epaUserAgent = "GEMIncenereS2QmFN83P/1.0.0";
+
     @Inject
     @ConfigProperty(name = "medication-service.api.url")
     String medicationServiceApiUrl;

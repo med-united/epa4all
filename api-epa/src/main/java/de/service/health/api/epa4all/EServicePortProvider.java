@@ -28,15 +28,23 @@ import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRA
 @ApplicationScoped
 public class EServicePortProvider {
 
-    public IDocumentManagementPortType getDocumentManagementPortType(String url, VauFacade vauFacade) throws Exception {
-        return createXDSDocumentPortType(url, IDocumentManagementPortType.class, vauFacade);
+    public IDocumentManagementPortType getDocumentManagementPortType(
+        String url,
+        String epaUserAgent,
+        VauFacade vauFacade
+    ) throws Exception {
+        return createXDSDocumentPortType(url, epaUserAgent, IDocumentManagementPortType.class, vauFacade);
     }
 
-    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(String url, VauFacade vauFacade) throws Exception {
-        return createXDSDocumentPortType(url, IDocumentManagementInsurantPortType.class, vauFacade);
+    public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(
+        String url,
+        String epaUserAgent,
+        VauFacade vauFacade
+    ) throws Exception {
+        return createXDSDocumentPortType(url, epaUserAgent, IDocumentManagementInsurantPortType.class, vauFacade);
     }
 
-    private <T> T createXDSDocumentPortType(String address, Class<T> clazz, VauFacade vauFacade) throws Exception {
+    private <T> T createXDSDocumentPortType(String address, String epaUserAgent, Class<T> clazz, VauFacade vauFacade) throws Exception {
         JaxWsProxyFactoryBean jaxWsProxyFactory = new JaxWsProxyFactoryBean();
         jaxWsProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
         jaxWsProxyFactory.setServiceClass(XDSDocumentService.class);
@@ -53,7 +61,7 @@ public class EServicePortProvider {
         jaxWsProxyFactory.getOutInterceptors().addAll(
             List.of(
                 new LoggingOutInterceptor(),
-                new CxfVauSetupInterceptor(vauFacade),
+                new CxfVauSetupInterceptor(vauFacade, epaUserAgent),
                 new CxfVauWriteSoapInterceptor(vauFacade)
             )
         );

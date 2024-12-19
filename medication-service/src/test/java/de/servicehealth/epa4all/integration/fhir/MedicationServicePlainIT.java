@@ -50,7 +50,7 @@ public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
     public void documentsFetched() throws Exception {
         if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             Executor executor = Executor.newInstance(HttpClients.custom().setSSLContext(createFakeSSLContext()).build());
-            IRenderClient renderClient = new PlainRenderClient(executor, medicationServiceRenderUrl);
+            IRenderClient renderClient = new PlainRenderClient(executor, epaUserAgent, medicationServiceRenderUrl);
 
             Map<String, String> xHeaders = Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45");
             File file = renderClient.getPdfFile(xHeaders);

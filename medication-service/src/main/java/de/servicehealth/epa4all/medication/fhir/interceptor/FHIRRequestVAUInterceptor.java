@@ -45,6 +45,7 @@ import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
@@ -52,7 +53,6 @@ import static org.apache.http.HttpHeaders.CONNECTION;
 import static org.apache.http.HttpHeaders.CONTENT_LENGTH;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpHeaders.HOST;
-import static org.apache.http.HttpHeaders.USER_AGENT;
 import static org.apache.http.client.fluent.Executor.newInstance;
 
 public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
@@ -65,11 +65,18 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
     }
 
     private final URI medicationBaseUri;
+    private final String epaUserAgent;
     private final SSLContext sslContext;
     private final VauFacade vauFacade;
 
-    public FHIRRequestVAUInterceptor(URI medicationBaseUri, SSLContext sslContext, VauFacade vauFacade) {
+    public FHIRRequestVAUInterceptor(
+        URI medicationBaseUri,
+        String epaUserAgent,
+        SSLContext sslContext,
+        VauFacade vauFacade
+    ) {
         this.medicationBaseUri = medicationBaseUri;
+        this.epaUserAgent = epaUserAgent;
         this.sslContext = sslContext;
         this.vauFacade = vauFacade;
     }
@@ -227,7 +234,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         headers[2] = new BasicHeader(ACCEPT_ENCODING, "gzip, x-gzip, deflate");
         headers[3] = new BasicHeader(CONTENT_TYPE, "application/cbor");
         headers[4] = new BasicHeader(HOST, host);
-        headers[5] = new BasicHeader(USER_AGENT, "Apache-CfxClient/4.0.5");
+        headers[5] = new BasicHeader(X_USER_AGENT, epaUserAgent);
         return headers;
     }
 }

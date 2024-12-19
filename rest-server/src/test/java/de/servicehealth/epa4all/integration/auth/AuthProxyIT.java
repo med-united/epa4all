@@ -11,6 +11,6 @@ public class AuthProxyIT extends AbstractAuthIT {
 
     @Override
     protected <T> T buildApi(VauFacade vauFacade, Class<T> clazz, String url) throws Exception {
-        return clientFactory.createProxyClient(vauFacade, clazz, url);
+        return clientFactory.createProxyClient(vauFacade, epaConfig.getEpaUserAgent(), clazz, url);
     }
 }

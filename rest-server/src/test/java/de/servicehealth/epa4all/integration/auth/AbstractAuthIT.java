@@ -18,8 +18,6 @@ public abstract class AbstractAuthIT {
 
     public static final String AUTHORIZATION_SERVICE = "authorization-service";
 
-    String xUseragent = "CLIENTID1234567890AB/2.1.12-45";
-
     @Inject
     EpaConfig epaConfig;
 
@@ -47,10 +45,11 @@ public abstract class AbstractAuthIT {
             String backendUrl = getBackendUrl(backend, authorizationServiceUrl);
             AuthorizationSmcBApi api = buildApi(vauFacade, AuthorizationSmcBApi.class, backendUrl);
 
+            String epaUserAgent = epaConfig.getEpaUserAgent();
             for (int i = 0; i < 10; i++) {
-                GetNonce200Response nonce = api.getNonce(xUseragent);
+                GetNonce200Response nonce = api.getNonce(epaUserAgent);
                 assertNotNull(nonce);
-                try (Response response = api.sendAuthorizationRequestSCWithResponse(xUseragent, "test:8080")) {
+                try (Response response = api.sendAuthorizationRequestSCWithResponse(epaUserAgent, "test:8080")) {
                     String query = response.getLocation().getQuery();
                     assertTrue(query.contains("redirect_uri"));
                 }

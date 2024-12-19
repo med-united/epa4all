@@ -36,12 +36,12 @@ import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_S2C;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_C2S_INFO;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT_ENCODING;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.HOST;
-import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
 import static org.apache.cxf.helpers.HttpHeaderHelper.CONNECTION;
 
 public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
@@ -54,10 +54,12 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
     }
 
     private final VauFacade vauFacade;
+    private final String epaUserAgent;
 
-    public CxfVauSetupInterceptor(VauFacade vauFacade) {
+    public CxfVauSetupInterceptor(VauFacade vauFacade, String epaUserAgent) {
         super(Phase.SETUP);
         this.vauFacade = vauFacade;
+        this.epaUserAgent = epaUserAgent;
     }
 
     @Override
@@ -81,16 +83,15 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     uri = uriObject.getScheme() + "://" + uriObject.getHost() + (uriObject.getPort() == -1 ? "" : ":" + uriObject.getPort());
 
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
-                    WebClient client = WebClient.create(uri + "/VAU", providers);
-                    ClientFactory.initClient(client.getConfiguration(), List.of(), List.of());
+                    WebClient client1 = WebClient.create(uri + "/VAU", providers);
+                    ClientFactory.initClient(client1.getConfiguration(), List.of(), List.of());
 
                     byte[] message1 = vauClient.getVauStateMachine().generateMessage1();
 
-                    client.headers(prepareVauOutboundHeaders(uri, message1.length));
+                    client1.headers(prepareVauOutboundHeaders(uri, message1.length));
 
-                    Response response = client.post(ByteBuffer.wrap(message1));
+                    Response response = client1.post(ByteBuffer.wrap(message1));
                     byte[] message2 = getPayload(response);
-                    log.info("Message2 : " + new String(message2));
 
                     String vauCid = getHeaderValue(response, VAU_CID);
                     String vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK1_S2C);
@@ -108,11 +109,11 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     // TODO path|query params for VAU endpoint as well
                     // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
 
-                    client = WebClient.create(uri + vauCid, providers);
-                    ClientFactory.initClient(client.getConfiguration(), List.of(), List.of());
-                    client.headers(prepareVauOutboundHeaders(uri, message3.length));
+                    WebClient client2 = WebClient.create(uri + vauCid, providers);
+                    ClientFactory.initClient(client2.getConfiguration(), List.of(), List.of());
+                    client2.headers(prepareVauOutboundHeaders(uri, message3.length));
 
-                    response = client.post(ByteBuffer.wrap(message3));
+                    response = client2.post(ByteBuffer.wrap(message3));
                     byte[] message4 = getPayload(response);
 
                     vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK2_S2C_INFO);
@@ -159,7 +160,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
         headers.add(CONTENT_TYPE, "application/cbor");
         headers.add(CONTENT_LENGTH, String.valueOf(length));
         headers.add(HOST, URI.create(uri).getHost());
-        headers.add(USER_AGENT, "Apache-CfxClient/4.0.5");
+        headers.add(X_USER_AGENT, epaUserAgent);
         return headers;
     }
 }
