@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
+import org.apache.cxf.ext.logging.LoggingFeature;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.w3c.dom.Document;
@@ -59,11 +60,17 @@ public class KServicePortProvider extends StartableService {
     @Getter
     @Setter
     Map<String, Map<String, String>> userConfigurations2endpointMap = new HashMap<>();
+   
+    LoggingFeature loggingFeature = new LoggingFeature();
 
     // this must be started after MultiEpaService
     public void onStart() throws Exception {
         Map<String, Map<String, String>> map = new ServicePortFile(configDirectory).load();
         userConfigurations2endpointMap.putAll(map);
+        
+        loggingFeature.setPrettyLogging(true);
+        loggingFeature.setVerbose(true);
+        loggingFeature.setLogMultipart(true);
     }
 
     @Inject
@@ -77,7 +84,7 @@ public class KServicePortProvider extends StartableService {
 
     public CertificateServicePortType getCertificateServicePort(UserRuntimeConfig userRuntimeConfig) {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        CertificateService certificateService = new CertificateService();
+        CertificateService certificateService = new CertificateService(loggingFeature);
         CertificateServicePortType certificateServicePort = certificateService.getCertificateServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
         String url = userConfigurations2endpointMap.get(connectorBaseURL).get("certificateServiceEndpointAddress");
@@ -88,7 +95,7 @@ public class KServicePortProvider extends StartableService {
 
     public CardServicePortType getCardServicePortType(UserRuntimeConfig userRuntimeConfig) {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        CardService cardService = new CardService();
+        CardService cardService = new CardService(loggingFeature);
         CardServicePortType cardServicePort = cardService.getCardServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
         String url = userConfigurations2endpointMap.get(connectorBaseURL).get("cardServiceEndpointAddress");
@@ -99,7 +106,7 @@ public class KServicePortProvider extends StartableService {
 
     public VSDServicePortType getVSDServicePortType(UserRuntimeConfig userRuntimeConfig) {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        VSDService vsdService = new VSDService();
+        VSDService vsdService = new VSDService(loggingFeature);
         VSDServicePortType cardServicePort = vsdService.getVSDServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
         String url = userConfigurations2endpointMap.get(connectorBaseURL).get("vsdServiceEndpointAddress");
@@ -110,7 +117,7 @@ public class KServicePortProvider extends StartableService {
 
     public AuthSignatureServicePortType getAuthSignatureServicePortType(UserRuntimeConfig userRuntimeConfig) {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        AuthSignatureService authSignatureService = new AuthSignatureService();
+        AuthSignatureService authSignatureService = new AuthSignatureService(loggingFeature);
         AuthSignatureServicePortType authSignatureServicePort = authSignatureService.getAuthSignatureServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
         String url = userConfigurations2endpointMap.get(connectorBaseURL).get("authSignatureServiceEndpointAddress");
@@ -121,7 +128,7 @@ public class KServicePortProvider extends StartableService {
 
     public EventServicePortType getEventServicePort(UserRuntimeConfig userRuntimeConfig) {
         SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        EventService eventService = new EventService();
+        EventService eventService = new EventService(loggingFeature);
         EventServicePortType eventServicePort = eventService.getEventServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
         String url = userConfigurations2endpointMap.get(connectorBaseURL).get("eventServiceEndpointAddress");
