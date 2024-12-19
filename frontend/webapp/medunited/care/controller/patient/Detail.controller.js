@@ -41,7 +41,7 @@ sap.ui.define([
 				const oFlexibleColumnLayout = me.getOwnerComponent().getRootControl().byId("fcl");
 				this.getOwnerComponent().runAsOwner(() => {
 					let sViewer;
-					if(sDecodedDocument.indexOf("pdf") != null) {
+					if(sDecodedDocument.indexOf("pdf") != null && !sDecodedDocument.endsWith(".xml")) {
 						sViewer = "PdfViewer";
 					} else if(sDecodedDocument.endsWith(".xml")) {
 						sViewer = "CodeViewer";
