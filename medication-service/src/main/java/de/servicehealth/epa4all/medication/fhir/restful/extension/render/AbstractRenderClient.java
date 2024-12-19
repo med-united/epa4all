@@ -16,10 +16,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.CONNECTION;
 import static org.apache.http.HttpHeaders.UPGRADE;
-import static org.apache.http.HttpHeaders.USER_AGENT;
 
 public abstract class AbstractRenderClient implements IRenderClient {
 
@@ -27,13 +27,16 @@ public abstract class AbstractRenderClient implements IRenderClient {
     public static final String XHTML_EXT = "xhtml";
 
     private final Executor executor;
+    private final String epaUserAgent;
     private final String medicationRenderUrl;
 
     public AbstractRenderClient(
         Executor executor,
+        String epaUserAgent,
         String medicationRenderUrl
     ) {
         this.executor = executor;
+        this.epaUserAgent = epaUserAgent;
         this.medicationRenderUrl = medicationRenderUrl;
     }
     
@@ -79,7 +82,7 @@ public abstract class AbstractRenderClient implements IRenderClient {
         headers[0] = new BasicHeader(CONNECTION, "Upgrade, HTTP2-Settings");
         headers[1] = new BasicHeader(ACCEPT, "*/*");
         headers[2] = new BasicHeader(UPGRADE, "h2c");
-        headers[3] = new BasicHeader(USER_AGENT, "Apache-CfxClient/4.0.5");
+        headers[3] = new BasicHeader(X_USER_AGENT, epaUserAgent);
 
         Iterator<Map.Entry<String, String>> iterator = xHeaders.entrySet().iterator();
         for (int i = 4; i < total; i++) {

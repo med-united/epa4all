@@ -29,6 +29,8 @@ public abstract class AbstractEntitlementServiceIT {
 
     public static final String ENTITLEMENT_SERVICE = "entitlement-service";
 
+    protected String epaUserAgent = "GEMIncenereS2QmFN83P/1.0.0";
+
     @Inject
     @ConfigProperty(name = "entitlement-service.url")
     String entitlementServiceUrl;

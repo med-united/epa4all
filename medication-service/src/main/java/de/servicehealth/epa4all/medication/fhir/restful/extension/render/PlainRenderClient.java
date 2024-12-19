@@ -8,8 +8,8 @@ import java.net.URI;
 
 public class PlainRenderClient extends AbstractRenderClient {
 
-    public PlainRenderClient(Executor executor, String medicationServiceRenderUrl) {
-        super(executor, medicationServiceRenderUrl);
+    public PlainRenderClient(Executor executor, String epaUserAgent, String medicationServiceRenderUrl) {
+        super(executor, epaUserAgent, medicationServiceRenderUrl);
     }
 
     @Override

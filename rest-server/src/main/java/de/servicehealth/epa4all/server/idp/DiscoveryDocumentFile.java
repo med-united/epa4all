@@ -36,7 +36,7 @@ public class DiscoveryDocumentFile<T extends Serializable> {
         try (ObjectInputStream is = new ObjectInputStream(new FileInputStream(file))) {
             return (T) is.readObject();
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Unable to store '%s' file", DISCOVERY_DOC_FILE_NAME), e);
+            log.log(Level.SEVERE, String.format("Unable to read '%s' file: %s", DISCOVERY_DOC_FILE_NAME, e.getMessage()));
         } finally {
             lock.readLock().unlock();
         }
@@ -48,7 +48,7 @@ public class DiscoveryDocumentFile<T extends Serializable> {
         try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file))) {
             os.writeObject(serializable);
         } catch (IOException e) {
-            log.log(Level.SEVERE, String.format("Unable to store '%s' file", DISCOVERY_DOC_FILE_NAME), e);
+            log.log(Level.SEVERE, String.format("Unable to store '%s' file: %s", DISCOVERY_DOC_FILE_NAME, e.getMessage()));
         } finally {
             lock.writeLock().unlock();
         }

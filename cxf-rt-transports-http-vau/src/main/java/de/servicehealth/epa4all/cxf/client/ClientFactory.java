@@ -63,7 +63,7 @@ public class ClientFactory extends StartableService {
         return api;
     }
 
-    public <T> T createProxyClient(VauFacade vauFacade, Class<T> clazz, String url) throws Exception {
+    public <T> T createProxyClient(VauFacade vauFacade, String epaUserAgent, Class<T> clazz, String url) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
         JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade);
         JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
@@ -71,7 +71,7 @@ public class ClientFactory extends StartableService {
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
             WebClient.getConfig(api),
-            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade)),
+            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade, epaUserAgent)),
             List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
         );
         return api;

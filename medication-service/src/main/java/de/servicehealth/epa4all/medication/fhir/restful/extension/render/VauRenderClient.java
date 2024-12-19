@@ -8,8 +8,8 @@ import java.net.URI;
 
 public class VauRenderClient extends AbstractRenderClient {
 
-    public VauRenderClient(Executor executor, String medicationRenderUrl) {
-        super(executor, medicationRenderUrl);
+    public VauRenderClient(Executor executor, String epaUserAgent, String medicationRenderUrl) {
+        super(executor, epaUserAgent, medicationRenderUrl);
     }
 
     @Override

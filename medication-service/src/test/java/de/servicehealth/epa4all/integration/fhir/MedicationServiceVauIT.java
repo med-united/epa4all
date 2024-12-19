@@ -46,7 +46,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
         if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
             VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(ctx);
-            apiClientFactory.init(vauFacade, getBaseUrl(medicationServiceApiUrl));
+            apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationServiceApiUrl));
 
             String kvnr = "X110485291";
 
@@ -98,10 +98,10 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
         if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
             VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(ctx);
-            apiClientFactory.init(vauFacade, getBaseUrl(medicationServiceRenderUrl));
+            apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationServiceRenderUrl));
 
             Executor executor = Executor.newInstance(apiClientFactory.getVauHttpClient());
-            IRenderClient renderClient = new VauRenderClient(executor, medicationServiceRenderUrl);
+            IRenderClient renderClient = new VauRenderClient(executor, epaUserAgent, medicationServiceRenderUrl);
 
             Map<String, String> xHeaders = Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45");
 

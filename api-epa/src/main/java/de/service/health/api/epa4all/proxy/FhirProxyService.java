@@ -38,10 +38,13 @@ public class FhirProxyService implements IFhirProxy {
 
     private final WebClient apiClient;
     private final WebClient renderClient;
+    private final String epaUserAgent;
 
     public FhirProxyService(String backend, EpaConfig epaConfig, VauConfig vauConfig, VauFacade vauFacade) throws Exception {
         String apiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
         String renderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
+
+        epaUserAgent = epaConfig.getEpaUserAgent();
 
         apiClient = setup(apiUrl, vauConfig, vauFacade);
         renderClient = setup(renderUrl, vauConfig, vauFacade);
@@ -63,7 +66,7 @@ public class FhirProxyService implements IFhirProxy {
 
         ClientFactory.initClient(
             webClient.getConfiguration(),
-            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade)),
+            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade, epaUserAgent)),
             List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
         );
         return webClient;
