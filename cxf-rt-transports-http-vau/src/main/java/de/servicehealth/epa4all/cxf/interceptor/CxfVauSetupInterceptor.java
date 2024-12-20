@@ -23,10 +23,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.security.Security;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import static de.servicehealth.utils.CborUtils.printCborMessage;
 import static de.servicehealth.vau.VauClient.VAU_CID;
@@ -82,15 +86,34 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     uri = uriObject.getScheme() + "://" + uriObject.getHost() + (uriObject.getPort() == -1 ? "" : ":" + uriObject.getPort());
 
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
-                    WebClient client1 = WebClient.create(uri + "/VAU", providers);
-                    // ClientFactory.initClient(client1.getConfiguration(), List.of(), List.of());
 
                     byte[] message1 = vauClient.getVauStateMachine().generateMessage1();
 
-                    client1.headers(prepareVauOutboundHeaders(uri, message1.length));
+                    HttpResponse<byte[]> response;
+                    try (HttpClient client = HttpClient.newHttpClient()) {
 
-                    Response response = client1.post(ByteBuffer.wrap(message1));
-                    byte[] message2 = getPayload(response);
+                        // Build the HttpRequest
+                        HttpRequest request = HttpRequest.newBuilder()
+                            .uri(new URI(uri + "/VAU"))
+                            .header(CONNECTION, "Keep-Alive")
+                            .header(ACCEPT, "application/octet-stream, application/json, application/cbor, application/*+json, */*")
+                            .header(ACCEPT_ENCODING, "gzip, x-gzip, deflate")
+                            .header(CONTENT_TYPE, "application/cbor")
+                            .header(CONTENT_LENGTH, String.valueOf(message1.length))
+                            .header(HOST, URI.create(uri).getHost())
+                            .header(X_USER_AGENT, epaUserAgent)
+                            .POST(HttpRequest.BodyPublishers.ofByteArray(message1))
+                            .build();
+
+                        response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                    }
+
+
+                    // WebClient client1 = WebClient.create(uri + "/VAU", providers);
+                    // client1.headers(prepareVauOutboundHeaders(uri, message1.length));
+                    // Response response = client1.post(ByteBuffer.wrap(message1));
+
+                    byte[] message2 = response.body();
 
                     String vauCid = getHeaderValue(response, VAU_CID);
                     String vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK1_S2C);
@@ -112,12 +135,12 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     // ClientFactory.initClient(client2.getConfiguration(), List.of(), List.of());
                     client2.headers(prepareVauOutboundHeaders(uri, message3.length));
 
-                    response = client2.post(ByteBuffer.wrap(message3));
-                    byte[] message4 = getPayload(response);
+                    Response response2 = client2.post(ByteBuffer.wrap(message3));
+                    byte[] message4 = getPayload(response2);
 
-                    vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK2_S2C_INFO);
-                    vauDebugCS = getHeaderValue(response, VAU_DEBUG_SK2_C2S_INFO);
-                    contentLength = getHeaderValue(response, CONTENT_LENGTH);
+                    vauDebugSC = getHeaderValue(response2, VAU_DEBUG_SK2_S2C_INFO);
+                    vauDebugCS = getHeaderValue(response2, VAU_DEBUG_SK2_C2S_INFO);
+                    contentLength = getHeaderValue(response2, CONTENT_LENGTH);
 
                     printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
 
@@ -143,6 +166,11 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
     private String getHeaderValue(Response response, String headerName) {
         MultivaluedMap<String, Object> headers = response.getHeaders();
         return (String) headers.getFirst(headerName);
+    }
+
+    private String getHeaderValue(HttpResponse response, String headerName) {
+        Map<String, List<String>> headers = response.headers().map();
+        return headers.get(headerName).getFirst();
     }
 
     private void printHeaders(Response response) {
