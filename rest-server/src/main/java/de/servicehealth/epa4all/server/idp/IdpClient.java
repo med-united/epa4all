@@ -85,6 +85,7 @@ public class IdpClient extends StartableService {
     }
 
     public void onStart() throws Exception {
+        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
         retrieveDiscoveryDocument();
     }
 

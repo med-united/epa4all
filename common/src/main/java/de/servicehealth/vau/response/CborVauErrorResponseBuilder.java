@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import de.servicehealth.gson.InstantDeSerializer;
 import de.servicehealth.vau.GeneralError;
+import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauResponse;
 import org.apache.commons.lang3.tuple.Pair;
@@ -50,8 +51,16 @@ public class CborVauErrorResponseBuilder extends AbstractVauResponseBuilder {
             } catch (IOException ignored) {
             }
         }
-        return error != null
-            ? new VauResponse(responseCode, error, error.getBytes(UTF_8), headers)
-            : super.build(vauCid, responseCode, headers, vauFacade.getVauClient(vauCid).decryptVauMessage(bytes));
+        if (error != null) {
+            return new VauResponse(responseCode, error, error.getBytes(UTF_8), headers);
+        } else {
+            VauClient vauClient = vauFacade.getVauClient(vauCid);
+            if (vauClient == null) {
+                error = "Vau request read timed out";
+                return new VauResponse(responseCode, error, error.getBytes(UTF_8), headers);
+            }
+            byte[] decryptedBytes = vauClient.decryptVauMessage(bytes);
+            return super.build(vauCid, responseCode, headers, decryptedBytes);
+        }
     }
 }
