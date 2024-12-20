@@ -95,12 +95,9 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                         // Build the HttpRequest
                         HttpRequest request = HttpRequest.newBuilder()
                             .uri(new URI(uri + "/VAU"))
-                            .header(CONNECTION, "Keep-Alive")
                             .header(ACCEPT, "application/octet-stream, application/json, application/cbor, application/*+json, */*")
                             .header(ACCEPT_ENCODING, "gzip, x-gzip, deflate")
                             .header(CONTENT_TYPE, "application/cbor")
-                            .header(CONTENT_LENGTH, String.valueOf(message1.length))
-                            .header(HOST, URI.create(uri).getHost())
                             .header(X_USER_AGENT, epaUserAgent)
                             .POST(HttpRequest.BodyPublishers.ofByteArray(message1))
                             .build();
