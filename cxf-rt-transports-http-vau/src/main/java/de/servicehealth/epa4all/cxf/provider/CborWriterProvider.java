@@ -29,6 +29,6 @@ public class CborWriterProvider implements MessageBodyWriter<ByteBuffer> {
         OutputStream entityStream
     ) throws IOException, WebApplicationException {
         entityStream.write(buffer.array());
-        entityStream.close();
+        // entityStream.close();
     }
 }
