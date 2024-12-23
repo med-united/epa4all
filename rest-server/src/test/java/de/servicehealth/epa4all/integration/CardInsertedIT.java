@@ -16,7 +16,7 @@ import org.mockito.ArgumentCaptor;
 import java.util.List;
 import java.util.Map;
 
-import static de.servicehealth.epa4all.common.Utils.runWithDocker;
+import static de.servicehealth.epa4all.common.TestUtils.runWithDocker;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;

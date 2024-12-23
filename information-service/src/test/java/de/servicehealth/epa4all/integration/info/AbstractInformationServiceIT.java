@@ -3,7 +3,7 @@ package de.servicehealth.epa4all.integration.info;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.ConsentDecisionsApi;
 import de.servicehealth.epa4all.common.DockerAction;
-import de.servicehealth.epa4all.common.Utils;
+import de.servicehealth.epa4all.common.TestUtils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.model.GetConsentDecisionInformation200Response;
 import jakarta.inject.Inject;
@@ -25,7 +25,7 @@ public abstract class AbstractInformationServiceIT {
     ClientFactory clientFactory;
 
     private void runWithDocker(DockerAction action) throws Exception {
-        Utils.runWithDocker(INFORMATION_SERVICE, action);
+        TestUtils.runWithDocker(INFORMATION_SERVICE, action);
     }
 
     @Test

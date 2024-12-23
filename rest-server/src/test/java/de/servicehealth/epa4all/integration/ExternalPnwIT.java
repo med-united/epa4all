@@ -18,7 +18,7 @@ import org.mockito.stubbing.Answer;
 import java.time.Instant;
 import java.util.Map;
 
-import static de.servicehealth.epa4all.common.Utils.runWithDocker;
+import static de.servicehealth.epa4all.common.TestUtils.runWithDocker;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

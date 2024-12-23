@@ -34,9 +34,9 @@ import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 
 @ApplicationScoped
 @Startup
-public class MultiEpaService extends StartableService {
+public class EpaMultiService extends StartableService {
 
-    private static final Logger log = Logger.getLogger(MultiEpaService.class.getName());
+    private static final Logger log = Logger.getLogger(EpaMultiService.class.getName());
 
     @Getter
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
@@ -48,7 +48,7 @@ public class MultiEpaService extends StartableService {
     private final EpaConfig epaConfig;
     private final ClientFactory clientFactory;
     private final Instance<VauFacade> vauFacadeInstance;
-    private final EServicePortProvider eServicePortProvider;
+    private final EpaServicePortProvider epaServicePortProvider;
 
     private final Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
         .maximumSize(1000)
@@ -56,14 +56,14 @@ public class MultiEpaService extends StartableService {
         .build();
 
     @Inject
-    public MultiEpaService(
+    public EpaMultiService(
         VauConfig vauConfig,
         EpaConfig epaConfig,
         ClientFactory clientFactory,
         Instance<VauFacade> vauFacadeInstance,
-        EServicePortProvider eServicePortProvider
+        EpaServicePortProvider epaServicePortProvider
     ) {
-        this.eServicePortProvider = eServicePortProvider;
+        this.epaServicePortProvider = epaServicePortProvider;
         this.vauFacadeInstance = vauFacadeInstance;
         this.clientFactory = clientFactory;
         this.epaConfig = epaConfig;
@@ -76,7 +76,7 @@ public class MultiEpaService extends StartableService {
     }
 
     @Override
-    protected void onStart() throws Exception {
+    public void onStart() throws Exception {
         epaConfig.getEpaBackends().forEach(backend ->
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
@@ -86,12 +86,12 @@ public class MultiEpaService extends StartableService {
                     String epaUserAgent = epaConfig.getEpaUserAgent();
 
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
-                    IDocumentManagementPortType documentManagementPortType = eServicePortProvider.getDocumentManagementPortType(
+                    IDocumentManagementPortType documentManagementPortType = epaServicePortProvider.getDocumentManagementPortType(
                         documentManagementUrl, epaUserAgent, vauFacade
                     );
 
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
-                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = eServicePortProvider.getDocumentManagementInsurantPortType(
+                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = epaServicePortProvider.getDocumentManagementInsurantPortType(
                         documentManagementInsurantUrl, epaUserAgent, vauFacade
                     );
 
@@ -122,6 +122,7 @@ public class MultiEpaService extends StartableService {
                     
                     return new EpaAPIAggregator(
                         backend,
+                        vauFacade,
                         renderClient,
                         medicationClient,
                         documentManagementPortType,

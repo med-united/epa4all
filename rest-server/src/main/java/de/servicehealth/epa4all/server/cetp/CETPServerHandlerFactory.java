@@ -5,7 +5,7 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
-import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
@@ -22,7 +22,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     private final VsdConfig vsdConfig;
     private final IdpClient idpClient;
     private final VauNpProvider vauNpProvider;
-    private final MultiEpaService multiEpaService;
+    private final EpaMultiService epaMultiService;
     private final IKonnektorClient konnektorClient;
     private final EpaFileDownloader epaFileDownloader;
     private final InsuranceDataService insuranceDataService;
@@ -33,7 +33,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         IdpClient idpClient,
         VsdConfig vsdConfig,
         VauNpProvider vauNpProvider,
-        MultiEpaService multiEpaService,
+        EpaMultiService epaMultiService,
         IKonnektorClient konnektorClient,
         EpaFileDownloader epaFileDownloader,
         InsuranceDataService insuranceDataService,
@@ -42,7 +42,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         this.idpClient = idpClient;
         this.vsdConfig = vsdConfig;
         this.vauNpProvider = vauNpProvider;
-        this.multiEpaService = multiEpaService;
+        this.epaMultiService = epaMultiService;
         this.konnektorClient = konnektorClient;
         this.epaFileDownloader = epaFileDownloader;
         this.insuranceDataService = insuranceDataService;
@@ -58,7 +58,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         );
         CETPEventHandler cetpEventHandler = new CETPEventHandler(
             cardlinkWebsocketClient, insuranceDataService, epaFileDownloader,
-            konnektorClient, multiEpaService, vauNpProvider, runtimeConfig, vsdConfig
+            konnektorClient, epaMultiService, vauNpProvider, runtimeConfig, vsdConfig
         );
         return new ChannelInboundHandler[] { cetpEventHandler };
     }

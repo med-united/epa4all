@@ -7,7 +7,7 @@ import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.field.ClaimName;
 import de.gematik.idp.field.CodeChallengeMethod;
 import de.health.service.config.api.UserRuntimeConfig;
-import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.EpaMultiService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.idp.action.AuthAction;
@@ -57,7 +57,7 @@ public class IdpClient extends StartableService {
     IdpConfig idpConfig;
     ManagedExecutor managedExecutor;
     KonnektorClient konnektorClient;
-    MultiEpaService multiEpaService;
+    EpaMultiService epaMultiService;
     AuthenticatorClient authenticatorClient;
     MultiKonnektorService multiKonnektorService;
 
@@ -72,17 +72,21 @@ public class IdpClient extends StartableService {
         IdpConfig idpConfig,
         ManagedExecutor managedExecutor,
         KonnektorClient konnektorClient,
-        MultiEpaService multiEpaService,
+        EpaMultiService epaMultiService,
         AuthenticatorClient authenticatorClient,
         MultiKonnektorService multiKonnektorService
     ) {
         this.idpConfig = idpConfig;
         this.managedExecutor = managedExecutor;
         this.konnektorClient = konnektorClient;
-        this.multiEpaService = multiEpaService;
+        this.epaMultiService = epaMultiService;
         this.authenticatorClient = authenticatorClient;
         this.multiKonnektorService = multiKonnektorService;
     }
+    
+    // TODO VAU Session result into VauCheck, REST endpoint to reload vau sessions
+    // TODO disable FHIR context to speed up the boot
+    // TODO VauClient concurrent test, WireMock ssl
 
     public void onStart() throws Exception {
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
@@ -105,7 +109,7 @@ public class IdpClient extends StartableService {
                     idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
                 );
                 DiscoveryDocumentWrapper wrapper = new DiscoveryDocumentWrapper(discoveryDocumentResponse);
-                new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(configDirectory).store(wrapper);
+                new DiscoveryDocumentFile<>(configDirectory).store(wrapper);
                 worked = true;
             } catch (Exception ex) {
                 log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
@@ -127,7 +131,7 @@ public class IdpClient extends StartableService {
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         IdpFunc idpFunc = IdpFunc.init(
-            multiEpaService.getEpaConfig().getEpaUserAgent(),
+            epaMultiService.getEpaConfig().getEpaUserAgent(),
             backend,
             servicePorts,
             authorizationSmcBApi
@@ -151,7 +155,7 @@ public class IdpClient extends StartableService {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ThreadLocal<String> threadLocalString = new ThreadLocal<String>();
         IdpFunc idpFunc = IdpFunc.init(
-            multiEpaService.getEpaConfig().getEpaUserAgent(),
+            epaMultiService.getEpaConfig().getEpaUserAgent(),
             backend,
             servicePorts,
             authorizationSmcBApi
@@ -287,7 +291,7 @@ public class IdpClient extends StartableService {
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
 
         IdpFunc idpFunc = IdpFunc.init(
-            multiEpaService.getEpaConfig().getEpaUserAgent(),
+            epaMultiService.getEpaConfig().getEpaUserAgent(),
             backend,
             servicePorts,
             authorizationSmcBApi
@@ -303,7 +307,7 @@ public class IdpClient extends StartableService {
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         IdpFunc idpFunc = IdpFunc.init(
-            multiEpaService.getEpaConfig().getEpaUserAgent(),
+            epaMultiService.getEpaConfig().getEpaUserAgent(),
             backend,
             servicePorts,
             authorizationSmcBApi

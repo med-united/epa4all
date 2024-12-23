@@ -3,7 +3,7 @@ package de.servicehealth.epa4all.unit;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.EpaMultiService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
@@ -49,7 +49,7 @@ public class VauNpProviderTest {
         IKonnektorClient konnektorClient = mock(IKonnektorClient.class);
         when(konnektorClient.getSmcbHandle(any())).thenReturn(smcbHandle);
 
-        MultiEpaService multiEpaService = mock(MultiEpaService.class);
+        EpaMultiService epaMultiService = mock(EpaMultiService.class);
 
         ConcurrentHashMap<String, EpaAPI> map = new ConcurrentHashMap<>();
         EpaAPI epaAPI = mock(EpaAPI.class);
@@ -57,12 +57,12 @@ public class VauNpProviderTest {
         when(epaAPI.getBackend()).thenReturn(epaBackend);
 
         map.put(epaBackend, epaAPI);
-        when(multiEpaService.getEpaBackendMap()).thenReturn(map);
+        when(epaMultiService.getEpaBackendMap()).thenReturn(map);
 
         IdpClient idpClient = mock(IdpClient.class);
         when(idpClient.getVauNpSync(any(), any(), eq(smcbHandle), eq(epaBackend))).thenReturn(vauNp);
 
-        VauNpProvider vauNpProvider = new VauNpProvider(idpClient, multiEpaService, konnektorClient, null);
+        VauNpProvider vauNpProvider = new VauNpProvider(idpClient, epaMultiService, konnektorClient, null);
         vauNpProvider.setScheduledThreadPool(
             new SmallRyeManagedExecutor(
                 3, 3, SmallRyeThreadContext.builder().build(), SmallRyeManagedExecutor.newThreadPoolExecutor(3, 3), "point"

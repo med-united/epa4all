@@ -26,7 +26,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
-import static de.servicehealth.epa4all.common.Utils.isDockerContainerRunning;
+import static de.servicehealth.epa4all.common.TestUtils.isDockerContainerRunning;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;

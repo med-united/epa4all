@@ -29,6 +29,9 @@ public class VauClient {
     @Getter
     private final VauClientStateMachine vauStateMachine;
 
+    @Getter
+    private final boolean mock;
+
     @Setter
     @Getter
     private VauInfo vauInfo;
@@ -39,8 +42,9 @@ public class VauClient {
 
     private final ReentrantLock lock;
 
-    public VauClient(VauClientStateMachine vauStateMachine) {
+    public VauClient(VauClientStateMachine vauStateMachine, boolean mock) {
         this.vauStateMachine = vauStateMachine;
+        this.mock = mock;
 
         lock = new ReentrantLock();
         broken = new AtomicBoolean(false);

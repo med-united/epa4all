@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
@@ -13,6 +14,9 @@ import java.security.cert.X509Certificate;
 @Setter
 @NoArgsConstructor
 public class DiscoveryDocumentWrapper implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 4597996348076108959L;
 
     private String authorizationEndpoint;
     private String ssoEndpoint;
@@ -38,5 +42,14 @@ public class DiscoveryDocumentWrapper implements Serializable {
         return new DiscoveryDocumentResponse(
             authorizationEndpoint, ssoEndpoint, tokenEndpoint, pairingEndpoint, authPairEndpoint, idpSig, idpEnc, discSig
         );
+    }
+
+    public DiscoveryDocumentWrapper changeEndpoints(String target, String replacement) {
+        authorizationEndpoint = authorizationEndpoint.replace(target, replacement);
+        ssoEndpoint = ssoEndpoint.replace(target, replacement);
+        tokenEndpoint = tokenEndpoint.replace(target, replacement);
+        pairingEndpoint = pairingEndpoint.replace(target, replacement);
+        authPairEndpoint = authPairEndpoint.replace(target, replacement);
+        return this;
     }
 }

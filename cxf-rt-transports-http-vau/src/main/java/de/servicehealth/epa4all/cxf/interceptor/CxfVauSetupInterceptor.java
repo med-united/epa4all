@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
 import de.gematik.vau.lib.data.KdfKey2;
+import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
@@ -81,8 +82,14 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     // Construct the base URI
                     uri = uriObject.getScheme() + "://" + uriObject.getHost() + (uriObject.getPort() == -1 ? "" : ":" + uriObject.getPort());
 
+                    String[] parts = vauFacade.getBackend().split("/");
+                    String backend = parts[parts.length - 1];
+                    String mock = vauClient.isMock() ? "/" + backend + "/" + Math.abs(vauClient.hashCode()) : "";
+
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
-                    WebClient client1 = WebClient.create(uri + "/VAU", providers);
+                    String baseAddress = uri + mock + "/VAU";
+                    WebClient client1 = WebClient.create(baseAddress, providers);
+                    ClientFactory.initClient(client1.getConfiguration(), List.of(), List.of());
 
                     byte[] message1 = vauClient.getVauStateMachine().generateMessage1();
                     client1.headers(prepareVauOutboundHeaders(uri, message1.length));
@@ -105,7 +112,8 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     // TODO path|query params for VAU endpoint as well
                     // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
 
-                    WebClient client2 = WebClient.create(uri + vauCid, providers);
+                    WebClient client2 = WebClient.create(uri + mock + vauCid, providers);
+                    ClientFactory.initClient(client2.getConfiguration(), List.of(), List.of());
                     client2.headers(prepareVauOutboundHeaders(uri, message3.length));
 
                     Response response2 = client2.post(ByteBuffer.wrap(message3));
@@ -119,8 +127,8 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     vauClient.getVauStateMachine().receiveMessage4(message4);
 
-                    vauInfo = new VauInfo(vauCid, c2sAppData, s2cAppData);
-                    message.put(VAU_CID, vauCid);
+                    vauInfo = new VauInfo(mock + vauCid, c2sAppData, s2cAppData);
+                    message.put(VAU_CID, mock + vauCid);
                     message.put(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());
                     vauClient.setVauInfo(vauInfo);
                 }

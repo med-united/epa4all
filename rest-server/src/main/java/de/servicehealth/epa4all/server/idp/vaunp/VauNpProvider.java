@@ -6,7 +6,7 @@ import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.EpaMultiService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
@@ -42,7 +42,7 @@ public class VauNpProvider extends StartableService {
     ManagedExecutor scheduledThreadPool;
 
     IdpClient idpClient;
-    MultiEpaService multiEpaService;
+    EpaMultiService epaMultiService;
     IKonnektorClient konnektorClient;
     KonnektorDefaultConfig konnektorDefaultConfig;
 
@@ -55,12 +55,12 @@ public class VauNpProvider extends StartableService {
     @Inject
     public VauNpProvider(
         IdpClient idpClient,
-        MultiEpaService multiEpaService,
+        EpaMultiService epaMultiService,
         IKonnektorClient konnektorClient,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
         this.idpClient = idpClient;
-        this.multiEpaService = multiEpaService;
+        this.epaMultiService = epaMultiService;
         this.konnektorClient = konnektorClient;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
     }
@@ -99,7 +99,7 @@ public class VauNpProvider extends StartableService {
     public void reload(boolean cleanup) throws Exception {
         Map<VauNpKey, String> savedVauNpMap = loadVauNps(cleanup);
         Map<String, KonnektorConfig> uniqueKonnektorsConfigs = getUniqueKonnektorsConfigs();
-        ConcurrentHashMap<String, EpaAPI> epaBackendMap = multiEpaService.getEpaBackendMap();
+        ConcurrentHashMap<String, EpaAPI> epaBackendMap = epaMultiService.getEpaBackendMap();
         if (!savedVauNpMap.isEmpty() && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
             log.info("Using saved NP");
             vauNpMap.putAll(savedVauNpMap);

@@ -26,7 +26,7 @@ import static de.servicehealth.epa4all.cxf.client.ClientFactory.initConduit;
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 
 @ApplicationScoped
-public class EServicePortProvider {
+public class EpaServicePortProvider {
 
     public IDocumentManagementPortType getDocumentManagementPortType(
         String url,

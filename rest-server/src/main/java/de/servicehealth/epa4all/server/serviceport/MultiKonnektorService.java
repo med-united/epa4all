@@ -27,14 +27,14 @@ public class MultiKonnektorService {
     @Getter
     private final ConcurrentHashMap<KonnektorKey, IKonnektorServicePortsAPI> portMap = new ConcurrentHashMap<>();
 
-    private final KServicePortProvider servicePortProvider;
+    private final ServicePortProvider servicePortProvider;
 
     @Setter
     @ConfigProperty(name = "ere.per.konnektor.config.folder")
     String configFolder;
 
     @Inject
-    public MultiKonnektorService(KServicePortProvider servicePortProvider) {
+    public MultiKonnektorService(ServicePortProvider servicePortProvider) {
         this.servicePortProvider = servicePortProvider;
     }
 

@@ -8,7 +8,7 @@ import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.config.api.IUserConfigurations;
-import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
@@ -63,7 +63,7 @@ public abstract class AbstractVsdTest {
     protected IKonnektorClient konnektorClient;
 
     @Inject
-    protected MultiEpaService multiEpaService;
+    protected EpaMultiService epaMultiService;
 
     @Inject
     protected VsdService vsdService;
@@ -157,7 +157,7 @@ public abstract class AbstractVsdTest {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
             cardlinkWebsocketClient, insuranceDataService, epaFileDownloader, konnektorClient,
-            multiEpaService, vauNpProvider, runtimeConfig, vsdConfig
+            epaMultiService, vauNpProvider, runtimeConfig, vsdConfig
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 
