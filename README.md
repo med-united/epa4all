@@ -54,7 +54,7 @@ cd rest-server
 ../mvnw quarkus:dev
 ```
 
-Open https://localhost:8090/frontend
+Open http://localhost:8090/frontend
 
 ## Running IT tests:
 
