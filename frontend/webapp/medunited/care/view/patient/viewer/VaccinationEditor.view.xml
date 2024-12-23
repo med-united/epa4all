@@ -1,0 +1,113 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m"
+	xmlns:core="sap.ui.core" xmlns:f="sap.ui.layout.form" controllerName="medunited.care.controller.patient.viewer.VaccinationEditor">
+	<TabContainer showAddNewButton="false">
+		<items>
+			<TabContainerItem name="Vaccination Editor"
+				modified="">
+				<content>
+					<Page title="Vaccination Record">
+						<content>
+							<VBox>
+								<!-- Section: Patient -->
+								<f:SimpleForm editable="true"
+									layout="ResponsiveGridLayout" title="Patient Information"
+									labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+									adjustLabelSpan="false" emptySpanXL="4" emptySpanL="4"
+									emptySpanM="4" emptySpanS="0" columnsXL="2" columnsL="2"
+									columnsM="1" singleContainerFullSize="false" id="simpleFormPatient">
+									<Label text="Given Name" />
+									<Input value="{name/given/@value}" />
+									<Label text="Family Name" />
+									<Input value="{name/family/@value}" />
+									<Label text="Gender" />
+									<Input value="{gender/@value}" />
+									<Label text="Birth Date" />
+									<DatePicker value="{birthDate/@value}" />
+									<Label text="IKNR" />
+									<Input value="{identifier/value/@value}" />
+								</f:SimpleForm>
+
+								<!-- Section: Practitioner -->
+								<f:SimpleForm editable="true"
+									layout="ResponsiveGridLayout" title="Practitioner Information"
+									labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+									adjustLabelSpan="false" emptySpanXL="4" emptySpanL="4"
+									emptySpanM="4" emptySpanS="0" columnsXL="2" columnsL="2"
+									columnsM="1" singleContainerFullSize="false" id="simpleFormPractitioner">
+									<Label text="Prefix" />
+									<Input value="{name/prefix/@value}" />
+									<Label text="Given Name" />
+									<Input value="{name/given/@value}" />
+									<Label text="Family Name" />
+									<Input value="{name/family/@value}" />
+									<Label text="LANR" />
+									<Input value="{identifier/value/@value}" />
+									<Label text="Gender" />
+									<Input value="{qualification/code/coding/display/@value}" />
+									<Label text="Phone" />
+									<Input value="{telecom/value/@value}" />
+								</f:SimpleForm>
+
+								<!-- Section: Organization -->
+								<f:SimpleForm editable="true"
+									layout="ResponsiveGridLayout" title="Practitioner Information"
+									labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+									adjustLabelSpan="false" emptySpanXL="4" emptySpanL="4"
+									emptySpanM="4" emptySpanS="0" columnsXL="2" columnsL="2"
+									columnsM="1" singleContainerFullSize="false" id="simpleFormOrganization">
+									<Label text="Name" />
+									<Input value="{name/@value}" />
+									<Label text="Address" />
+									<Input value="{address/line/@value}" />
+									<Label text="City" />
+									<Input value="{address/city/@value}" />
+									<Label text="Postal Code" />
+									<Input value="{address/postalCode/@value}" />
+									<Label text="Country" />
+									<Input value="{address/country/@value}" />
+								</f:SimpleForm>
+
+								<!-- Section: Immunizations -->
+								<Panel headerText="Immunizations" expandable="true"
+									expanded="true" id="simpleFormImmunization">
+									<Table items="{/}" inset="true">
+										<columns>
+											<Column>
+												<Text text="Vaccine Code" />
+											</Column>
+											<Column>
+												<Text text="Occurrence Date" />
+											</Column>
+											<Column>
+												<Text text="Manufacturer" />
+											</Column>
+											<Column>
+												<Text text="Lot Number" />
+											</Column>
+										</columns>
+										<items>
+											<ColumnListItem>
+												<cells>
+													<Input value="{vaccineCode/coding/display/@value}" />
+													<DatePicker value="{occurrenceDateTime/@value}" />
+													<Input value="{manufacturer/display/@value}" />
+													<Input value="{lotNumber/@value)}" />
+												</cells>
+											</ColumnListItem>
+										</items>
+									</Table>
+								</Panel>
+							</VBox>
+						</content>
+					</Page>
+				</content>
+			</TabContainerItem>
+			<TabContainerItem name="XML Editor" modified="">
+				<content>
+					<mvc:XMLView
+						viewName="medunited.care.view.patient.viewer.CodeViewer" id="codeEditorView" />
+				</content>
+			</TabContainerItem>
+		</items>
+	</TabContainer>
+</mvc:View>

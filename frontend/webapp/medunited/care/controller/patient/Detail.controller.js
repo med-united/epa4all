@@ -41,7 +41,9 @@ sap.ui.define([
 				const oFlexibleColumnLayout = me.getOwnerComponent().getRootControl().byId("fcl");
 				this.getOwnerComponent().runAsOwner(() => {
 					let sViewer;
-					if(sDecodedDocument.indexOf("pdf") != null && !sDecodedDocument.endsWith(".xml")) {
+					if(sDecodedDocument.indexOf("vaccination") != -1) {
+						sViewer = "VaccinationEditor";
+					} else if(sDecodedDocument.indexOf("pdf") != -1 && !sDecodedDocument.endsWith(".xml")) {
 						sViewer = "PdfViewer";
 					} else if(sDecodedDocument.endsWith(".xml")) {
 						sViewer = "CodeViewer";
@@ -56,19 +58,14 @@ sap.ui.define([
 						if(sViewer == "PdfViewer") {							
 							oView.byId("pdf").setSource(sDecodedDocument);
 						} else if(sViewer == "CodeViewer") {
-							const decoderIso = new TextDecoder('iso-8859-15');
-							const decoderUtf8 = new TextDecoder('utf-8');
-							
-							fetch(sDecodedDocument)
-								.then(o => o.arrayBuffer())
-								.then(buf => {
-									let text = decoderUtf8.decode(buf);
-									if(text.indexOf("ISO-8859-15") != -1) {
-										text = decoderIso.decode(buf);
-									}
-									return text;
-								})
-								.then((text) => oView.byId("code").setValue(text));
+							me.fetchDocument(sDecodedDocument).then((text) => {
+								oView.byId("code").setValue(text);
+							});
+						} else if(sViewer == "VaccinationEditor") {
+							me.fetchDocument(sDecodedDocument).then((text) => {
+								oView.byId("codeEditorView").byId("code").setValue(text);
+								oView.getController().setXML(text);
+							});
 						} else {
 							fetch(sDecodedDocument)
 								.then(o => o.text())
@@ -81,6 +78,20 @@ sap.ui.define([
 					});
 				});
 			}
+		},
+		fetchDocument: function(sDecodedDocument) {
+			const decoderIso = new TextDecoder('iso-8859-15');
+			const decoderUtf8 = new TextDecoder('utf-8');
+
+			return fetch(sDecodedDocument)
+				.then(o => o.arrayBuffer())
+				.then(buf => {
+					let text = decoderUtf8.decode(buf);
+					if(text.indexOf("ISO-8859-15") != -1) {
+						text = decoderIso.decode(buf);
+					}
+					return text;
+				});
 		},
 		formatPatientDataMatrix: function (sId, optionSelected) {
 			const oPatient = this.getView().getModel().getProperty("/Patient/" + sId);
