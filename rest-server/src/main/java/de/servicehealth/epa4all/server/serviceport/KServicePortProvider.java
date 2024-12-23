@@ -45,6 +45,7 @@ import java.io.InputStream;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import static de.servicehealth.utils.SSLUtils.createSSLContext;
@@ -60,6 +61,8 @@ public class KServicePortProvider extends StartableService {
     @Getter
     @Setter
     Map<String, Map<String, String>> userConfigurations2endpointMap = new HashMap<>();
+    
+    Map<IUserConfigurations, SSLContext> sslContexts = new ConcurrentHashMap<>();
    
     LoggingFeature loggingFeature = new LoggingFeature();
 
@@ -138,10 +141,14 @@ public class KServicePortProvider extends StartableService {
     }
 
     private SSLContext getSSLContext(IUserConfigurations userConfigurations) {
-        String certificate = userConfigurations.getClientCertificate();
-        String certificatePassword = userConfigurations.getClientCertificatePassword();
-        SSLContext sslContext = createSSLContext(certificate, certificatePassword, defaultSSLContext);
-        lookupWebServiceURLsIfNecessary(sslContext, userConfigurations);
+    	SSLContext sslContext = sslContexts.get(userConfigurations);
+    	if(sslContext == null) {
+	        String certificate = userConfigurations.getClientCertificate();
+	        String certificatePassword = userConfigurations.getClientCertificatePassword();
+	        sslContext = createSSLContext(certificate, certificatePassword, defaultSSLContext);
+	        sslContexts.put(userConfigurations, sslContext);
+	        lookupWebServiceURLsIfNecessary(sslContext, userConfigurations);
+    	}
         return sslContext;
     }
 

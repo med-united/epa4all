@@ -50,8 +50,8 @@ public class IdpClient extends StartableService {
     public static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
     static {
-        Security.removeProvider(BOUNCY_CASTLE_PROVIDER.getName());
-        Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
+        // Security.removeProvider(BOUNCY_CASTLE_PROVIDER.getName());
+        //Security.insertProviderAt(BOUNCY_CASTLE_PROVIDER, 1);
     }
 
     IdpConfig idpConfig;
@@ -95,26 +95,28 @@ public class IdpClient extends StartableService {
             discoveryDocumentResponse = documentWrapper.toDiscoveryDocumentResponse();
             return;
         }
-
-        boolean worked = false;
-        while (!worked) {
-            try {
-                log.info("Downloading: " + idpConfig.getDiscoveryDocumentUrl());
-                discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
-                    idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-                );
-                DiscoveryDocumentWrapper wrapper = new DiscoveryDocumentWrapper(discoveryDocumentResponse);
-                new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(configDirectory).store(wrapper);
-                worked = true;
-            } catch (Exception ex) {
-                log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    log.log(Level.SEVERE, "Could not wait.", e);
-                }
-            }
-        }
+        // try every 10 seconds to get the discovery document until it works
+        managedExecutor.submit(() -> {
+	        boolean worked = false;
+	        while (!worked) {
+	            try {
+	                log.info("Downloading: " + idpConfig.getDiscoveryDocumentUrl());
+	                discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
+	                    idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+	                );
+	                DiscoveryDocumentWrapper wrapper = new DiscoveryDocumentWrapper(discoveryDocumentResponse);
+	                new DiscoveryDocumentFile<DiscoveryDocumentWrapper>(configDirectory).store(wrapper);
+	                worked = true;
+	            } catch (Exception ex) {
+	                log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
+	                try {
+	                    Thread.sleep(10000);
+	                } catch (InterruptedException e) {
+	                    log.log(Level.SEVERE, "Could not wait.", e);
+	                }
+	            }
+	        }
+        });
     }
 
     public void getVauNp(

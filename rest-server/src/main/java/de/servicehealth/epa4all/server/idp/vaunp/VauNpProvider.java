@@ -16,7 +16,6 @@ import jakarta.inject.Inject;
 import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.jboss.logmanager.Level;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -26,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -107,7 +107,14 @@ public class VauNpProvider extends StartableService {
             List<Future<VauNpInfo>> futures = new ArrayList<>();
             uniqueKonnektorsConfigs.forEach((konnektor, config) ->
                 epaBackendMap.forEach((backend, api) ->
-                    futures.add(scheduledThreadPool.submit(() -> getVauNp(config, api, konnektor)))
+                    futures.add(scheduledThreadPool.submit(() -> {
+	                    try {
+	                    	return getVauNp(config, api, konnektor);
+	                    } catch(Throwable t) {
+	                    	log.log(Level.SEVERE, "Could not connect to VAU", t);
+	                    	return null;
+	                    }
+                    }))
                 )
             );
             String status = collectResults(futures);

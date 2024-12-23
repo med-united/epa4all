@@ -52,8 +52,8 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
     private static final Logger log = LoggerFactory.getLogger(CxfVauSetupInterceptor.class);
 
     static {
-        Security.addProvider(new BouncyCastlePQCProvider());
-        Security.addProvider(new BouncyCastleProvider());
+        //Security.addProvider(new BouncyCastlePQCProvider());
+        //Security.addProvider(new BouncyCastleProvider());
     }
 
     private final VauFacade vauFacade;
@@ -167,7 +167,11 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private String getHeaderValue(HttpResponse response, String headerName) {
         Map<String, List<String>> headers = response.headers().map();
-        return headers.get(headerName).getFirst();
+        if(headers.containsKey(headerName)) {        	
+        	return headers.get(headerName).getFirst();
+        } else {
+        	return null;
+        }
     }
 
     private void printHeaders(Response response) {
