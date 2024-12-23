@@ -47,8 +47,14 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 You can run your application in dev mode that enables live coding using:
 
 ```shell script
-./mvnw compile quarkus:dev
+git clone --recurse-submodules https://github.com/med-united/epa4all
+cd epa4all
+./mvnw -DskipTests -T1C clean install
+cd rest-server
+../mvnw quarkus:dev
 ```
+
+Open https://localhost:8090/frontend
 
 ## Running IT tests:
 
