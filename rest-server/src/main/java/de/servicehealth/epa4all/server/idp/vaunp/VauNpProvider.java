@@ -87,7 +87,7 @@ public class VauNpProvider extends StartableService {
         try {
             VauNpFile vauNpFile = new VauNpFile(configDirectory);
             if (cleanup) {
-                vauNpFile.cleanUp();
+                vauNpFile.reset();
             }
             return vauNpFile.get();
         } catch (Exception e) {

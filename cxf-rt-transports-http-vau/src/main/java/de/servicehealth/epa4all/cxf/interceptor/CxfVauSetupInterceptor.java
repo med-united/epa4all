@@ -87,9 +87,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     // Construct the base URI
                     uri = uriObject.getScheme() + "://" + uriObject.getHost() + (uriObject.getPort() == -1 ? "" : ":" + uriObject.getPort());
 
-                    String[] parts = vauFacade.getBackend().split("/");
-                    String backend = parts[parts.length - 1];
-                    String mock = vauClient.isMock() ? "/" + backend + "/" + Math.abs(vauClient.hashCode()) : "";
+                    String mock = vauClient.isMock() ? "/" + Math.abs(vauClient.hashCode()) : "";
 
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
                     String baseAddress = uri + mock + "/VAU";

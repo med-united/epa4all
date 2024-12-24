@@ -18,7 +18,6 @@ import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
-import io.restassured.RestAssured;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,14 +33,16 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
-import static com.github.tomakehurst.wiremock.client.WireMock.not;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.common.ResourceUtil.getResource;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
+import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
@@ -52,6 +53,8 @@ public class RequestVauNpIT {
     public final static String FIXTURES = WIREMOCK + "fixtures";
     public final static String VAU = WIREMOCK + "vau";
 
+    private static final String KEY = "key";
+    private static final String VALUE = "value";
 
     private static final String VAU_MESSAGE1_TRANSFORMER = "vauMessage1Transformer";
     private static final String VAU_MESSAGE3_TRANSFORMER = "vauMessage3Transformer";
@@ -75,8 +78,15 @@ public class RequestVauNpIT {
     @Inject
     ServicePortProvider servicePortProvider;
 
+    private final File configFolder = getResourcePath("wiremock").toFile();
+
     @BeforeAll
     public static void beforeAll() {
+        System.setProperty(
+            "javax.xml.transform.TransformerFactory",
+            "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl"
+        );
+        
         vauMessage1Transformer = new VauMessage1Transformer(VAU_MESSAGE1_TRANSFORMER);
         vauMessage3Transformer = new VauMessage3Transformer(VAU_MESSAGE3_TRANSFORMER);
         wiremock = new WireMockServer(
@@ -96,13 +106,21 @@ public class RequestVauNpIT {
     }
 
     @BeforeEach
-    void setUp() {
-        RestAssured.baseURI = "http://localhost:9443";
+    void setUp() throws Exception {
+        new VauNpFile(configFolder).reset();
+
     }
 
     @Test
     void vauNpProvisioningReloaded() throws Exception {
-        File configFolder = getResourcePath("wiremock").toFile();
+
+
+        Map<VauNpKey, String> map = new VauNpFile(configFolder).get();
+        assertTrue(map.isEmpty());
+
+        // String discoveryDocument = "eyJhbGciOiJCUDI1NlIxIiwia2lkIjoicHVrX2Rpc2Nfc2lnIiwieDVjIjpbIk1JSUMrakNDQXFDZ0F3SUJBZ0lDRzNvd0NnWUlLb1pJemowRUF3SXdnWVF4Q3pBSkJnTlZCQVlUQWtSRk1SOHdIUVlEVlFRS0RCWm5aVzFoZEdscklFZHRZa2dnVGs5VUxWWkJURWxFTVRJd01BWURWUVFMRENsTGIyMXdiMjVsYm5SbGJpMURRU0JrWlhJZ1ZHVnNaVzFoZEdscmFXNW1jbUZ6ZEhKMWEzUjFjakVnTUI0R0ExVUVBd3dYUjBWTkxrdFBUVkF0UTBFeU9DQlVSVk5VTFU5T1RGa3dIaGNOTWpFd05UQTJNVFV5TnpNMVdoY05Nall3TlRBMU1UVXlOek0wV2pCOU1Rc3dDUVlEVlFRR0V3SkJWREVvTUNZR0ExVUVDZ3dmVWtsVFJTQkhiV0pJSUZSRlUxUXRUMDVNV1NBdElFNVBWQzFXUVV4SlJERXBNQ2NHQTFVRUJSTWdNemczTnpndFZqQXhTVEF3TURGVU1qQXlNVEExTURZeE5ETTVOVGswTkRZeEdUQVhCZ05WQkFNTUVHUnBjMk11Y25VdWFXUndMbkpwYzJVd1dqQVVCZ2NxaGtqT1BRSUJCZ2tySkFNREFnZ0JBUWNEUWdBRWxvM1NiUTJjcmhpTlJmMC93K1FvUFE0cTY1MFNKdVM3WTJYYmxXZnFmRjRlQm96TUJBa0JjRlA1SEdaM3h1SlFJWTJJLzBTNitKVzRCbzlrek9GV3lhT0NBUVV3Z2dFQk1CMEdBMVVkRGdRV0JCUitlek1ZVDRBTGU2Wi9pS0tTNm40SXJEZDhrREFmQmdOVkhTTUVHREFXZ0JRQWFqaVE4NW11SVk5UzJ1N0JqRzZBcldFaXlUQlBCZ2dyQmdFRkJRY0JBUVJETUVFd1B3WUlLd1lCQlFVSE1BR0dNMmgwZEhBNkx5OXZZM053TWkxMFpYTjBjbVZtTG10dmJYQXRZMkV1ZEdWc1pXMWhkR2xyTFhSbGMzUXZiMk56Y0M5bFl6QU9CZ05WSFE4QkFmOEVCQU1DQjRBd0lRWURWUjBnQkJvd0dEQUtCZ2dxZ2hRQVRBU0JJekFLQmdncWdoUUFUQVNCU3pBTUJnTlZIUk1CQWY4RUFqQUFNQzBHQlNza0NBTURCQ1F3SWpBZ01CNHdIREFhTUF3TUNrbEVVQzFFYVdWdWMzUXdDZ1lJS29JVUFFd0VnZ1F3Q2dZSUtvWkl6ajBFQXdJRFNBQXdSUUlnVkozTW1BTnlkWmVCSEFzaHpsWmVUeXowSUlaajNCLzROTzJaR2JqQXZOY0NJUUNUc2FyY2lrRmJSK2dkU0dON2pzd1EydmZqR3JXeVhVVVR4R1lnQ1ZJNFFnPT0iXSwidHlwIjoiSldUIn0.eyJpYXQiOjE3MzQ3NzQ3NjEsImV4cCI6MTczNDg2MTE2MSwiaXNzdWVyIjoiaHR0cHM6Ly9pZHAtcmVmLnplbnRyYWwuaWRwLnNwbGl0ZG5zLnRpLWRpZW5zdGUuZGUiLCJqd2tzX3VyaSI6Imh0dHBzOi8vaWRwLXJlZi56ZW50cmFsLmlkcC5zcGxpdGRucy50aS1kaWVuc3RlLmRlL2NlcnRzIiwidXJpX2Rpc2MiOiJodHRwczovL2lkcC1yZWYuemVudHJhbC5pZHAuc3BsaXRkbnMudGktZGllbnN0ZS5kZS8ud2VsbC1rbm93bi9vcGVuaWQtY29uZmlndXJhdGlvbiIsImF1dGhvcml6YXRpb25fZW5kcG9pbnQiOiJodHRwczovL2lkcC1yZWYuemVudHJhbC5pZHAuc3BsaXRkbnMudGktZGllbnN0ZS5kZS9hdXRoIiwic3NvX2VuZHBvaW50IjoiaHR0cHM6Ly9pZHAtcmVmLnplbnRyYWwuaWRwLnNwbGl0ZG5zLnRpLWRpZW5zdGUuZGUvYXV0aC9zc29fcmVzcG9uc2UiLCJ0b2tlbl9lbmRwb2ludCI6Imh0dHBzOi8vaWRwLXJlZi56ZW50cmFsLmlkcC5zcGxpdGRucy50aS1kaWVuc3RlLmRlL3Rva2VuIiwidXJpX3B1a19pZHBfZW5jIjoiaHR0cHM6Ly9pZHAtcmVmLnplbnRyYWwuaWRwLnNwbGl0ZG5zLnRpLWRpZW5zdGUuZGUvY2VydHMvcHVrX2lkcF9lbmMiLCJ1cmlfcHVrX2lkcF9zaWciOiJodHRwczovL2lkcC1yZWYuemVudHJhbC5pZHAuc3BsaXRkbnMudGktZGllbnN0ZS5kZS9jZXJ0cy9wdWtfaWRwX3NpZyIsImNvZGVfY2hhbGxlbmdlX21ldGhvZHNfc3VwcG9ydGVkIjpbIlMyNTYiXSwicmVzcG9uc2VfdHlwZXNfc3VwcG9ydGVkIjpbImNvZGUiXSwiZ3JhbnRfdHlwZXNfc3VwcG9ydGVkIjpbImF1dGhvcml6YXRpb25fY29kZSJdLCJpZF90b2tlbl9zaWduaW5nX2FsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkJQMjU2UjEiXSwiYWNyX3ZhbHVlc19zdXBwb3J0ZWQiOlsiZ2VtYXRpay1laGVhbHRoLWxvYS1oaWdoIl0sInJlc3BvbnNlX21vZGVzX3N1cHBvcnRlZCI6WyJxdWVyeSJdLCJ0b2tlbl9lbmRwb2ludF9hdXRoX21ldGhvZHNfc3VwcG9ydGVkIjpbIm5vbmUiXSwic2NvcGVzX3N1cHBvcnRlZCI6WyJvcGVuaWQiLCJlLXJlemVwdCIsImUtcmV6ZXB0LWRldiIsImVQQS1QUy1nZW10ayIsImVQQS1ibXQtcXQiLCJlUEEtYm10LXJ0IiwiZVBBLWlibTEiLCJlUEEtaWJtMiIsImVidG0tYmRyIiwiZWJ0bS1iZHIyIiwiZmgtZm9rdXMtZGVtaXMiLCJmaGlyLXZ6ZCIsImdlbS1hdXRoIiwiZ210aWstZGVtaXMiLCJnbXRpay1kZW1pcy1ma2IiLCJnbXRpay1kZW1pcy1mcmEiLCJnbXRpay1kZW1pcy1xcyIsImdtdGlrLWRlbWlzLXJlZiIsImdtdGlrLWZoaXJkaXJlY3Rvcnktc3NwIiwiZ210aWstemVyb3RydXN0LXBvYyIsImlyZC1ibWciLCJrdnNoLW9wdCIsIm9nci1uZXhlbmlvLWRlbW8iLCJvZ3ItbmV4ZW5pby1kZXYiLCJvZ3ItbmV4ZW5pby1wcmVwcm9kIiwib2dyLW5leGVuaW8tdGVzdCIsIm9yZ2Fuc3BlbmRlLXJlZ2lzdGVyIiwicGFpcmluZyIsInJwZG9jLWVtbWEiLCJycGRvYy1lbW1hLXBoYWIiLCJ0aS1tZXNzZW5nZXIiLCJ0aS1zY29yZSIsInRpLXNjb3JlMiIsInp2ci1ibm90ayJdLCJzdWJqZWN0X3R5cGVzX3N1cHBvcnRlZCI6WyJwYWlyd2lzZSJdfQ.VyIGl5GNG0o4CQnwHNjkepf_FRbQOXhUJ3YZHb35WhWHPXez2fX9YnVx4hNnDF3U3Nvi8vmS8iD85UHGof9SYA";
+        // wiremock.addStubMapping(WireMock.get(urlEqualTo("/idp"))
+        //     .willReturn(WireMock.aResponse().withStatus(200).withBody(discoveryDocument)).build());
 
         idpClient.onStart();
         clientFactory.onStart();
@@ -116,19 +134,11 @@ public class RequestVauNpIT {
         epaMultiService.getEpaBackendMap().forEach((backend, epaApi) -> {
             epaApi.getVauFacade().getVauClients().forEach(vc -> {
                 try {
-
-                    // TODO - refactor!
-
-                    // epa1/234234234/VAU
-                    // epa1/987987987/VAU
+                    // /234234234/VAU
+                    // /987987987/VAU
                     String vauHashCode = String.valueOf(Math.abs(vc.hashCode()));
-                    String psNum = backend.split("localhost:9443/")[1];
-                    String vauPath = "/" + psNum + "/" + vauHashCode + "/VAU";
+                    String vauPath = "/" + vauHashCode + "/VAU";
 
-                    String key = "key";
-                    Object value = new Object();
-
-                    // 18b2333686c61604944f1d4e90a6f75d8395b79375266d561e2284756d436b4a/5920fd7c6ce64f65bab7025e1bb6f62d
                     String uniquePath = concatUuids(2) + "/" + concatUuids(1);
 
                     VauServerStateMachine vauServer = prepareVauServer();
@@ -136,14 +146,14 @@ public class RequestVauNpIT {
 
                     wiremock
                         .addStubMapping(post(urlEqualTo(vauPath))
-                            .willReturn(WireMock.aResponse().withTransformer(VAU_MESSAGE1_TRANSFORMER, key, value)).build());
+                            .willReturn(WireMock.aResponse().withTransformer(VAU_MESSAGE1_TRANSFORMER, KEY, VALUE)).build());
 
                     vauPath = vauPath + "/" + uniquePath;
                     vauMessage3Transformer.registerVauChannel(vauPath, vauServer);
                     vauMessage3Transformer.registerVauFacade(epaApi.getVauFacade());
                     wiremock
                         .addStubMapping(post(urlEqualTo(vauPath))
-                            .willReturn(WireMock.aResponse().withTransformer(VAU_MESSAGE3_TRANSFORMER, key, value)).build());
+                            .willReturn(WireMock.aResponse().withTransformer(VAU_MESSAGE3_TRANSFORMER, KEY, VALUE)).build());
 
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -151,33 +161,27 @@ public class RequestVauNpIT {
             });
         });
 
-        // TODO - All ePA calls will go to the VAU_MESSAGE3_TRANSFORMER
-
         String soapSmcbCertificateEnvelop = getFixture("SmcbCertificate.xml");
-        wiremock.addStubMapping(WireMock.get(urlEqualTo("/konnektor/ws/CertificateService"))
+        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapSmcbCertificateEnvelop)).build());
 
-        String soapExternalAuthenticateEnvelop = getFixture("ExternalAuthenticate.xml");
-        wiremock.addStubMapping(WireMock.get(urlEqualTo("/konnektor/ws/AuthSignatureService"))
+        String soapExternalAuthenticateEnvelop = getFixture("ExternalAuthenticateResponse.xml");
+        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/AuthSignatureService"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapExternalAuthenticateEnvelop)).build());
 
-        String jsonAuthenticationChallenge = getFixture("AuthenticationChallenge.json");
-        wiremock.addStubMapping(WireMock.get(urlEqualTo("/idp/auth"))
-            .withRequestBody(matchingJsonPath("$.nonce"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(jsonAuthenticationChallenge)).build());
-
         String jsonAuthenticationResponse = getFixture("AuthenticationResponse.json");
-        wiremock.addStubMapping(WireMock.post(urlEqualTo("/idp/auth"))
-            .withRequestBody(not(matchingJsonPath("$.nonce")))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(jsonAuthenticationResponse)).build());
+        wiremock.addStubMapping(post(urlEqualTo("/idp/auth"))
+            .willReturn(WireMock.aResponse()
+                .withHeader(LOCATION, "https://e4a-rt.deine-epa.de/?code\u003deyJlbmMiOiJBMjU2R0NNIiwiY3R5IjoiTkpXVCIsImV4cCI6MTczNTAwOTU5MiwiYWxnIjoiZGlyIiwia2lkIjoiMDAwMSJ9..jQOcvkSkNe_2svy6.yswP6uELSRQSBvJrewOOXjmLWwTccmhWKXXrsDPfBo6vZButt0rvkV0cosOyksnbCfQqLscWaJCF3UQZ06jDiIqB_A1OlBY6tfgVLnLfe2QRtXbmcQOl-aQSyu3QDMZ_Qc0fxrGfK4PhMrYOHwWniaptNXStr59EzeXGHVbkfasxu2ALhuS94SP0PsxMyicWiOWEZT34Tc1rS2g6YZQzrH0spsPDUES9nMnH-m-y7ZX8VDs7iVMbJ-0njR9KdvKMPjoZGicPYt54jDPiAy_5Ge_e9PxY3vpfiq2Ey7tdg4alhYhkVzPR6L6kqE3uunYSamkwuMo2VIj60S8rYol3sHmYR6ywaiZ-b9TjT_XI7LuPLeMgBlGBP7SOoCikpR0QuX6NBTPmvN1TCOpmuyrdyBHGAEhqCbqtB0Y6l5Y247DHU6ccKZi9n1L3WQ795GLBaayntvhlsNQSr667xlj0aNLe4wWjxEHDUI8o8XQRkTdXg457adL5ETFAR7_RcjVYjZW9Dk2fAo39pmOQhI8lYKdm2-epO8GLSz-T6AJrNqb2nI7dSDq2waY0NBLezQxZKXHXEoMGMsLp8NS7gtQT_zaoGYGZzlmxfZyFg-a8S6F_KIpTPYzvkzntr671Wz_EuPskyY7eDf4ziDDiN8tuo6lgEzKpwDgJDn8-6lD-8vb9gU52O9YhgsrFpbmWL8aMUOTaLE1sKIYCFZOoFfkW_zZ-gY8mjHtCZ3QUDGaVBb5a1lmdr-6k4XG4qk7IBrOjKTHVHH1sbgw76VHTFHH9v6r4ylFpB1LSY4Ce13nghSUDE_f15Xa2BfEUgFPPZhqyGVnSE_ITa1BNQ0ivQs7uacE2xKZaUxKTz-np2RIAgqERWdqAxChcoSvKAKOHipqGKyR8VVZbo5rHlN4Pt9Ng1UU651fLMaEW0Zh8R5bBBIAX-oH37VKn-m8b-7IVmlvcYfQkfT12pr1BpPConY1qLGZfsoptKfwhVDGioKz0VaGy--ksuaABNMi0DQG4BchJDORWR89TYRI-tFhA8oHVgEsq4ftdh-Awc1SNMjcGxeXAPvrudMzcy7VrPyMBacQyJ894XwZCJiWEjRfLJCRVQeUJrSuwDbnQ0VyNpwrAgEA65f8dEH_7UBvvXeCey5JgnJFkEmnfhVoh8i5cqcM9FwauzybHMHUwjxFlMbkmJTSLLKqX14tG7nMmYoThr4GxbscfDcPdvmvlTKIROaLeXhtekQR1rU_y2PMMBOwcSkbwa1N-_KxzcAjgxZr15tA65S-_w4RqP_1hUbsRc3cPoZ6WYuGqyQCoJp2jxqRdjl1TTlCut_vy8nLaJlWtfsu5Y3sBgN2qObegmTD6iodKuY6Rdbs0cMNYIXKQVmHvavfYtYwy8HOb3gXaZdCBxr9xHiUA5p1AMJoX9qdt31DQK1djOlwX-tICnShsw9_gEMhR2O3b9hRs7emCxmTh0ca2P15BMMZoNxgnpSk8MehX_eRK2ZT_zkYI8pRc74bvgMAfkH1NDm04gIutX8auk8a5SMZQy-hm7xtdwAfB6hPVVlMJ8Piv3Lcs2m2AicGTSynvw0cdAVlcCUU5pwcd-h69xIOef8yXApMp1hvzr2lQ-ZcNEoQcEGyNFefQ4nLmqjh2izO-G8SSVi-z99Jys35IqtHUMCE.SJLonvjMnBK6X9nxtOLo_Q\u0026state\u003dnRGsqMXISWqr6oaTcdGMcs6Oxt2vIOebYvUwd85BtLLk8d0vAgiy88kP3gBsr6xL")
+                .withStatus(302).withBody(jsonAuthenticationResponse)).build());
 
-        // String discoveryDocument = "eyJhbGciOiJCUDI1NlIxIiwia2lkIjoicHVrX2Rpc2Nfc2lnIiwieDVjIjpbIk1JSUMrakNDQXFDZ0F3SUJBZ0lDRzNvd0NnWUlLb1pJemowRUF3SXdnWVF4Q3pBSkJnTlZCQVlUQWtSRk1SOHdIUVlEVlFRS0RCWm5aVzFoZEdscklFZHRZa2dnVGs5VUxWWkJURWxFTVRJd01BWURWUVFMRENsTGIyMXdiMjVsYm5SbGJpMURRU0JrWlhJZ1ZHVnNaVzFoZEdscmFXNW1jbUZ6ZEhKMWEzUjFjakVnTUI0R0ExVUVBd3dYUjBWTkxrdFBUVkF0UTBFeU9DQlVSVk5VTFU5T1RGa3dIaGNOTWpFd05UQTJNVFV5TnpNMVdoY05Nall3TlRBMU1UVXlOek0wV2pCOU1Rc3dDUVlEVlFRR0V3SkJWREVvTUNZR0ExVUVDZ3dmVWtsVFJTQkhiV0pJSUZSRlUxUXRUMDVNV1NBdElFNVBWQzFXUVV4SlJERXBNQ2NHQTFVRUJSTWdNemczTnpndFZqQXhTVEF3TURGVU1qQXlNVEExTURZeE5ETTVOVGswTkRZeEdUQVhCZ05WQkFNTUVHUnBjMk11Y25VdWFXUndMbkpwYzJVd1dqQVVCZ2NxaGtqT1BRSUJCZ2tySkFNREFnZ0JBUWNEUWdBRWxvM1NiUTJjcmhpTlJmMC93K1FvUFE0cTY1MFNKdVM3WTJYYmxXZnFmRjRlQm96TUJBa0JjRlA1SEdaM3h1SlFJWTJJLzBTNitKVzRCbzlrek9GV3lhT0NBUVV3Z2dFQk1CMEdBMVVkRGdRV0JCUitlek1ZVDRBTGU2Wi9pS0tTNm40SXJEZDhrREFmQmdOVkhTTUVHREFXZ0JRQWFqaVE4NW11SVk5UzJ1N0JqRzZBcldFaXlUQlBCZ2dyQmdFRkJRY0JBUVJETUVFd1B3WUlLd1lCQlFVSE1BR0dNMmgwZEhBNkx5OXZZM053TWkxMFpYTjBjbVZtTG10dmJYQXRZMkV1ZEdWc1pXMWhkR2xyTFhSbGMzUXZiMk56Y0M5bFl6QU9CZ05WSFE4QkFmOEVCQU1DQjRBd0lRWURWUjBnQkJvd0dEQUtCZ2dxZ2hRQVRBU0JJekFLQmdncWdoUUFUQVNCU3pBTUJnTlZIUk1CQWY4RUFqQUFNQzBHQlNza0NBTURCQ1F3SWpBZ01CNHdIREFhTUF3TUNrbEVVQzFFYVdWdWMzUXdDZ1lJS29JVUFFd0VnZ1F3Q2dZSUtvWkl6ajBFQXdJRFNBQXdSUUlnVkozTW1BTnlkWmVCSEFzaHpsWmVUeXowSUlaajNCLzROTzJaR2JqQXZOY0NJUUNUc2FyY2lrRmJSK2dkU0dON2pzd1EydmZqR3JXeVhVVVR4R1lnQ1ZJNFFnPT0iXSwidHlwIjoiSldUIn0.eyJpYXQiOjE3MzQ3NzQ3NjEsImV4cCI6MTczNDg2MTE2MSwiaXNzdWVyIjoiaHR0cHM6Ly9pZHAtcmVmLnplbnRyYWwuaWRwLnNwbGl0ZG5zLnRpLWRpZW5zdGUuZGUiLCJqd2tzX3VyaSI6Imh0dHBzOi8vaWRwLXJlZi56ZW50cmFsLmlkcC5zcGxpdGRucy50aS1kaWVuc3RlLmRlL2NlcnRzIiwidXJpX2Rpc2MiOiJodHRwczovL2lkcC1yZWYuemVudHJhbC5pZHAuc3BsaXRkbnMudGktZGllbnN0ZS5kZS8ud2VsbC1rbm93bi9vcGVuaWQtY29uZmlndXJhdGlvbiIsImF1dGhvcml6YXRpb25fZW5kcG9pbnQiOiJodHRwczovL2lkcC1yZWYuemVudHJhbC5pZHAuc3BsaXRkbnMudGktZGllbnN0ZS5kZS9hdXRoIiwic3NvX2VuZHBvaW50IjoiaHR0cHM6Ly9pZHAtcmVmLnplbnRyYWwuaWRwLnNwbGl0ZG5zLnRpLWRpZW5zdGUuZGUvYXV0aC9zc29fcmVzcG9uc2UiLCJ0b2tlbl9lbmRwb2ludCI6Imh0dHBzOi8vaWRwLXJlZi56ZW50cmFsLmlkcC5zcGxpdGRucy50aS1kaWVuc3RlLmRlL3Rva2VuIiwidXJpX3B1a19pZHBfZW5jIjoiaHR0cHM6Ly9pZHAtcmVmLnplbnRyYWwuaWRwLnNwbGl0ZG5zLnRpLWRpZW5zdGUuZGUvY2VydHMvcHVrX2lkcF9lbmMiLCJ1cmlfcHVrX2lkcF9zaWciOiJodHRwczovL2lkcC1yZWYuemVudHJhbC5pZHAuc3BsaXRkbnMudGktZGllbnN0ZS5kZS9jZXJ0cy9wdWtfaWRwX3NpZyIsImNvZGVfY2hhbGxlbmdlX21ldGhvZHNfc3VwcG9ydGVkIjpbIlMyNTYiXSwicmVzcG9uc2VfdHlwZXNfc3VwcG9ydGVkIjpbImNvZGUiXSwiZ3JhbnRfdHlwZXNfc3VwcG9ydGVkIjpbImF1dGhvcml6YXRpb25fY29kZSJdLCJpZF90b2tlbl9zaWduaW5nX2FsZ192YWx1ZXNfc3VwcG9ydGVkIjpbIkJQMjU2UjEiXSwiYWNyX3ZhbHVlc19zdXBwb3J0ZWQiOlsiZ2VtYXRpay1laGVhbHRoLWxvYS1oaWdoIl0sInJlc3BvbnNlX21vZGVzX3N1cHBvcnRlZCI6WyJxdWVyeSJdLCJ0b2tlbl9lbmRwb2ludF9hdXRoX21ldGhvZHNfc3VwcG9ydGVkIjpbIm5vbmUiXSwic2NvcGVzX3N1cHBvcnRlZCI6WyJvcGVuaWQiLCJlLXJlemVwdCIsImUtcmV6ZXB0LWRldiIsImVQQS1QUy1nZW10ayIsImVQQS1ibXQtcXQiLCJlUEEtYm10LXJ0IiwiZVBBLWlibTEiLCJlUEEtaWJtMiIsImVidG0tYmRyIiwiZWJ0bS1iZHIyIiwiZmgtZm9rdXMtZGVtaXMiLCJmaGlyLXZ6ZCIsImdlbS1hdXRoIiwiZ210aWstZGVtaXMiLCJnbXRpay1kZW1pcy1ma2IiLCJnbXRpay1kZW1pcy1mcmEiLCJnbXRpay1kZW1pcy1xcyIsImdtdGlrLWRlbWlzLXJlZiIsImdtdGlrLWZoaXJkaXJlY3Rvcnktc3NwIiwiZ210aWstemVyb3RydXN0LXBvYyIsImlyZC1ibWciLCJrdnNoLW9wdCIsIm9nci1uZXhlbmlvLWRlbW8iLCJvZ3ItbmV4ZW5pby1kZXYiLCJvZ3ItbmV4ZW5pby1wcmVwcm9kIiwib2dyLW5leGVuaW8tdGVzdCIsIm9yZ2Fuc3BlbmRlLXJlZ2lzdGVyIiwicGFpcmluZyIsInJwZG9jLWVtbWEiLCJycGRvYy1lbW1hLXBoYWIiLCJ0aS1tZXNzZW5nZXIiLCJ0aS1zY29yZSIsInRpLXNjb3JlMiIsInp2ci1ibm90ayJdLCJzdWJqZWN0X3R5cGVzX3N1cHBvcnRlZCI6WyJwYWlyd2lzZSJdfQ.VyIGl5GNG0o4CQnwHNjkepf_FRbQOXhUJ3YZHb35WhWHPXez2fX9YnVx4hNnDF3U3Nvi8vmS8iD85UHGof9SYA";
-        // wiremock.addStubMapping(WireMock.get(urlEqualTo("/idp"))
-        //     .willReturn(WireMock.aResponse().withStatus(200).withBody(discoveryDocument)).build());
+        String jsonAuthenticationChallenge = getFixture("AuthenticationChallenge.json");
+        wiremock.addStubMapping(get(urlPathMatching("/idp/auth.*"))
+            .willReturn(WireMock.aResponse().withStatus(200).withBody(jsonAuthenticationChallenge)).build());
 
         vauNpProvider.reload(false);
 
-        Map<VauNpKey, String> map = new VauNpFile(configFolder).get();
+        map = new VauNpFile(configFolder).get();
         assertFalse(map.isEmpty());
     }
 

@@ -1,6 +1,7 @@
 package de.servicehealth.http;
 
 import lombok.Getter;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Arrays;
@@ -26,20 +27,28 @@ public class HttpParcel {
         this.payload = payload;
     }
 
+    public byte[] toBytes() {
+        return ArrayUtils.addAll(getStatusLineWithHeaders().getBytes(UTF_8), payload);
+    }
+
     public String toString(boolean base64) {
-        StringBuilder sb = new StringBuilder(statusLine);
-        String headersString = headers.stream()
-            .map(h -> String.format("%s: %s", h.getKey(), h.getValue()))
-            .collect(Collectors.joining("\n"));
-        sb.append("\n").append(headersString).append("\n\n");
+        String payloadString = "";
         if (payload != null && payload.length > 0) {
             byte[] bytes = payload;
             if (base64) {
                 bytes = Base64.getEncoder().encode(bytes);
             }
-            sb.append(new String(bytes));
+            payloadString = new String(bytes);
         }
-        return sb.toString();
+        return getStatusLineWithHeaders() + payloadString;
+    }
+
+    private String getStatusLineWithHeaders() {
+        String headersString = headers.stream()
+            .map(h -> String.format("%s: %s", h.getKey(), h.getValue()))
+            .collect(Collectors.joining("\n"));
+
+        return statusLine + "\n" + headersString + "\r\n\r\n";
     }
 
     public boolean isResponse() {
@@ -85,7 +94,7 @@ public class HttpParcel {
         System.arraycopy(bytes, 0, headerBytes, 0, headersBoundary);
 
         List<String> headerLines = getHeaderLines(headerBytes);
-        String statusLine = headerLines.getFirst().split("\n")[0].trim();
+        String statusLine = headerLines.get(0).split("\n")[0].trim();
         List<Pair<String, String>> headers = getHeaders(headerLines);
         byte[] payload = extractPayload(bytes, headersBoundary);
 
