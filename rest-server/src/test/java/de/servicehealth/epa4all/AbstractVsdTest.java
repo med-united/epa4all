@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -42,6 +44,8 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings("UnusedReturnValue")
 public abstract class AbstractVsdTest {
+
+    private static final Logger log = Logger.getLogger(AbstractVsdTest.class.getName());
 
     public static final String INFORMATION_SERVICE = "information-service";
 
@@ -95,7 +99,7 @@ public abstract class AbstractVsdTest {
                     try {
                         deleteDirectory(f);
                     } catch (IOException e) {
-                        System.out.println(e.getMessage());
+                        log.log(Level.SEVERE, e.getMessage());
                     }
                 } else {
                     f.delete();

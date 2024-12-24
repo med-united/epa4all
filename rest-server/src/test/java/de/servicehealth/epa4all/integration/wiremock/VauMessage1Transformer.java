@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.http.ResponseDefinition;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import de.gematik.vau.lib.VauServerStateMachine;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,11 +20,16 @@ import static org.apache.cxf.helpers.HttpHeaderHelper.CONTENT_TYPE;
 @Getter
 public class VauMessage1Transformer implements ResponseDefinitionTransformerV2 {
 
-    private static final ConcurrentHashMap<String, VauServerStateMachine> vau1ServersMap = new ConcurrentHashMap<>();
+    @Getter
+    @AllArgsConstructor
+    private static class VauServerInfo {
+        private String uniquePath;
+        private VauServerStateMachine vauServer;
+    }
+
+    private static final ConcurrentHashMap<String, VauServerInfo> vau1ServersMap = new ConcurrentHashMap<>();
 
     private final String name;
-
-    private String uniquePath;
 
     public VauMessage1Transformer(String name) {
         this.name = name;
@@ -40,14 +46,15 @@ public class VauMessage1Transformer implements ResponseDefinitionTransformerV2 {
     }
 
     public void registerVauChannel(String path, String uniquePath, VauServerStateMachine vauServer) {
-        this.uniquePath = uniquePath;
-        vau1ServersMap.put(path, vauServer);
+        vau1ServersMap.put(path, new VauServerInfo(uniquePath, vauServer));
     }
 
     @Override
     public ResponseDefinition transform(ServeEvent serveEvent) {
         LoggedRequest request = serveEvent.getRequest();
-        VauServerStateMachine vauServer = vau1ServersMap.get(request.getUrl());
+        VauServerInfo vauServerInfo = vau1ServersMap.get(request.getUrl());
+        VauServerStateMachine vauServer = vauServerInfo.getVauServer();
+        String uniquePath = vauServerInfo.getUniquePath();
 
         byte[] message1 = request.getBody();
         byte[] message2 = vauServer.receiveMessage(message1);

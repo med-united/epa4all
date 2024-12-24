@@ -32,6 +32,10 @@ public class VauFacade {
     @Getter
     private String backend;
 
+    @Setter
+    @Getter
+    private String vauNpStatus;
+
     @Getter
     private final boolean tracingEnabled;
     private final BeanRegistry registry;

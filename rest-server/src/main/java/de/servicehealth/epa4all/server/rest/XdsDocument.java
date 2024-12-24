@@ -34,7 +34,7 @@ import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 
 @RequestScoped
 @Path("xds-document")
-public class XDSDocument extends AbstractResource {
+public class XdsDocument extends AbstractResource {
 
     @GET
     @Path("query/{konnektor : ([0-9a-zA-Z\\-]+)?}")

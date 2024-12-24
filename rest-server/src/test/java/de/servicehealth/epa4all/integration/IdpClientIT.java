@@ -16,10 +16,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.logging.Logger;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
 public class IdpClientIT {
+
+    private static final Logger log = Logger.getLogger(IdpClientIT.class.getName());
 
     @Inject
     IdpClient idpClient;
@@ -35,12 +39,12 @@ public class IdpClientIT {
         Unirest.config().interceptor(new Interceptor() {
             @Override
             public void onRequest(HttpRequest<?> request, Config config) {
-                System.out.println("Request: " + request.getBody());
+                log.info("Request: " + request.getBody());
             }
 
             @Override
             public void onResponse(HttpResponse<?> response, HttpRequestSummary request, Config config) {
-                System.out.println("Response: " + response.getBody());
+                log.info("Response: " + response.getBody());
             }
         });
     }
@@ -50,7 +54,7 @@ public class IdpClientIT {
         EpaAPI epaAPI = epaMultiService.getEpaAPI("X110485291");
         String backend = epaAPI.getBackend();
         idpClient.getVauNp(epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, "SMC-B-12", backend, (String np) -> {
-            System.out.println("NP: " + np);
+            log.info("NP: " + np);
             assertNotNull(np);
         });
     }
@@ -60,7 +64,7 @@ public class IdpClientIT {
     public void testGetBearerToken() throws Exception {
         EpaAPI epaAPI = epaMultiService.getEpaAPI("X110485291");
         idpClient.getBearerToken("test:8080", epaAPI.getAuthorizationSmcBApi(), defaultUserConfig, (String token) -> {
-            System.out.println("Bearer " + token);
+            log.info("Bearer " + token);
             assertNotNull(token);
         });
     }

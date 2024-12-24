@@ -27,6 +27,7 @@ import org.apache.http.client.fluent.Executor;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
@@ -76,7 +77,7 @@ public class EpaMultiService extends StartableService {
     }
 
     @Override
-    public void onStart() throws Exception {
+    public void onStart() {
         epaConfig.getEpaBackends().forEach(backend ->
             epaBackendMap.computeIfAbsent(backend, k -> {
                 try {
@@ -133,6 +134,7 @@ public class EpaMultiService extends StartableService {
                         fhirProxy
                     );
                 } catch (Exception e) {
+                    log.log(Level.SEVERE, "Error while instantiating EPA API", e);
                     throw new RuntimeException(e);
                 }
             }));

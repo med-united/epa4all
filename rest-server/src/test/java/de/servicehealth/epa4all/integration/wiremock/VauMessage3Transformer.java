@@ -65,6 +65,7 @@ public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
         byte[] message3 = serveEvent.getRequest().getBody();
         try {
             new CBORMapper().readTree(message3);
+
             byte[] message4 = vauServer.receiveMessage(message3);
             return new ResponseDefinitionBuilder()
                 .withHeader(VAU_DEBUG_SK2_S2C_INFO, "")

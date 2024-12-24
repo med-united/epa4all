@@ -21,10 +21,13 @@ import org.jboss.logmanager.Level;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -35,7 +38,10 @@ public class VauNpProvider extends StartableService {
 
     private static final Logger log = Logger.getLogger(VauNpProvider.class.getName());
 
+    private static final String STATUS_TEMPLATE = "[%s] Took %d ms - %s";
+    
     private final Map<VauNpKey, String> vauNpMap = new HashMap<>();
+    private final Semaphore semaphore = new Semaphore(1);
 
     @Inject
     @Setter
@@ -71,7 +77,17 @@ public class VauNpProvider extends StartableService {
     }
 
     public void onStart() throws Exception {
-        reload(false);
+        List<String> statuses;
+        Map<VauNpKey, String> cachedNps = loadVauNps();
+        if (!cachedNps.isEmpty() && sameConfigs(cachedNps)) {
+            vauNpMap.putAll(cachedNps);
+            statuses = cachedNps.keySet().stream()
+                .map(s -> String.format(STATUS_TEMPLATE, s.getEpaBackend(), 0, "Restored from cache"))
+                .toList();
+        } else {
+            statuses = reload(new HashSet<>());
+        }
+        log.info(String.format("VAU sessions status:\n%s", String.join("\n", statuses)));
     }
 
     private Map<String, KonnektorConfig> getUniqueKonnektorsConfigs() {
@@ -83,12 +99,9 @@ public class VauNpProvider extends StartableService {
             .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
-    private Map<VauNpKey, String> loadVauNps(boolean cleanup) {
+    private Map<VauNpKey, String> loadVauNps() {
         try {
             VauNpFile vauNpFile = new VauNpFile(configDirectory);
-            if (cleanup) {
-                vauNpFile.reset();
-            }
             return vauNpFile.get();
         } catch (Exception e) {
             log.log(Level.SEVERE, "Error while loading VauNpFile", e);
@@ -96,41 +109,16 @@ public class VauNpProvider extends StartableService {
         }
     }
 
-    public void reload(boolean cleanup) throws Exception {
-        Map<VauNpKey, String> savedVauNpMap = loadVauNps(cleanup);
-        Map<String, KonnektorConfig> uniqueKonnektorsConfigs = getUniqueKonnektorsConfigs();
-        ConcurrentHashMap<String, EpaAPI> epaBackendMap = epaMultiService.getEpaBackendMap();
-        if (!savedVauNpMap.isEmpty() && sameConfigs(uniqueKonnektorsConfigs, savedVauNpMap, epaBackendMap)) {
-            log.info("Using saved NP");
-            vauNpMap.putAll(savedVauNpMap);
-        } else {
-            List<Future<VauNpInfo>> futures = new ArrayList<>();
-            uniqueKonnektorsConfigs.forEach((konnektor, config) ->
-                epaBackendMap.forEach((backend, api) ->
-                    futures.add(scheduledThreadPool.submit(() -> getVauNp(config, api, konnektor)))
-                )
-            );
-            String status = collectResults(futures);
-            log.info(String.format("VAU sessions status:\n%s", status));
-
-            new VauNpFile(configDirectory).store(vauNpMap);
-        }
-    }
-
-    private boolean sameConfigs(
-        Map<String, KonnektorConfig> uniqueKonnektorsConfigs,
-        Map<VauNpKey, String> savedVauNpMap,
-        ConcurrentHashMap<String, EpaAPI> epaBackendMap
-    ) {
-        for (Map.Entry<String, KonnektorConfig> entry : uniqueKonnektorsConfigs.entrySet()) {
-            for (String backend : epaBackendMap.keySet()) {
+    private boolean sameConfigs(Map<VauNpKey, String> cachedVauNps) {
+        for (Map.Entry<String, KonnektorConfig> entry : getUniqueKonnektorsConfigs().entrySet()) {
+            for (String backend : epaMultiService.getEpaBackendMap().keySet()) {
                 try {
                     RuntimeConfig runtimeConfig = new RuntimeConfig(
                         konnektorDefaultConfig, entry.getValue().getUserConfigurations()
                     );
                     String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
                     VauNpKey vauNpKey = new VauNpKey(smcbHandle, entry.getKey(), backend);
-                    if (!savedVauNpMap.containsKey(vauNpKey)) {
+                    if (!cachedVauNps.containsKey(vauNpKey)) {
                         return false;
                     }
                 } catch (CetpFault e) {
@@ -159,7 +147,7 @@ public class VauNpProvider extends StartableService {
         }
     }
 
-    private String collectResults(List<Future<VauNpInfo>> futures) {
+    private List<String> collectResults(List<Future<VauNpInfo>> futures) throws Exception {
         List<String> statuses = new ArrayList<>();
         for (Future<VauNpInfo> future : futures) {
             try {
@@ -172,12 +160,34 @@ public class VauNpProvider extends StartableService {
                 statuses.add(e.getMessage());
             }
         }
-        return String.join("\n", statuses);
+        new VauNpFile(configDirectory).update(vauNpMap);
+        return statuses;
     }
 
-    private VauNpInfo getVauNp(KonnektorConfig config, EpaAPI api, String konnektor) {
+    public List<String> reload(Set<String> targetEpaSet) throws Exception {
+        if (semaphore.tryAcquire()) {
+            try {
+                ConcurrentHashMap<String, EpaAPI> epaBackendMap = epaMultiService.getEpaBackendMap();
+                List<Future<VauNpInfo>> futures = new ArrayList<>();
+                getUniqueKonnektorsConfigs().forEach((konnektor, config) ->
+                    epaBackendMap.entrySet().stream()
+                        .filter(e -> targetEpaSet.isEmpty() || targetEpaSet.stream().anyMatch(t -> e.getKey().startsWith(t)))
+                        .forEach(e ->
+                            futures.add(scheduledThreadPool.submit(() -> getVauNp(konnektor, config, e.getValue())))
+                        )
+                );
+                return collectResults(futures);
+            } finally {
+                semaphore.release();
+            }
+        } else {
+            return List.of("Reload is in progress, try later");
+        }
+    }
+
+    private VauNpInfo getVauNp(String konnektor, KonnektorConfig config, EpaAPI api) {
         String backend = api.getBackend();
-        String status = "[%s] Took %d ms -> %s";
+
 
         long start = System.currentTimeMillis();
         try {
@@ -187,12 +197,14 @@ public class VauNpProvider extends StartableService {
             VauNpKey key = new VauNpKey(smcbHandle, konnektor, backend);
             String vauNp = idpClient.getVauNpSync(authorizationSmcBApi, runtimeConfig, smcbHandle, backend);
             long delta = System.currentTimeMillis() - start;
-            
-            String okStatus = String.format(status, backend, delta, "OK");
+
+            String okStatus = String.format(STATUS_TEMPLATE, backend, delta, "OK");
+            api.getVauFacade().setVauNpStatus(okStatus);
             return new VauNpInfo(key, vauNp, okStatus);
         } catch (Exception e) {
             long delta = System.currentTimeMillis() - start;
-            String errorStatus = String.format(status, backend, delta, e.getMessage());
+            String errorStatus = String.format(STATUS_TEMPLATE, backend, delta, e.getMessage());
+            api.getVauFacade().setVauNpStatus(errorStatus);
             return new VauNpInfo(null, null, errorStatus);
         }
     }
