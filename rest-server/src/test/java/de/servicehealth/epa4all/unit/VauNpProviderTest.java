@@ -7,6 +7,7 @@ import de.service.health.api.epa4all.EpaMultiService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
+import de.servicehealth.vau.VauFacade;
 import io.smallrye.context.SmallRyeManagedExecutor;
 import io.smallrye.context.SmallRyeThreadContext;
 import org.junit.jupiter.api.AfterEach;
@@ -55,6 +56,7 @@ public class VauNpProviderTest {
         EpaAPI epaAPI = mock(EpaAPI.class);
         when(epaAPI.getAuthorizationSmcBApi()).thenReturn(mock(AuthorizationSmcBApi.class));
         when(epaAPI.getBackend()).thenReturn(epaBackend);
+        when(epaAPI.getVauFacade()).thenReturn(mock(VauFacade.class));
 
         map.put(epaBackend, epaAPI);
         when(epaMultiService.getEpaBackendMap()).thenReturn(map);
