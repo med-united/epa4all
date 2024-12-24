@@ -19,7 +19,7 @@ public class CborUtils {
         String contentLength
     ) {
         try {
-            final JsonNode message2Tree = new CBORMapper().readTree(message);
+            JsonNode message2Tree = new CBORMapper().readTree(message);
             if (vauCid != null) {
                 log.info("\n\nVAU MESSAGE {}, length [{}]\nVAU-CID: {}\nVAU-DEBUG-S_K1_s2c: {}\nVAU-DEBUG-S_K1_c2s: {}\nKyber768_ct: {}\nAEAD_ct: {}\n\nECDH_ct: {}",
                     message2Tree.get("MessageType").textValue(),

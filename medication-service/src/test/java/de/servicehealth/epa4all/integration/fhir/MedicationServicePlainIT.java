@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Map;
 
-import static de.servicehealth.epa4all.common.Utils.isDockerContainerRunning;
+import static de.servicehealth.epa4all.common.TestUtils.isDockerContainerRunning;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;

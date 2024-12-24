@@ -51,9 +51,9 @@ import static de.servicehealth.utils.SSLUtils.createSSLContext;
 import static de.servicehealth.utils.SSLUtils.initSSLContext;
 
 @ApplicationScoped
-public class KServicePortProvider extends StartableService {
+public class ServicePortProvider extends StartableService {
 
-    private static final Logger log = Logger.getLogger(KServicePortProvider.class.getName());
+    private static final Logger log = Logger.getLogger(ServicePortProvider.class.getName());
 
     private final SSLContext defaultSSLContext;
 
@@ -74,7 +74,7 @@ public class KServicePortProvider extends StartableService {
     }
 
     @Inject
-    public KServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) throws Exception {
+    public ServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) throws Exception {
         String certPass = konnektorDefaultConfig.getCertAuthStoreFilePassword();
         try (FileInputStream certInputStream = new FileInputStream(konnektorDefaultConfig.getCertAuthStoreFile())) {
             SSLResult sslResult = initSSLContext(certInputStream, certPass);

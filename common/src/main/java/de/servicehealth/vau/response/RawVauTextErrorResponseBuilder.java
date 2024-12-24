@@ -6,6 +6,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.List;
 import java.util.Optional;
 
+import static de.servicehealth.utils.ServerUtils.findHeaderValue;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.cxf.helpers.HttpHeaderHelper.CONTENT_TYPE;
 

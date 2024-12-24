@@ -31,18 +31,18 @@ public abstract class StartableService implements StartupEventListener {
 
     public void onStart(StartupEvent ev) throws Exception {
         String className = getClass().getSimpleName();
-        if (startupEventsDisabled) {
-            log.warning(String.format("[%s] STARTUP events are disabled by config property, initialization is SKIPPED", className));
-        } else {
-            configDirectory = new File(configFolder);
-            if (!configDirectory.exists() || !configDirectory.isDirectory()) {
-                throw new IllegalStateException("Konnektor config directory is corrupted");
+        configDirectory = new File(configFolder);
+        if (configDirectory.exists() && configDirectory.isDirectory()) {
+            if (startupEventsDisabled) {
+                log.warning(String.format("[%s] STARTUP events are disabled by config property, initialization is SKIPPED", className));
+            } else {
+                long start = System.currentTimeMillis();
+                onStart();
+                long delta = System.currentTimeMillis() - start;
+                log.info(String.format("[%s] STARTED in %d ms", className, delta));
             }
-            
-            long start = System.currentTimeMillis();
-            onStart();
-            long delta = System.currentTimeMillis() - start;
-            log.info(String.format("[%s] STARTED in %d ms", className, delta));
+        } else {
+            throw new IllegalStateException("Konnektor config directory is corrupted");
         }
     }
 

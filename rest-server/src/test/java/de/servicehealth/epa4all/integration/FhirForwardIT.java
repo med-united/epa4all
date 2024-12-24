@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static ca.uhn.fhir.rest.client.api.ServerValidationModeEnum.NEVER;
-import static de.servicehealth.epa4all.common.Utils.isDockerContainerRunning;
+import static de.servicehealth.epa4all.common.TestUtils.isDockerContainerRunning;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertFalse;

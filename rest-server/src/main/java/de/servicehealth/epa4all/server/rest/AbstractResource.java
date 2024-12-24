@@ -3,7 +3,7 @@ package de.servicehealth.epa4all.server.rest;
 import de.health.service.check.HealthChecker;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
@@ -57,7 +57,7 @@ public abstract class AbstractResource {
     Event<FileUpload> eventFileUpload;
 
     @Inject
-    MultiEpaService multiEpaService;
+    EpaMultiService epaMultiService;
 
     @Inject
     FolderService folderService;
@@ -106,8 +106,8 @@ public abstract class AbstractResource {
             insuranceData = insuranceDataService.readVsd(telematikId, null, kvnr, smcbHandle, userRuntimeConfig);
         }
         String insurantId = insuranceData.getInsurantId();
-        EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
-        String userAgent = multiEpaService.getEpaConfig().getEpaUserAgent();
+        EpaAPI epaAPI = epaMultiService.getEpaAPI(insurantId);
+        String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
         String backend = epaAPI.getBackend();
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         String vauNp = vauNpProvider.getVauNp(smcbHandle, konnektorUrl, backend);

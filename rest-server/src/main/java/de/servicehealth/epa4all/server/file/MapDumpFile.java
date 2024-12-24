@@ -70,7 +70,7 @@ public abstract class MapDumpFile<K, V> {
         }
     }
 
-    public void cleanUp() {
+    public void reset() {
         store(Map.of());
     }
 }

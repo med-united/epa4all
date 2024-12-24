@@ -1,14 +1,12 @@
 package de.servicehealth.epa4all.server.filetracker;
 
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
 import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
 import de.servicehealth.epa4all.xds.structure.StructureDefinitionService;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
-import io.quarkus.runtime.StartupEvent;
-import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -25,9 +23,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.logging.Logger;
 
 import static de.health.service.cetp.utils.Utils.saveDataToFile;
@@ -45,7 +40,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
     FolderService folderService;
 
     @Inject
-    MultiEpaService multiEpaService;
+    EpaMultiService epaMultiService;
 
     @Inject
     protected Instance<XDSDocumentService> xdsDocumentService;
@@ -110,7 +105,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
     }
 
     public IDocumentManagementPortType getDocumentManagementPortType(EpaContext epaContext) {
-        EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+        EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
         IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
         ((BindingProvider) documentManagementPortType).getRequestContext().putAll(epaContext.getXHeaders());
         return documentManagementPortType;

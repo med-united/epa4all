@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Optional;
 
 public abstract class AbstractVauResponseBuilder implements VauResponseBuilder {
 
@@ -27,12 +26,5 @@ public abstract class AbstractVauResponseBuilder implements VauResponseBuilder {
         } else {
             throw new IllegalStateException("No final VauResponse builder is found");
         }
-    }
-
-    protected Optional<String> findHeaderValue(List<Pair<String, String>> headers, String headerName) {
-        return headers.stream()
-            .filter(p -> p.getKey().equalsIgnoreCase(headerName))
-            .map(Pair::getValue)
-            .findFirst();
     }
 }

@@ -5,7 +5,7 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
 import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.filetracker.download.FileDownload;
@@ -38,7 +38,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private final InsuranceDataService insuranceDataService;
     private final EpaFileDownloader epaFileDownloader;
     private final IKonnektorClient konnektorClient;
-    private final MultiEpaService multiEpaService;
+    private final EpaMultiService epaMultiService;
     private final RuntimeConfig runtimeConfig;
     private final VauNpProvider vauNpProvider;
     private final VsdConfig vsdConfig;
@@ -48,7 +48,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         InsuranceDataService insuranceDataService,
         EpaFileDownloader epaFileDownloader,
         IKonnektorClient konnektorClient,
-        MultiEpaService multiEpaService,
+        EpaMultiService epaMultiService,
         VauNpProvider vauNpProvider,
         RuntimeConfig runtimeConfig,
         VsdConfig vsdConfig
@@ -58,7 +58,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         this.insuranceDataService = insuranceDataService;
         this.epaFileDownloader = epaFileDownloader;
         this.konnektorClient = konnektorClient;
-        this.multiEpaService = multiEpaService;
+        this.epaMultiService = epaMultiService;
         this.runtimeConfig = runtimeConfig;
         this.vauNpProvider = vauNpProvider;
         this.vsdConfig = vsdConfig;
@@ -115,8 +115,8 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     }
                 }
                 String insurantId = insuranceData.getInsurantId();
-                EpaAPI epaAPI = multiEpaService.getEpaAPI(insurantId);
-                String epaUserAgent = multiEpaService.getEpaConfig().getEpaUserAgent();
+                EpaAPI epaAPI = epaMultiService.getEpaAPI(insurantId);
+                String epaUserAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
 
                 String vauNp = vauNpProvider.getVauNp(smcbHandle, configurations.getConnectorBaseURL(), epaAPI.getBackend());
                 Map<String, String> xHeaders = Map.of(

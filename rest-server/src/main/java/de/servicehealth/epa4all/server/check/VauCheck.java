@@ -40,11 +40,12 @@ public class VauCheck implements Check {
     public Map<String, String> getData(IRuntimeConfig runtimeConfig) {
         return registry.getInstances(VauFacade.class).stream().map(f -> {
             String backend = f.getBackend();
+            String status = f.getVauNpStatus();
             int total = f.getVauClients().size();
             int busy = (int) f.getVauClients().stream().filter(VauClient::busy).count();
             int broken = (int) f.getVauClients().stream().filter(VauClient::broken).count();
             int idle = total - busy - broken;
-            return Pair.of(backend, String.format("total=%d busy=%d broken=%d idle=%d", total, busy, broken, idle));
+            return Pair.of(backend, String.format("total=%d busy=%d broken=%d idle=%d vau-np-status: %s", total, busy, broken, idle, status));
         }).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 }

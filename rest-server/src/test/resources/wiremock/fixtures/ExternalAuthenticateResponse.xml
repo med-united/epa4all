@@ -1,0 +1,13 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Header/>
+    <SOAP-ENV:Body>
+        <ns9:ExternalAuthenticateResponse xmlns:ns10="http://ws.gematik.de/conn/ConnectorCommon/v5.0" xmlns:ns11="http://ws.gematik.de/conn/ConnectorContext/v2.0" xmlns:ns12="urn:oasis:names:tc:dss-x:1.0:profiles:SignaturePolicy:schema#" xmlns:ns2="http://ws.gematik.de/conn/nfds/NFDService/v1.0" xmlns:ns3="http://ws.gematik.de/tel/error/v2.0" xmlns:ns4="urn:oasis:names:tc:dss:1.0:core:schema" xmlns:ns5="http://www.w3.org/2000/09/xmldsig#" xmlns:ns6="urn:oasis:names:tc:dss-x:1.0:profiles:verificationreport:schema#" xmlns:ns7="http://uri.etsi.org/01903/v1.3.2#" xmlns:ns8="http://uri.etsi.org/02231/v2#" xmlns:ns9="http://ws.gematik.de/conn/SignatureService/v7.4">
+            <ns10:Status>
+                <ns10:Result>OK</ns10:Result>
+            </ns10:Status>
+            <ns4:SignatureObject>
+                <ns4:Base64Signature Type="urn:bsi:tr:03111:ecdsa">MEQCIAslR/tp843ZZ2985Gwpp8U2ow/cl7OeJJqqoYrLvMZRAiANHmSOedQ7FD/jPYW1H646zRcPGSOKFPOh2BC5w8p5Pg==</ns4:Base64Signature>
+            </ns4:SignatureObject>
+        </ns9:ExternalAuthenticateResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

@@ -35,4 +35,10 @@ public class VauNpFile extends MapDumpFile<VauNpKey, String> {
         VauNpKey key = entry.getKey();
         return key.getSmcbHandle() + "_" + key.getKonnektor() + "_" + key.getEpaBackend() + "_" + entry.getValue();
     }
+
+    public void update(Map<VauNpKey, String> vauNpMap) {
+        Map<VauNpKey, String> cachedMap = get();
+        cachedMap.putAll(vauNpMap);
+        store(cachedMap);
+    }
 }

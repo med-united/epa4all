@@ -27,6 +27,7 @@ import org.apache.cxf.transport.DestinationFactoryManager;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
+import javax.net.ssl.SSLSession;
 import java.util.List;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
@@ -98,6 +99,7 @@ public class ClientFactory extends StartableService {
         TLSClientParameters tlsParams = new TLSClientParameters();
         // setDisableCNCheck and setHostnameVerifier should not be set
         // to stick to HttpClientHTTPConduit (see HttpClientHTTPConduit.setupConnection)
+        // tlsParams.setHostnameVerifier((hostname, session) -> true);
         tlsParams.setSslContext(createFakeSSLContext());
         conduit.setTlsClientParameters(tlsParams);
     }

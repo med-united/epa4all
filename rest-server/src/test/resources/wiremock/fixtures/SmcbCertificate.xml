@@ -1,0 +1,23 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Header/>
+    <SOAP-ENV:Body>
+        <ns5:ReadCardCertificateResponse xmlns:ns2="http://ws.gematik.de/conn/ConnectorCommon/v5.0" xmlns:ns3="http://ws.gematik.de/tel/error/v2.0" xmlns:ns4="http://ws.gematik.de/conn/CertificateServiceCommon/v2.0" xmlns:ns5="http://ws.gematik.de/conn/CertificateService/v6.0">
+            <ns2:Status>
+                <ns2:Result>OK</ns2:Result>
+            </ns2:Status>
+            <ns4:X509DataInfoList>
+                <ns4:X509DataInfo>
+                    <ns4:CertRef>C.AUT</ns4:CertRef>
+                    <ns4:X509Data>
+                        <ns4:X509IssuerSerial>
+                            <ns4:X509IssuerName>CN=GEM.SMCB-CA51 TEST-ONLY,OU=Institution des Gesundheitswesens-CA der Telematikinfrastruktur,O=gematik GmbH NOT-VALID,C=DE</ns4:X509IssuerName>
+                            <ns4:X509SerialNumber>402294285618875</ns4:X509SerialNumber>
+                        </ns4:X509IssuerSerial>
+                        <ns4:X509SubjectName>CN=Markt ApothekeTEST-ONLY,2.5.4.42=#0c06536f70686965,2.5.4.4=#0c1842657574656c736261636865722d54c3bc74656e6865696d,2.5.4.5=#13143830323736383833313130303030313437383037,O=3-SMC-B-Testkarte--883110000147807,STREET=Leipziger Str. 1,2.5.4.17=#0c053939303835,L=Erfurt,ST=Bundesland,C=DE</ns4:X509SubjectName>
+                        <ns4:X509Certificate>MIID7zCCA5agAwIBAgIHAW3ib/1OuzAKBggqhkjOPQQDAjCBmjELMAkGA1UEBhMCREUxHzAdBgNVBAoMFmdlbWF0aWsgR21iSCBOT1QtVkFMSUQxSDBGBgNVBAsMP0luc3RpdHV0aW9uIGRlcyBHZXN1bmRoZWl0c3dlc2Vucy1DQSBkZXIgVGVsZW1hdGlraW5mcmFzdHJ1a3R1cjEgMB4GA1UEAwwXR0VNLlNNQ0ItQ0E1MSBURVNULU9OTFkwHhcNMjMwMzI4MDAwMDAwWhcNMjgwMzI3MjM1OTU5WjCCAQAxCzAJBgNVBAYTAkRFMRMwEQYDVQQIDApCdW5kZXNsYW5kMQ8wDQYDVQQHDAZFcmZ1cnQxDjAMBgNVBBEMBTk5MDg1MRkwFwYDVQQJDBBMZWlwemlnZXIgU3RyLiAxMSswKQYDVQQKDCIzLVNNQy1CLVRlc3RrYXJ0ZS0tODgzMTEwMDAwMTQ3ODA3MR0wGwYDVQQFExQ4MDI3Njg4MzExMDAwMDE0NzgwNzEhMB8GA1UEBAwYQmV1dGVsc2JhY2hlci1Uw7x0ZW5oZWltMQ8wDQYDVQQqDAZTb3BoaWUxIDAeBgNVBAMMF01hcmt0IEFwb3RoZWtlVEVTVC1PTkxZMFowFAYHKoZIzj0CAQYJKyQDAwIIAQEHA0IABCg2mQFC7PIrdrtt8TrddyG83V77oS7OvURmqG3yL5PHHpvvESCQyaaZQPdXbu7VpFTG4+mqYxJYxB3YznYGZqCjggFbMIIBVzAfBgNVHSMEGDAWgBQGmOkCVf/Jn1yjZQ7xXeIg9YT7kzAgBgNVHSAEGTAXMAoGCCqCFABMBIEjMAkGByqCFABMBE0wOAYIKwYBBQUHAQEELDAqMCgGCCsGAQUFBzABhhxodHRwOi8vZWhjYS5nZW1hdGlrLmRlL29jc3AvMAwGA1UdEwEB/wQCMAAwEwYDVR0lBAwwCgYIKwYBBQUHAwIwDgYDVR0PAQH/BAQDAgeAMB0GA1UdDgQWBBTrsPjEtdFx3mnWxA8iY0dWq0SlADCBhQYFKyQIAwMEfDB6pCgwJjELMAkGA1UEBhMCREUxFzAVBgNVBAoMDmdlbWF0aWsgQmVybGluME4wTDBKMEgwFwwVw5ZmZmVudGxpY2hlIEFwb3RoZWtlMAkGByqCFABMBDYTIjMtU01DLUItVGVzdGthcnRlLS04ODMxMTAwMDAxNDc4MDcwCgYIKoZIzj0EAwIDRwAwRAIgWa4RAeRFCqCgWXjNe/o2rWvhXPwP+hBiAG/IPCS67mgCIC7VQ/7GxHNd+sBuDfMinPMr3Vjxrj92RyOzGQIGHwmB</ns4:X509Certificate>
+                    </ns4:X509Data>
+                </ns4:X509DataInfo>
+            </ns4:X509DataInfoList>
+        </ns5:ReadCardCertificateResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

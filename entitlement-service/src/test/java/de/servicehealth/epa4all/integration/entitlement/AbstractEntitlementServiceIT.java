@@ -4,7 +4,7 @@ import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.api.EntitlementsEPaFdVApi;
 import de.servicehealth.api.UserBlockingApi;
 import de.servicehealth.epa4all.common.DockerAction;
-import de.servicehealth.epa4all.common.Utils;
+import de.servicehealth.epa4all.common.TestUtils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.GetEntitlements200Response;
@@ -50,7 +50,7 @@ public abstract class AbstractEntitlementServiceIT {
     }
 
     private void runWithDocker(DockerAction action) throws Exception {
-        Utils.runWithDocker(ENTITLEMENT_SERVICE, action);
+        TestUtils.runWithDocker(ENTITLEMENT_SERVICE, action);
     }
 
     @Test

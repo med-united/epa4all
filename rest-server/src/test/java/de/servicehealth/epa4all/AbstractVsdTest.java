@@ -8,7 +8,7 @@ import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.config.api.IUserConfigurations;
-import de.service.health.api.epa4all.MultiEpaService;
+import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -42,6 +44,8 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings("UnusedReturnValue")
 public abstract class AbstractVsdTest {
+
+    private static final Logger log = Logger.getLogger(AbstractVsdTest.class.getName());
 
     public static final String INFORMATION_SERVICE = "information-service";
 
@@ -63,7 +67,7 @@ public abstract class AbstractVsdTest {
     protected IKonnektorClient konnektorClient;
 
     @Inject
-    protected MultiEpaService multiEpaService;
+    protected EpaMultiService epaMultiService;
 
     @Inject
     protected VsdService vsdService;
@@ -95,7 +99,7 @@ public abstract class AbstractVsdTest {
                     try {
                         deleteDirectory(f);
                     } catch (IOException e) {
-                        System.out.println(e.getMessage());
+                        log.log(Level.SEVERE, e.getMessage());
                     }
                 } else {
                     f.delete();
@@ -157,7 +161,7 @@ public abstract class AbstractVsdTest {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
             cardlinkWebsocketClient, insuranceDataService, epaFileDownloader, konnektorClient,
-            multiEpaService, vauNpProvider, runtimeConfig, vsdConfig
+            epaMultiService, vauNpProvider, runtimeConfig, vsdConfig
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 

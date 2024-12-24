@@ -66,7 +66,7 @@ public class Fhir extends AbstractResource {
         }
 
         EpaContext epaContext = prepareEpaContext(xInsurantId);
-        EpaAPI epaAPI = multiEpaService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+        EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
         return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, uriInfo, headers, body, epaContext.getXHeaders());
     }
 }

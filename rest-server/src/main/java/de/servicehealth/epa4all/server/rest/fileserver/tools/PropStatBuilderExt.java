@@ -95,26 +95,6 @@ public class PropStatBuilderExt {
         return this;
     }
 
-//	public PropStatBuilderExt isHidden(boolean hide){
-//		if(!names.contains("ishidden")){
-//			IsHiddenProperty hidden = new IsHiddenProperty(hide);
-//			properties.add(hidden);
-//			names.add("ishidden");
-//		}
-//
-//		return this;
-//	}
-//
-//	public PropStatBuilderExt lastAccessed(Date dateTime){
-//		if(!names.contains("lastaccessed")){
-//			LastAccessed lastAccessed = new LastAccessed(dateTime);
-//			properties.add(lastAccessed);
-//			names.add("lastaccessed");
-//		}
-//
-//		return this;
-//	}
-
     public PropStat notFound(Prop allprops) {
         boolean empty = true;
         List<Object> notFound = new ArrayList<>();
@@ -122,7 +102,6 @@ public class PropStatBuilderExt {
             if (prop instanceof Element element) {
                 String name = element.getLocalName();
                 if (!names.contains(name)) {
-                    System.out.println("notFound: " + name);
                     notFound.add(prop);
                     empty = false;
                 }

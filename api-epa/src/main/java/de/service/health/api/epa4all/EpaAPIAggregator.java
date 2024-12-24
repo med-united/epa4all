@@ -6,12 +6,14 @@ import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRenderClient;
+import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 
 public class EpaAPIAggregator implements EpaAPI {
 
     private final String backend;
+    private final VauFacade vauFacade;
     private final IRenderClient renderClient;
     private final IMedicationClient medicationClient;
     private final IDocumentManagementPortType documentManagementPortType;
@@ -23,6 +25,7 @@ public class EpaAPIAggregator implements EpaAPI {
 
     public EpaAPIAggregator(
         String backend,
+        VauFacade vauFacade,
         IRenderClient renderClient,
         IMedicationClient medicationClient,
         IDocumentManagementPortType documentManagementPortType,
@@ -33,6 +36,7 @@ public class EpaAPIAggregator implements EpaAPI {
         IFhirProxy fhirProxy
     ) {
         this.backend = backend;
+        this.vauFacade = vauFacade;
         this.renderClient = renderClient;
         this.medicationClient = medicationClient;
         this.documentManagementPortType = documentManagementPortType;
@@ -46,6 +50,11 @@ public class EpaAPIAggregator implements EpaAPI {
     @Override
     public String getBackend() {
         return backend;
+    }
+
+    @Override
+    public VauFacade getVauFacade() {
+        return vauFacade;
     }
 
     @Override
