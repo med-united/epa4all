@@ -1,9 +1,8 @@
 package de.servicehealth.epa4all.integration.wiremock;
 
-import com.github.tomakehurst.wiremock.extension.ResponseTransformerV2;
-import com.github.tomakehurst.wiremock.http.HttpHeader;
-import com.github.tomakehurst.wiremock.http.HttpHeaders;
-import com.github.tomakehurst.wiremock.http.Response;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
+import com.github.tomakehurst.wiremock.extension.ResponseDefinitionTransformerV2;
+import com.github.tomakehurst.wiremock.http.ResponseDefinition;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import de.gematik.vau.lib.VauServerStateMachine;
@@ -18,7 +17,7 @@ import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.apache.cxf.helpers.HttpHeaderHelper.CONTENT_TYPE;
 
 @Getter
-public class VauMessage1Transformer implements ResponseTransformerV2 {
+public class VauMessage1Transformer implements ResponseDefinitionTransformerV2 {
 
     private static final ConcurrentHashMap<String, VauServerStateMachine> vau1ServersMap = new ConcurrentHashMap<>();
 
@@ -46,28 +45,21 @@ public class VauMessage1Transformer implements ResponseTransformerV2 {
     }
 
     @Override
-    public Response transform(Response response, ServeEvent serveEvent) {
+    public ResponseDefinition transform(ServeEvent serveEvent) {
         LoggedRequest request = serveEvent.getRequest();
         VauServerStateMachine vauServer = vau1ServersMap.get(request.getUrl());
 
         byte[] message1 = request.getBody();
         byte[] message2 = vauServer.receiveMessage(message1);
 
-        try {
-            return Response.response()
-                .headers(new HttpHeaders(
-                    new HttpHeader(VAU_CID, "/VAU/" + uniquePath),
-                    new HttpHeader(VAU_DEBUG_SK1_S2C, ""),
-                    new HttpHeader(VAU_DEBUG_SK1_C2S, ""),
-                    new HttpHeader(CONTENT_TYPE, "application/cbor"),
-                    new HttpHeader(CONTENT_LENGTH, String.valueOf(message2.length))
-                ))
-                .body(message2).status(200).build();
-        } catch (Throwable t) {
-            return Response.response()
-                .status(500)
-                .body("Error processing request: " + t.getMessage())
-                .build();
-        }
+        return new ResponseDefinitionBuilder()
+            .withHeader(VAU_CID, "/VAU/" + uniquePath)
+            .withHeader(VAU_DEBUG_SK1_S2C, "")
+            .withHeader(VAU_DEBUG_SK1_C2S, "")
+            .withHeader(CONTENT_TYPE, "application/cbor")
+            .withHeader(CONTENT_LENGTH, String.valueOf(message2.length))
+            .withStatus(200)
+            .withBody(message2)
+            .build();
     }
 }

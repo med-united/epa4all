@@ -262,7 +262,6 @@ public class ServicePortProvider extends StartableService {
             }
 
             location = endpointNode.getAttributes().getNamedItem("Location").getTextContent();
-            location = location.replace("443", "8070");
             if (location.startsWith(userConfig.getConnectorBaseURL())) {
                 return location;
             } else {

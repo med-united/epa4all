@@ -1,9 +1,8 @@
 package de.servicehealth.epa4all.integration.wiremock;
 
-import com.github.tomakehurst.wiremock.extension.ResponseTransformerV2;
-import com.github.tomakehurst.wiremock.http.HttpHeader;
-import com.github.tomakehurst.wiremock.http.HttpHeaders;
-import com.github.tomakehurst.wiremock.http.Response;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
+import com.github.tomakehurst.wiremock.extension.ResponseDefinitionTransformerV2;
+import com.github.tomakehurst.wiremock.http.ResponseDefinition;
 import com.github.tomakehurst.wiremock.stubbing.ServeEvent;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import de.gematik.vau.lib.VauServerStateMachine;
@@ -17,13 +16,13 @@ import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static org.jose4j.jwx.HeaderParameterNames.CONTENT_TYPE;
 
 @Getter
-public class VauMessage2Transformer implements ResponseTransformerV2 {
+public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
 
     private static final ConcurrentHashMap<String, VauServerStateMachine> vau2ServersMap = new ConcurrentHashMap<>();
 
     private final String name;
 
-    public VauMessage2Transformer(String name) {
+    public VauMessage3Transformer(String name) {
         this.name = name;
     }
 
@@ -42,20 +41,23 @@ public class VauMessage2Transformer implements ResponseTransformerV2 {
     }
 
     @Override
-    public Response transform(Response response, ServeEvent serveEvent) {
+    public ResponseDefinition transform(ServeEvent serveEvent) {
         LoggedRequest request = serveEvent.getRequest();
         VauServerStateMachine vauServer = vau2ServersMap.get(request.getUrl());
 
         byte[] message3 = serveEvent.getRequest().getBody();
+
+        // TODO analyze message3 -> chain
+
         byte[] message4 = vauServer.receiveMessage(message3);
 
-        return Response.response()
-            .headers(new HttpHeaders(
-                new HttpHeader(VAU_DEBUG_SK2_S2C_INFO, ""),
-                new HttpHeader(VAU_DEBUG_SK2_C2S_INFO, ""),
-                new HttpHeader(CONTENT_TYPE, "application/cbor"),
-                new HttpHeader(CONTENT_LENGTH, String.valueOf(message4.length))
-            ))
-            .body(message4).status(200).build();
+        return new ResponseDefinitionBuilder()
+            .withHeader(VAU_DEBUG_SK2_S2C_INFO, "")
+            .withHeader(VAU_DEBUG_SK2_C2S_INFO, "")
+            .withHeader(CONTENT_TYPE, "application/cbor")
+            .withHeader(CONTENT_LENGTH, String.valueOf(message4.length))
+            .withStatus(200)
+            .withBody(message4)
+            .build();
     }
 }
