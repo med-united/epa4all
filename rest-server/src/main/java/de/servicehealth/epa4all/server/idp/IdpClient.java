@@ -84,9 +84,11 @@ public class IdpClient extends StartableService {
         this.multiKonnektorService = multiKonnektorService;
     }
     
-    // TODO VAU Session result into VauCheck, REST endpoint to reload vau sessions
-    // TODO disable FHIR context to speed up the boot
-    // TODO VauClient concurrent test, WireMock ssl
+    // TODO   -  VAU Session result into VauCheck, REST endpoint to reload vau sessions
+    // TODO   -  disable FHIR context to speed up the boot
+    // TODO  +-  VauClient concurrent test, WireMock ssl
+    // TODO   -  CxfVauSetupInterceptor for TESTS with mock
+    // 
 
     public void onStart() throws Exception {
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");

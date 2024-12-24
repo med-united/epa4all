@@ -16,6 +16,8 @@ public class WiremockTestResource implements QuarkusTestResourceConfigurableLife
 
     private final File configFolder = getResourcePath("wiremock").toFile();
 
+    // TODO refactor
+
     private final int httpsPort = 9443;
 
     @Override

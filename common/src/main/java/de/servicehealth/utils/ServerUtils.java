@@ -1,5 +1,6 @@
 package de.servicehealth.utils;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +10,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
+import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -66,5 +69,12 @@ public class ServerUtils {
         } catch (Exception e) {
             return bytes;
         }
+    }
+
+    public static Optional<String> findHeaderValue(List<Pair<String, String>> headers, String headerName) {
+        return headers.stream()
+            .filter(p -> p.getKey().equalsIgnoreCase(headerName))
+            .map(Pair::getValue)
+            .findFirst();
     }
 }
