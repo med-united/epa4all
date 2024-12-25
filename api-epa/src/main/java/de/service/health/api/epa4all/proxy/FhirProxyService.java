@@ -16,6 +16,7 @@ import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
 import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.WebClient;
@@ -26,15 +27,22 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static org.apache.http.HttpHeaders.ACCEPT;
+import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
 import static org.apache.http.HttpHeaders.CONNECTION;
 import static org.apache.http.HttpHeaders.UPGRADE;
 
 public class FhirProxyService implements IFhirProxy {
+
+    private static final Logger log = Logger.getLogger(FhirProxyService.class.getName());
 
     private final WebClient apiClient;
     private final WebClient renderClient;
@@ -97,9 +105,29 @@ public class FhirProxyService implements IFhirProxy {
 
         String query = excludeQueryParams(uriInfo.getRequestUri().getQuery(), Set.of("subject", X_INSURANT_ID, X_KONNEKTOR));
 
-        String accept = isPdf ? "Accept: application/pdf" : isXhtml ? "Accept: text/html" : "Accept-Encoding: gzip\r\nAccept: application/fhir+json;q=1.0, application/json+fhir;q=0.9";
-        String contentType = body == null || body.length == 0 ? "" : "application/fhir+json; charset=UTF-8";
-        FhirRequest fhirRequest = new FhirRequest(isGet, accept, contentType, body);
+        log.info("Forwarding : " + fhirPath + "?" + query);
+
+        List<Pair<String, String>> acceptHeaders;
+        if (isPdf) {
+            acceptHeaders = List.of(Pair.of(ACCEPT, "application/pdf"));
+        } else if (isXhtml) {
+            acceptHeaders = List.of(Pair.of(ACCEPT, "text/html"));
+        } else {
+            acceptHeaders = List.of(
+                Pair.of(ACCEPT_ENCODING, "gzip"),
+                Pair.of(ACCEPT, "application/fhir+json;q=1.0, application/json+fhir;q=0.9")
+            );
+        }
+        List<Pair<String, String>> contentHeaders;
+        if (body == null || body.length == 0) {
+            contentHeaders = List.of();
+        } else {
+            contentHeaders = List.of(
+                Pair.of(CONTENT_TYPE, "application/fhir+json; charset=UTF-8"),
+                Pair.of(CONTENT_LENGTH, String.valueOf(body.length))
+            );
+        }
+        FhirRequest fhirRequest = new FhirRequest(isGet, acceptHeaders, contentHeaders, body);
 
         Response response = webClient
             .headers(map)

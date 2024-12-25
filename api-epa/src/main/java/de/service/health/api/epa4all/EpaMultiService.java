@@ -144,6 +144,8 @@ public class EpaMultiService extends StartableService {
         return clientFactory.createProxyClient(vauFacade, epaConfig.getEpaUserAgent(), clazz, getBackendUrl(backend, serviceUrl));
     }
 
+    // TODO - confirm purpose of the cache
+    
     public EpaAPI getEpaAPI(String insurantId) {
         EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(insurantId);
         if (epaAPI != null) {

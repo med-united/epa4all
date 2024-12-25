@@ -45,6 +45,7 @@ public class HttpParcel {
 
     private String getStatusLineWithHeaders() {
         String headersString = headers.stream()
+            .filter(h -> h.getValue() != null && !h.getValue().trim().isEmpty() && !h.getValue().equals("null"))
             .map(h -> String.format("%s: %s", h.getKey(), h.getValue()))
             .collect(Collectors.joining("\n"));
 

@@ -85,7 +85,7 @@ public class VauNpProvider extends StartableService {
                 .map(s -> String.format(STATUS_TEMPLATE, s.getEpaBackend(), 0, "Restored from cache"))
                 .toList();
         } else {
-            statuses = reload(new HashSet<>());
+            statuses = reload(Set.of());
         }
         log.info(String.format("VAU sessions status:\n%s", String.join("\n", statuses)));
     }
@@ -188,7 +188,6 @@ public class VauNpProvider extends StartableService {
     private VauNpInfo getVauNp(String konnektor, KonnektorConfig config, EpaAPI api) {
         String backend = api.getBackend();
 
-
         long start = System.currentTimeMillis();
         try {
             RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
@@ -199,12 +198,12 @@ public class VauNpProvider extends StartableService {
             long delta = System.currentTimeMillis() - start;
 
             String okStatus = String.format(STATUS_TEMPLATE, backend, delta, "OK");
-            api.getVauFacade().setVauNpStatus(okStatus);
+            api.getVauFacade().setVauNpStatus(okStatus, true);
             return new VauNpInfo(key, vauNp, okStatus);
         } catch (Exception e) {
             long delta = System.currentTimeMillis() - start;
             String errorStatus = String.format(STATUS_TEMPLATE, backend, delta, e.getMessage());
-            api.getVauFacade().setVauNpStatus(errorStatus);
+            api.getVauFacade().setVauNpStatus(errorStatus, false);
             return new VauNpInfo(null, null, errorStatus);
         }
     }

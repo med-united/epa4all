@@ -20,7 +20,7 @@ public class VauConfig {
     @ConfigProperty(name = "epa.vau.pool.size", defaultValue = "10")
     int vauPoolSize;
 
-    @ConfigProperty(name = "epa.vau.read.timeout.sec", defaultValue = "10")
+    @ConfigProperty(name = "epa.vau.read.timeout.sec", defaultValue = "30")
     int vauReadTimeoutSec;
 
     @ConfigProperty(name = "epa.vau.connection.timeout.ms", defaultValue = "10000")

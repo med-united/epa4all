@@ -4,9 +4,9 @@ import de.gematik.vau.lib.VauClientStateMachine;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class VauClient {
 
@@ -26,6 +26,8 @@ public class VauClient {
     public static final String X_BACKEND = "x-backend";
     public static final String VAU_NP = "VAU-NP";
 
+    private static final int PERMITS = 1;
+
     @Getter
     private final VauClientStateMachine vauStateMachine;
 
@@ -36,23 +38,24 @@ public class VauClient {
     @Getter
     private VauInfo vauInfo;
 
-    @Getter
     private final AtomicLong acquiredAt;
     private final AtomicBoolean broken;
+    private final int readTimeoutMs;
 
-    private final ReentrantLock lock;
+    private final Semaphore semaphore;
 
-    public VauClient(VauClientStateMachine vauStateMachine, boolean mock) {
+    public VauClient(VauClientStateMachine vauStateMachine, boolean mock, int readTimeoutMs) {
         this.vauStateMachine = vauStateMachine;
+        this.readTimeoutMs = readTimeoutMs;
         this.mock = mock;
 
-        lock = new ReentrantLock();
+        semaphore = new Semaphore(PERMITS);
         broken = new AtomicBoolean(false);
         acquiredAt = new AtomicLong(0L);
     }
 
     public boolean acquire() {
-        boolean acquired = lock.tryLock();
+        boolean acquired = semaphore.tryAcquire();
         if (acquired) {
             broken.set(false);
             acquiredAt.set(System.currentTimeMillis());
@@ -61,7 +64,15 @@ public class VauClient {
     }
 
     public boolean busy() {
-        return lock.isLocked();
+        long acquired = acquiredAt.get();
+        int availablePermits = semaphore.availablePermits();
+        return availablePermits == 0 && 0 < acquired && acquired >= System.currentTimeMillis() - readTimeoutMs;
+    }
+
+    public boolean hangs() {
+        long acquired = acquiredAt.get();
+        int availablePermits = semaphore.availablePermits();
+        return availablePermits == 0 && 0 < acquired && acquired < System.currentTimeMillis() - readTimeoutMs;
     }
 
     public boolean broken() {
@@ -70,7 +81,7 @@ public class VauClient {
 
     public void release() {
         try {
-            lock.unlock();
+            semaphore.release();
         } finally {
             acquiredAt.set(0L);
         }
@@ -86,11 +97,10 @@ public class VauClient {
 
     public void forceRelease() {
         try {
-            lock.unlock();
+            release();
         } finally {
             broken.set(true);
             vauInfo = null;
-            acquiredAt.set(0L);
         }
     }
 }
