@@ -31,9 +31,9 @@ public class HttpParcel {
         return ArrayUtils.addAll(getStatusLineWithHeaders().getBytes(UTF_8), payload);
     }
 
-    public String toString(boolean base64) {
+    public String toString(boolean base64, boolean showPayload) {
         String payloadString = "";
-        if (payload != null && payload.length > 0) {
+        if (showPayload && payload != null && payload.length > 0) {
             byte[] bytes = payload;
             if (base64) {
                 bytes = Base64.getEncoder().encode(bytes);

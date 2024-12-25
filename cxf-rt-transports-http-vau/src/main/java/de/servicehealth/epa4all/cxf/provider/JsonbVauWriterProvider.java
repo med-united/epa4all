@@ -98,7 +98,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
 
             HttpParcel httpParcel = new HttpParcel(statusLine, headers, payload);
 
-            log.info("REST Inner Request: " + httpParcel.toString(false));
+            log.info("REST Inner Request: " + httpParcel.toString(false, true));
 
             VauClient vauClient = vauFacade.getVauClient(vauCid);
             byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());

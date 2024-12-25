@@ -14,6 +14,9 @@ public class VauConfig {
     @ConfigProperty(name = "epa.vau.mock", defaultValue = "false")
     boolean mock;
 
+    @ConfigProperty(name = "epa.internal.fhir.enabled", defaultValue = "false")
+    boolean internalFhirEnabled;
+
     @ConfigProperty(name = "epa.vau.tracing.enabled", defaultValue = "true")
     boolean tracingEnabled;
 

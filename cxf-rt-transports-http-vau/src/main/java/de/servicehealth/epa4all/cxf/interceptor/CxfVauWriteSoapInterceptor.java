@@ -5,9 +5,9 @@ import de.servicehealth.http.HttpParcel;
 import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.InterceptorChain;
-import org.apache.cxf.interceptor.StaxOutInterceptor;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
@@ -16,6 +16,7 @@ import org.apache.cxf.transport.http.Headers;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,7 +26,6 @@ import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_ME
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
-import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -41,7 +41,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
     public CxfVauWriteSoapInterceptor(VauFacade vauFacade) {
         super(PRE_STREAM);
-        addBefore(StaxOutInterceptor.class.getName());
+        addBefore(LoggingOutInterceptor.class.getName());
         this.vauFacade = vauFacade;
     }
 
@@ -84,14 +84,22 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             httpHeaders.put(X_INSURANT_ID, List.of(xInsurantId));
             httpHeaders.put(X_USER_AGENT, List.of(xUserAgent));
 
-            headers.add(Pair.of(X_INSURANT_ID, xInsurantId));
-            headers.add(Pair.of(X_USER_AGENT, xUserAgent));
-            headers.add(Pair.of(X_BACKEND, String.valueOf(message.get(X_BACKEND))));
-            headers.add(Pair.of(VAU_NP, String.valueOf(message.get(VAU_NP))));
+            // headers.add(Pair.of(X_INSURANT_ID, xInsurantId));
+            // headers.add(Pair.of(X_USER_AGENT, xUserAgent));
+            // headers.add(Pair.of(X_BACKEND, String.valueOf(message.get(X_BACKEND))));
+            
+            Optional<Pair<String, String>> vauNpHeaderOpt = headers.stream()
+                .filter(p -> p.getKey().equalsIgnoreCase(VAU_NP))
+                .findFirst();
+            if (vauNpHeaderOpt.isEmpty()) {
+                headers.add(Pair.of(VAU_NP, String.valueOf(message.get(VAU_NP))));
+            }
             headers.add(Pair.of(CONTENT_TYPE, String.valueOf(message.get(CONTENT_TYPE))));
             headers.add(Pair.of(CONTENT_LENGTH, String.valueOf(payload.length)));
 
             HttpParcel httpParcel = new HttpParcel(statusLine, headers, payload);
+
+            log.info("SOAP Inner Request: " + httpParcel.toString(false, false));
 
             VauClient vauClient = vauFacade.getVauClient(vauCid);
             byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
@@ -113,7 +121,8 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
         }
     }
 
-    private static class CachedStream extends CachedOutputStream {
+    @SuppressWarnings("InnerClassMayBeStatic")
+    private class CachedStream extends CachedOutputStream {
         public CachedStream() {
             // forces CachedOutputStream to keep the whole content in-memory.
             super(1024 * 1024 * (long) 1024);

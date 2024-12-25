@@ -44,6 +44,8 @@ public class RequestVauNpIT extends AbstractVauNpTest {
         assertFalse(map.get(new VauNpKey("SMC-B-11", "localhost", "localhost:9443")).isEmpty());
     }
 
+    // хедеры реквест и тэг
+
     // TODO - test the case when some user request fails and ReloadVauNpEvent is fired for the affected ePA backend
 
     // @Test

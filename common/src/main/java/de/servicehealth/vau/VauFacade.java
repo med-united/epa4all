@@ -78,9 +78,7 @@ public class VauFacade {
             try {
                 for (VauClient vauClient : vauClients) {
                     if (vauClient.hangs()) {
-                        String vauCid = vauClient.getVauInfo().getVauCid();
                         vauClient.forceRelease();
-                        log.warn(String.format("[%s] VauClient is force released", vauCid));
                     }
                 }
             } catch (Throwable t) {

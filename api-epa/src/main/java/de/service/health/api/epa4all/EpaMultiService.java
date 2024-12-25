@@ -108,18 +108,22 @@ public class EpaMultiService extends StartableService {
 
                     IFhirProxy fhirProxy = new FhirProxyService(backend, epaConfig, vauConfig, vauFacade);
 
-                    VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
-                    String medicationApiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
-                    apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationApiUrl));
-                    GenericDirectClient medicationClient = apiClientFactory.newGenericClient(medicationApiUrl.replace("+vau", ""));
+                    GenericDirectClient medicationClient = null;
+                    VauRenderClient renderClient = null;
+                    if (vauConfig.isInternalFhirEnabled()) {
+                        VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
+                        String medicationApiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
+                        apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationApiUrl));
+                        medicationClient = apiClientFactory.newGenericClient(medicationApiUrl.replace("+vau", ""));
 
-                    String medicationRenderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
-                    VauRestfulClientFactory renderClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
-                    renderClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationRenderUrl));
-                    Executor renderExecutor = Executor.newInstance(renderClientFactory.getVauHttpClient());
-                    VauRenderClient renderClient = new VauRenderClient(
-                        renderExecutor, epaUserAgent, medicationRenderUrl.replace("+vau", "")
-                    );
+                        String medicationRenderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
+                        VauRestfulClientFactory renderClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
+                        renderClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationRenderUrl));
+                        Executor renderExecutor = Executor.newInstance(renderClientFactory.getVauHttpClient());
+                        renderClient = new VauRenderClient(
+                            renderExecutor, epaUserAgent, medicationRenderUrl.replace("+vau", "")
+                        );
+                    }
                     
                     return new EpaAPIAggregator(
                         backend,
