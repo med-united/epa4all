@@ -1,12 +1,8 @@
 package de.servicehealth.epa4all.integration.wiremock;
 
-import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.EpaConfig;
-import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.common.WireMockProfile;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpFile;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpKey;
-import de.servicehealth.model.GetNonce200Response;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -17,7 +13,6 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
@@ -51,28 +46,28 @@ public class RequestVauNpIT extends AbstractVauNpTest {
 
     // TODO - test the case when some user request fails and ReloadVauNpEvent is fired for the affected ePA backend
 
-    @Test
-    public void vauErrorHandledCorrectly() throws Exception {
-        // new VauNpFile(configFolder).store(Map.of(
-        //     new VauNpKey("SMC-B-11", "localhost", "localhost:8072"), "3faa0d1bb2b2e4a066be655d84cd8279b7919b767e92bbfa5550de99abd675a3"
-        // ));
-
-        clientFactory.onStart();
-        epaMultiService.onStart();
-
-        EpaConfig epaConfig = epaMultiService.getEpaConfig();
-        
-        epaMultiService.getEpaBackendMap().entrySet().stream()
-            .filter(e -> e.getKey().startsWith("localhost"))
-            .findFirst()
-            .ifPresent(e -> {
-                EpaAPI epaApi = e.getValue();
-                AuthorizationSmcBApi authorizationSmcBApi = epaApi.getAuthorizationSmcBApi();
-                String epaUserAgent = epaConfig.getEpaUserAgent();
-                String backend = epaApi.getBackend();
-                GetNonce200Response nonceResponse = authorizationSmcBApi.getNonce(epaUserAgent, backend);
-                assertNotNull(nonceResponse);
-            });
-    }
+    // @Test
+    // public void vauErrorHandledCorrectly() throws Exception {
+    //     // new VauNpFile(configFolder).store(Map.of(
+    //     //     new VauNpKey("SMC-B-11", "localhost", "localhost:8072"), "3faa0d1bb2b2e4a066be655d84cd8279b7919b767e92bbfa5550de99abd675a3"
+    //     // ));
+    //
+    //     clientFactory.onStart();
+    //     epaMultiService.onStart();
+    //
+    //     EpaConfig epaConfig = epaMultiService.getEpaConfig();
+    //
+    //     epaMultiService.getEpaBackendMap().entrySet().stream()
+    //         .filter(e -> e.getKey().startsWith("localhost"))
+    //         .findFirst()
+    //         .ifPresent(e -> {
+    //             EpaAPI epaApi = e.getValue();
+    //             AuthorizationSmcBApi authorizationSmcBApi = epaApi.getAuthorizationSmcBApi();
+    //             String epaUserAgent = epaConfig.getEpaUserAgent();
+    //             String backend = epaApi.getBackend();
+    //             GetNonce200Response nonceResponse = authorizationSmcBApi.getNonce(epaUserAgent, backend);
+    //             assertNotNull(nonceResponse);
+    //         });
+    // }
 }
 

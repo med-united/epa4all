@@ -84,6 +84,9 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
         message.put(ACCEPT, APPLICATION_OCTET_STREAM);
         message.put(REQUEST_URI, vauUri);
 
+        String methodWithPath = (method == null ? "POST" : method) + " " + fullPath;
+        message.put(VAU_METHOD_PATH, methodWithPath);
+
         message.getExchange().put(VAU_CID, vauCid);
 
         Object map = message.computeIfAbsent(PROTOCOL_HEADERS, k -> new HashMap<>());
@@ -92,7 +95,9 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
             headers.put(CONTENT_TYPE, List.of(APPLICATION_OCTET_STREAM));
             headers.put(ACCEPT, List.of(APPLICATION_OCTET_STREAM));
             headers.put(VAU_NON_PU_TRACING, List.of(vauNonPUTracing));
-            headers.put(VAU_METHOD_PATH, List.of((method == null ? "POST" : method) + " " + fullPath));
+            if (soapVersion == null) {
+                headers.put(VAU_METHOD_PATH, List.of(methodWithPath));
+            }
             headers.put(VAU_CID, List.of(vauCid));
 
             Object np = message.get(VAU_NP);

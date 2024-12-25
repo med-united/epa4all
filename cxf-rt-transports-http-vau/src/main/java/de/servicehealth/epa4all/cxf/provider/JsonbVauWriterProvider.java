@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
@@ -83,7 +84,9 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             }
 
             byte[] payload = getPayload(obj, type);
-            String statusLine = getStatusLine(obj, httpHeaders);
+
+            String methodWithPath = evictHeader(httpHeaders, VAU_METHOD_PATH);
+            String statusLine = getStatusLine(obj, methodWithPath);
             List<Pair<String, String>> headers = prepareHeaders(httpHeaders);
             
             headers.add(Pair.of(X_BACKEND, backend));
@@ -106,6 +109,14 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             log.log(Level.SEVERE, "Error while writing Vau JSON message", e);
             throw new IOException(e);
         }
+    }
+
+    private String getStatusLine(Object obj, String methodWithPath) {
+        if (methodWithPath != null && obj instanceof FhirRequest fhirRequest) {
+            String method = methodWithPath.trim().split(" ")[0];
+            methodWithPath = methodWithPath.replace(method, fhirRequest.getMethod());
+        }
+        return methodWithPath + " HTTP/1.1";
     }
 
     private List<Pair<String, String>> prepareAcceptHeaders(Object obj) {

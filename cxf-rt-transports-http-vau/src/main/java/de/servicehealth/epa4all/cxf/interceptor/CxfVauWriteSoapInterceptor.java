@@ -11,7 +11,7 @@ import org.apache.cxf.interceptor.StaxOutInterceptor;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
-import org.apache.cxf.transport.http.Address;
+import org.apache.cxf.transport.http.Headers;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
+import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
@@ -68,13 +69,24 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             OutputStream os = message.getContent(OutputStream.class);
             CachedStream cs = new CachedStream();
             byte[] payload = getPayload(os, cs, message);
-            String statusLine = getStatusLine(null, httpHeaders);
+
+            String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));
+            String statusLine = methodWithPath + " HTTP/1.1";
 
             List<Pair<String, String>> headers = prepareHeaders(httpHeaders);
 
+            String xInsurantId = String.valueOf(message.get(X_INSURANT_ID));
+            String xUserAgent = String.valueOf(message.get(X_USER_AGENT));
+
+            // DefaultLogEventMapper logs REQ_OUT before xHeaders from EpaContext are added
+            // directly into HttpRequest.Builder rb,
+            message.put(Headers.ADD_HEADERS_PROPERTY, true);
+            httpHeaders.put(X_INSURANT_ID, List.of(xInsurantId));
+            httpHeaders.put(X_USER_AGENT, List.of(xUserAgent));
+
+            headers.add(Pair.of(X_INSURANT_ID, xInsurantId));
+            headers.add(Pair.of(X_USER_AGENT, xUserAgent));
             headers.add(Pair.of(X_BACKEND, String.valueOf(message.get(X_BACKEND))));
-            headers.add(Pair.of(X_INSURANT_ID, String.valueOf(message.get(X_INSURANT_ID))));
-            headers.add(Pair.of(X_USER_AGENT, String.valueOf(message.get(X_USER_AGENT))));
             headers.add(Pair.of(VAU_NP, String.valueOf(message.get(VAU_NP))));
             headers.add(Pair.of(CONTENT_TYPE, String.valueOf(message.get(CONTENT_TYPE))));
             headers.add(Pair.of(CONTENT_LENGTH, String.valueOf(payload.length)));
@@ -83,6 +95,8 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             VauClient vauClient = vauFacade.getVauClient(vauCid);
             byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
+
+            httpHeaders.put(CONTENT_LENGTH, List.of(String.valueOf(vauMessage.length)));
 
             message.put("org.apache.cxf.message.Message.ENCODING", null);
 
