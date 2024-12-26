@@ -124,7 +124,7 @@ public class EpaMultiService extends StartableService {
                             renderExecutor, epaUserAgent, medicationRenderUrl.replace("+vau", "")
                         );
                     }
-                    
+
                     return new EpaAPIAggregator(
                         backend,
                         vauFacade,
@@ -148,8 +148,6 @@ public class EpaMultiService extends StartableService {
         return clientFactory.createProxyClient(vauFacade, epaConfig.getEpaUserAgent(), clazz, getBackendUrl(backend, serviceUrl));
     }
 
-    // TODO - confirm purpose of the cache
-    
     public EpaAPI getEpaAPI(String insurantId) {
         EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(insurantId);
         if (epaAPI != null) {

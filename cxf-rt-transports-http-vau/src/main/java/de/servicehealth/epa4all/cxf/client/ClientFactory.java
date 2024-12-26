@@ -46,7 +46,7 @@ public class ClientFactory extends StartableService {
         return CxfClientFactoryPriority;
     }
 
-    public void onStart() throws Exception {
+    public void onStart() {
         Bus globalBus = BusFactory.getDefaultBus();
         globalBus.setProperty("force.urlconnection.http.conduit", false);
         DestinationFactoryManager dfm = globalBus.getExtension(DestinationFactoryManager.class);

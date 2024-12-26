@@ -53,12 +53,12 @@ public class CborVauErrorResponseBuilder extends AbstractVauResponseBuilder {
             }
         }
         if (error != null) {
-            return new VauResponse(responseCode, error, error.getBytes(UTF_8), headers);
+            return new VauResponse(responseCode, error, error.getBytes(UTF_8), headers, false);
         } else {
             VauClient vauClient = vauFacade.getVauClient(vauCid);
             if (vauClient == null) {
                 error = "Vau request read timed out";
-                return new VauResponse(responseCode, error, error.getBytes(UTF_8), headers);
+                return new VauResponse(responseCode, error, error.getBytes(UTF_8), headers, false);
             }
             byte[] decryptedBytes = vauClient.decryptVauMessage(bytes);
             return super.build(vauCid, responseCode, headers, decryptedBytes);

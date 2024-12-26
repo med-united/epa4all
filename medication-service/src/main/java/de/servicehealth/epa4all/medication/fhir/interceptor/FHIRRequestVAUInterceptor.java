@@ -84,11 +84,19 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
     @Override
     public void process(HttpRequest request, HttpContext context) {
         if (request instanceof HttpEntityEnclosingRequest entityRequest) {
+            boolean encrypted = false;
+            String vauCid = null;
             try {
                 VauClient vauClient = initVauClient();
                 VauInfo vauInfo = vauClient.getVauInfo();
+                vauCid = vauInfo.getVauCid();
 
-                byte[] vauMessage = prepareVauMessage(entityRequest, vauClient);
+                byte[] vauMessage;
+                try {
+                    vauMessage = prepareVauMessage(entityRequest, vauClient);
+                } finally {
+                    encrypted = true;
+                }
                 entityRequest.setEntity(new ByteArrayEntity(vauMessage));
                 entityRequest.setHeader(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
                 entityRequest.setHeader(ACCEPT, APPLICATION_OCTET_STREAM);
@@ -100,10 +108,13 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
                 }
 
                 String port = getMedicationPort();
-                String vauUri = medicationBaseUri.getScheme() + "://" + medicationBaseUri.getHost() + port + vauInfo.getVauCid();
+                String vauUri = medicationBaseUri.getScheme() + "://" + medicationBaseUri.getHost() + port + vauCid;
                 ((HttpRequestWrapper) entityRequest).setURI(URI.create(vauUri));
 
             } catch (Exception e) {
+                if (encrypted) {
+                    vauFacade.forceRelease(vauCid, e.getMessage(), false);
+                }
                 throw new RuntimeException(e);
             }
         }
@@ -152,9 +163,9 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
     private String prepareAcceptHeader(boolean api, byte[] body) {
         if (api) {
-           return body.length != 0
-               ? "Accept: application/fhir+xml;q=1.0, application/fhir+json;q=1.0, application/xml+fhir;q=0.9, application/json+fhir;q=0.9\r\n"
-               : "Accept: application/fhir+json;q=1.0, application/json+fhir;q=0.9\r\n";
+            return body.length != 0
+                ? "Accept: application/fhir+xml;q=1.0, application/fhir+json;q=1.0, application/xml+fhir;q=0.9, application/json+fhir;q=0.9\r\n"
+                : "Accept: application/fhir+json;q=1.0, application/json+fhir;q=0.9\r\n";
         } else {
             return "";
         }
@@ -186,8 +197,8 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         String vauCid = getHeaderValue(httpResponse, VAU_CID);
         String vauDebugCS = getHeaderValue(httpResponse, VAU_DEBUG_SK1_C2S);
         String vauDebugSC = getHeaderValue(httpResponse, VAU_DEBUG_SK1_S2C);
-		String contentLength = getHeaderValue(httpResponse, CONTENT_LENGTH);
-        
+        String contentLength = getHeaderValue(httpResponse, CONTENT_LENGTH);
+
         byte[] message2 = httpResponse.getEntity().getContent().readAllBytes();
 
         printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
@@ -218,7 +229,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         vauClient.getVauStateMachine().receiveMessage4(message4);
         vauClient.setVauInfo(vauInfo);
-        
+
         return vauClient;
     }
 

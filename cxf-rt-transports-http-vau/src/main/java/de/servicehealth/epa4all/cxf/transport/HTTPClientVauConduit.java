@@ -83,13 +83,12 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
                 message.put("proxy.method.parameter.body.index", -1);
             }
         }
-        if (method == null) {
-            method = "POST";
-        }
-        String mfp = method + " " + fullPath;
+        String methodPath = (method == null ? "POST" : method) + " " + fullPath;;
 
+        message.put(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
+        message.put(ACCEPT, APPLICATION_OCTET_STREAM);
         message.put(REQUEST_URI, vauUri);
-        message.put(VAU_METHOD_PATH, mfp);
+        message.put(VAU_METHOD_PATH, methodPath);
         message.getExchange().put(VAU_CID, vauCid);
 
         Object map = message.computeIfAbsent(PROTOCOL_HEADERS, k -> new HashMap<>());
@@ -101,7 +100,7 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
                 headers.put(VAU_NON_PU_TRACING, List.of(vauNonPUTracing));
             }
             if (soapVersion == null) {
-                headers.put(VAU_METHOD_PATH, List.of(mfp));
+                headers.put(VAU_METHOD_PATH, List.of(methodPath));
             }
             headers.put(VAU_CID, List.of(vauCid));
 

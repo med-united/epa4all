@@ -48,7 +48,12 @@ public class FhirProxyService implements IFhirProxy {
     private final WebClient renderClient;
     private final String epaUserAgent;
 
-    public FhirProxyService(String backend, EpaConfig epaConfig, VauConfig vauConfig, VauFacade vauFacade) throws Exception {
+    public FhirProxyService(
+        String backend,
+        EpaConfig epaConfig,
+        VauConfig vauConfig,
+        VauFacade vauFacade
+    ) throws Exception {
         String apiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
         String renderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
 

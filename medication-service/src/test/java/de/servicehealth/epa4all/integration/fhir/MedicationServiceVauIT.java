@@ -60,11 +60,11 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
 
             List<Patient> patients = medicationClient.searchPatients(kvnr);
             assertFalse(patients.isEmpty());
-            patients.forEach(p -> System.out.println(p.getIdElement()));
+            patients.forEach(p -> log.info(String.valueOf(p.getIdElement())));
 
             Patient patient = patients.getLast();
             for (Identifier identifier : patient.getIdentifier()) {
-                System.out.println("Found Insurance ID: " + identifier.getValue());
+                log.info("Found Insurance ID: " + identifier.getValue());
             }
 
             String medIdentifier = "123";
@@ -77,7 +77,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
             medicationRequest.setMedication(new Reference("Medication/" + outcome.getId().getIdPart()));
 
             MethodOutcome methodOutcome = medicationClient.createResource(medicationRequest);
-            System.out.println(methodOutcome);
+            log.info(String.valueOf(methodOutcome));
 
             List<Medication> medications = medicationClient.searchMedications();
             assertFalse(medications.isEmpty());

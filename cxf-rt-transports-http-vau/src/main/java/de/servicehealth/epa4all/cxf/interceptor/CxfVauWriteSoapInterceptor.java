@@ -11,6 +11,7 @@ import org.apache.cxf.interceptor.InterceptorChain;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
+import org.apache.cxf.transport.http.HTTPException;
 import org.apache.cxf.transport.http.Headers;
 
 import java.io.IOException;
@@ -65,25 +66,33 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
     @Override
     public void handleMessage(Message message) throws Fault {
+        boolean encrypted = false;
+        String vauCid = (String) message.getExchange().get(VAU_CID);
         try {
             TreeMap httpHeaders = (TreeMap) message.get(PROTOCOL_HEADERS);
 
             /*1. Headers manipulations*/
-            String vauCid = evictHeader(httpHeaders, VAU_CID);
-            String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));
+            evictHeader(httpHeaders, VAU_METHOD_PATH);
+            evictHeader(httpHeaders, X_BACKEND);
+            evictHeader(httpHeaders, X_INSURANT_ID);
+
+            vauCid = evictHeader(httpHeaders, VAU_CID);
 
             // Getting xHeaders provided by bindingProvider.getRequestContext
             String backend = String.valueOf(message.get(X_BACKEND));
-            String vauNp = String.valueOf(message.get(VAU_NP));
 
             // All outer headers must be set before step 3 so DefaultLogEventMapper will log them in REQ_OUT
             message.put(Headers.ADD_HEADERS_PROPERTY, true);
+            addOuterHeader(message, httpHeaders, VAU_NP);
             addOuterHeader(message, httpHeaders, CLIENT_ID);
             addOuterHeader(message, httpHeaders, X_USER_AGENT);
             addOuterHeader(message, httpHeaders, X_INSURANT_ID);
 
             /*2. Mirror Message.PROTOCOL_HEADERS into inner HttpRequest headers*/
-            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend, vauNp);
+            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend);
+
+            httpHeaders.remove(VAU_NP);
+            httpHeaders.remove(X_INSURANT_ID);
 
             /*3. Collecting payload, printing resulting outer headers*/
             OutputStream os = message.getContent(OutputStream.class);
@@ -94,13 +103,19 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             innerHeaders.add(Pair.of(CONTENT_TYPE, String.valueOf(message.get(CONTENT_TYPE))));
             innerHeaders.add(Pair.of(CONTENT_LENGTH, String.valueOf(payload.length)));
 
+            String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));
             String statusLine = methodWithPath + " HTTP/1.1";
             HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);
             log.info("SOAP Inner Request: " + httpParcel.toString(false, false));
 
             /*4. Prepare Vau message*/
-            VauClient vauClient = vauFacade.getVauClient(vauCid);
-            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
+            byte[] vauMessage;
+            try {
+                VauClient vauClient = vauFacade.getVauClient(vauCid);
+                vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
+            } finally {
+                encrypted = true;
+            }
 
             httpHeaders.put(CONTENT_LENGTH, List.of(String.valueOf(vauMessage.length)));
 
@@ -115,7 +130,10 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
                 os.close();
             }
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while writing Vau SOAP message", e);
+            log.log(Level.SEVERE, "Error while sending Vau SOAP message", e);
+            if (encrypted || e instanceof HTTPException) {
+                vauFacade.forceRelease(vauCid, e.getMessage(), false);
+            }
             throw new Fault(e);
         }
     }
