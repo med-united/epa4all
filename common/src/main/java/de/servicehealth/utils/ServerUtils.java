@@ -72,9 +72,12 @@ public class ServerUtils {
     }
 
     public static Optional<String> findHeaderValue(List<Pair<String, String>> headers, String headerName) {
+        return findHeader(headers, headerName).map(Pair::getValue);
+    }
+
+    public static Optional<Pair<String, String>> findHeader(List<Pair<String, String>> headers, String headerName) {
         return headers.stream()
             .filter(p -> p.getKey().equalsIgnoreCase(headerName))
-            .map(Pair::getValue)
             .findFirst();
     }
 }

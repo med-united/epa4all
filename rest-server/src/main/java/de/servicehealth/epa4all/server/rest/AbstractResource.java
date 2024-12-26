@@ -13,6 +13,7 @@ import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
+import de.servicehealth.epa4all.server.idp.IdpConfig;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static de.servicehealth.vau.VauClient.CLIENT_ID;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
@@ -70,6 +72,9 @@ public abstract class AbstractResource {
 
     @Inject
     BulkTransfer bulkTransfer;
+
+    @Inject
+    IdpConfig idpConfig;
 
     @Inject
     @FromHttpPath
@@ -138,6 +143,7 @@ public abstract class AbstractResource {
         attributes.put(X_INSURANT_ID, insurantId);
         attributes.put(X_USER_AGENT, userAgent);
         attributes.put(X_BACKEND, backend);
+        attributes.put(CLIENT_ID, idpConfig.getClientId());
         if (vauNp != null) {
             attributes.put(VAU_NP, vauNp);
         }

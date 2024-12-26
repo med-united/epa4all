@@ -33,6 +33,7 @@ import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.HOST;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 
@@ -89,7 +90,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             String statusLine = getStatusLine(obj, methodWithPath);
             List<Pair<String, String>> headers = prepareHeaders(httpHeaders);
             
-            headers.add(Pair.of(X_BACKEND, backend));
+            headers.add(Pair.of(HOST, backend));
             headers.addAll(prepareAcceptHeaders(obj));
             headers.addAll(prepareContentHeaders(obj, payload));
 
