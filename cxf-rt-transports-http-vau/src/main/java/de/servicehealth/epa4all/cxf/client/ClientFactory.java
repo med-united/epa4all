@@ -10,8 +10,10 @@ import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbWriterProvider;
 import de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory;
 import de.servicehealth.startup.StartableService;
+import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
@@ -27,7 +29,6 @@ import org.apache.cxf.transport.DestinationFactoryManager;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
-import javax.net.ssl.SSLSession;
 import java.util.List;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
@@ -36,6 +37,9 @@ import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_A
 
 @ApplicationScoped
 public class ClientFactory extends StartableService {
+
+    @Inject
+    VauConfig vauConfig;
 
     @Override
     public int getPriority() {
@@ -46,7 +50,7 @@ public class ClientFactory extends StartableService {
         Bus globalBus = BusFactory.getDefaultBus();
         globalBus.setProperty("force.urlconnection.http.conduit", false);
         DestinationFactoryManager dfm = globalBus.getExtension(DestinationFactoryManager.class);
-        HTTPVauTransportFactory customTransport = new HTTPVauTransportFactory();
+        HTTPVauTransportFactory customTransport = new HTTPVauTransportFactory(vauConfig);
         dfm.registerDestinationFactory(TRANSPORT_IDENTIFIER, customTransport);
 
         ConduitInitiatorManager extension = globalBus.getExtension(ConduitInitiatorManager.class);

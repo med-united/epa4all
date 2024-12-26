@@ -8,8 +8,11 @@ import java.util.Map;
 import java.util.Set;
 
 import static de.servicehealth.utils.ServerUtils.findHeaderValue;
+import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
+import static de.servicehealth.vau.VauClient.VAU_NP;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.HOST;
 import static org.apache.cxf.helpers.HttpHeaderHelper.CONNECTION;
 
 @SuppressWarnings("rawtypes")
@@ -28,13 +31,15 @@ public interface VauHeaders {
             .toList());
     }
 
-    default List<Pair<String, String>> prepareHeaders(Map<String, Object> httpHeaders) {
-        List<Pair<String, String>> headers = extractHeaders(httpHeaders, Set.of(CONTENT_TYPE, ACCEPT));
+    default List<Pair<String, String>> prepareInnerHeaders(Map<String, Object> httpHeaders, String backend, String vauNp) {
+        List<Pair<String, String>> headers = extractHeaders(httpHeaders, Set.of(CONTENT_TYPE, ACCEPT, VAU_NON_PU_TRACING));
         findHeaderValue(headers, CONNECTION).ifPresent(s -> {
             if (!s.contains("Keep-Alive")) {
                 headers.add(Pair.of(CONNECTION, "Keep-Alive"));
             }
         });
+        headers.add(Pair.of(HOST, backend));
+        headers.add(Pair.of(VAU_NP, vauNp));
         return headers;
     }
 }

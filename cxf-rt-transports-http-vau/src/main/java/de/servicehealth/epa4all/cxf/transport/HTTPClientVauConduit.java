@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.cxf.transport;
 
 import de.servicehealth.epa4all.cxf.model.EmptyRequest;
+import de.servicehealth.vau.VauConfig;
 import org.apache.cxf.Bus;
 import org.apache.cxf.binding.soap.Soap12;
 import org.apache.cxf.message.Message;
@@ -33,14 +34,17 @@ import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.message.Message.REQUEST_URI;
 import static org.apache.cxf.transport.http.Headers.EMPTY_REQUEST_PROPERTY;
 
+@SuppressWarnings("rawtypes")
 public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
     public static final String VAU_METHOD_PATH = "VAU-METHOD-PATH";
-
     public static final String POST_METHOD = "POST";
 
-    public HTTPClientVauConduit(Bus b, EndpointInfo ei, EndpointReferenceType t) throws IOException {
+    private final VauConfig vauConfig;
+
+    public HTTPClientVauConduit(Bus b, EndpointInfo ei, EndpointReferenceType t, VauConfig vauConfig) throws IOException {
         super(b, ei, t);
+        this.vauConfig = vauConfig;
     }
 
     @SuppressWarnings("unchecked")
@@ -79,14 +83,13 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
                 message.put("proxy.method.parameter.body.index", -1);
             }
         }
+        if (method == null) {
+            method = "POST";
+        }
+        String mfp = method + " " + fullPath;
 
-        message.put(CONTENT_TYPE, APPLICATION_OCTET_STREAM);
-        message.put(ACCEPT, APPLICATION_OCTET_STREAM);
         message.put(REQUEST_URI, vauUri);
-
-        String methodWithPath = (method == null ? "POST" : method) + " " + fullPath;
-        message.put(VAU_METHOD_PATH, methodWithPath);
-
+        message.put(VAU_METHOD_PATH, mfp);
         message.getExchange().put(VAU_CID, vauCid);
 
         Object map = message.computeIfAbsent(PROTOCOL_HEADERS, k -> new HashMap<>());
@@ -94,9 +97,11 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
             headers.put(CONNECTION, List.of(KEEP_ALIVE));
             headers.put(CONTENT_TYPE, List.of(APPLICATION_OCTET_STREAM));
             headers.put(ACCEPT, List.of(APPLICATION_OCTET_STREAM));
-            headers.put(VAU_NON_PU_TRACING, List.of(vauNonPUTracing));
+            if (vauConfig.isTracingEnabled()) {
+                headers.put(VAU_NON_PU_TRACING, List.of(vauNonPUTracing));
+            }
             if (soapVersion == null) {
-                headers.put(VAU_METHOD_PATH, List.of(methodWithPath));
+                headers.put(VAU_METHOD_PATH, List.of(mfp));
             }
             headers.put(VAU_CID, List.of(vauCid));
 

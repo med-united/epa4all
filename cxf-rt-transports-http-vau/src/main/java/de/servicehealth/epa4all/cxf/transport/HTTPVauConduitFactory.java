@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.cxf.transport;
 
+import de.servicehealth.vau.VauConfig;
 import org.apache.cxf.Bus;
 import org.apache.cxf.service.model.EndpointInfo;
 import org.apache.cxf.transport.http.HTTPConduit;
@@ -11,6 +12,12 @@ import java.io.IOException;
 
 public class HTTPVauConduitFactory implements HTTPConduitFactory {
 
+    private final VauConfig vauConfig;
+
+    public HTTPVauConduitFactory(VauConfig vauConfig) {
+        this.vauConfig = vauConfig;
+    }
+
     @Override
     public HTTPConduit createConduit(
         HTTPTransportFactory f,
@@ -18,6 +25,6 @@ public class HTTPVauConduitFactory implements HTTPConduitFactory {
         EndpointInfo localInfo,
         EndpointReferenceType target
     ) throws IOException {
-        return new HTTPClientVauConduit(b, localInfo, target);
+        return new HTTPClientVauConduit(b, localInfo, target, vauConfig);
     }
 }

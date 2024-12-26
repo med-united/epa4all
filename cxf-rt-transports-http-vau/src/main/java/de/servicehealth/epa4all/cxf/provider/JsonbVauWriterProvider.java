@@ -26,14 +26,11 @@ import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.vau.VauClient.VAU_CID;
-import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
-import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static jakarta.ws.rs.core.HttpHeaders.HOST;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 
@@ -80,24 +77,18 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
         try {
             String vauCid = evictHeader(httpHeaders, VAU_CID);
             String backend = evictHeader(httpHeaders, X_BACKEND);
-            if (!vauFacade.isTracingEnabled()) {
-                evictHeader(httpHeaders, VAU_NON_PU_TRACING);
-            }
+            String vauNp = evictHeader(httpHeaders, VAU_NP);
 
             byte[] payload = getPayload(obj, type);
 
+            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend, vauNp);
+            innerHeaders.addAll(prepareAcceptHeaders(obj));
+            innerHeaders.addAll(prepareContentHeaders(obj, payload));
+
             String methodWithPath = evictHeader(httpHeaders, VAU_METHOD_PATH);
             String statusLine = getStatusLine(obj, methodWithPath);
-            List<Pair<String, String>> headers = prepareHeaders(httpHeaders);
-            
-            headers.add(Pair.of(HOST, backend));
-            headers.addAll(prepareAcceptHeaders(obj));
-            headers.addAll(prepareContentHeaders(obj, payload));
 
-            evictHeader(httpHeaders, X_INSURANT_ID);
-            evictHeader(httpHeaders, VAU_NP);
-
-            HttpParcel httpParcel = new HttpParcel(statusLine, headers, payload);
+            HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);
 
             log.info("REST Inner Request: " + httpParcel.toString(false, true));
 
