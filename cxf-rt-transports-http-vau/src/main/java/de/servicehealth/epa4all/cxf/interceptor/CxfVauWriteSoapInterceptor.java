@@ -1,121 +1,112 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
+import de.servicehealth.epa4all.cxf.VauHeaders;
+import de.servicehealth.http.HttpParcel;
 import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.interceptor.InterceptorChain;
-import org.apache.cxf.interceptor.StaxOutInterceptor;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
-import org.apache.cxf.transport.http.Address;
+import org.apache.cxf.transport.http.Headers;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
+import static de.servicehealth.vau.VauClient.CLIENT_ID;
 import static de.servicehealth.vau.VauClient.VAU_CID;
-import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
-import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.phase.Phase.PRE_STREAM;
 
-public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message> {
+@SuppressWarnings({"unchecked", "rawtypes"})
+public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message> implements VauHeaders {
+
+    private static final Logger log = Logger.getLogger(CxfVauWriteSoapInterceptor.class.getName());
 
     private final VauFacade vauFacade;
-    private static final Logger log = Logger.getLogger(CxfVauWriteSoapInterceptor.class.getName());
 
     public CxfVauWriteSoapInterceptor(VauFacade vauFacade) {
         super(PRE_STREAM);
-        addBefore(StaxOutInterceptor.class.getName());
+        addBefore(LoggingOutInterceptor.class.getName());
         this.vauFacade = vauFacade;
     }
 
-    @SuppressWarnings("unchecked")
+    private byte[] getPayload(OutputStream os, CachedStream cs, Message message) throws Exception {
+        message.setContent(OutputStream.class, cs);
+        InterceptorChain interceptorChain = excludeInterceptors(message);
+        interceptorChain.doIntercept(message);
+        cs.flush();
+        CachedOutputStream csNew = (CachedOutputStream) message.getContent(OutputStream.class);
+        message.setContent(OutputStream.class, os);
+        return csNew.getBytes();
+    }
+
+    private void addOuterHeader(Message message, TreeMap httpHeaders, String headerName) {
+        Object value = message.get(headerName);
+        if (value != null) {
+            httpHeaders.put(headerName, List.of(String.valueOf(value)));
+        }
+    }
+
     @Override
     public void handleMessage(Message message) throws Fault {
         try {
-            TreeMap<String, List<String>> httpHeaders = (TreeMap<String, List<String>>) message.get(PROTOCOL_HEADERS);
-            List<String> vauPathHeaders = httpHeaders.remove(VAU_METHOD_PATH);
-            List<String> vauCidHeaders = httpHeaders.remove(VAU_CID);
-            List<String> backendHeaders = httpHeaders.remove(X_BACKEND);
+            TreeMap httpHeaders = (TreeMap) message.get(PROTOCOL_HEADERS);
 
-            if (!vauFacade.isTracingEnabled()) {
-                httpHeaders.remove(VAU_NON_PU_TRACING);
-            }
+            /*1. Headers manipulations*/
+            String vauCid = evictHeader(httpHeaders, VAU_CID);
 
-            String path = (vauPathHeaders == null || vauPathHeaders.isEmpty()) ? "undefined" : vauPathHeaders.getFirst();
-            String vauCid = (vauCidHeaders == null || vauCidHeaders.isEmpty()) ? "undefined" : vauCidHeaders.getFirst();
-            String backend = (backendHeaders == null || backendHeaders.isEmpty()) ? "undefined" : backendHeaders.getFirst();
+            // Getting xHeaders provided by bindingProvider.getRequestContext
+            String backend = String.valueOf(message.get(X_BACKEND));
+            String vauNp = String.valueOf(message.get(VAU_NP));
 
-            String additionalHeaders = httpHeaders.entrySet()
-                .stream()
-                .filter(p -> !p.getKey().equalsIgnoreCase(CONTENT_TYPE))
-                .filter(p -> !p.getKey().equalsIgnoreCase(ACCEPT))
-                .map(p -> p.getKey() + ": " + p.getValue().getFirst())
-                .collect(Collectors.joining("\r\n"));
+            // DefaultLogEventMapper logs REQ_OUT before xHeaders from EpaContext are added
+            // directly into HttpRequest.Builder rb,
+            message.put(Headers.ADD_HEADERS_PROPERTY, true);
+            addOuterHeader(message, httpHeaders, CLIENT_ID);
+            addOuterHeader(message, httpHeaders, X_USER_AGENT);
+            addOuterHeader(message, httpHeaders, X_INSURANT_ID);
 
-            if (!additionalHeaders.isBlank()) {
-                additionalHeaders += "\r\n";
-            }
+            /*2. Mirror Message.innerHeaders into inner HttpRequest headers*/
+            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend, vauNp);
 
-            String keepAlive = additionalHeaders.contains("Keep-Alive") ? "" : "Connection: Keep-Alive\r\n";
-
+            /*3. Collecting payload, printing resulting outer headers*/
             OutputStream os = message.getContent(OutputStream.class);
             CachedStream cs = new CachedStream();
-            message.setContent(OutputStream.class, cs);
+            byte[] payload = getPayload(os, cs, message);
 
-            InterceptorChain interceptorChain = excludeInterceptors(
-                message
-            );
+            // ContentType is fully constructed after payload is built
+            innerHeaders.add(Pair.of(CONTENT_TYPE, String.valueOf(message.get(CONTENT_TYPE))));
+            innerHeaders.add(Pair.of(CONTENT_LENGTH, String.valueOf(payload.length)));
 
-            interceptorChain.doIntercept(message);
+            String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));
+            String statusLine = methodWithPath + " HTTP/1.1";
 
-            cs.flush();
+            HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);
+            log.info("SOAP Inner Request: " + httpParcel.toString(false, false));
 
-            CachedOutputStream csNew = (CachedOutputStream) message.getContent(OutputStream.class);
-            message.setContent(OutputStream.class, os);
-            String payload = new String(csNew.getBytes(), UTF_8);
-            byte[] full = payload.getBytes();
-
-            Address address = (Address) message.get("http.connection.address");
-            String fullString = new String(full);
-
-            String contentType = String.valueOf(message.get(CONTENT_TYPE));
-            String insurantId = String.valueOf(message.get(X_INSURANT_ID));
-            String userAgent = String.valueOf(message.get(X_USER_AGENT));
-            String np = String.valueOf(message.get(VAU_NP));
-
-            String headers = prepareContentHeaders(
-                insurantId,
-                np,
-                userAgent,
-                contentType,
-                fullString.getBytes().length
-            );
-
-            byte[] httpRequest = (path + " HTTP/1.1\r\n"
-                + "Host: " + address.getURL().getHost() + "\r\n"
-                + additionalHeaders + keepAlive
-                + headers
-            ).getBytes();
-
-            byte[] content = ArrayUtils.addAll(httpRequest, fullString.getBytes());
+            /*4. Prepare Vau message*/
             VauClient vauClient = vauFacade.getVauClient(vauCid);
-            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(content);
+            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
 
+            httpHeaders.put(CONTENT_LENGTH, List.of(String.valueOf(vauMessage.length)));
+
+            // confirm
             message.put("org.apache.cxf.message.Message.ENCODING", null);
 
             try {
@@ -126,30 +117,12 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
                 os.close();
             }
         } catch (Exception e) {
+            log.log(Level.SEVERE, "Error while writing Vau SOAP message", e);
             throw new Fault(e);
         }
     }
 
-    private String prepareContentHeaders(
-        String insurantId,
-        String np,
-        String userAgent,
-        String contentType,
-        int length
-    ) {
-        String headers = "Content-Type: " + contentType;
-        headers += "\r\nContent-Length: " + length;
-        headers += "\r\n" + X_USER_AGENT + ": " + userAgent;
-        if (insurantId != null) {
-            headers += "\r\n" + X_INSURANT_ID + ": " + insurantId;
-        }
-        if (np != null) {
-            headers += "\r\n" + VAU_NP + ": " + np;
-        }
-        headers += "\r\n\r\n";
-        return headers;
-    }
-
+    @SuppressWarnings("InnerClassMayBeStatic")
     private class CachedStream extends CachedOutputStream {
         public CachedStream() {
             // forces CachedOutputStream to keep the whole content in-memory.

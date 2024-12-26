@@ -11,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -71,10 +72,40 @@ public class ServerUtils {
         }
     }
 
+    public static String getHeaderValue(List<Pair<String, String>> headers, String headerName) {
+        return findHeaderValue(headers, headerName).orElseThrow(() ->
+            new IllegalStateException(String.format("'%s' is not defined", headerName))
+        );
+    }
+
     public static Optional<String> findHeaderValue(List<Pair<String, String>> headers, String headerName) {
+        return findHeader(headers, headerName).map(Pair::getValue);
+    }
+
+    public static String getHeaderValue(Map<String, List<Object>> headers, String headerName) {
+        return findHeaderValue(headers, headerName).orElseThrow(() ->
+            new IllegalStateException(String.format("'%s' is not defined", headerName))
+        );
+    }
+
+    public static Optional<String> findHeaderValue(Map<String, List<Object>> headers, String headerName) {
+        return findHeader(headers, headerName).map(Pair::getValue);
+    }
+
+    public static Optional<Pair<String, String>> findHeader(List<Pair<String, String>> headers, String headerName) {
         return headers.stream()
             .filter(p -> p.getKey().equalsIgnoreCase(headerName))
-            .map(Pair::getValue)
+            .findFirst();
+    }
+
+    public static Optional<Pair<String, String>> findHeader(Map<String, List<Object>> headers, String headerName) {
+        return headers.entrySet().stream()
+            .filter(h -> h.getKey().equalsIgnoreCase(headerName))
+            .map(h -> {
+                List<Object> list = h.getValue();
+                String value = list == null || list.isEmpty() ? null : String.valueOf(list.get(0));
+                return Pair.of(h.getKey(), value);
+            })
             .findFirst();
     }
 }

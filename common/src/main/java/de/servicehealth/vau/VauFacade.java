@@ -23,24 +23,6 @@ public class VauFacade {
 
     private static final Logger log = LoggerFactory.getLogger(VauFacade.class);
 
-    @Getter
-    private final Set<VauClient> vauClients = new ConcurrentHashSet<>();
-    
-    private final ScheduledExecutorService executorService;
-
-    @Setter
-    @Getter
-    private String backend;
-
-    @Setter
-    @Getter
-    private String vauNpStatus;
-
-    @Getter
-    private final boolean tracingEnabled;
-    private final BeanRegistry registry;
-
-    
     public static void terminateExecutor(ExecutorService executorService, String executorName, int awaitMillis) {
         if (executorService != null) {
             log.info(String.format("[%s] Terminating", executorName));
@@ -58,26 +40,49 @@ public class VauFacade {
             }
         }
     }
-    
+
+    @Getter
+    private final Set<VauClient> vauClients = new ConcurrentHashSet<>();
+
+    private final ScheduledExecutorService executorService;
+
+    @Setter
+    @Getter
+    private String backend;
+
+    @Getter
+    private String vauNpStatus;
+
+    @Getter
+    private final boolean tracingEnabled;
+    private final BeanRegistry registry;
+
+    @Getter
+    private volatile boolean vauNpSet;
+
     @Inject
     public VauFacade(BeanRegistry registry, VauConfig vauConfig) {
         this.registry = registry;
         this.registry.register(this);
         tracingEnabled = vauConfig.isTracingEnabled();
+        int vauReadTimeoutMs = vauConfig.getVauReadTimeoutSec() * 1000;
         for (int i = 0; i < vauConfig.getVauPoolSize(); i++) {
-            vauClients.add(new VauClient(new VauClientStateMachine(vauConfig.isPu()), vauConfig.isMock()));
+            VauClientStateMachine vauStateMachine = new VauClientStateMachine(vauConfig.isPu());
+            vauClients.add(new VauClient(vauStateMachine, vauConfig.isMock(), vauReadTimeoutMs));
         }
         executorService = Executors.newSingleThreadScheduledExecutor();
         Runtime.getRuntime().addShutdownHook(new Thread(() ->
             terminateExecutor(executorService, "Vau-Release-Job", 6000))
         );
-        int vauReadTimeoutMs = vauConfig.getVauReadTimeoutSec() * 1000;
         executorService.scheduleWithFixedDelay(() -> {
-            for(VauClient vauClient: vauClients) {
-                if (vauClient.busy() && vauClient.getAcquiredAt().get() < System.currentTimeMillis() - vauReadTimeoutMs) {
-                    log.warn(String.format("VauClient [VAU_CID='%s'] is force released", vauClient.getVauInfo().getVauCid()));
-                    vauClient.forceRelease();
+            try {
+                for (VauClient vauClient : vauClients) {
+                    if (vauClient.hangs()) {
+                        vauClient.forceRelease();
+                    }
                 }
+            } catch (Throwable t) {
+                log.error("Error while VauClient forceRelease", t);
             }
         }, 10, 10, TimeUnit.SECONDS);
     }
@@ -85,6 +90,11 @@ public class VauFacade {
     @PreDestroy
     void cleanup() {
         registry.unregister(this);
+    }
+
+    public void setVauNpStatus(String vauNpStatus, boolean vauNpSet) {
+        this.vauNpStatus = vauNpStatus;
+        this.vauNpSet = vauNpSet;
     }
 
     public VauClient acquireVauClient() throws InterruptedException {

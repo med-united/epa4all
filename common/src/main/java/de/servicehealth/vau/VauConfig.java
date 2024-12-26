@@ -14,13 +14,16 @@ public class VauConfig {
     @ConfigProperty(name = "epa.vau.mock", defaultValue = "false")
     boolean mock;
 
+    @ConfigProperty(name = "epa.internal.fhir.enabled", defaultValue = "false")
+    boolean internalFhirEnabled;
+
     @ConfigProperty(name = "epa.vau.tracing.enabled", defaultValue = "true")
     boolean tracingEnabled;
 
     @ConfigProperty(name = "epa.vau.pool.size", defaultValue = "10")
     int vauPoolSize;
 
-    @ConfigProperty(name = "epa.vau.read.timeout.sec", defaultValue = "10")
+    @ConfigProperty(name = "epa.vau.read.timeout.sec", defaultValue = "30")
     int vauReadTimeoutSec;
 
     @ConfigProperty(name = "epa.vau.connection.timeout.ms", defaultValue = "10000")

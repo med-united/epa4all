@@ -14,7 +14,6 @@ import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
-
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.logmanager.Level;
 
@@ -107,7 +106,9 @@ public abstract class EpaFileTracker<T extends FileAction> {
     public IDocumentManagementPortType getDocumentManagementPortType(EpaContext epaContext) {
         EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
         IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
-        ((BindingProvider) documentManagementPortType).getRequestContext().putAll(epaContext.getXHeaders());
+        if (documentManagementPortType instanceof BindingProvider bindingProvider) {
+            bindingProvider.getRequestContext().putAll(epaContext.getXHeaders());
+        }
         return documentManagementPortType;
     }
 
