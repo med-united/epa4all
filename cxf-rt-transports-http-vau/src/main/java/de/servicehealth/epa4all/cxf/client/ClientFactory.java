@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.cxf.client;
 
+import de.servicehealth.epa4all.cxf.command.VauSessionReload;
 import de.servicehealth.epa4all.cxf.interceptor.CxfHeadersInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
@@ -13,6 +14,7 @@ import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
@@ -40,6 +42,9 @@ public class ClientFactory extends StartableService {
 
     @Inject
     VauConfig vauConfig;
+
+    @Inject
+    Event<VauSessionReload> vauSessionReloadEvent;
 
     @Override
     public int getPriority() {
@@ -77,7 +82,7 @@ public class ClientFactory extends StartableService {
         initClient(
             WebClient.getConfig(api),
             List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade, epaUserAgent)),
-            List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
+            List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade, vauSessionReloadEvent))
         );
         return api;
     }

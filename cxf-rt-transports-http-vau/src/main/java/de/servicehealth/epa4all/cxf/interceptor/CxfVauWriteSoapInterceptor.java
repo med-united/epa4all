@@ -74,16 +74,16 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             // Getting xHeaders provided by bindingProvider.getRequestContext
             String backend = String.valueOf(message.get(X_BACKEND));
-            String vauNp = String.valueOf(message.get(VAU_NP));
 
             // All outer headers must be set before step 3 so DefaultLogEventMapper will log them in REQ_OUT
             message.put(Headers.ADD_HEADERS_PROPERTY, true);
+            addOuterHeader(message, httpHeaders, VAU_NP);
             addOuterHeader(message, httpHeaders, CLIENT_ID);
             addOuterHeader(message, httpHeaders, X_USER_AGENT);
             addOuterHeader(message, httpHeaders, X_INSURANT_ID);
 
             /*2. Mirror Message.PROTOCOL_HEADERS into inner HttpRequest headers*/
-            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend, vauNp);
+            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend);
 
             /*3. Collecting payload, printing resulting outer headers*/
             OutputStream os = message.getContent(OutputStream.class);

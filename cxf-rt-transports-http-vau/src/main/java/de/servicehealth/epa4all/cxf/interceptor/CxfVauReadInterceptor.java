@@ -1,8 +1,11 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
+import de.servicehealth.epa4all.cxf.command.VauSessionReload;
+import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauResponse;
 import de.servicehealth.vau.VauResponseReader;
+import jakarta.enterprise.event.Event;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
@@ -26,10 +29,19 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger log = Logger.getLogger(CxfVauReadInterceptor.class.getName());
 
-    private final VauResponseReader vauResponseReader;
+    public static final Set<String> MEDIA_TYPES = Set.of(
+        "application/octet-stream", "application/pdf", "image/png", "image/jpeg", "image/gif", "image/bmp"
+    );
 
-    public CxfVauReadInterceptor(VauFacade vauFacade) {
+    private final VauFacade vauFacade;
+    private final VauResponseReader vauResponseReader;
+    private final Event<VauSessionReload> vauSessionReloadEvent;
+
+    public CxfVauReadInterceptor(VauFacade vauFacade, Event<VauSessionReload> vauSessionReloadEvent) {
         super(Phase.PROTOCOL);
+        this.vauFacade = vauFacade;
+        this.vauSessionReloadEvent = vauSessionReloadEvent;
+
         vauResponseReader = new VauResponseReader(vauFacade);
     }
 
@@ -40,29 +52,39 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             Integer responseCode = (Integer) message.get(RESPONSE_CODE);
 
             String vauCid = (String) message.getExchange().get(VAU_CID);
+            byte[] vauPayload = inputStream.readAllBytes();
             VauResponse vauResponse = vauResponseReader.read(
-                vauCid, responseCode, getProtocolHeaders(message), inputStream.readAllBytes()
+                vauCid, responseCode, getProtocolHeaders(message), vauPayload
             );
             restoreHeaders(vauResponse, message, Set.of(LOCATION, CONTENT_TYPE, CONTENT_LENGTH));
 
-            if (vauResponse.generalError() != null) {
-                putProtocolHeader(message, VAU_ERROR, vauResponse.generalError());
+            String error = vauResponse.error();
+            if (error != null) {
+                putProtocolHeader(message, VAU_ERROR, error);
+                if (error.contains("no userSession")) {
+                    vauSessionReloadEvent.fireAsync(new VauSessionReload(vauFacade.getBackend()));
+                }
+                if (!vauResponse.decrypted()) {
+                    VauClient vauClient = vauFacade.getVauClient(vauCid);
+                    if (vauClient != null) {
+                        log.warning(String.format("[%s] VauClient was force released", vauCid));
+                        vauClient.forceRelease();
+                    }
+                }
             }
             byte[] payload = vauResponse.payload();
             if (payload != null) {
-
                 vauResponse.headers().stream()
                     .filter(p -> p.getKey().equalsIgnoreCase(CONTENT_TYPE))
-                    .findFirst().ifPresent(p -> {
-                        String contentType = p.getValue();
+                    .findFirst().ifPresent(h -> {
+                        String contentType = h.getValue();
                         message.put(CONTENT_TYPE, contentType);
-                        if (!contentType.contains("pdf")) {
+                        if (!MEDIA_TYPES.contains(contentType)) {
                             String content = new String(payload);
                             content = content.substring(0, Math.min(100, content.length())) + " ********* ";
                             log.info("Response PAYLOAD: " + content);
                         }
                     });
-
 
                 message.setContent(InputStream.class, new ByteArrayInputStream(payload));
                 putProtocolHeader(message, CONTENT_LENGTH, payload.length);

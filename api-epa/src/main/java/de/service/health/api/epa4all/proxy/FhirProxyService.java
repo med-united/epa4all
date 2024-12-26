@@ -2,6 +2,7 @@ package de.service.health.api.epa4all.proxy;
 
 import de.service.health.api.epa4all.EpaConfig;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
+import de.servicehealth.epa4all.cxf.command.VauSessionReload;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.model.FhirRequest;
@@ -10,6 +11,7 @@ import de.servicehealth.epa4all.cxf.provider.JsonbVauReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
+import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedHashMap;
@@ -47,8 +49,15 @@ public class FhirProxyService implements IFhirProxy {
     private final WebClient apiClient;
     private final WebClient renderClient;
     private final String epaUserAgent;
+    private final Event<VauSessionReload> vauSessionReloadEvent;
 
-    public FhirProxyService(String backend, EpaConfig epaConfig, VauConfig vauConfig, VauFacade vauFacade) throws Exception {
+    public FhirProxyService(
+        String backend,
+        EpaConfig epaConfig,
+        VauConfig vauConfig,
+        VauFacade vauFacade,
+        Event<VauSessionReload> vauSessionReloadEvent
+    ) throws Exception {
         String apiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
         String renderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
 
@@ -56,6 +65,8 @@ public class FhirProxyService implements IFhirProxy {
 
         apiClient = setup(apiUrl, vauConfig, vauFacade);
         renderClient = setup(renderUrl, vauConfig, vauFacade);
+
+        this.vauSessionReloadEvent = vauSessionReloadEvent;
     }
 
     private WebClient setup(String url, VauConfig vauConfig, VauFacade vauFacade) throws Exception {
@@ -75,7 +86,7 @@ public class FhirProxyService implements IFhirProxy {
         ClientFactory.initClient(
             webClient.getConfiguration(),
             List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade, epaUserAgent)),
-            List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
+            List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade, vauSessionReloadEvent))
         );
         return webClient;
     }

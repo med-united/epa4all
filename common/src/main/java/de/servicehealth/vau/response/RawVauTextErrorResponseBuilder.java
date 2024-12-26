@@ -22,7 +22,7 @@ public class RawVauTextErrorResponseBuilder extends AbstractVauResponseBuilder {
             error = responseCode + " " + source.split(String.valueOf(responseCode))[1].split("<")[0].trim();
         }
         return error != null
-            ? new VauResponse(responseCode, error, error.getBytes(UTF_8), headers)
+            ? new VauResponse(responseCode, error, error.getBytes(UTF_8), headers, false)
             : super.build(vauCid, responseCode, headers, bytes);
     }
 }

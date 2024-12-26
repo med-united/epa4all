@@ -19,15 +19,15 @@ public class VauHeaderInnerResponseBuilder extends AbstractVauResponseBuilder {
         List<Pair<String, String>> innerHeaders = httpResponse.getHeaders();
         String error = findHeaderValue(innerHeaders, VAU_ERROR).orElse(null);
         if (error != null) {
-            return new VauResponse(httpResponse.getStatus(), error, error.getBytes(UTF_8), innerHeaders);
+            return new VauResponse(httpResponse.getStatus(), error, error.getBytes(UTF_8), innerHeaders, true);
         } else {
             int status = httpResponse.getStatus();
             byte[] payload = httpResponse.getPayload();
             if (status >= 400) {
                 error = payload == null ? "no error description" : new String(payload);
-                return new VauResponse(status, error, error.getBytes(UTF_8), innerHeaders);
+                return new VauResponse(status, error, error.getBytes(UTF_8), innerHeaders, true);
             } else {
-                return new VauResponse(status, null, payload, innerHeaders);
+                return new VauResponse(status, null, payload, innerHeaders, true);
             }
         }
     }

@@ -21,7 +21,7 @@ public class DecryptedVauTextErrorResponseBuilder extends AbstractVauResponseBui
             error = new String(bytes);
         }
         return error != null
-            ? new VauResponse(responseCode, error, error.getBytes(UTF_8), headers)
+            ? new VauResponse(responseCode, error, error.getBytes(UTF_8), headers, true)
             : super.build(vauCid, responseCode, headers, bytes);
     }
 }

@@ -5,13 +5,16 @@ import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.fault.CetpFault;
+import de.health.service.cetp.retry.Retrier;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.epa4all.cxf.command.VauSessionReload;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.startup.StartableService;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
@@ -21,7 +24,6 @@ import org.jboss.logmanager.Level;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,6 +164,20 @@ public class VauNpProvider extends StartableService {
         }
         new VauNpFile(configDirectory).update(vauNpMap);
         return statuses;
+    }
+
+    public void onTransfer(@ObservesAsync VauSessionReload sessionReload) {
+        String backend = sessionReload.getBackend();
+        try {
+            Retrier.callAndRetry(
+                List.of(1000),
+                30000,
+                () -> reload(Set.of(backend)),
+                statusList -> !statusList.getFirst().contains("try later")
+            );
+        } catch (Exception e) {
+            log.log(Level.SEVERE, String.format("Error while reloading Vau NP for '%s'", backend), e);
+        }
     }
 
     public List<String> reload(Set<String> targetEpaSet) throws Exception {

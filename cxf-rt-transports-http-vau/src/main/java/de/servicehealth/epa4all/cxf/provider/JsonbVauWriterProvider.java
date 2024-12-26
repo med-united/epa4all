@@ -26,7 +26,6 @@ import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.vau.VauClient.VAU_CID;
-import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -78,11 +77,10 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             String methodWithPath = evictHeader(httpHeaders, VAU_METHOD_PATH);
             String vauCid = evictHeader(httpHeaders, VAU_CID);
             String backend = evictHeader(httpHeaders, X_BACKEND);
-            String vauNp = evictHeader(httpHeaders, VAU_NP);
 
             byte[] payload = getPayload(obj, type);
 
-            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend, vauNp);
+            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend);
             innerHeaders.addAll(prepareAcceptHeaders(obj));
             innerHeaders.addAll(prepareContentHeaders(obj, payload));
 
