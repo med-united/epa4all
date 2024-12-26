@@ -75,6 +75,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
         OutputStream entityStream
     ) throws IOException, WebApplicationException {
         try {
+            String methodWithPath = evictHeader(httpHeaders, VAU_METHOD_PATH);
             String vauCid = evictHeader(httpHeaders, VAU_CID);
             String backend = evictHeader(httpHeaders, X_BACKEND);
             String vauNp = evictHeader(httpHeaders, VAU_NP);
@@ -85,9 +86,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             innerHeaders.addAll(prepareAcceptHeaders(obj));
             innerHeaders.addAll(prepareContentHeaders(obj, payload));
 
-            String methodWithPath = evictHeader(httpHeaders, VAU_METHOD_PATH);
             String statusLine = getStatusLine(obj, methodWithPath);
-
             HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);
 
             log.info("REST Inner Request: " + httpParcel.toString(false, true));

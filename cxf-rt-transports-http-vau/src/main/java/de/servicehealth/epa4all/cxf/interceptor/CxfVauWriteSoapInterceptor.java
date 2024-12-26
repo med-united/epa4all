@@ -70,19 +70,19 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
             /*1. Headers manipulations*/
             String vauCid = evictHeader(httpHeaders, VAU_CID);
+            String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));
 
             // Getting xHeaders provided by bindingProvider.getRequestContext
             String backend = String.valueOf(message.get(X_BACKEND));
             String vauNp = String.valueOf(message.get(VAU_NP));
 
-            // DefaultLogEventMapper logs REQ_OUT before xHeaders from EpaContext are added
-            // directly into HttpRequest.Builder rb,
+            // All outer headers must be set before step 3 so DefaultLogEventMapper will log them in REQ_OUT
             message.put(Headers.ADD_HEADERS_PROPERTY, true);
             addOuterHeader(message, httpHeaders, CLIENT_ID);
             addOuterHeader(message, httpHeaders, X_USER_AGENT);
             addOuterHeader(message, httpHeaders, X_INSURANT_ID);
 
-            /*2. Mirror Message.innerHeaders into inner HttpRequest headers*/
+            /*2. Mirror Message.PROTOCOL_HEADERS into inner HttpRequest headers*/
             List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend, vauNp);
 
             /*3. Collecting payload, printing resulting outer headers*/
@@ -94,9 +94,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             innerHeaders.add(Pair.of(CONTENT_TYPE, String.valueOf(message.get(CONTENT_TYPE))));
             innerHeaders.add(Pair.of(CONTENT_LENGTH, String.valueOf(payload.length)));
 
-            String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));
             String statusLine = methodWithPath + " HTTP/1.1";
-
             HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);
             log.info("SOAP Inner Request: " + httpParcel.toString(false, false));
 
