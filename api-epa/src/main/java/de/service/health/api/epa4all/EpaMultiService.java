@@ -9,7 +9,6 @@ import de.service.health.api.epa4all.proxy.FhirProxyService;
 import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
-import de.servicehealth.epa4all.cxf.command.VauSessionReload;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.GenericDirectClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
@@ -20,7 +19,6 @@ import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Event;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
@@ -46,7 +44,6 @@ public class EpaMultiService extends StartableService {
 
     @Getter
     private final VauConfig vauConfig;
-    private final Event<VauSessionReload> vauSessionReloadEvent;
 
     @Getter
     private final EpaConfig epaConfig;
@@ -65,11 +62,9 @@ public class EpaMultiService extends StartableService {
         EpaConfig epaConfig,
         ClientFactory clientFactory,
         Instance<VauFacade> vauFacadeInstance,
-        EpaServicePortProvider epaServicePortProvider,
-        Event<VauSessionReload> vauSessionReloadEvent
+        EpaServicePortProvider epaServicePortProvider
     ) {
         this.epaServicePortProvider = epaServicePortProvider;
-        this.vauSessionReloadEvent = vauSessionReloadEvent;
         this.vauFacadeInstance = vauFacadeInstance;
         this.clientFactory = clientFactory;
         this.epaConfig = epaConfig;
@@ -111,7 +106,7 @@ public class EpaMultiService extends StartableService {
                         EntitlementsApi.class, backend, epaConfig.getEntitlementServiceUrl(), vauFacade
                     );
 
-                    IFhirProxy fhirProxy = new FhirProxyService(backend, epaConfig, vauConfig, vauFacade, vauSessionReloadEvent);
+                    IFhirProxy fhirProxy = new FhirProxyService(backend, epaConfig, vauConfig, vauFacade);
 
                     GenericDirectClient medicationClient = null;
                     VauRenderClient renderClient = null;
@@ -129,7 +124,7 @@ public class EpaMultiService extends StartableService {
                             renderExecutor, epaUserAgent, medicationRenderUrl.replace("+vau", "")
                         );
                     }
-                    
+
                     return new EpaAPIAggregator(
                         backend,
                         vauFacade,
@@ -153,8 +148,6 @@ public class EpaMultiService extends StartableService {
         return clientFactory.createProxyClient(vauFacade, epaConfig.getEpaUserAgent(), clazz, getBackendUrl(backend, serviceUrl));
     }
 
-    // TODO - confirm purpose of the cache
-    
     public EpaAPI getEpaAPI(String insurantId) {
         EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(insurantId);
         if (epaAPI != null) {

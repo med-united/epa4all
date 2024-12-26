@@ -26,11 +26,13 @@ import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 
 public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
 
-    private static Logger log = Logger.getLogger(FHIRResponseVAUInterceptor.class.getName());
+    private static final Logger log = Logger.getLogger(FHIRResponseVAUInterceptor.class.getName());
 
+    private final VauFacade vauFacade;
     private final VauResponseReader vauResponseReader;
 
     public FHIRResponseVAUInterceptor(VauFacade vauFacade) {
+        this.vauFacade = vauFacade;
         this.vauResponseReader = new VauResponseReader(vauFacade);
     }
 
@@ -46,6 +48,10 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
         String vauCid = URI.create(uri).getPath();
 
         VauResponse vauResponse = vauResponseReader.read(vauCid, responseCode, originHeaders, bytes);
+        String error = vauResponse.error();
+        if (error != null) {
+            vauFacade.forceRelease(vauCid, error, vauResponse.decrypted());
+        }
 
         Header[] headers = vauResponse.headers()
             .stream()

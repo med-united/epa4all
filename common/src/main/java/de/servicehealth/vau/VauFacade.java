@@ -5,23 +5,28 @@ import de.servicehealth.registry.BeanRegistry;
 import io.vertx.core.impl.ConcurrentHashSet;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.time.LocalTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Dependent
 public class VauFacade {
 
-    private static final Logger log = LoggerFactory.getLogger(VauFacade.class);
+    private static final java.util.logging.Logger log = Logger.getLogger(VauFacade.class.getName());
+
+    @Inject
+    Event<VauSessionReload> vauSessionReloadEvent;
 
     public static void terminateExecutor(ExecutorService executorService, String executorName, int awaitMillis) {
         if (executorService != null) {
@@ -36,7 +41,7 @@ public class VauFacade {
                 }
             } catch (InterruptedException ex) {
                 executorService.shutdownNow();
-               Thread.currentThread().interrupt();
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -65,7 +70,7 @@ public class VauFacade {
         this.registry = registry;
         this.registry.register(this);
         tracingEnabled = vauConfig.isTracingEnabled();
-        int vauReadTimeoutMs = vauConfig.getVauReadTimeoutSec() * 1000;
+        int vauReadTimeoutMs = vauConfig.getVauReadTimeoutMs();
         for (int i = 0; i < vauConfig.getVauPoolSize(); i++) {
             VauClientStateMachine vauStateMachine = new VauClientStateMachine(vauConfig.isPu());
             vauClients.add(new VauClient(vauStateMachine, vauConfig.isMock(), vauReadTimeoutMs));
@@ -78,13 +83,15 @@ public class VauFacade {
             try {
                 for (VauClient vauClient : vauClients) {
                     if (vauClient.hangs()) {
+                        String vauCid = vauClient.getVauInfo().getVauCid();
+                        log.warning(String.format("[%s] Timeout force release", vauCid));
                         vauClient.forceRelease();
                     }
                 }
             } catch (Throwable t) {
-                log.error("Error while VauClient forceRelease", t);
+                log.log(Level.SEVERE, "Error while VauClient forceRelease", t);
             }
-        }, 10, 10, TimeUnit.SECONDS);
+        }, 100, 100, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
@@ -104,7 +111,10 @@ public class VauFacade {
                 .filter(VauClient::acquire)
                 .findFirst();
             if (vauClientOpt.isEmpty()) {
-                log.info(String.format("******** [%s] WAITING FOR VAU CLIENT ********", Thread.currentThread().getName()));
+
+                String threadName = Thread.currentThread().getName();
+                LocalTime n = LocalTime.now();
+                System.out.printf("%tT.%tL [%s] WAITING FOR VAU CLIENT ********%n", n, n, threadName);
                 TimeUnit.MILLISECONDS.sleep(300);
             } else {
                 break;
@@ -119,5 +129,18 @@ public class VauFacade {
             .filter(vc -> vc.getVauInfo().getVauCid().equals(vauCid))
             .findFirst()
             .orElse(null);
+    }
+
+    public void forceRelease(String vauCid, String error, boolean decrypted) {
+        if (error.contains("no userSession")) {
+            vauSessionReloadEvent.fireAsync(new VauSessionReload(backend));
+        }
+        log.warning(String.format("[%s] Error force release", vauCid));
+
+        VauClient vauClient = getVauClient(vauCid);
+        if (vauClient != null && !decrypted) {
+            System.out.printf("[%s] %s Error force release%n", Thread.currentThread().getName(), vauCid);
+            vauClient.forceRelease();
+        }
     }
 }

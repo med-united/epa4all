@@ -9,10 +9,10 @@ import de.health.service.cetp.retry.Retrier;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
-import de.servicehealth.epa4all.cxf.command.VauSessionReload;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.startup.StartableService;
+import de.servicehealth.vau.VauSessionReload;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
@@ -41,7 +41,7 @@ public class VauNpProvider extends StartableService {
     private static final Logger log = Logger.getLogger(VauNpProvider.class.getName());
 
     private static final String STATUS_TEMPLATE = "[%s] Took %d ms - %s";
-    
+
     private final Map<VauNpKey, String> vauNpMap = new HashMap<>();
     private final Semaphore semaphore = new Semaphore(1);
 

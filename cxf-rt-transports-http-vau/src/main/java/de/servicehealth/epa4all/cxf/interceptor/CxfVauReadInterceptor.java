@@ -1,11 +1,8 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
-import de.servicehealth.epa4all.cxf.command.VauSessionReload;
-import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauResponse;
 import de.servicehealth.vau.VauResponseReader;
-import jakarta.enterprise.event.Event;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
@@ -35,12 +32,10 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private final VauFacade vauFacade;
     private final VauResponseReader vauResponseReader;
-    private final Event<VauSessionReload> vauSessionReloadEvent;
 
-    public CxfVauReadInterceptor(VauFacade vauFacade, Event<VauSessionReload> vauSessionReloadEvent) {
+    public CxfVauReadInterceptor(VauFacade vauFacade) {
         super(Phase.PROTOCOL);
         this.vauFacade = vauFacade;
-        this.vauSessionReloadEvent = vauSessionReloadEvent;
 
         vauResponseReader = new VauResponseReader(vauFacade);
     }
@@ -57,20 +52,10 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
                 vauCid, responseCode, getProtocolHeaders(message), vauPayload
             );
             restoreHeaders(vauResponse, message, Set.of(LOCATION, CONTENT_TYPE, CONTENT_LENGTH));
-
             String error = vauResponse.error();
             if (error != null) {
                 putProtocolHeader(message, VAU_ERROR, error);
-                if (error.contains("no userSession")) {
-                    vauSessionReloadEvent.fireAsync(new VauSessionReload(vauFacade.getBackend()));
-                }
-                if (!vauResponse.decrypted()) {
-                    VauClient vauClient = vauFacade.getVauClient(vauCid);
-                    if (vauClient != null) {
-                        log.warning(String.format("[%s] VauClient was force released", vauCid));
-                        vauClient.forceRelease();
-                    }
-                }
+                vauFacade.forceRelease(vauCid, error, vauResponse.decrypted());
             }
             byte[] payload = vauResponse.payload();
             if (payload != null) {

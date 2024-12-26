@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.cxf.command;
+package de.servicehealth.vau;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

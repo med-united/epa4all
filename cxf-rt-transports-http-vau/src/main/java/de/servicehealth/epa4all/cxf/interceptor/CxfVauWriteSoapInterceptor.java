@@ -11,6 +11,7 @@ import org.apache.cxf.interceptor.InterceptorChain;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
+import org.apache.cxf.transport.http.HTTPException;
 import org.apache.cxf.transport.http.Headers;
 
 import java.io.IOException;
@@ -65,11 +66,13 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
 
     @Override
     public void handleMessage(Message message) throws Fault {
+        boolean encrypted = false;
+        String vauCid = (String) message.getExchange().get(VAU_CID);
         try {
             TreeMap httpHeaders = (TreeMap) message.get(PROTOCOL_HEADERS);
 
             /*1. Headers manipulations*/
-            String vauCid = evictHeader(httpHeaders, VAU_CID);
+            vauCid = evictHeader(httpHeaders, VAU_CID);
             String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));
 
             // Getting xHeaders provided by bindingProvider.getRequestContext
@@ -99,8 +102,13 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             log.info("SOAP Inner Request: " + httpParcel.toString(false, false));
 
             /*4. Prepare Vau message*/
-            VauClient vauClient = vauFacade.getVauClient(vauCid);
-            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
+            byte[] vauMessage;
+            try {
+                VauClient vauClient = vauFacade.getVauClient(vauCid);
+                vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
+            } finally {
+                encrypted = true;
+            }
 
             httpHeaders.put(CONTENT_LENGTH, List.of(String.valueOf(vauMessage.length)));
 
@@ -115,7 +123,10 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
                 os.close();
             }
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while writing Vau SOAP message", e);
+            log.log(Level.SEVERE, "Error while sending Vau SOAP message", e);
+            if (encrypted || e instanceof HTTPException) {
+                vauFacade.forceRelease(vauCid, e.getMessage(), false);
+            }
             throw new Fault(e);
         }
     }

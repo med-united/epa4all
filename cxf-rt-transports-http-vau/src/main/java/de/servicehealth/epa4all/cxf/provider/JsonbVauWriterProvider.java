@@ -73,9 +73,10 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
         MultivaluedMap httpHeaders,
         OutputStream entityStream
     ) throws IOException, WebApplicationException {
+        boolean encrypted = false;
+        String vauCid = evictHeader(httpHeaders, VAU_CID);
         try {
             String methodWithPath = evictHeader(httpHeaders, VAU_METHOD_PATH);
-            String vauCid = evictHeader(httpHeaders, VAU_CID);
             String backend = evictHeader(httpHeaders, X_BACKEND);
 
             byte[] payload = getPayload(obj, type);
@@ -89,13 +90,21 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
 
             log.info("REST Inner Request: " + httpParcel.toString(false, true));
 
-            VauClient vauClient = vauFacade.getVauClient(vauCid);
-            byte[] vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
+            byte[] vauMessage;
+            try {
+                VauClient vauClient = vauFacade.getVauClient(vauCid);
+                vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
+            } finally {
+                encrypted = true;
+            }
             entityStream.write(vauMessage);
             entityStream.close();
 
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while writing Vau JSON message", e);
+            log.log(Level.SEVERE, "Error while sending Vau REST message", e);
+            if (encrypted) {
+                vauFacade.forceRelease(vauCid, e.getMessage(), false);
+            }
             throw new IOException(e);
         }
     }
