@@ -70,10 +70,11 @@ public class VauClient {
         return availablePermits == 0 && 0 < acquired && acquired >= System.currentTimeMillis() - readTimeoutMs;
     }
 
-    public boolean hangs() {
-        long acquired = acquiredAt.get();
+    public Long hangs() {
         int availablePermits = semaphore.availablePermits();
-        return availablePermits == 0 && 0 < acquired && acquired < System.currentTimeMillis() - readTimeoutMs;
+        boolean hangs = availablePermits == 0 && 0 < acquiredAt.get() && acquiredAt.get() < System.currentTimeMillis() - readTimeoutMs;
+        long hangsTime = System.currentTimeMillis() - acquiredAt.get();
+        return hangs ? hangsTime : null;
     }
 
     public boolean broken() {
@@ -96,12 +97,22 @@ public class VauClient {
         }
     }
 
-    public void forceRelease() {
-        try {
-            release();
-        } finally {
-            broken.set(true);
-            vauInfo = null;
+    public String forceRelease(Long hangsTime) {
+        if (hangsTime == null || hangsTime <= System.currentTimeMillis() - acquiredAt.get()) {
+            try {
+                try {
+                    String vauCid = vauInfo.getVauCid();
+                    release();
+                    return vauCid;
+                } finally {
+                    broken.set(true);
+                    vauInfo = null;
+                }
+            } catch (Exception ignored) {
+                return null;
+            }
+        } else {
+            return null;
         }
     }
 }

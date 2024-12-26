@@ -82,10 +82,14 @@ public class VauFacade {
         executorService.scheduleWithFixedDelay(() -> {
             try {
                 for (VauClient vauClient : vauClients) {
-                    if (vauClient.hangs()) {
-                        String vauCid = vauClient.getVauInfo().getVauCid();
-                        log.warning(String.format("[%s] Timeout force release", vauCid));
-                        vauClient.forceRelease();
+                    Long hangsTime = vauClient.hangs();
+                    if (hangsTime != null) {
+                        String vauCid = vauClient.forceRelease(hangsTime);
+                        if (vauCid == null) {
+                            log.info("*Force release failed, vauClient was acquired right now*");
+                        } else {
+                            log.warning(String.format("[%s] Timeout force release", vauCid));
+                        }
                     }
                 }
             } catch (Throwable t) {
@@ -111,10 +115,8 @@ public class VauFacade {
                 .filter(VauClient::acquire)
                 .findFirst();
             if (vauClientOpt.isEmpty()) {
-
                 String threadName = Thread.currentThread().getName();
-                LocalTime n = LocalTime.now();
-                System.out.printf("%tT.%tL [%s] WAITING FOR VAU CLIENT ********%n", n, n, threadName);
+                log.warning(String.format("[%s] WAITING FOR VAU CLIENT ********", threadName));
                 TimeUnit.MILLISECONDS.sleep(300);
             } else {
                 break;
@@ -135,12 +137,10 @@ public class VauFacade {
         if (error.contains("no userSession")) {
             vauSessionReloadEvent.fireAsync(new VauSessionReload(backend));
         }
-        log.warning(String.format("[%s] Error force release", vauCid));
-
         VauClient vauClient = getVauClient(vauCid);
         if (vauClient != null && !decrypted) {
-            System.out.printf("[%s] %s Error force release%n", Thread.currentThread().getName(), vauCid);
-            vauClient.forceRelease();
+            log.warning(String.format("[%s] %s Error force release", Thread.currentThread().getName(), vauCid));
+            vauClient.forceRelease(null);
         }
     }
 }
