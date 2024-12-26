@@ -71,6 +71,7 @@ public class ServicePortProvider extends StartableService {
         loggingFeature.setPrettyLogging(true);
         loggingFeature.setVerbose(true);
         loggingFeature.setLogMultipart(true);
+        loggingFeature.setLogBinary(false);
     }
 
     @Inject
