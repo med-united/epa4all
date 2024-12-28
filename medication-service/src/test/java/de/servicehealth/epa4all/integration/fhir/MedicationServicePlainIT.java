@@ -3,7 +3,7 @@ package de.servicehealth.epa4all.integration.fhir;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import de.servicehealth.epa4all.common.PlainTestProfile;
+import de.servicehealth.epa4all.common.profile.PlainLocalTestProfile;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.PlainRenderClient;
 import io.quarkus.test.junit.QuarkusTest;
@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
-@TestProfile(PlainTestProfile.class)
+@TestProfile(PlainLocalTestProfile.class)
 public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
 
     private static final Logger log = LoggerFactory.getLogger(MedicationServicePlainIT.class);

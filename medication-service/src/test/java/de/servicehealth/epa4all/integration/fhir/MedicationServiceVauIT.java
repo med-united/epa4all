@@ -2,7 +2,7 @@ package de.servicehealth.epa4all.integration.fhir;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
-import de.servicehealth.epa4all.common.ProxyTestProfile;
+import de.servicehealth.epa4all.common.profile.ProxyLocalTestProfile;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderClient;
@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
-@TestProfile(ProxyTestProfile.class)
+@TestProfile(ProxyLocalTestProfile.class)
 public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
 
     private static final Logger log = LoggerFactory.getLogger(MedicationServiceVauIT.class);

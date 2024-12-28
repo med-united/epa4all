@@ -3,7 +3,7 @@ package de.servicehealth.epa4all.integration.bc;
 import de.health.service.cetp.IKonnektorClient;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
-import de.servicehealth.epa4all.common.ProxyTestProfile;
+import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import io.quarkus.test.junit.QuarkusTest;
@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
-@TestProfile(ProxyTestProfile.class)
+@TestProfile(ProxyEpaTestProfile.class)
 public class IdpClientIT {
 
     private static final Logger log = Logger.getLogger(IdpClientIT.class.getName());

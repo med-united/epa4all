@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.integration.bc.wiremock;
 
-import de.servicehealth.epa4all.common.WireMockProfile;
+import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVauNpTest;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpFile;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpKey;

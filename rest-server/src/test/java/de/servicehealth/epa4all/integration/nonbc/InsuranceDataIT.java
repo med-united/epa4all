@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.integration.nonbc;
 
 import de.health.service.cetp.IKonnektorClient;
-import de.servicehealth.epa4all.common.ProxyTestProfile;
+import de.servicehealth.epa4all.common.profile.ProxyLocalTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @QuarkusTest
-@TestProfile(ProxyTestProfile.class)
+@TestProfile(ProxyLocalTestProfile.class)
 public class InsuranceDataIT extends AbstractVsdTest {
 
     @Test

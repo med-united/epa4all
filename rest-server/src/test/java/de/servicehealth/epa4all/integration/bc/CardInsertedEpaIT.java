@@ -2,7 +2,7 @@ package de.servicehealth.epa4all.integration.bc;
 
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
-import de.servicehealth.epa4all.common.ProxyTestProfile;
+import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.vsd.VsdService;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @QuarkusTest
-@TestProfile(ProxyTestProfile.class)
+@TestProfile(ProxyEpaTestProfile.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CardInsertedEpaIT extends AbstractVsdTest {
 

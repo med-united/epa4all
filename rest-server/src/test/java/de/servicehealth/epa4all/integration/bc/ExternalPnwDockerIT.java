@@ -3,8 +3,7 @@ package de.servicehealth.epa4all.integration.bc;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
-import de.service.health.api.epa4all.EpaConfig;
-import de.servicehealth.epa4all.common.ExternalTestProfile;
+import de.servicehealth.epa4all.common.profile.ExternalDockerTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
@@ -34,15 +33,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @QuarkusTest
-@TestProfile(ExternalTestProfile.class)
+@TestProfile(ExternalDockerTestProfile.class)
 public class ExternalPnwDockerIT extends AbstractVsdTest {
 
     private final Set<String> containers = Set.of(
@@ -72,10 +69,6 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
 
     @Test
     public void medicationPdfUploadedForExternalPnw() throws Exception {
-        EpaConfig epaConfigSpy = spy(epaConfig);
-        doReturn(Set.of("localhost:443")).when(epaConfigSpy).getEpaBackends();
-        QuarkusMock.installMockForType(epaConfigSpy, EpaConfig.class);
-
         runWithDockerContainers(containers, () -> {
             mockWebdavConfig();
             mockVsdService();
@@ -132,7 +125,6 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
 
     @AfterEach
     public void afterEachEx() {
-        QuarkusMock.installMockForType(epaConfig, EpaConfig.class);
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
         QuarkusMock.installMockForType(vsdService, VsdService.class);
         QuarkusMock.installMockForType(vauNpProvider, VauNpProvider.class);

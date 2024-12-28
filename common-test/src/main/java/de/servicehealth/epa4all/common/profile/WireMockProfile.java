@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.common;
+package de.servicehealth.epa4all.common.profile;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 

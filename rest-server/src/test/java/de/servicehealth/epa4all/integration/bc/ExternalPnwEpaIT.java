@@ -2,7 +2,7 @@ package de.servicehealth.epa4all.integration.bc;
 
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
-import de.servicehealth.epa4all.common.ExternalTestProfile;
+import de.servicehealth.epa4all.common.profile.ExternalEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
@@ -14,7 +14,6 @@ import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import java.io.File;
 import java.time.Instant;
@@ -35,8 +34,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @QuarkusTest
-@TestProfile(ExternalTestProfile.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestProfile(ExternalEpaTestProfile.class)
 public class ExternalPnwEpaIT extends AbstractVsdTest {
 
     private final String kvnr = "X110485291";
