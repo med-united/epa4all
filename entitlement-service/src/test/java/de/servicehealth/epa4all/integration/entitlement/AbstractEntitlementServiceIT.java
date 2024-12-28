@@ -3,7 +3,7 @@ package de.servicehealth.epa4all.integration.entitlement;
 import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.api.EntitlementsEPaFdVApi;
 import de.servicehealth.api.UserBlockingApi;
-import de.servicehealth.epa4all.common.DockerAction;
+import de.servicehealth.epa4all.common.ITAction;
 import de.servicehealth.epa4all.common.TestUtils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.model.EntitlementRequestType;
@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class AbstractEntitlementServiceIT {
 
+    public static final String INFORMATION_SERVICE = "information-service";
     public static final String ENTITLEMENT_SERVICE = "entitlement-service";
 
     protected String epaUserAgent = "GEMIncenereS2QmFN83P/1.0.0";
@@ -49,8 +51,8 @@ public abstract class AbstractEntitlementServiceIT {
         return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     }
 
-    private void runWithDocker(DockerAction action) throws Exception {
-        TestUtils.runWithDocker(ENTITLEMENT_SERVICE, action);
+    private void runWithDocker(ITAction action) throws Exception {
+        TestUtils.runWithDockerContainers(Set.of(INFORMATION_SERVICE, ENTITLEMENT_SERVICE), action);
     }
 
     @Test
@@ -66,7 +68,7 @@ public abstract class AbstractEntitlementServiceIT {
                 api.setEntitlementPs("Z123456789", "CLIENTID1234567890AB/2.1.12-45", requestType);
             } catch (BadRequestException | ForbiddenException e) {
                 ex = e;
-                assertTrue(getPayload(e).contains("Invalid JWT Payload"));
+                assertTrue(getPayload(e).contains("AUT Certificate is invalid"));
             }
             assertNotNull(ex);
         });

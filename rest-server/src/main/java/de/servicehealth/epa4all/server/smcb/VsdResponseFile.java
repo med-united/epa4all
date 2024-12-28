@@ -104,6 +104,10 @@ public class VsdResponseFile {
                 byte[] geschuetzteVersichertendaten = Files.readAllBytes(geschuetzteVersichertendatenFile.toPath());
                 byte[] pruefungsnachweis = Files.readAllBytes(pruefungsnachweisFile.toPath());
 
+                if (persoenlicheVersichertendaten.length == 0 && pruefungsnachweis.length == 0) {
+                    return null;
+                }
+
                 return new InsuranceData(
                     extractPz(pruefungsnachweis),
                     kvnr,

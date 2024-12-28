@@ -1,24 +1,32 @@
-package de.servicehealth.epa4all.integration;
+package de.servicehealth.epa4all.integration.bc;
 
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
-import de.servicehealth.epa4all.AbstractVsdTest;
+import de.health.service.cetp.cardlink.CardlinkClient;
+import de.health.service.cetp.config.KonnektorConfig;
+import de.service.health.api.epa4all.EpaConfig;
 import de.servicehealth.epa4all.common.ExternalTestProfile;
+import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
+import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
+import de.servicehealth.epa4all.server.smcb.VsdResponseFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
+import java.io.File;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
 
-import static de.servicehealth.epa4all.common.TestUtils.runWithDocker;
+import static de.servicehealth.epa4all.common.TestUtils.runWithDockerContainers;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -26,31 +34,64 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @QuarkusTest
 @TestProfile(ExternalTestProfile.class)
-public class ExternalPnwIT extends AbstractVsdTest {
+public class ExternalPnwDockerIT extends AbstractVsdTest {
+
+    private final Set<String> containers = Set.of(
+        INFORMATION_SERVICE,
+        VAU_PROXY_SERVER,
+        ENTITLEMENT_SERVICE,
+        MEDICATION_RENDER_SERVICE
+    );
+
+    private final String kvnr = "X110485291";
+
+    private String egkHandle;
+    private String smcbHandle;
+    private String telematikId;
+
+    @BeforeEach
+    public void before() throws Exception {
+        telematikId = "5-SMC-B-Testkarte-883110000118001";
+        egkHandle = "EGK-127";
+        smcbHandle = "SMC-B-123";
+
+        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        new VsdResponseFile(localFolder).cleanUp();
+
+        new EntitlementFile(localFolder, kvnr).reset();
+    }
 
     @Test
     public void medicationPdfUploadedForExternalPnw() throws Exception {
-        runWithDocker(INFORMATION_SERVICE, () -> {
-            String telematikId = "5-SMC-B-Testkarte-883110000118001";
-            String egkHandle = "EGK-127";
-            String kvnr = "X110485291";
-            String smcbHandle = "SMC-B-123";
+        EpaConfig epaConfigSpy = spy(epaConfig);
+        doReturn(Set.of("localhost:443")).when(epaConfigSpy).getEpaBackends();
+        QuarkusMock.installMockForType(epaConfigSpy, EpaConfig.class);
 
+        runWithDockerContainers(containers, () -> {
             mockWebdavConfig();
             mockVsdService();
             mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
 
-            CardlinkWebsocketClient cardlinkWebsocketClient = mock(CardlinkWebsocketClient.class);
-            receiveCardInsertedEvent(cardlinkWebsocketClient);
+            CardlinkClient cardlinkClient = mock(CardlinkClient.class);
+            KonnektorConfig konnektorConfig = mockKonnektorConfig();
+            VauNpProvider vauNpProvider = mockVauNpProvider();
+            receiveCardInsertedEvent(
+                konnektorConfig,
+                vauNpProvider,
+                cardlinkClient,
+                egkHandle
+            );
 
-            verify(cardlinkWebsocketClient, never()).sendJson(any(), any(), any(), any());
+            verify(cardlinkClient, never()).sendJson(any(), any(), any(), any());
 
             Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, kvnr);
             assertNull(validTo);
@@ -78,18 +119,24 @@ public class ExternalPnwIT extends AbstractVsdTest {
             InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, kvnr);
             assertEquals("WDExMDQ4NTI5MTE3MzIxODk5OTdVWDFjxzDPSFvdIrRmmmOWFP/aP5rakVUqQj8=", insuranceData.getPz());
 
-            receiveCardInsertedEvent(cardlinkWebsocketClient);
+            receiveCardInsertedEvent(
+                konnektorConfig,
+                vauNpProvider,
+                cardlinkClient,
+                egkHandle
+            );
 
-            verify(cardlinkWebsocketClient, times(1)).sendJson(any(), any(), eq("eRezeptBundlesFromAVS"), any());
+            verify(cardlinkClient, times(1)).sendJson(any(), any(), eq("eRezeptBundlesFromAVS"), any());
         });
     }
 
     @AfterEach
     public void afterEachEx() {
+        QuarkusMock.installMockForType(epaConfig, EpaConfig.class);
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
-        QuarkusMock.installMockForType(konnektorClient, IKonnektorClient.class);
         QuarkusMock.installMockForType(vsdService, VsdService.class);
-
+        QuarkusMock.installMockForType(vauNpProvider, VauNpProvider.class);
+        QuarkusMock.installMockForType(konnektorClient, IKonnektorClient.class);
         QuarkusMock.installMockForType(entitlementService, EntitlementService.class);
     }
 }

@@ -171,7 +171,7 @@ public class VauNpProvider extends StartableService {
         try {
             Retrier.callAndRetry(
                 List.of(1000),
-                30000,
+                15000,
                 () -> reload(Set.of(backend)),
                 statusList -> !statusList.getFirst().contains("try later")
             );

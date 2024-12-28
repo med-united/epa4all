@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.wiremock;
+package de.servicehealth.epa4all.integration.base;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -9,6 +9,8 @@ import de.gematik.vau.lib.data.SignedPublicVauKeys;
 import de.gematik.vau.lib.data.VauPublicKeys;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
+import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage1Transformer;
+import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage3Transformer;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
@@ -65,7 +67,7 @@ public abstract class AbstractVauNpTest {
     @Inject
     ServicePortProvider servicePortProvider;
 
-    File configFolder = getResourcePath("wiremock").toFile();
+    protected File configFolder = getResourcePath("wiremock").toFile();
 
     @BeforeAll
     public static void beforeAll() {
@@ -93,11 +95,11 @@ public abstract class AbstractVauNpTest {
     }
 
     @BeforeEach
-    public void beforeEach() throws Exception {
+    public void beforeEach() {
         clientFactory.onStart();
     }
 
-    protected void prepareVauStubs() throws Exception {
+    protected void prepareVauStubs() {
         epaMultiService.onStart();
         epaMultiService.getEpaBackendMap().forEach((backend, epaApi) -> {
             epaApi.getVauFacade().getVauClients().forEach(vc -> {

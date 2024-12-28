@@ -23,8 +23,6 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
@@ -33,6 +31,8 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,7 +57,7 @@ import static org.apache.http.client.fluent.Executor.newInstance;
 
 public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(FHIRRequestVAUInterceptor.class);
+    private static final Logger log = Logger.getLogger(FHIRRequestVAUInterceptor.class.getName());
 
     static {
         Security.addProvider(new BouncyCastlePQCProvider());
@@ -112,6 +112,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
                 ((HttpRequestWrapper) entityRequest).setURI(URI.create(vauUri));
 
             } catch (Exception e) {
+                log.log(Level.SEVERE, "Error while sending DIRECT Fhir request, encrypted = " + encrypted, e);
                 if (encrypted) {
                     vauFacade.forceRelease(vauCid, e.getMessage(), false);
                 }
@@ -158,7 +159,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         byte[] content = ArrayUtils.addAll(httpRequest, body);
         log.info("FHIR REQUEST: " + new String(content));
-        return vauClient.getVauStateMachine().encryptVauMessage(content);
+        return vauClient.encryptVauMessage(content);
     }
 
     private String prepareAcceptHeader(boolean api, byte[] body) {
@@ -179,7 +180,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         String host = medicationBaseUri.getHost();
 
-        byte[] message1 = vauClient.getVauStateMachine().generateMessage1();
+        byte[] message1 = vauClient.generateMessage1();
         String port = getMedicationPort();
         Request request1 = Request
             .Post(medicationBaseUri.getScheme() + "://" + host + port + "/VAU")
@@ -203,9 +204,9 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
 
-        byte[] message3 = vauClient.getVauStateMachine().receiveMessage2(message2);
+        byte[] message3 = vauClient.receiveMessage2(message2);
 
-        KdfKey2 clientKey2 = vauClient.getVauStateMachine().getClientKey2();
+        KdfKey2 clientKey2 = vauClient.getClientKey2();
         String c2sAppData = Base64.getEncoder().encodeToString(clientKey2.getClientToServerAppData());
         String s2cAppData = Base64.getEncoder().encodeToString(clientKey2.getServerToClientAppData());
 
@@ -227,7 +228,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
 
-        vauClient.getVauStateMachine().receiveMessage4(message4);
+        vauClient.receiveMessage4(message4);
         vauClient.setVauInfo(vauInfo);
 
         return vauClient;

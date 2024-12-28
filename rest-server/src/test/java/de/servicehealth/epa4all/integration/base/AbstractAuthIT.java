@@ -1,8 +1,8 @@
-package de.servicehealth.epa4all.integration.auth;
+package de.servicehealth.epa4all.integration.base;
 
 import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
-import de.servicehealth.epa4all.common.DockerAction;
+import de.servicehealth.epa4all.common.ITAction;
 import de.servicehealth.epa4all.common.TestUtils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.model.GetNonce200Response;
@@ -10,6 +10,8 @@ import de.servicehealth.vau.VauFacade;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,18 +21,18 @@ public abstract class AbstractAuthIT {
     public static final String AUTHORIZATION_SERVICE = "authorization-service";
 
     @Inject
-    EpaConfig epaConfig;
+    protected EpaConfig epaConfig;
 
     @Inject
-    VauFacade vauFacade;
+    protected VauFacade vauFacade;
 
     @Inject
-    ClientFactory clientFactory;
+    protected ClientFactory clientFactory;
 
     protected abstract <T> T buildApi(VauFacade vauFacade, Class<T> clazz, String url) throws Exception;
 
-    private void runWithDocker(DockerAction action) throws Exception {
-        TestUtils.runWithDocker(AUTHORIZATION_SERVICE, action);
+    private void runWithDocker(ITAction action) throws Exception {
+        TestUtils.runWithDockerContainers(Set.of(AUTHORIZATION_SERVICE), action);
     }
 
     private String getBackendUrl(String backend, String serviceUrl) {

@@ -98,7 +98,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             byte[] vauMessage;
             try {
                 VauClient vauClient = vauFacade.getVauClient(vauCid);
-                vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
+                vauMessage = vauClient.encryptVauMessage(httpParcel.toBytes());
             } finally {
                 encrypted = true;
             }

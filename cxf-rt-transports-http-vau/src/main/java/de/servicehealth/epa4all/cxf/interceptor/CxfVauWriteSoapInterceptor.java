@@ -112,7 +112,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             byte[] vauMessage;
             try {
                 VauClient vauClient = vauFacade.getVauClient(vauCid);
-                vauMessage = vauClient.getVauStateMachine().encryptVauMessage(httpParcel.toBytes());
+                vauMessage = vauClient.encryptVauMessage(httpParcel.toBytes());
             } finally {
                 encrypted = true;
             }

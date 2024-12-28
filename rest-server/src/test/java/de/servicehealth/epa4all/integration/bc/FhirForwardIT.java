@@ -1,12 +1,15 @@
-package de.servicehealth.epa4all.integration;
+package de.servicehealth.epa4all.integration.bc;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
+import de.service.health.api.epa4all.EpaConfig;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.ForwardingRestfulClientFactory;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
+import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
+import jakarta.inject.Inject;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.ContactPoint;
 import org.hl7.fhir.r4.model.HumanName;
@@ -19,9 +22,11 @@ import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Ratio;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.StringType;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static ca.uhn.fhir.rest.client.api.ServerValidationModeEnum.NEVER;
 import static de.servicehealth.epa4all.common.TestUtils.isDockerContainerRunning;
@@ -29,6 +34,8 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 @QuarkusTest
 @TestProfile(ProxyTestProfile.class)
@@ -36,8 +43,15 @@ public class FhirForwardIT {
 
     public static final String MEDICATION_SERVICE = "medication-service";
 
+    @Inject
+    EpaConfig epaConfig;
+
     @Test
-    public void patientCreationIsForwardedToEPA() throws Exception {
+    public void patientCreationIsForwardedToEPA() {
+        EpaConfig epaConfigSpy = spy(epaConfig);
+        doReturn(Set.of("localhost:443")).when(epaConfigSpy).getEpaBackends();
+        QuarkusMock.installMockForType(epaConfigSpy, EpaConfig.class);
+
         if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
 
@@ -102,5 +116,10 @@ public class FhirForwardIT {
         medication.setText(new Narrative().setStatus(Narrative.NarrativeStatus.ADDITIONAL));
         medication.setStatus(Medication.MedicationStatus.INACTIVE);
         return medication;
+    }
+
+    @AfterEach
+    public void afterEachEx() {
+        QuarkusMock.installMockForType(epaConfig, EpaConfig.class);
     }
 }

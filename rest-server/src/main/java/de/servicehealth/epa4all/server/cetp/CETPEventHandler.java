@@ -2,7 +2,7 @@ package de.servicehealth.epa4all.server.cetp;
 
 import de.health.service.cetp.AbstractCETPEventHandler;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
+import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
@@ -13,7 +13,7 @@ import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
-import de.servicehealth.epa4all.server.vsd.VsdConfig;
+import de.servicehealth.feature.FeatureConfig;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.jboss.logging.MDC;
@@ -29,7 +29,6 @@ import static de.health.service.cetp.utils.Utils.printException;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
-import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 public class CETPEventHandler extends AbstractCETPEventHandler {
 
@@ -41,19 +40,19 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private final EpaMultiService epaMultiService;
     private final RuntimeConfig runtimeConfig;
     private final VauNpProvider vauNpProvider;
-    private final VsdConfig vsdConfig;
+    private final FeatureConfig featureConfig;
 
     public CETPEventHandler(
-        CardlinkWebsocketClient cardlinkWebsocketClient,
+        CardlinkClient cardlinkClient,
         InsuranceDataService insuranceDataService,
         EpaFileDownloader epaFileDownloader,
         IKonnektorClient konnektorClient,
         EpaMultiService epaMultiService,
         VauNpProvider vauNpProvider,
         RuntimeConfig runtimeConfig,
-        VsdConfig vsdConfig
+        FeatureConfig featureConfig
     ) {
-        super(cardlinkWebsocketClient);
+        super(cardlinkClient);
 
         this.insuranceDataService = insuranceDataService;
         this.epaFileDownloader = epaFileDownloader;
@@ -61,7 +60,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         this.epaMultiService = epaMultiService;
         this.runtimeConfig = runtimeConfig;
         this.vauNpProvider = vauNpProvider;
-        this.vsdConfig = vsdConfig;
+        this.featureConfig = featureConfig;
     }
 
     @Override
@@ -105,7 +104,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
                 InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, egkHandle, runtimeConfig);
                 if (insuranceData == null) {
-                    if (vsdConfig.isUseExternalPnw()) {
+                    if (featureConfig.isExternalPnwEnabled()) {
                         log.warning(String.format(
                             "PNW is not found for EGK=%s, ReadVSD is disabled, use external PNW call", egkHandle
                         ));
@@ -116,11 +115,10 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 }
                 String insurantId = insuranceData.getInsurantId();
                 EpaAPI epaAPI = epaMultiService.getEpaAPI(insurantId);
-                String epaUserAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
 
                 String vauNp = vauNpProvider.getVauNp(smcbHandle, configurations.getConnectorBaseURL(), epaAPI.getBackend());
                 Map<String, String> xHeaders = Map.of(
-                    X_INSURANT_ID, insurantId, X_USER_AGENT, epaUserAgent, VAU_NP, vauNp, X_BACKEND, epaAPI.getBackend()
+                    X_INSURANT_ID, insurantId, VAU_NP, vauNp, X_BACKEND, epaAPI.getBackend()
                 );
                 byte[] bytes = epaAPI.getRenderClient().getPdfBytes(xHeaders);
 
@@ -129,11 +127,11 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
                 String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                 Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
-                cardlinkWebsocketClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
+                cardlinkClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
             } catch (Exception e) {
                 log.log(Level.WARNING, String.format("[%s] Could not get medication PDF", correlationId), e);
                 String error = printException(e);
-                cardlinkWebsocketClient.sendJson(
+                cardlinkClient.sendJson(
                     correlationId,
                     iccsn,
                     "receiveTasklistError",

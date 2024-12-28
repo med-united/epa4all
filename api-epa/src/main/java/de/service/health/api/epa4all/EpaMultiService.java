@@ -9,9 +9,13 @@ import de.service.health.api.epa4all.proxy.FhirProxyService;
 import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.GenericDirectClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRenderClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.render.StubMedicationClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderClient;
+import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderStubClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
+import de.servicehealth.feature.FeatureConfig;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
@@ -47,6 +51,7 @@ public class EpaMultiService extends StartableService {
 
     @Getter
     private final EpaConfig epaConfig;
+    private final FeatureConfig featureConfig;
     private final ClientFactory clientFactory;
     private final Instance<VauFacade> vauFacadeInstance;
     private final EpaServicePortProvider epaServicePortProvider;
@@ -60,6 +65,7 @@ public class EpaMultiService extends StartableService {
     public EpaMultiService(
         VauConfig vauConfig,
         EpaConfig epaConfig,
+        FeatureConfig featureConfig,
         ClientFactory clientFactory,
         Instance<VauFacade> vauFacadeInstance,
         EpaServicePortProvider epaServicePortProvider
@@ -67,6 +73,7 @@ public class EpaMultiService extends StartableService {
         this.epaServicePortProvider = epaServicePortProvider;
         this.vauFacadeInstance = vauFacadeInstance;
         this.clientFactory = clientFactory;
+        this.featureConfig = featureConfig;
         this.epaConfig = epaConfig;
         this.vauConfig = vauConfig;
     }
@@ -108,21 +115,26 @@ public class EpaMultiService extends StartableService {
 
                     IFhirProxy fhirProxy = new FhirProxyService(backend, epaConfig, vauConfig, vauFacade);
 
-                    GenericDirectClient medicationClient = null;
-                    VauRenderClient renderClient = null;
-                    if (vauConfig.isInternalFhirEnabled()) {
-                        VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
+                    IMedicationClient medicationClient;
+                    IRenderClient renderClient;
+                    if (featureConfig.isFhirEnabled()) {
+                        FhirContext fhirContext = FhirContext.forR4();
+
+                        VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(fhirContext);
                         String medicationApiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
                         apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationApiUrl));
                         medicationClient = apiClientFactory.newGenericClient(medicationApiUrl.replace("+vau", ""));
 
                         String medicationRenderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
-                        VauRestfulClientFactory renderClientFactory = new VauRestfulClientFactory(FhirContext.forR4());
+                        VauRestfulClientFactory renderClientFactory = new VauRestfulClientFactory(fhirContext);
                         renderClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationRenderUrl));
                         Executor renderExecutor = Executor.newInstance(renderClientFactory.getVauHttpClient());
                         renderClient = new VauRenderClient(
                             renderExecutor, epaUserAgent, medicationRenderUrl.replace("+vau", "")
                         );
+                    } else {
+                        medicationClient = new StubMedicationClient();
+                        renderClient = new VauRenderStubClient();
                     }
 
                     return new EpaAPIAggregator(
