@@ -1,6 +1,5 @@
 package de.servicehealth.vau;
 
-import de.gematik.vau.lib.VauClientStateMachine;
 import de.servicehealth.registry.BeanRegistry;
 import io.vertx.core.impl.ConcurrentHashSet;
 import jakarta.annotation.PreDestroy;
@@ -10,7 +9,6 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalTime;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -23,7 +21,7 @@ import java.util.logging.Logger;
 @Dependent
 public class VauFacade {
 
-    private static final java.util.logging.Logger log = Logger.getLogger(VauFacade.class.getName());
+    private static final Logger log = Logger.getLogger(VauFacade.class.getName());
 
     @Inject
     Event<VauSessionReload> vauSessionReloadEvent;
@@ -72,8 +70,7 @@ public class VauFacade {
         tracingEnabled = vauConfig.isTracingEnabled();
         int vauReadTimeoutMs = vauConfig.getVauReadTimeoutMs();
         for (int i = 0; i < vauConfig.getVauPoolSize(); i++) {
-            VauClientStateMachine vauStateMachine = new VauClientStateMachine(vauConfig.isPu());
-            vauClients.add(new VauClient(vauStateMachine, vauConfig.isMock(), vauReadTimeoutMs));
+            vauClients.add(new VauClient(vauConfig.isPu(), vauConfig.isMock(), vauReadTimeoutMs));
         }
         executorService = Executors.newSingleThreadScheduledExecutor();
         Runtime.getRuntime().addShutdownHook(new Thread(() ->
@@ -85,11 +82,8 @@ public class VauFacade {
                     Long hangsTime = vauClient.hangs();
                     if (hangsTime != null) {
                         String vauCid = vauClient.forceRelease(hangsTime);
-                        if (vauCid == null) {
-                            log.info("*Force release failed, vauClient was acquired right now*");
-                        } else {
-                            log.warning(String.format("[%s] Timeout force release", vauCid));
-                        }
+                        String threadName = Thread.currentThread().getName();
+                        log.warning(String.format("[%s] Timeout force release CID=%s", threadName, vauCid));
                     }
                 }
             } catch (Throwable t) {
@@ -139,7 +133,7 @@ public class VauFacade {
         }
         VauClient vauClient = getVauClient(vauCid);
         if (vauClient != null && !decrypted) {
-            log.warning(String.format("[%s] %s Error force release", Thread.currentThread().getName(), vauCid));
+            log.warning(String.format("[%s] Error force release CID=%s", Thread.currentThread().getName(), vauCid));
             vauClient.forceRelease(null);
         }
     }

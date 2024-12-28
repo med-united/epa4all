@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.wiremock;
+package de.servicehealth.epa4all.integration.bc.wiremock;
 
 import de.servicehealth.epa4all.server.idp.DiscoveryDocumentFile;
 import de.servicehealth.epa4all.server.idp.DiscoveryDocumentWrapper;
@@ -16,7 +16,7 @@ public class WiremockTestResource implements QuarkusTestResourceConfigurableLife
 
     private final File configFolder = getResourcePath("wiremock").toFile();
 
-    // TODO refactor
+    // TODO refactor port
 
     private final int httpsPort = 9443;
 

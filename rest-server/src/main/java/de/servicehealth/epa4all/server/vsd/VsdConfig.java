@@ -8,9 +8,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class VsdConfig {
 
-    @ConfigProperty(name = "vsd.use.external.pnw", defaultValue = "false")
-    boolean useExternalPnw;
-
     @ConfigProperty(name = "vsd.handles.test.mode", defaultValue = "true")
     boolean handlesTestMode;
 

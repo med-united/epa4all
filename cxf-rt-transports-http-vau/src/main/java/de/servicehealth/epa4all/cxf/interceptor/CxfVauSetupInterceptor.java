@@ -1,6 +1,5 @@
 package de.servicehealth.epa4all.cxf.interceptor;
 
-import de.gematik.vau.lib.VauClientStateMachine;
 import de.gematik.vau.lib.data.KdfKey2;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
@@ -10,6 +9,7 @@ import de.servicehealth.vau.VauInfo;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.message.Message;
@@ -19,8 +19,6 @@ import org.apache.cxf.transport.Conduit;
 import org.apache.cxf.transport.http.HttpClientHTTPConduit;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +27,8 @@ import java.nio.ByteBuffer;
 import java.security.Security;
 import java.util.Base64;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static de.servicehealth.utils.CborUtils.printCborMessage;
 import static de.servicehealth.utils.ServerUtils.decompress;
@@ -48,7 +48,7 @@ import static org.apache.cxf.helpers.HttpHeaderHelper.CONNECTION;
 
 public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
-    private static final Logger log = LoggerFactory.getLogger(CxfVauSetupInterceptor.class);
+    private static final Logger log = Logger.getLogger(CxfVauSetupInterceptor.class.getName());
 
     static {
         Security.addProvider(new BouncyCastlePQCProvider());
@@ -92,10 +92,10 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
                     String baseAddress = uri + mock + "/VAU";
                     WebClient client1 = WebClient.create(baseAddress, providers);
-                    ClientFactory.initClient(client1.getConfiguration(), List.of(), List.of());
+                    ClientConfiguration configuration = client1.getConfiguration();
+                    ClientFactory.initClient(configuration, List.of(), List.of());
 
-                    VauClientStateMachine vauStateMachine = vauClient.getVauStateMachine();
-                    byte[] message1 = vauStateMachine.generateMessage1();
+                    byte[] message1 = vauClient.generateMessage1();
                     client1.headers(prepareVauOutboundHeaders(uri, message1.length));
                     Response response = client1.post(ByteBuffer.wrap(message1));
                     byte[] message2 = getPayload(response);
@@ -107,9 +107,9 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
 
-                    byte[] message3 = vauStateMachine.receiveMessage2(message2);
+                    byte[] message3 = vauClient.receiveMessage2(message2);
 
-                    KdfKey2 clientKey2 = vauStateMachine.getClientKey2();
+                    KdfKey2 clientKey2 = vauClient.getClientKey2();
                     String c2sAppData = Base64.getEncoder().encodeToString(clientKey2.getClientToServerAppData());
                     String s2cAppData = Base64.getEncoder().encodeToString(clientKey2.getServerToClientAppData());
 
@@ -129,7 +129,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
 
-                    vauStateMachine.receiveMessage4(message4);
+                    vauClient.receiveMessage4(message4);
 
                     vauInfo = new VauInfo(mock + vauCid, c2sAppData, s2cAppData);
                     message.put(VAU_CID, mock + vauCid);
@@ -138,7 +138,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                 }
             }
         } catch (Exception e) {
-            log.error("Error while creating VAU session", e);
+            log.log(Level.SEVERE, "Error while VAU handshake", e);
             throw new Fault(e);
         }
     }

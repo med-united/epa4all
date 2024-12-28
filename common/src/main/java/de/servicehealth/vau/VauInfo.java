@@ -2,9 +2,11 @@ package de.servicehealth.vau;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
+@ToString(of = "vauCid")
 public class VauInfo {
 
     private String vauCid;

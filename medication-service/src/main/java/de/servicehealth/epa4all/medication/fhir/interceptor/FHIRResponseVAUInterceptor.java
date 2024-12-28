@@ -19,6 +19,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
@@ -50,6 +51,8 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
         VauResponse vauResponse = vauResponseReader.read(vauCid, responseCode, originHeaders, bytes);
         String error = vauResponse.error();
         if (error != null) {
+            String msg = "Error while receiving DIRECT Fhir response, decrypted = " + vauResponse.decrypted() + " : " + error;
+            log.log(Level.SEVERE, msg);
             vauFacade.forceRelease(vauCid, error, vauResponse.decrypted());
         }
 

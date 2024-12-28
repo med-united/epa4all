@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
+import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.CONNECTION;
 import static org.apache.http.HttpHeaders.UPGRADE;
@@ -68,7 +69,7 @@ public abstract class AbstractRenderClient implements IRenderClient {
 
     private InputStream execute(String ext, Map<String, String> xHeaders) throws Exception {
         URI renderUri = URI.create(medicationRenderUrl + "/" + ext);
-        Header[] headers = prepareHeaders(xHeaders);
+        Header[] headers = prepareHeaders(xHeaders, ext);
 
         Response response = executor.execute(buildRequest(renderUri, headers));
         return response.returnResponse().getEntity().getContent();
@@ -76,16 +77,18 @@ public abstract class AbstractRenderClient implements IRenderClient {
 
     protected abstract Request buildRequest(URI renderUri, Header[] headers);
 
-    private Header[] prepareHeaders(Map<String, String> xHeaders) {
-        int total = 4 + xHeaders.size();
+    private Header[] prepareHeaders(Map<String, String> xHeaders, String ext) {
+        int mandatoryHeadersCount = 5;
+        int total = mandatoryHeadersCount + xHeaders.size();
         Header[] headers = new Header[total];
         headers[0] = new BasicHeader(CONNECTION, "Upgrade, HTTP2-Settings");
-        headers[1] = new BasicHeader(ACCEPT, "*/*");
+        headers[1] = new BasicHeader(ACCEPT, ext.equals(PDF_EXT) ? "application/pdf" : "*/*");
         headers[2] = new BasicHeader(UPGRADE, "h2c");
-        headers[3] = new BasicHeader(X_USER_AGENT, epaUserAgent);
+        headers[3] = new BasicHeader(USER_AGENT, "Apache-CXF/4.0.5");
+        headers[4] = new BasicHeader(X_USER_AGENT, epaUserAgent);
 
         Iterator<Map.Entry<String, String>> iterator = xHeaders.entrySet().iterator();
-        for (int i = 4; i < total; i++) {
+        for (int i = mandatoryHeadersCount; i < total; i++) {
             Map.Entry<String, String> next = iterator.next();
             headers[i] = new BasicHeader(next.getKey(), next.getValue());
         }

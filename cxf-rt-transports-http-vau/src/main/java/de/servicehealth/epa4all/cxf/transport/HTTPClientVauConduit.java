@@ -51,6 +51,9 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
     @Override
     protected void setupConnection(Message message, Address address, HTTPClientPolicy csPolicy) throws IOException {
         String vauCid = (String) message.get(VAU_CID);
+        if (vauCid == null) {
+            throw new IOException("Vau CID is not fetched while Vau handshake");
+        }
         String vauNonPUTracing = (String) message.get(VAU_NON_PU_TRACING);
 
         String str = address.getString().replace("+vau", "");

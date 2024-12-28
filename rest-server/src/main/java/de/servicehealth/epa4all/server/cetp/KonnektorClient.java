@@ -65,6 +65,7 @@ import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 public class KonnektorClient implements IKonnektorClient {
 
     private final ConcurrentHashMap<KonnektorKey, String> smcbMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> telematikMap = new ConcurrentHashMap<>();
 
     private final Object emptyInput = new Object();
 
@@ -115,8 +116,10 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public String getTelematikId(UserRuntimeConfig userRuntimeConfig, String smcbHandle) {
-        Pair<X509Certificate, Boolean> x509Certificate = getSmcbX509Certificate(smcbHandle, userRuntimeConfig);
-        return extractTelematikIdFromCertificate(x509Certificate.getKey());
+        return telematikMap.computeIfAbsent(smcbHandle, handle -> {
+            Pair<X509Certificate, Boolean> x509Certificate = getSmcbX509Certificate(smcbHandle, userRuntimeConfig);
+            return extractTelematikIdFromCertificate(x509Certificate.getKey());
+        });
     }
 
     public String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {

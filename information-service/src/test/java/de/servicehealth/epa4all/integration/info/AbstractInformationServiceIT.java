@@ -2,13 +2,15 @@ package de.servicehealth.epa4all.integration.info;
 
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.ConsentDecisionsApi;
-import de.servicehealth.epa4all.common.DockerAction;
+import de.servicehealth.epa4all.common.ITAction;
 import de.servicehealth.epa4all.common.TestUtils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.model.GetConsentDecisionInformation200Response;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -24,8 +26,8 @@ public abstract class AbstractInformationServiceIT {
     @Inject
     ClientFactory clientFactory;
 
-    private void runWithDocker(DockerAction action) throws Exception {
-        TestUtils.runWithDocker(INFORMATION_SERVICE, action);
+    private void runWithDocker(ITAction action) throws Exception {
+        TestUtils.runWithDockerContainers(Set.of(INFORMATION_SERVICE), action);
     }
 
     @Test

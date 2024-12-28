@@ -94,11 +94,12 @@ public class ClientFactory extends StartableService {
     }
 
     public static void initConduit(HTTPConduit conduit) throws Exception {
-        HTTPClientPolicy client = conduit.getClient();
-        client.setVersion("1.1");
-        client.setAutoRedirect(false);
-        client.setAllowChunking(false);
-        client.setConnection(KEEP_ALIVE);
+        HTTPClientPolicy clientPolicy = conduit.getClient();
+        clientPolicy.setVersion("1.1");
+        clientPolicy.setAutoRedirect(false);
+        clientPolicy.setAllowChunking(false);
+        clientPolicy.setConnection(KEEP_ALIVE);
+        clientPolicy.setConnectionTimeout(5000);
 
         TLSClientParameters tlsParams = new TLSClientParameters();
         // setDisableCNCheck and setHostnameVerifier should not be set

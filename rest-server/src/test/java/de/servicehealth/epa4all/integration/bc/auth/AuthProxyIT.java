@@ -1,6 +1,7 @@
-package de.servicehealth.epa4all.integration.auth;
+package de.servicehealth.epa4all.integration.bc.auth;
 
 import de.servicehealth.epa4all.common.ProxyTestProfile;
+import de.servicehealth.epa4all.integration.base.AbstractAuthIT;
 import de.servicehealth.vau.VauFacade;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;

@@ -1,13 +1,15 @@
-package de.servicehealth.epa4all;
+package de.servicehealth.epa4all.integration.base;
 
 import de.gematik.ws.conn.eventservice.v7.Event;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.cardlink.CardlinkWebsocketClient;
+import de.health.service.cetp.KonnektorsConfigs;
+import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.config.api.IUserConfigurations;
+import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
@@ -16,11 +18,12 @@ import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
+import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.vsd.VsdConfig;
 import de.servicehealth.epa4all.server.vsd.VsdService;
+import de.servicehealth.feature.FeatureConfig;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusMock;
 import jakarta.inject.Inject;
@@ -31,6 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import java.io.File;
 import java.io.IOException;
 import java.security.cert.X509Certificate;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,41 +52,57 @@ public abstract class AbstractVsdTest {
     private static final Logger log = Logger.getLogger(AbstractVsdTest.class.getName());
 
     public static final String INFORMATION_SERVICE = "information-service";
+    public static final String VAU_PROXY_SERVER = "vau-proxy-server";
+    public static final String ENTITLEMENT_SERVICE = "entitlement-service";
+    public static final String MEDICATION_RENDER_SERVICE = "medication-render-service";
 
     public static final File TEST_FOLDER = new File("test-data");
 
     @Inject
-    protected EventMapper eventMapper;
-
-    @Inject
-    protected EntitlementService entitlementService;
-
-    @Inject
-    protected EpaFileDownloader epaFileDownloader;
-
-    @Inject
-    protected DefaultUserConfig defaultUserConfig;
-
-    @Inject
-    protected IKonnektorClient konnektorClient;
-
-    @Inject
-    protected EpaMultiService epaMultiService;
+    protected EpaConfig epaConfig;
 
     @Inject
     protected VsdService vsdService;
 
     @Inject
+    protected EventMapper eventMapper;
+
+    @Inject
     protected WebdavConfig webdavConfig;
 
     @Inject
-    protected VsdConfig vsdConfig;
+    protected FeatureConfig featureConfig;
+
+    @Inject
+    protected FolderService folderService;
+
+    @Inject
+    protected VauNpProvider vauNpProvider;
+
+    @Inject
+    protected EpaMultiService epaMultiService;
+
+    @Inject
+    protected IKonnektorClient konnektorClient;
+
+    @Inject
+    protected DefaultUserConfig defaultUserConfig;
+
+    @Inject
+    protected EpaFileDownloader epaFileDownloader;
+
+    @Inject
+    protected EntitlementService entitlementService;
 
     @Inject
     protected InsuranceDataService insuranceDataService;
 
     @Inject
     protected KonnektorDefaultConfig konnektorDefaultConfig;
+
+    @Inject
+    @KonnektorsConfigs
+    protected Map<String, KonnektorConfig> konnektorConfigs;
 
 
     @BeforeEach
@@ -154,39 +174,53 @@ public abstract class AbstractVsdTest {
         return vsdServiceMock;
     }
 
-    protected void receiveCardInsertedEvent(CardlinkWebsocketClient cardlinkWebsocketClient) throws Exception {
-        VauNpProvider vauNpProvider = mock(VauNpProvider.class);
-        when(vauNpProvider.getVauNp(any(), any(), any())).thenReturn("vau-np");
+    protected VauNpProvider mockVauNpProvider() {
+        VauNpProvider vauNpProviderMock = mock(VauNpProvider.class);
+        when(vauNpProviderMock.getVauNp(any(), any(), any())).thenReturn("f5931e8c19c21bca44fa");
+        QuarkusMock.installMockForType(vauNpProviderMock, VauNpProvider.class);
+        return vauNpProviderMock;
+    }
 
+    protected KonnektorConfig mockKonnektorConfig() {
+        KonnektorConfig konnektorConfig = mock(KonnektorConfig.class);
+        IUserConfigurations configurations = mock(IUserConfigurations.class);
+        when(konnektorConfig.getUserConfigurations()).thenReturn(configurations);
+        return konnektorConfig;
+    }
+
+    protected void receiveCardInsertedEvent(
+        KonnektorConfig konnektorConfig,
+        VauNpProvider vauNpProvider,
+        CardlinkClient cardlinkClient,
+        String egkHandle
+    ) {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
+
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
-            cardlinkWebsocketClient, insuranceDataService, epaFileDownloader, konnektorClient,
-            epaMultiService, vauNpProvider, runtimeConfig, vsdConfig
+            cardlinkClient, insuranceDataService, epaFileDownloader, konnektorClient,
+            epaMultiService, vauNpProvider, runtimeConfig, featureConfig
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 
         String slotIdValue = "3";
         String ctIdValue = "CtIDValue";
 
-        KonnektorConfig konnektorConfig = mock(KonnektorConfig.class);
-        IUserConfigurations configurations = mock(IUserConfigurations.class);
-        when(konnektorConfig.getUserConfigurations()).thenReturn(configurations);
-
-        channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue));
+        channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue, egkHandle));
         channel.pipeline().fireChannelReadComplete();
     }
 
     protected DecodeResult decode(
         KonnektorConfig konnektorConfig,
         String slotIdValue,
-        String ctIdValue
+        String ctIdValue,
+        String egkHandle
     ) {
         Event event = new Event();
         event.setTopic("CARD/INSERTED");
         Event.Message message = new Event.Message();
         Event.Message.Parameter parameter = new Event.Message.Parameter();
         parameter.setKey("CardHandle");
-        parameter.setValue("CardHandleValue");
+        parameter.setValue(egkHandle);
         Event.Message.Parameter parameterSlotId = new Event.Message.Parameter();
         parameterSlotId.setKey("SlotID");
         parameterSlotId.setValue(slotIdValue);

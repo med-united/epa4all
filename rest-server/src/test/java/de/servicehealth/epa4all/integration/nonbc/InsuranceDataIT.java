@@ -1,8 +1,8 @@
-package de.servicehealth.epa4all.integration;
+package de.servicehealth.epa4all.integration.nonbc;
 
 import de.health.service.cetp.IKonnektorClient;
-import de.servicehealth.epa4all.AbstractVsdTest;
 import de.servicehealth.epa4all.common.ProxyTestProfile;
+import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.vsd.VsdService;
