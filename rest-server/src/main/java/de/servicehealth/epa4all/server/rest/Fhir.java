@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.rest;
 
+import de.health.service.cetp.retry.Retrier;
 import de.service.health.api.epa4all.EpaAPI;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.Consumes;
@@ -15,9 +16,16 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
+import java.util.List;
+
+import static de.servicehealth.vau.VauClient.VAU_NO_SESSION;
+
 @RequestScoped
 @Path("{fhirPath: fhir/.*}")
 public class Fhir extends AbstractResource {
+
+    private static final int FHIR_RETRY_PERIOD_MS = 30000;
+    private static final List<Integer> FHIR_RETRIES = List.of(1000, 2000, 3000, 5000);
 
     @GET
     @Consumes(MediaType.WILDCARD)
@@ -31,7 +39,13 @@ public class Fhir extends AbstractResource {
         @QueryParam("subject") String subject,
         @QueryParam("ui5") String ui5
     ) throws Exception {
-        return forward(true, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null);
+        return Retrier.callAndRetryEx(
+            FHIR_RETRIES,
+            FHIR_RETRY_PERIOD_MS,
+            true,
+            () -> forward(true, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null),
+            response -> response.getHeaderString(VAU_NO_SESSION) == null
+        );
     }
 
     @POST
@@ -47,7 +61,13 @@ public class Fhir extends AbstractResource {
         @QueryParam("ui5") String ui5,
         byte[] body
     ) throws Exception {
-        return forward(false, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body);
+        return Retrier.callAndRetryEx(
+            FHIR_RETRIES,
+            FHIR_RETRY_PERIOD_MS,
+            true,
+            () -> forward(false, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body),
+            response -> response.getHeaderString(VAU_NO_SESSION) == null
+        );
     }
 
     private Response forward(
@@ -64,7 +84,7 @@ public class Fhir extends AbstractResource {
         if (subject != null) {
             xInsurantId = subject;
         }
-
+        log.info(String.format("[%s] FHIR [%s] is forwarding", Thread.currentThread().getName(), fhirPath));
         EpaContext epaContext = prepareEpaContext(xInsurantId);
         EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
         return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, uriInfo, headers, body, epaContext.getXHeaders());

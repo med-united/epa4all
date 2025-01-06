@@ -84,11 +84,6 @@ public class IdpClient extends StartableService {
         this.multiKonnektorService = multiKonnektorService;
     }
     
-    // TODO   -  disable FHIR context to speed up the boot
-    // TODO  +-  VauClient concurrent test, WireMock ssl
-    // TODO   -  CxfVauSetupInterceptor for TESTS with mock
-    // 
-
     public void onStart() throws Exception {
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
         retrieveDiscoveryDocument();
@@ -184,9 +179,7 @@ public class IdpClient extends StartableService {
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
         String nonce = idpFunc.getNonceSupplier().get();
 
-        Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(
-            servicePorts, smcbHandle
-        );
+        Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(servicePorts, smcbHandle);
         if (smcbAuthCertPair.getValue()) {
             // A_24884-01 - clientAttest signieren als PKCS#1-Signatur
             signatureType = "urn:ietf:rfc:3447";

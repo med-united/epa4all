@@ -19,7 +19,7 @@ public class RawVauTextErrorResponseBuilder extends AbstractVauResponseBuilder {
         Optional<String> contentTypeOpt = findHeaderValue(headers, CONTENT_TYPE);
         if (responseCode >= 400 && contentTypeOpt.isPresent() && contentTypeOpt.get().contains("text")) {
             String source = new String(bytes);
-            error = responseCode + " " + source.split(String.valueOf(responseCode))[1].split("<")[0].trim();
+            error = responseCode + " " + source;
         }
         return error != null
             ? new VauResponse(responseCode, error, error.getBytes(UTF_8), headers, false)

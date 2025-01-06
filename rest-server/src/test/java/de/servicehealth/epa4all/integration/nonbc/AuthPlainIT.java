@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.nonbc.auth;
+package de.servicehealth.epa4all.integration.nonbc;
 
 import de.servicehealth.epa4all.common.profile.PlainLocalTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractAuthIT;

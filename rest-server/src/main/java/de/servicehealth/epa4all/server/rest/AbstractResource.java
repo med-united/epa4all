@@ -38,7 +38,7 @@ import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 public abstract class AbstractResource {
 
-    private static final Logger log = Logger.getLogger(AbstractResource.class.getName());
+    protected final Logger log = Logger.getLogger(getClass().getName());
 
     @Inject
     Event<ReadVSDResponseEx> readVSDResponseExEvent;

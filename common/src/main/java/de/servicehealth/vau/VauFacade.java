@@ -23,6 +23,8 @@ public class VauFacade {
 
     private static final Logger log = Logger.getLogger(VauFacade.class.getName());
 
+    public static final String NO_USER_SESSION = "no userSession";
+
     @Inject
     Event<VauSessionReload> vauSessionReloadEvent;
 
@@ -47,8 +49,6 @@ public class VauFacade {
     @Getter
     private final Set<VauClient> vauClients = new ConcurrentHashSet<>();
 
-    private final ScheduledExecutorService executorService;
-
     @Setter
     @Getter
     private String backend;
@@ -58,10 +58,12 @@ public class VauFacade {
 
     @Getter
     private final boolean tracingEnabled;
-    private final BeanRegistry registry;
 
     @Getter
-    private volatile boolean vauNpSet;
+    private volatile boolean sessionEstablished;
+
+    private final ScheduledExecutorService executorService;
+    private final BeanRegistry registry;
 
     @Inject
     public VauFacade(BeanRegistry registry, VauConfig vauConfig) {
@@ -97,9 +99,9 @@ public class VauFacade {
         registry.unregister(this);
     }
 
-    public void setVauNpStatus(String vauNpStatus, boolean vauNpSet) {
+    public void setVauNpSessionStatus(String vauNpStatus, boolean sessionEstablished) {
         this.vauNpStatus = vauNpStatus;
-        this.vauNpSet = vauNpSet;
+        this.sessionEstablished = sessionEstablished;
     }
 
     public VauClient acquireVauClient() throws InterruptedException {
@@ -127,9 +129,14 @@ public class VauFacade {
             .orElse(null);
     }
 
-    public void forceRelease(String vauCid, String error, boolean decrypted) {
-        if (error.contains("no userSession")) {
-            vauSessionReloadEvent.fireAsync(new VauSessionReload(backend));
+    public void forceRelease(String vauCid, boolean noUserSession, boolean decrypted) {
+        if (noUserSession) {
+            synchronized (this) {
+                if (sessionEstablished) {
+                    sessionEstablished = false;
+                    vauSessionReloadEvent.fireAsync(new VauSessionReload(backend));
+                }
+            }
         }
         VauClient vauClient = getVauClient(vauCid);
         if (vauClient != null && !decrypted) {

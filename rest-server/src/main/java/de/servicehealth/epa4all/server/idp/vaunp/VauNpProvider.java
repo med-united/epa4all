@@ -168,6 +168,7 @@ public class VauNpProvider extends StartableService {
 
     public void onTransfer(@ObservesAsync VauSessionReload sessionReload) {
         String backend = sessionReload.getBackend();
+        log.info(String.format("[%s] Vau session reload is submitted", backend));
         try {
             Retrier.callAndRetry(
                 List.of(1000),
@@ -214,12 +215,14 @@ public class VauNpProvider extends StartableService {
             long delta = System.currentTimeMillis() - start;
 
             String okStatus = String.format(STATUS_TEMPLATE, backend, delta, "OK");
-            api.getVauFacade().setVauNpStatus(okStatus, true);
+            api.getVauFacade().setVauNpSessionStatus(okStatus, true);
             return new VauNpInfo(key, vauNp, okStatus);
         } catch (Exception e) {
+            String msg = String.format("Error while getVauNpSync konnektor=%s, ePA=%s", konnektor, backend);
+            log.log(Level.SEVERE, msg, e);
             long delta = System.currentTimeMillis() - start;
             String errorStatus = String.format(STATUS_TEMPLATE, backend, delta, e.getMessage());
-            api.getVauFacade().setVauNpStatus(errorStatus, false);
+            api.getVauFacade().setVauNpSessionStatus(errorStatus, false);
             return new VauNpInfo(null, null, errorStatus);
         }
     }

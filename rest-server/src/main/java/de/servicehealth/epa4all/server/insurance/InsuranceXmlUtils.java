@@ -43,7 +43,7 @@ public class InsuranceXmlUtils {
         );
     }
 
-    public static Document createDocument(byte[] bytes) throws IOException, SAXException {
+    public static synchronized Document createDocument(byte[] bytes) throws IOException, SAXException {
         return documentBuilder.parse(new ByteArrayInputStream(decompress(bytes)));
     }
 

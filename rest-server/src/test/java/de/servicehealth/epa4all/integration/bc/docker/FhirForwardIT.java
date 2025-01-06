@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.bc;
+package de.servicehealth.epa4all.integration.bc.docker;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;

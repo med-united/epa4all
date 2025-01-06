@@ -12,7 +12,6 @@ import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage1Transformer;
 import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage3Transformer;
 import de.servicehealth.epa4all.server.idp.IdpClient;
-import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
@@ -57,9 +56,6 @@ public abstract class AbstractVauNpTest {
 
     @Inject
     ClientFactory clientFactory;
-
-    @Inject
-    VauNpProvider vauNpProvider;
 
     @Inject
     EpaMultiService epaMultiService;

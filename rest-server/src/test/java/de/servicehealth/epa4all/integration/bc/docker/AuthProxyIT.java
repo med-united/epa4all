@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.bc.auth;
+package de.servicehealth.epa4all.integration.bc.docker;
 
 import de.servicehealth.epa4all.common.profile.ProxyLocalTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractAuthIT;

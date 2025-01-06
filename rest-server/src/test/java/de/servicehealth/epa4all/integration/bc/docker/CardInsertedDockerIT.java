@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.bc;
+package de.servicehealth.epa4all.integration.bc.docker;
 
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;

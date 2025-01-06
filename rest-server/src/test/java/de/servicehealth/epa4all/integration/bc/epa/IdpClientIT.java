@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.bc;
+package de.servicehealth.epa4all.integration.bc.epa;
 
 import de.health.service.cetp.IKonnektorClient;
 import de.service.health.api.epa4all.EpaAPI;
