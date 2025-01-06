@@ -17,6 +17,8 @@ import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.getProto
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.putProtocolHeader;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
+import static de.servicehealth.vau.VauClient.VAU_NO_SESSION;
+import static de.servicehealth.vau.VauFacade.NO_USER_SESSION;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
@@ -55,7 +57,11 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             String error = vauResponse.error();
             if (error != null) {
                 putProtocolHeader(message, VAU_ERROR, error);
-                vauFacade.forceRelease(vauCid, error, vauResponse.decrypted());
+                boolean noUserSession = error.contains(NO_USER_SESSION);
+                if (noUserSession) {
+                    putProtocolHeader(message, VAU_NO_SESSION, "true");
+                }
+                vauFacade.forceRelease(vauCid, noUserSession, vauResponse.decrypted());
             }
             byte[] payload = vauResponse.payload();
             if (payload != null) {
@@ -67,7 +73,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
                         if (!MEDIA_TYPES.contains(contentType)) {
                             String content = new String(payload);
                             content = content.substring(0, Math.min(100, content.length())) + " ********* ";
-                            log.info("Response PAYLOAD: " + content);
+                            log.info(String.format("[%s] Response PAYLOAD: %s", Thread.currentThread().getName(), content));
                         }
                     });
 

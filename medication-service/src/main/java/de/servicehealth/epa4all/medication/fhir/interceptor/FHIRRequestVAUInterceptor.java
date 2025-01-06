@@ -46,6 +46,7 @@ import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
+import static de.servicehealth.vau.VauFacade.NO_USER_SESSION;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
@@ -114,7 +115,8 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Error while sending DIRECT Fhir request, encrypted = " + encrypted, e);
                 if (encrypted) {
-                    vauFacade.forceRelease(vauCid, e.getMessage(), false);
+                    boolean noUserSession = e.getMessage().contains(NO_USER_SESSION);
+                    vauFacade.forceRelease(vauCid, noUserSession, false);
                 }
                 throw new RuntimeException(e);
             }

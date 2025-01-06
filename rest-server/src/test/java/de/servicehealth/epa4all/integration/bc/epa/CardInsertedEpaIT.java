@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.bc;
+package de.servicehealth.epa4all.integration.bc.epa;
 
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
@@ -28,8 +28,9 @@ import static org.mockito.Mockito.verify;
 
 @QuarkusTest
 @TestProfile(ProxyEpaTestProfile.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CardInsertedEpaIT extends AbstractVsdTest {
+
+    private final String kvnr = "X110485291";
 
     @Test
     public void epaPdfDocumentIsSentToCardlink() throws Exception {
@@ -38,7 +39,6 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
             List<String> statuses = vauNpProvider.reload(epaBackends);
             assertTrue(statuses.getFirst().contains("OK"));
 
-            String kvnr = "X110485291";
             String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
 
             CardlinkClient cardlinkClient = mock(CardlinkClient.class);

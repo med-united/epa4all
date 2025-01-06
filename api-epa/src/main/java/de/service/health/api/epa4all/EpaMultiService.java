@@ -162,16 +162,16 @@ public class EpaMultiService extends StartableService {
 
     public EpaAPI getEpaAPI(String insurantId) {
         EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(insurantId);
-        if (epaAPI != null) {
+        if (epaAPI != null && epaAPI.getVauFacade().isSessionEstablished()) {
             return epaAPI;
         } else {
             for (EpaAPI api : epaBackendMap.values()) {
-                if (hasEpaRecord(api, insurantId)) {
+                if (api.getVauFacade().isSessionEstablished() && hasEpaRecord(api, insurantId)) {
                     xInsurantid2ePAApi.put(insurantId, api);
                     return api;
                 }
             }
-            throw new WebApplicationException(String.format("Insurant [%s] - ePA record is not found", insurantId));
+            throw new WebApplicationException(String.format("Insurant [%s] - ePA record is not found in active ePA backends", insurantId));
         }
     }
 

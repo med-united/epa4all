@@ -41,7 +41,7 @@ public class TestUtils {
         return running;
     }
 
-    public static boolean isBackendRunning(String backend) {
+    public static boolean isBackendReachable(String backend) {
         boolean reachable = false;
         ProcessBuilder processBuilder = new ProcessBuilder("openssl", "s_client", "-showcerts", "-connect", backend);
         processBuilder.redirectErrorStream(true);
@@ -79,35 +79,41 @@ public class TestUtils {
         return reachable;
     }
 
-    private static <T> T timed(String backend, String actionName, TimedAction<T> action) {
+    private static <T> T timed(String subject, String actionName, TimedAction<T> action) {
         StopWatch watch = StopWatch.createStarted();
         try {
             return action.execute();
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Error while staring '%s' for %s", actionName, backend), e);
+            log.log(Level.SEVERE, String.format("[%s] Error while running '%s' action", subject, actionName), e);
             return null;
         } finally {
             watch.stop();
-            log.info(String.format("%s %s took %s", backend, actionName, watch.formatTime()));
+            log.info(String.format("[%s] '%s' action took %s", subject, actionName, watch.formatTime()));
         }
     }
 
     public static void runWithDockerContainers(Set<String> containers, ITAction action) throws Exception {
-        if (containers.stream().allMatch(TestUtils::isDockerContainerRunning)) {
-            containers.forEach(b -> log.info(String.format("[%s] Running", b)));
-            action.execute();
-        } else {
-            log.warning("Skipping test");
-        }
+        timed("Docker containers", "check running", () -> {
+            if (containers.parallelStream().allMatch(TestUtils::isDockerContainerRunning)) {
+                containers.forEach(b -> log.info(String.format("[%s] Running", b)));
+                action.execute();
+            } else {
+                log.warning("Skipping test");
+            }
+            return null;
+        });
     }
 
     public static void runWithEpaBackends(Set<String> backends, ITAction action) throws Exception {
-        if (backends.stream().allMatch(TestUtils::isBackendRunning)) {
-            backends.forEach(b -> log.info(String.format("[%s] Connected", b)));
-            action.execute();
-        } else {
-            log.warning("Skipping test");
-        }
+        timed("ePA backends", "check reachable", () -> {
+            if (backends.parallelStream().allMatch(TestUtils::isBackendReachable)) {
+                backends.forEach(b -> log.info(String.format("[%s] Connected", b)));
+                action.execute();
+            } else {
+                log.warning("Skipping test");
+            }
+            return null;
+        });
     }
 
     public static Path getResourcePath(String... paths) {

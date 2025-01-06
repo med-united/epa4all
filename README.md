@@ -59,7 +59,7 @@ Open http://localhost:8090/frontend
 ## Running IT tests:
 
 ```shell script
-./mvnw clean verify -Pdev
+./mvn clean verify -DskipIT=false
 ```
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
