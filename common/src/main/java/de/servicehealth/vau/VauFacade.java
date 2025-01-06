@@ -60,7 +60,7 @@ public class VauFacade {
     private final boolean tracingEnabled;
 
     @Getter
-    private volatile boolean sessionEstablished;
+    private volatile boolean sessionEstablished = true;
 
     private final ScheduledExecutorService executorService;
     private final BeanRegistry registry;
