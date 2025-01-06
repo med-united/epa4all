@@ -85,7 +85,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         MDC.put("ctid", paramsMap.getOrDefault("CtID", "NoCtIDProvided"));
         MDC.put("slot", paramsMap.getOrDefault("SlotID", "NoSlotIDProvided"));
 
-        log.fine("%s event received with the following payload: %s".formatted(getTopicName(), paramsMap));
+        log.info("%s event received with the following payload: %s".formatted(getTopicName(), paramsMap));
 
         boolean isEGK = "EGK".equalsIgnoreCase(paramsMap.get("CardType"));
         boolean hasCardHandle = paramsMap.containsKey("CardHandle");
