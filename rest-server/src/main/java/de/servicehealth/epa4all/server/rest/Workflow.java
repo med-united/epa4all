@@ -40,7 +40,7 @@ public class Workflow extends AbstractResource {
         @QueryParam(X_KONNEKTOR) String konnektor
     ) {
         return konnektorsConfigs.values().stream()
-            .filter(kc -> konnektor == null || kc.getHost().contains(konnektor))
+            .filter(kc -> konnektor == null || (kc.getHost() != null && kc.getHost().contains(konnektor)))
             .map(kc -> {
                 IUserConfigurations userConfigurations = kc.getUserConfigurations();
                 return new KonnektorUserConfig(
