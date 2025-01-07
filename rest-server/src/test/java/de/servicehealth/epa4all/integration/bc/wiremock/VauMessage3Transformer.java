@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static de.servicehealth.epa4all.common.TestUtils.FIXTURES;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
-import static de.servicehealth.epa4all.integration.bc.wiremock.RequestVauNpIT.FIXTURES;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_C2S_INFO;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;

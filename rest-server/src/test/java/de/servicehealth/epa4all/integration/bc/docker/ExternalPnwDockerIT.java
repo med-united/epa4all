@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static de.servicehealth.epa4all.common.TestUtils.runWithDockerContainers;
+import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -100,7 +101,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
 
             given()
                 .body(pnw.getBytes())
-                .queryParams(Map.of("x-konnektor", "localhost"))
+                .queryParams(Map.of(X_KONNEKTOR, "localhost"))
                 .when()
                 .post("/vsd/pnw")
                 .then()

@@ -117,7 +117,7 @@ public class EpaMultiService extends StartableService {
 
                     IMedicationClient medicationClient;
                     IRenderClient renderClient;
-                    if (featureConfig.isFhirEnabled()) {
+                    if (featureConfig.isNativeFhirEnabled()) {
                         FhirContext fhirContext = FhirContext.forR4();
 
                         VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(fhirContext);

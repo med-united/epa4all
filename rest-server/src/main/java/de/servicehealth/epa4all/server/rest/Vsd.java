@@ -15,6 +15,7 @@ import java.util.Base64;
 
 import static de.servicehealth.epa4all.server.smcb.VsdResponseFile.extractInsurantId;
 import static de.servicehealth.epa4all.server.vsd.VsdService.buildSyntheticVSDResponse;
+import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 
 @RequestScoped
 @Path("vsd")
@@ -25,7 +26,7 @@ public class Vsd extends AbstractResource {
     @Produces(MediaType.WILDCARD)
     @Path("pnw")
     public Response proxy(
-        @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
+        @QueryParam(X_KONNEKTOR) String konnektor,
         byte[] base64EncodedBody
     ) throws Exception {
         folderService.applyTelematikPath(telematikId);

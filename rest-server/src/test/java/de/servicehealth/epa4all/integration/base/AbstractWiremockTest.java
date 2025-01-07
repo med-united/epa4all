@@ -14,6 +14,7 @@ import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage3Transformer;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -32,13 +33,13 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.common.ResourceUtil.getResource;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static de.servicehealth.epa4all.common.TestUtils.WIREMOCK;
+import static de.servicehealth.epa4all.common.TestUtils.getFixture;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 
-public abstract class AbstractVauNpTest {
+public abstract class AbstractWiremockTest {
 
-    public final static String WIREMOCK = "wiremock/";
-    public final static String FIXTURES = WIREMOCK + "fixtures";
     public final static String VAU = WIREMOCK + "vau";
 
     protected static final String KEY = "key";
@@ -88,6 +89,13 @@ public abstract class AbstractVauNpTest {
                 )
         );
         wiremock.start();
+    }
+
+    @AfterAll
+    static void afterAll() {
+        if (wiremock != null) {
+            wiremock.stop();
+        }
     }
 
     @BeforeEach
@@ -162,10 +170,6 @@ public abstract class AbstractVauNpTest {
         String jsonAuthenticationChallenge = getFixture("AuthenticationChallenge.json");
         wiremock.addStubMapping(get(urlPathMatching("/idp/auth.*"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(jsonAuthenticationChallenge)).build());
-    }
-
-    protected String getFixture(String fileName) throws Exception {
-        return Files.readString(getResourcePath(FIXTURES, fileName));
     }
 
     protected String concatUuids(int times) {

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.time.StopWatch;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -15,6 +16,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class TestUtils {
+
+    public final static String WIREMOCK = "wiremock/";
+    public final static String FIXTURES = WIREMOCK + "fixtures";
 
     private static final Logger log = Logger.getLogger(TestUtils.class.getName());
 
@@ -118,5 +122,9 @@ public class TestUtils {
 
     public static Path getResourcePath(String... paths) {
         return Path.of("src/test/resources", paths);
+    }
+
+    public static String getFixture(String fileName) throws Exception {
+        return Files.readString(getResourcePath(FIXTURES, fileName));
     }
 }

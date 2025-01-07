@@ -1,5 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
+import de.health.service.cetp.KonnektorsConfigs;
+import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.check.HealthChecker;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
@@ -8,6 +10,7 @@ import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
+import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.entitlement.AuditEvidenceException;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
@@ -59,6 +62,9 @@ public abstract class AbstractResource {
     Event<FileUpload> eventFileUpload;
 
     @Inject
+    KonnektorClient konnektorClient;
+
+    @Inject
     EpaMultiService epaMultiService;
 
     @Inject
@@ -75,6 +81,9 @@ public abstract class AbstractResource {
 
     @Inject
     IdpConfig idpConfig;
+
+    @KonnektorsConfigs
+    Map<String, KonnektorConfig> konnektorsConfigs;
 
     @Inject
     @FromHttpPath
