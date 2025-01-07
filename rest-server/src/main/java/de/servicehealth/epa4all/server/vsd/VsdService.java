@@ -60,7 +60,7 @@ public class VsdService {
         return readVSDResponse;
     }
 
-    public ReadVSDResponse readVsd(
+    public synchronized ReadVSDResponse readVsd(
         String egkHandle,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig
@@ -70,13 +70,6 @@ public class VsdService {
         if (context.getUserId() == null || context.getUserId().isEmpty()) {
             context.setUserId(UUID.randomUUID().toString());
         }
-        String subsInfo = getSubscriptionsInfo(runtimeConfig);
-        log.info(String.format(
-            "readVSD for cardHandle=%s, smcbHandle=%s, subscriptions: %s", egkHandle, smcbHandle, subsInfo
-        ));
-
-        // TODO readEPrescriptionsMXBean.increaseVSDRead();
-
         ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle, smcbHandle);
         return servicePorts.getVSDServicePortType().readVSD(readVSD);
     }

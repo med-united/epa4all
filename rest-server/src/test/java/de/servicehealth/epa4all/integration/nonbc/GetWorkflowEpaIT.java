@@ -66,7 +66,7 @@ public class GetWorkflowEpaIT {
         org.mockito.Mockito.when(konnektorClientMock.getCardsResponse(any(), any())).thenReturn(getCardsResponse);
         QuarkusMock.installMockForType(konnektorClientMock, IKonnektorClient.class);
 
-        Response response = when().get("/workflow/cards");
+        Response response = when().get("/event/cards");
         assertEquals(200, response.getStatusCode());
         String xml = response.asString();
         assertTrue(xml.contains("GetCardsResponse"));
@@ -75,13 +75,13 @@ public class GetWorkflowEpaIT {
 
     @Test
     public void konnektorConfigsAreExposed() {
-        Response response = given().header(ACCEPT, APPLICATION_XML).when().get("/workflow/configs");
+        Response response = given().header(ACCEPT, APPLICATION_XML).when().get("/konnektor/configs");
         assertEquals(200, response.getStatusCode());
         String xml = response.asString();
         assertTrue(xml.contains("KonnektorConfig"));
         assertTrue(xml.contains("clientCertificate"));
 
-        response = given().header(ACCEPT, APPLICATION_JSON).when().get("/workflow/configs");
+        response = given().header(ACCEPT, APPLICATION_JSON).when().get("/konnektor/configs");
         assertEquals(200, response.getStatusCode());
         String json = response.asString();
         assertTrue(json.startsWith("[{"));
@@ -91,7 +91,7 @@ public class GetWorkflowEpaIT {
             .header(ACCEPT, APPLICATION_JSON)
             .queryParams(Map.of(X_KONNEKTOR, "10.0.0.1"))
             .when()
-            .get("/workflow/configs");
+            .get("/konnektor/configs");
         
         assertEquals(200, response.getStatusCode());
         json = response.asString();

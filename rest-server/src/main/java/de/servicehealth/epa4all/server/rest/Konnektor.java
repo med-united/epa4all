@@ -1,7 +1,5 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.gematik.ws.conn.eventservice.v7.GetCardsResponse;
-import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.config.api.IUserConfigurations;
 import de.servicehealth.epa4all.server.config.KonnektorUserConfig;
 import jakarta.ws.rs.GET;
@@ -18,19 +16,8 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 
 @SuppressWarnings("unused")
-@Path("/workflow")
-public class Workflow extends AbstractResource {
-
-    @GET
-    @Produces(APPLICATION_XML)
-    @Path("cards")
-    public GetCardsResponse cards(
-        @QueryParam(X_KONNEKTOR) String konnektor,
-        @QueryParam("cardType") String cardType
-    ) throws Exception {
-        CardType ct = cardType == null ? null : CardType.valueOf(cardType);
-        return konnektorClient.getCardsResponse(userRuntimeConfig, ct);
-    }
+@Path("konnektor")
+public class Konnektor extends AbstractResource {
 
     @GET
     @Produces({APPLICATION_JSON, APPLICATION_XML})
