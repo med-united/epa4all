@@ -9,6 +9,7 @@ import de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum;
 import de.gematik.ws.conn.connectorcommon.v5.Status;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.eventservice.v7.GetCards;
+import de.gematik.ws.conn.eventservice.v7.GetCardsResponse;
 import de.gematik.ws.conn.eventservice.v7.GetSubscription;
 import de.gematik.ws.conn.eventservice.v7.GetSubscriptionResponse;
 import de.gematik.ws.conn.eventservice.v7.RenewSubscriptions;
@@ -27,7 +28,6 @@ import de.health.service.cetp.domain.SubscriptionResult;
 import de.health.service.cetp.domain.eventservice.Subscription;
 import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
-import de.health.service.cetp.domain.eventservice.card.CardsResponse;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardTypeMapper;
@@ -54,15 +54,20 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static de.gematik.ws.conn.certificateservice.v6.CryptType.RSA;
 import static de.health.service.cetp.SubscriptionManager.FAILED;
+import static de.health.service.cetp.domain.eventservice.card.CardType.EGK;
 import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 import static de.servicehealth.epa4all.server.idp.IdpClient.BOUNCY_CASTLE_PROVIDER;
 import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 
 @ApplicationScoped
 public class KonnektorClient implements IKonnektorClient {
+
+    private static final Logger log = Logger.getLogger(KonnektorClient.class.getName());
 
     private final ConcurrentHashMap<KonnektorKey, String> smcbMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> telematikMap = new ConcurrentHashMap<>();
@@ -154,7 +159,7 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public String getKvnr(UserRuntimeConfig userRuntimeConfig, String egkHandle) throws CetpFault {
-        List<Card> cards = getCards(userRuntimeConfig, CardType.EGK);
+        List<Card> cards = getCards(userRuntimeConfig, EGK);
         return cards.stream()
             .filter(c -> c.getCardHandle().equals(egkHandle))
             .findAny()
@@ -163,7 +168,7 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public String getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) throws CetpFault {
-        List<Card> cards = getCards(userRuntimeConfig, CardType.EGK);
+        List<Card> cards = getCards(userRuntimeConfig, EGK);
         Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
         return vsdConfig.isHandlesTestMode()
             ? card.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle())
@@ -240,16 +245,20 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public List<Card> getCards(UserRuntimeConfig runtimeConfig, CardType cardType) throws CetpFault {
+        GetCardsResponse cardsResponse = getCardsResponse(runtimeConfig, cardType);
+        return cardsResponseMapper.toDomain(cardsResponse).getCards();
+    }
+
+    public GetCardsResponse getCardsResponse(UserRuntimeConfig runtimeConfig, CardType cardType) throws CetpFault {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         EventServicePortType eventService = servicePorts.getEventService();
         GetCards getCards = new GetCards();
         getCards.setContext(servicePorts.getContextType());
-        getCards.setCardType(cardTypeMapper.toSoap(cardType));
+        getCards.setCardType(cardType == null ? null : cardTypeMapper.toSoap(cardType));
         try {
-            CardsResponse cardsResponse = cardsResponseMapper.toDomain(eventService.getCards(getCards));
-            return cardsResponse.getCards();
-        } catch (FaultMessage faultMessage) {
-            throw new CetpFault(faultMessage.getMessage());
+            return eventService.getCards(getCards);
+        } catch (Exception e) {
+            throw new CetpFault(e.getMessage());
         }
     }
 
@@ -315,7 +324,7 @@ public class KonnektorClient implements IKonnektorClient {
                 }
             } else {
                 try {
-                    readCardCertificateRequest.setCrypt(CryptType.RSA);
+                    readCardCertificateRequest.setCrypt(RSA);
                     ReadCardCertificateResponse response = certificateService.readCardCertificate(readCardCertificateRequest);
 
                     return Pair.of(response, true);

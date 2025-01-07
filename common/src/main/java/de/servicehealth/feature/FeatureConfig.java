@@ -8,14 +8,14 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class FeatureConfig {
 
-    @ConfigProperty(name = "feature.fhir.enabled", defaultValue = "false")
-    boolean fhirEnabled;
-
     @ConfigProperty(name = "feature.cetp.enabled", defaultValue = "true")
     boolean cetpEnabled;
 
     @ConfigProperty(name = "feature.cardlink.enabled", defaultValue = "false")
     boolean cardlinkEnabled;
+
+    @ConfigProperty(name = "feature.native-fhir.enabled", defaultValue = "false")
+    boolean nativeFhirEnabled;
 
     @ConfigProperty(name = "feature.external-pnw.enabled", defaultValue = "false")
     boolean externalPnwEnabled;

@@ -15,6 +15,7 @@ import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import de.servicehealth.feature.FeatureConfig;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
+import jakarta.ws.rs.core.Response;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.jboss.logging.MDC;
 
@@ -29,6 +30,7 @@ import static de.health.service.cetp.utils.Utils.printException;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 public class CETPEventHandler extends AbstractCETPEventHandler {
 
@@ -114,20 +116,18 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     }
                 }
                 String insurantId = insuranceData.getInsurantId();
-                EpaAPI epaAPI = epaMultiService.getEpaAPI(insurantId);
-
-                String vauNp = vauNpProvider.getVauNp(smcbHandle, configurations.getConnectorBaseURL(), epaAPI.getBackend());
-                Map<String, String> xHeaders = Map.of(
-                    X_INSURANT_ID, insurantId, VAU_NP, vauNp, X_BACKEND, epaAPI.getBackend()
+                EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
+                Map<String, String> xHeaders = prepareXHeaders(
+                    epaApi, smcbHandle, configurations.getConnectorBaseURL(), insurantId
                 );
-                byte[] bytes = epaAPI.getRenderClient().getPdfBytes(xHeaders);
-
-                EpaContext epaContext = new EpaContext(insuranceData, Map.of());
-                handleDownloadResponse(bytes, telematikId, epaContext, insurantId);
-
-                String encodedPdf = Base64.getEncoder().encodeToString(bytes);
-                Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
-                cardlinkClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
+                try (Response response = epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders)) {
+                    byte[] bytes = response.readEntity(byte[].class);
+                    EpaContext epaContext = new EpaContext(insuranceData, Map.of());
+                    handleDownloadResponse(bytes, telematikId, epaContext, insurantId);
+                    String encodedPdf = Base64.getEncoder().encodeToString(bytes);
+                    Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
+                    cardlinkClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
+                }
             } catch (Exception e) {
                 log.log(Level.WARNING, String.format("[%s] Could not get medication PDF", correlationId), e);
                 String error = printException(e);
@@ -142,6 +142,18 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             String msgFormat = "Ignored \"CARD/INSERTED\" values=%s";
             log.log(Level.INFO, String.format(msgFormat, paramsMap));
         }
+    }
+
+    private Map<String, String> prepareXHeaders(EpaAPI epaApi, String insurantId, String smcbHandle, String konnectorBaseURL) {
+        String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
+        String epaBackend = epaApi.getBackend();
+        String vauNp = vauNpProvider.getVauNp(smcbHandle, konnectorBaseURL, epaBackend);
+        return Map.of(
+            X_INSURANT_ID, insurantId,
+            VAU_NP, vauNp,
+            X_BACKEND, epaBackend,
+            X_USER_AGENT, userAgent
+        );
     }
 
     private void handleDownloadResponse(

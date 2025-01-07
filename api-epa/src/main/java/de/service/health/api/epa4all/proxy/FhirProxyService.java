@@ -15,7 +15,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
 import org.apache.cxf.ext.logging.LoggingOutInterceptor;
@@ -85,11 +84,18 @@ public class FhirProxyService implements IFhirProxy {
         return webClient;
     }
 
+    public Response forwardGet(
+        String fhirPath,
+        Map<String, String> xHeaders
+    ) {
+        return forward(true, false, fhirPath, null, null, null, xHeaders);
+    }
+
     public Response forward(
         boolean isGet,
         boolean ui5,
         String fhirPath,
-        UriInfo uriInfo,
+        String baseQuery,
         HttpHeaders headers,
         byte[] body,
         Map<String, String> xHeaders
@@ -108,7 +114,7 @@ public class FhirProxyService implements IFhirProxy {
             map.add(UPGRADE, "h2c");
         }
 
-        String query = excludeQueryParams(uriInfo.getRequestUri().getQuery(), Set.of("subject", X_INSURANT_ID, X_KONNEKTOR));
+        String query = excludeQueryParams(baseQuery, Set.of("subject", X_INSURANT_ID, X_KONNEKTOR));
 
         log.info("Forwarding : " + fhirPath + "?" + query);
 

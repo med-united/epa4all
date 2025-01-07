@@ -15,10 +15,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @QuarkusTest
 @TestProfile(ProxyEpaTestProfile.class)
@@ -51,7 +50,7 @@ public class MultiForwardEpaIT {
                         "fhir/Medication?_count=10&_offset=0&_total=none&x-insurantid=%s&x-konnektor=localhost", insurantId
                     );
                     Response response = given()
-                        .queryParams(Map.of("x-konnektor", "localhost"))
+                        .queryParams(Map.of(X_KONNEKTOR, "localhost"))
                         .when()
                         .get(query);
 

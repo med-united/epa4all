@@ -85,7 +85,7 @@ public abstract class AbstractRenderClient implements IRenderClient {
         headers[1] = new BasicHeader(ACCEPT, ext.equals(PDF_EXT) ? "application/pdf" : "*/*");
         headers[2] = new BasicHeader(UPGRADE, "h2c");
         headers[3] = new BasicHeader(USER_AGENT, "Apache-CXF/4.0.5");
-        headers[4] = new BasicHeader(X_USER_AGENT, epaUserAgent);
+        headers[4] = new BasicHeader(X_USER_AGENT, epaUserAgent); // was added to FhirProxy call in the CETPEventHandler
 
         Iterator<Map.Entry<String, String>> iterator = xHeaders.entrySet().iterator();
         for (int i = mandatoryHeadersCount; i < total; i++) {

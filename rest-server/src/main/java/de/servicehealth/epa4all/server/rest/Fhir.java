@@ -19,12 +19,14 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.List;
 
 import static de.servicehealth.vau.VauClient.VAU_NO_SESSION;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 
 @RequestScoped
 @Path("{fhirPath: fhir/.*}")
 public class Fhir extends AbstractResource {
 
-    private static final int FHIR_RETRY_PERIOD_MS = 30000;
+    private static final int FHIR_RETRY_PERIOD_MS = 20000;
     private static final List<Integer> FHIR_RETRIES = List.of(1000, 2000, 3000, 5000);
 
     @GET
@@ -34,8 +36,8 @@ public class Fhir extends AbstractResource {
         @PathParam("fhirPath") String fhirPath,
         @Context UriInfo uriInfo,
         @Context HttpHeaders httpHeaders,
-        @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
-        @QueryParam("x-insurantid") String xInsurantId,
+        @QueryParam(X_KONNEKTOR) String konnektor,
+        @QueryParam(X_INSURANT_ID) String xInsurantId,
         @QueryParam("subject") String subject,
         @QueryParam("ui5") String ui5
     ) throws Exception {
@@ -55,8 +57,8 @@ public class Fhir extends AbstractResource {
         @PathParam("fhirPath") String fhirPath,
         @Context UriInfo uriInfo,
         @Context HttpHeaders httpHeaders,
-        @QueryParam("{x-konnektor : ([0-9a-zA-Z\\-\\.]+)?}") String konnektor,
-        @QueryParam("x-insurantid") String xInsurantId,
+        @QueryParam(X_KONNEKTOR) String konnektor,
+        @QueryParam(X_INSURANT_ID) String xInsurantId,
         @QueryParam("subject") String subject,
         @QueryParam("ui5") String ui5,
         byte[] body
@@ -87,6 +89,7 @@ public class Fhir extends AbstractResource {
         log.info(String.format("[%s] FHIR [%s] is forwarding", Thread.currentThread().getName(), fhirPath));
         EpaContext epaContext = prepareEpaContext(xInsurantId);
         EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-        return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, uriInfo, headers, body, epaContext.getXHeaders());
+        String baseQuery = uriInfo.getRequestUri().getQuery();
+        return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, baseQuery, headers, body, epaContext.getXHeaders());
     }
 }
