@@ -118,7 +118,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 String insurantId = insuranceData.getInsurantId();
                 EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
                 Map<String, String> xHeaders = prepareXHeaders(
-                    epaApi, smcbHandle, configurations.getConnectorBaseURL(), insurantId
+                    epaApi, insurantId, smcbHandle, configurations.getConnectorBaseURL()
                 );
                 try (Response response = epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders)) {
                     byte[] bytes = response.readEntity(byte[].class);
