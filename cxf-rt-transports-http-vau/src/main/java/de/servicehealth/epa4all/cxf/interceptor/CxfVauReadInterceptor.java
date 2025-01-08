@@ -61,7 +61,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
                 if (noUserSession) {
                     putProtocolHeader(message, VAU_NO_SESSION, "true");
                 }
-                vauFacade.forceRelease(vauCid, noUserSession, vauResponse.decrypted());
+                vauFacade.steadyVauSession(vauCid, noUserSession, vauResponse.decrypted());
             }
             byte[] payload = vauResponse.payload();
             if (payload != null) {

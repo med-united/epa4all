@@ -29,14 +29,14 @@ public class FolderService {
         }
     }
 
-    private File[] getNestedFiles(File parent) {
+    public File[] getNestedFiles(File parent) {
         if (parent == null || !parent.exists() || !parent.isDirectory()) {
             return new File[0];
         }
         return parent.listFiles(File::isFile);
     }
 
-    private File[] getNestedFolders(File parent) {
+    public File[] getNestedFolders(File parent) {
         if (parent == null || !parent.exists() || !parent.isDirectory()) {
             return new File[0];
         }

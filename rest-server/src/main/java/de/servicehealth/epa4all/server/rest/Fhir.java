@@ -1,8 +1,9 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.health.service.cetp.retry.Retrier;
 import de.service.health.api.epa4all.EpaAPI;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -16,18 +17,16 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
-import java.util.List;
-
-import static de.servicehealth.vau.VauClient.VAU_NO_SESSION;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 
+@SuppressWarnings("unused")
 @RequestScoped
 @Path("{fhirPath: fhir/.*}")
 public class Fhir extends AbstractResource {
 
-    private static final int FHIR_RETRY_PERIOD_MS = 20000;
-    private static final List<Integer> FHIR_RETRIES = List.of(1000, 2000, 3000, 5000);
+    @Inject
+    EpaCallGuard epaCallGuard;
 
     @GET
     @Consumes(MediaType.WILDCARD)
@@ -41,12 +40,8 @@ public class Fhir extends AbstractResource {
         @QueryParam("subject") String subject,
         @QueryParam("ui5") String ui5
     ) throws Exception {
-        return Retrier.callAndRetryEx(
-            FHIR_RETRIES,
-            FHIR_RETRY_PERIOD_MS,
-            true,
-            () -> forward(true, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null),
-            response -> response.getHeaderString(VAU_NO_SESSION) == null
+        return epaCallGuard.callAndRetry(() ->
+            forward(true, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null)
         );
     }
 
@@ -63,12 +58,8 @@ public class Fhir extends AbstractResource {
         @QueryParam("ui5") String ui5,
         byte[] body
     ) throws Exception {
-        return Retrier.callAndRetryEx(
-            FHIR_RETRIES,
-            FHIR_RETRY_PERIOD_MS,
-            true,
-            () -> forward(false, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body),
-            response -> response.getHeaderString(VAU_NO_SESSION) == null
+        return epaCallGuard.callAndRetry(() ->
+            forward(false, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body)
         );
     }
 

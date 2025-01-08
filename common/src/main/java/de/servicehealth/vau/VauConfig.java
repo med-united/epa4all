@@ -4,6 +4,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.util.List;
+
 @Getter
 @ApplicationScoped
 public class VauConfig {
@@ -22,6 +24,12 @@ public class VauConfig {
 
     @ConfigProperty(name = "epa.vau.read.timeout.ms", defaultValue = "10000")
     int vauReadTimeoutMs;
+
+    @ConfigProperty(name = "epa.vau.call.retry.period.ms", defaultValue = "20000")
+    int vauCallRetryPeriodMs;
+
+    @ConfigProperty(name = "epa.vau.call.retries.ms", defaultValue = "6000,3000,2000")
+    List<Integer> vauCallRetries;
 
     @ConfigProperty(name = "epa.vau.connection.timeout.ms", defaultValue = "10000")
     int connectionTimeoutMs;

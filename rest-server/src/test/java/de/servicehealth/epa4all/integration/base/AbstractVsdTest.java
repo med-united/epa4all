@@ -112,7 +112,10 @@ public abstract class AbstractVsdTest {
 
     @AfterEach
     public void afterEach() {
-        File[] files = TEST_FOLDER.listFiles();
+        deleteFiles(TEST_FOLDER.listFiles());
+    }
+
+    protected void deleteFiles(File[] files) {
         if (files != null) {
             Stream.of(files).forEach(f -> {
                 if (f.isDirectory()) {

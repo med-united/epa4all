@@ -19,6 +19,7 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
@@ -84,12 +85,11 @@ public class StructureDefinitionService {
     private String extractSchemaFileName(String contentType, byte[] documentBytes) throws Exception {
         if (isXmlCompliant(contentType)) {
             String xmlSource = new String(documentBytes);
-            if (xmlSource.contains("KBV_PR_EAU_Bundle")) {
-                return xmlSchemasMap.get("KBV_PR_EAU_Bundle");
-            } else if (xmlSource.contains("1.2.276.0.76.7.7")) {
-                return xmlSchemasMap.get("1.2.276.0.76.7.7");
-            } else if (xmlSource.contains("2.16.840.1.113883.6.1")) {
-                return xmlSchemasMap.get("2.16.840.1.113883.6.1");
+            Optional<Map.Entry<String, String>> entryOpt = xmlSchemasMap.entrySet().stream()
+                .filter(e -> xmlSource.contains(e.getKey()))
+                .findFirst();
+            if (entryOpt.isPresent()) {
+                return entryOpt.get().getValue();
             }
             Document xmlDocument = toXmlDocument(xmlSource);
             NodeList documentTypeCd = xmlDocument.getElementsByTagName("document_type_cd");

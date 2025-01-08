@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
+import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+
 @Provider
 public class UserRuntimeConfigProducer implements ContainerRequestFilter {
 
@@ -39,8 +41,8 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
     @FromHttpPath
     @Produces
     public UserRuntimeConfig userRuntimeConfig() {
-        if (info.getPathParameters().containsKey("konnektor")) {
-            String konnektor = info.getPathParameters().get("konnektor").getFirst();
+        if (info.getQueryParameters().containsKey(X_KONNEKTOR)) {
+            String konnektor = info.getPathParameters().get(X_KONNEKTOR).getFirst();
             Optional<String> configKey = konnektorsConfigs.keySet().stream().filter(s -> s.startsWith(konnektor)).findAny();
             if (configKey.isPresent()) {
                 IUserConfigurations userConfigurations = konnektorsConfigs.get(configKey.get()).getUserConfigurations();

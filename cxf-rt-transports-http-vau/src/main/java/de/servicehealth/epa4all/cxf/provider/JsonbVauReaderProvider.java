@@ -10,7 +10,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static de.servicehealth.vau.VauFacade.NO_USER_SESSION;
 
 public class JsonbVauReaderProvider extends AbstractJsonbReader {
 
@@ -24,7 +24,10 @@ public class JsonbVauReaderProvider extends AbstractJsonbReader {
     protected byte[] getBytes(InputStream entityStream, MultivaluedMap httpHeaders) throws IOException {
         List vauErrorList = (List) httpHeaders.get(VAU_ERROR);
         if (vauErrorList != null && !vauErrorList.isEmpty()) {
-            throw new IOException((String) vauErrorList.getFirst());
+            String error = (String) vauErrorList.getFirst();
+            if (!error.contains(NO_USER_SESSION)) {
+                throw new IOException(error);
+            }
         }
         return entityStream.readAllBytes();
     }

@@ -15,17 +15,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.common.TestUtils.getFixture;
-import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
-import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
-import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,9 +28,9 @@ import static org.mockito.Mockito.mock;
 
 @QuarkusTest
 @TestProfile(ProxyEpaTestProfile.class)
-public class GetWorkflowEpaIT {
+public class EventServiceEpaIT {
 
-    private static final Logger log = Logger.getLogger(GetWorkflowEpaIT.class.getName());
+    private static final Logger log = Logger.getLogger(EventServiceEpaIT.class.getName());
 
     static JAXBContext getCardsJaxbContext;
 
@@ -71,30 +65,5 @@ public class GetWorkflowEpaIT {
         String xml = response.asString();
         assertTrue(xml.contains("GetCardsResponse"));
         log.info("SOAP --> " + xml);
-    }
-
-    @Test
-    public void konnektorConfigsAreExposed() {
-        Response response = given().header(ACCEPT, APPLICATION_XML).when().get("/konnektor/configs");
-        assertEquals(200, response.getStatusCode());
-        String xml = response.asString();
-        assertTrue(xml.contains("KonnektorConfig"));
-        assertTrue(xml.contains("clientCertificate"));
-
-        response = given().header(ACCEPT, APPLICATION_JSON).when().get("/konnektor/configs");
-        assertEquals(200, response.getStatusCode());
-        String json = response.asString();
-        assertTrue(json.startsWith("[{"));
-        assertTrue(json.contains("clientCertificate"));
-
-        response = given()
-            .header(ACCEPT, APPLICATION_JSON)
-            .queryParams(Map.of(X_KONNEKTOR, "10.0.0.1"))
-            .when()
-            .get("/konnektor/configs");
-        
-        assertEquals(200, response.getStatusCode());
-        json = response.asString();
-        assertEquals("[]", json);
     }
 }

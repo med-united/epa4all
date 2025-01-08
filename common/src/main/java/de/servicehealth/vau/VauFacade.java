@@ -59,7 +59,6 @@ public class VauFacade {
     @Getter
     private final boolean tracingEnabled;
 
-    @Getter
     private volatile boolean sessionEstablished = true;
 
     private final ScheduledExecutorService executorService;
@@ -129,7 +128,7 @@ public class VauFacade {
             .orElse(null);
     }
 
-    public void forceRelease(String vauCid, boolean noUserSession, boolean decrypted) {
+    public void steadyVauSession(String vauCid, boolean noUserSession, boolean decrypted) {
         if (noUserSession) {
             synchronized (this) {
                 if (sessionEstablished) {

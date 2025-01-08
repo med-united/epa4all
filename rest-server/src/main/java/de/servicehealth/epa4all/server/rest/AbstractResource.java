@@ -1,28 +1,17 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.health.service.cetp.KonnektorsConfigs;
-import de.health.service.cetp.config.KonnektorConfig;
-import de.health.service.check.HealthChecker;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
-import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
 import de.servicehealth.epa4all.server.entitlement.AuditEvidenceException;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
-import de.servicehealth.epa4all.server.filetracker.FolderService;
-import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
-import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
 import de.servicehealth.epa4all.server.idp.IdpConfig;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.insurance.ReadVSDResponseEx;
-import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.ResponseProcessingException;
 
@@ -43,43 +32,19 @@ public abstract class AbstractResource {
     protected final Logger log = Logger.getLogger(getClass().getName());
 
     @Inject
-    Event<ReadVSDResponseEx> readVSDResponseExEvent;
-
-    @Inject
-    Instance<XDSDocumentService> xdsDocumentService;
-
-    @Inject
     InsuranceDataService insuranceDataService;
 
     @Inject
     EntitlementService entitlementService;
 
     @Inject
-    EpaFileDownloader epaFileDownloader;
-
-    @Inject
-    Event<FileUpload> eventFileUpload;
-
-    @Inject
-    EpaMultiService epaMultiService;
-
-    @Inject
-    FolderService folderService;
-
-    @Inject
-    HealthChecker healthChecker;
-
-    @Inject
     VauNpProvider vauNpProvider;
-
-    @Inject
-    BulkTransfer bulkTransfer;
 
     @Inject
     IdpConfig idpConfig;
 
-    @KonnektorsConfigs
-    Map<String, KonnektorConfig> konnektorsConfigs;
+    @Inject
+    protected EpaMultiService epaMultiService;
 
     @Inject
     @FromHttpPath
@@ -87,7 +52,7 @@ public abstract class AbstractResource {
 
     @Inject
     @TelematikId
-    String telematikId;
+    protected String telematikId;
 
     @Inject
     @SMCBHandle
