@@ -25,7 +25,6 @@ import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.WebApplicationException;
 import lombok.Getter;
 import org.apache.http.client.fluent.Executor;
 
@@ -95,12 +94,12 @@ public class EpaMultiService extends StartableService {
 
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
                     IDocumentManagementPortType documentManagementPortType = epaServicePortProvider.getDocumentManagementPortType(
-                        documentManagementUrl, epaUserAgent, vauFacade
+                        documentManagementUrl, epaUserAgent, vauFacade, vauConfig
                     );
 
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
                     IDocumentManagementInsurantPortType documentManagementInsurantPortType = epaServicePortProvider.getDocumentManagementInsurantPortType(
-                        documentManagementInsurantUrl, epaUserAgent, vauFacade
+                        documentManagementInsurantUrl, epaUserAgent, vauFacade, vauConfig
                     );
 
                     AccountInformationApi accountInformationApi = clientFactory.createPlainClient(
@@ -162,16 +161,17 @@ public class EpaMultiService extends StartableService {
 
     public EpaAPI getEpaAPI(String insurantId) {
         EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(insurantId);
-        if (epaAPI != null && epaAPI.getVauFacade().isSessionEstablished()) {
+        if (epaAPI != null) {
             return epaAPI;
         } else {
             for (EpaAPI api : epaBackendMap.values()) {
-                if (api.getVauFacade().isSessionEstablished() && hasEpaRecord(api, insurantId)) {
+                if (hasEpaRecord(api, insurantId)) {
                     xInsurantid2ePAApi.put(insurantId, api);
                     return api;
                 }
             }
-            throw new WebApplicationException(String.format("Insurant [%s] - ePA record is not found in active ePA backends", insurantId));
+            String msg = String.format("Insurant [%s] - ePA record is not found in ePA backends", insurantId);
+            throw new IllegalStateException(msg);
         }
     }
 

@@ -16,6 +16,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 
+import static de.servicehealth.vau.VauClient.CLIENT_ID;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
@@ -50,6 +51,7 @@ public interface AuthorizationSmcBApi extends de.servicehealth.api.Authorization
         @ApiResponse(code = 403, message = "Forbidden.", response = ErrorType.class),
         @ApiResponse(code = 500, message = "Internal Server Error", response = ErrorType.class)})
     Response sendAuthorizationRequestSCWithResponse(
+        @HeaderParam(CLIENT_ID) String clientId,
         @HeaderParam(X_USER_AGENT) String xUseragent,
         @HeaderParam(X_BACKEND) String xBackend
     );
@@ -63,6 +65,7 @@ public interface AuthorizationSmcBApi extends de.servicehealth.api.Authorization
         @ApiResponse(code = 400, message = "Bad Request", response = ErrorType.class),
         @ApiResponse(code = 500, message = "Internal Server Error", response = ErrorType.class) })
     GetNonce200Response getNonce(
+        @HeaderParam(CLIENT_ID) String clientId,
         @HeaderParam(X_USER_AGENT) String xUseragent,
         @HeaderParam(X_BACKEND) String xBackend
     );
@@ -79,6 +82,7 @@ public interface AuthorizationSmcBApi extends de.servicehealth.api.Authorization
         @ApiResponse(code = 409, message = "Conflict.", response = ErrorType.class),
         @ApiResponse(code = 500, message = "Internal Server Error", response = ErrorType.class) })
     SendAuthCodeSC200Response sendAuthCodeSC(
+        @HeaderParam(CLIENT_ID) String clientId,
         @HeaderParam(X_USER_AGENT) String xUseragent,
         @HeaderParam(X_BACKEND) String xBackend,
         SendAuthCodeSCtype sendAuthCodeSCtype

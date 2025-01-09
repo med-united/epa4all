@@ -3,6 +3,7 @@ package de.service.health.api.epa4all;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadSoapInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteSoapInterceptor;
+import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
@@ -31,20 +32,28 @@ public class EpaServicePortProvider {
     public IDocumentManagementPortType getDocumentManagementPortType(
         String url,
         String epaUserAgent,
-        VauFacade vauFacade
+        VauFacade vauFacade,
+        VauConfig vauConfig
     ) throws Exception {
-        return createXDSDocumentPortType(url, epaUserAgent, IDocumentManagementPortType.class, vauFacade);
+        return createXDSDocumentPortType(url, epaUserAgent, IDocumentManagementPortType.class, vauFacade, vauConfig);
     }
 
     public IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(
         String url,
         String epaUserAgent,
-        VauFacade vauFacade
+        VauFacade vauFacade,
+        VauConfig vauConfig
     ) throws Exception {
-        return createXDSDocumentPortType(url, epaUserAgent, IDocumentManagementInsurantPortType.class, vauFacade);
+        return createXDSDocumentPortType(url, epaUserAgent, IDocumentManagementInsurantPortType.class, vauFacade, vauConfig);
     }
 
-    private <T> T createXDSDocumentPortType(String address, String epaUserAgent, Class<T> clazz, VauFacade vauFacade) throws Exception {
+    private <T> T createXDSDocumentPortType(
+        String address,
+        String epaUserAgent,
+        Class<T> clazz,
+        VauFacade vauFacade,
+        VauConfig vauConfig
+    ) throws Exception {
         JaxWsProxyFactoryBean jaxWsProxyFactory = new JaxWsProxyFactoryBean();
         jaxWsProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
         jaxWsProxyFactory.setServiceClass(XDSDocumentService.class);
@@ -61,7 +70,7 @@ public class EpaServicePortProvider {
         jaxWsProxyFactory.getOutInterceptors().addAll(
             List.of(
                 new LoggingOutInterceptor(),
-                new CxfVauSetupInterceptor(vauFacade, epaUserAgent),
+                new CxfVauSetupInterceptor(vauFacade, vauConfig, epaUserAgent),
                 new CxfVauWriteSoapInterceptor(vauFacade)
             )
         );
@@ -70,7 +79,7 @@ public class EpaServicePortProvider {
         );
         T portType = jaxWsProxyFactory.create(clazz);
         Client client = ClientProxy.getClient(portType);
-        initConduit((HTTPConduit) client.getConduit());
+        initConduit((HTTPConduit) client.getConduit(), vauConfig.getConnectionTimeoutMs());
         return portType;
     }
 }

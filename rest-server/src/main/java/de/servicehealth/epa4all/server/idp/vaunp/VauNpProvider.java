@@ -5,11 +5,11 @@ import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.fault.CetpFault;
-import de.health.service.cetp.retry.Retrier;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauSessionReload;
@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -42,14 +41,15 @@ public class VauNpProvider extends StartableService {
 
     private static final String STATUS_TEMPLATE = "[%s] Took %d ms - %s";
 
+    private final Map<String, Semaphore> reloadMap = new HashMap<>();
     private final Map<VauNpKey, String> vauNpMap = new HashMap<>();
-    private final Semaphore semaphore = new Semaphore(1);
 
     @Inject
     @Setter
     ManagedExecutor scheduledThreadPool;
 
     IdpClient idpClient;
+    EpaCallGuard epaCallGuard;
     EpaMultiService epaMultiService;
     IKonnektorClient konnektorClient;
     KonnektorDefaultConfig konnektorDefaultConfig;
@@ -63,11 +63,13 @@ public class VauNpProvider extends StartableService {
     @Inject
     public VauNpProvider(
         IdpClient idpClient,
+        EpaCallGuard epaCallGuard,
         EpaMultiService epaMultiService,
         IKonnektorClient konnektorClient,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
         this.idpClient = idpClient;
+        this.epaCallGuard = epaCallGuard;
         this.epaMultiService = epaMultiService;
         this.konnektorClient = konnektorClient;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
@@ -79,6 +81,10 @@ public class VauNpProvider extends StartableService {
     }
 
     public void onStart() throws Exception {
+        epaMultiService.getEpaBackendMap().forEach((backend, api) ->
+            reloadMap.put(backend, new Semaphore(1))
+        );
+
         List<String> statuses;
         Map<VauNpKey, String> cachedNps = loadVauNps();
         if (!cachedNps.isEmpty() && sameConfigs(cachedNps)) {
@@ -103,8 +109,7 @@ public class VauNpProvider extends StartableService {
 
     private Map<VauNpKey, String> loadVauNps() {
         try {
-            VauNpFile vauNpFile = new VauNpFile(configDirectory);
-            return vauNpFile.get();
+            return new VauNpFile(configDirectory).get();
         } catch (Exception e) {
             log.log(Level.SEVERE, "Error while loading VauNpFile", e);
             return new HashMap<>();
@@ -149,9 +154,9 @@ public class VauNpProvider extends StartableService {
         }
     }
 
-    private List<String> collectResults(List<Future<VauNpInfo>> futures) throws Exception {
+    private List<String> collectResults(Map<String, Future<VauNpInfo>> backendToFuture) throws Exception {
         List<String> statuses = new ArrayList<>();
-        for (Future<VauNpInfo> future : futures) {
+        backendToFuture.forEach((backend, future) -> {
             try {
                 VauNpInfo vauInfo = future.get(60, TimeUnit.SECONDS);
                 if (vauInfo.hasValue()) {
@@ -160,51 +165,47 @@ public class VauNpProvider extends StartableService {
                 statuses.add(vauInfo.status);
             } catch (Exception e) {
                 statuses.add(e.getMessage());
+            } finally {
+                reloadMap.get(backend).release();
             }
-        }
+        });
         new VauNpFile(configDirectory).update(vauNpMap);
         return statuses;
     }
 
-    public void onTransfer(@ObservesAsync VauSessionReload sessionReload) {
+    public void onSessionReload(@ObservesAsync VauSessionReload sessionReload) {
         String backend = sessionReload.getBackend();
         log.info(String.format("[%s] Vau session reload is submitted", backend));
         try {
-            Retrier.callAndRetry(
-                List.of(1000),
-                15000,
-                () -> reload(Set.of(backend)),
-                statusList -> !statusList.getFirst().contains("try later")
-            );
+            reload(Set.of(backend));
         } catch (Exception e) {
             log.log(Level.SEVERE, String.format("Error while reloading Vau NP for '%s'", backend), e);
         }
     }
 
-    public List<String> reload(Set<String> targetEpaSet) throws Exception {
-        if (semaphore.tryAcquire()) {
-            try {
-                ConcurrentHashMap<String, EpaAPI> epaBackendMap = epaMultiService.getEpaBackendMap();
-                List<Future<VauNpInfo>> futures = new ArrayList<>();
-                getUniqueKonnektorsConfigs().forEach((konnektor, config) ->
-                    epaBackendMap.entrySet().stream()
-                        .filter(e -> targetEpaSet.isEmpty() || targetEpaSet.stream().anyMatch(t -> e.getKey().startsWith(t)))
-                        .forEach(e ->
-                            futures.add(scheduledThreadPool.submit(() -> getVauNp(konnektor, config, e.getValue())))
-                        )
-                );
-                return collectResults(futures);
-            } finally {
-                semaphore.release();
-            }
-        } else {
-            return List.of("Reload is in progress, try later");
-        }
+    public List<String> reload(Set<String> backendsToReload) throws Exception {
+        List<String> reloading = new ArrayList<>();
+        Map<String, Future<VauNpInfo>> futures = new HashMap<>();
+        epaMultiService.getEpaBackendMap().entrySet().stream()
+            .filter(e -> backendsToReload.isEmpty() || backendsToReload.stream().anyMatch(t -> e.getKey().startsWith(t)))
+            .forEach(e -> {
+                String backend = e.getKey();
+                if (reloadMap.get(backend).tryAcquire()) {
+                    epaCallGuard.setBlocked(backend, true);
+                    getUniqueKonnektorsConfigs().forEach((konnektor, config) ->
+                        futures.put(backend, scheduledThreadPool.submit(() -> getVauNp(konnektor, config, e.getValue())))
+                    );
+                } else {
+                    reloading.add(String.format("[%s] Reload is in progress, try later", backend));
+                }
+            });
+        List<String> statuses = collectResults(futures);
+        statuses.addAll(reloading);
+        return statuses;
     }
 
     private VauNpInfo getVauNp(String konnektor, KonnektorConfig config, EpaAPI api) {
         String backend = api.getBackend();
-
         long start = System.currentTimeMillis();
         try {
             RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
@@ -215,15 +216,17 @@ public class VauNpProvider extends StartableService {
             long delta = System.currentTimeMillis() - start;
 
             String okStatus = String.format(STATUS_TEMPLATE, backend, delta, "OK");
-            api.getVauFacade().setVauNpSessionStatus(okStatus, true);
+            api.getVauFacade().setVauNpSessionStatus(okStatus);
             return new VauNpInfo(key, vauNp, okStatus);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             String msg = String.format("Error while getVauNpSync konnektor=%s, ePA=%s", konnektor, backend);
             log.log(Level.SEVERE, msg, e);
             long delta = System.currentTimeMillis() - start;
             String errorStatus = String.format(STATUS_TEMPLATE, backend, delta, e.getMessage());
-            api.getVauFacade().setVauNpSessionStatus(errorStatus, false);
+            api.getVauFacade().setVauNpSessionStatus(errorStatus);
             return new VauNpInfo(null, null, errorStatus);
+        } finally {
+            epaCallGuard.setBlocked(backend, false);
         }
     }
 

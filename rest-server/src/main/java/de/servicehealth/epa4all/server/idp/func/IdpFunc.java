@@ -38,6 +38,7 @@ public class IdpFunc {
     }
 
     public static IdpFunc init(
+        String clientId,
         String userAgent,
         String backend,
         IKonnektorServicePortsAPI servicePorts,
@@ -52,9 +53,9 @@ public class IdpFunc {
                     throw new RuntimeException("Could not external authenticate", e);
                 }
             },
-            () -> authorizationSmcBApi.getNonce(userAgent, backend).getNonce(),
-            () -> authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(userAgent, backend),
-            sendAuthCodeSC -> authorizationSmcBApi.sendAuthCodeSC(userAgent, backend, sendAuthCodeSC)
+            () -> authorizationSmcBApi.getNonce(clientId, userAgent, backend).getNonce(),
+            () -> authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(clientId, userAgent, backend),
+            sendAuthCodeSC -> authorizationSmcBApi.sendAuthCodeSC(clientId, userAgent, backend, sendAuthCodeSC)
         );
     }
 }

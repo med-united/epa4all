@@ -122,7 +122,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 );
                 try (Response response = epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders)) {
                     byte[] bytes = response.readEntity(byte[].class);
-                    EpaContext epaContext = new EpaContext(insuranceData, Map.of());
+                    EpaContext epaContext = new EpaContext(epaApi.getBackend(), true, insuranceData, Map.of());
                     handleDownloadResponse(bytes, telematikId, epaContext, insurantId);
                     String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                     Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);

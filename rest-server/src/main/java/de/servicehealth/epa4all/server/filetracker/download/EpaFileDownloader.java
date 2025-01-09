@@ -39,8 +39,8 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
             byte[] documentBytes = documentResponse.getDocument();
             String mimeType = documentResponse.getMimeType();
             String fileName = documentResponse.getDocumentUniqueId();
-            if (!fileName.equalsIgnoreCase(fileDownload.getFileName())) {
-                log.warning(String.format("[%s] file names mismatch: %s %s", taskId, fileName, fileDownload.getFileName()));
+            if (!fileDownload.getFileName().contains(fileName)) {
+                log.warning(String.format("[taskId=%s] file names mismatch: %s %s", taskId, fileName, fileDownload.getFileName()));
             }
 
             StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(mimeType, documentBytes);

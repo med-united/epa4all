@@ -6,10 +6,14 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class VauNpFile extends MapDumpFile<VauNpKey, String> {
 
     public static final String VAU_NP_FILE_NAME = "vau-np";
+
+    private static final Lock lock = new ReentrantLock();
 
     public VauNpFile(File configFolder) throws IOException {
         super(configFolder);
@@ -37,8 +41,13 @@ public class VauNpFile extends MapDumpFile<VauNpKey, String> {
     }
 
     public void update(Map<VauNpKey, String> vauNpMap) {
-        Map<VauNpKey, String> cachedMap = get();
-        cachedMap.putAll(vauNpMap);
-        store(cachedMap);
+        lock.lock();
+        try {
+            Map<VauNpKey, String> cachedMap = get();
+            cachedMap.putAll(vauNpMap);
+            store(cachedMap);
+        } finally {
+            lock.unlock();
+        }
     }
 }

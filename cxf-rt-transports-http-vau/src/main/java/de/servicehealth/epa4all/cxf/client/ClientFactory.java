@@ -62,6 +62,7 @@ public class ClientFactory extends StartableService {
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
             WebClient.getConfig(api),
+            vauConfig.getConnectionTimeoutMs(),
             List.of(new LoggingOutInterceptor(), new CxfHeadersInterceptor()),
             List.of(new LoggingInInterceptor())
         );
@@ -76,7 +77,8 @@ public class ClientFactory extends StartableService {
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
             WebClient.getConfig(api),
-            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade, epaUserAgent)),
+            vauConfig.getConnectionTimeoutMs(),
+            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade, vauConfig, epaUserAgent)),
             List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
         );
         return api;
@@ -84,22 +86,23 @@ public class ClientFactory extends StartableService {
 
     public static void initClient(
         ClientConfiguration config,
+        int connectionTimeoutMs,
         List<Interceptor<? extends Message>> outInterceptors,
         List<Interceptor<? extends Message>> inInterceptors
     ) throws Exception {
         config.getOutInterceptors().addAll(outInterceptors);
         config.getInInterceptors().addAll(inInterceptors);
 
-        initConduit((HTTPConduit) config.getConduit());
+        initConduit((HTTPConduit) config.getConduit(), connectionTimeoutMs);
     }
 
-    public static void initConduit(HTTPConduit conduit) throws Exception {
+    public static void initConduit(HTTPConduit conduit, int connectionTimeoutMs) throws Exception {
         HTTPClientPolicy clientPolicy = conduit.getClient();
         clientPolicy.setVersion("1.1");
         clientPolicy.setAutoRedirect(false);
         clientPolicy.setAllowChunking(false);
         clientPolicy.setConnection(KEEP_ALIVE);
-        clientPolicy.setConnectionTimeout(5000);
+        clientPolicy.setConnectionTimeout(connectionTimeoutMs);
 
         TLSClientParameters tlsParams = new TLSClientParameters();
         // setDisableCNCheck and setHostnameVerifier should not be set

@@ -1,8 +1,5 @@
 package de.servicehealth.epa4all.server.filetracker;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -14,12 +11,15 @@ import java.nio.file.WatchService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Taken from <a href="https://gist.github.com/danielflower/f54c2fe42d32356301c68860a4ab21ed">...</a>
  */
 public class FileWatcher {
-    private static final Logger log = LoggerFactory.getLogger(FileWatcher.class);
+
+    private final static Logger log = Logger.getLogger(FileWatcher.class.getName());
 
     private Thread thread;
     private WatchService watchService;
@@ -48,7 +48,7 @@ public class FileWatcher {
             watchKeyToDirectory.put(wk, parent);
         }
         for (Path file : files) {
-            log.info("Going to watch {}", file);
+            log.info("Going to watch " + file);
         }
 
         thread = new Thread(() -> {
@@ -60,13 +60,13 @@ public class FileWatcher {
 
                     Path keyParent = watchKeyToDirectory.get(wk);
                     if (keyParent == null) {
-                        log.error("WatchKey not recognized");
+                        log.log(Level.SEVERE, "WatchKey not recognized");
                         continue;
                     }
 
                     for (WatchEvent<?> event : wk.pollEvents()) {
                         if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
-                            log.error("FileSystem watcher watched an OVERFLOW event");
+                            log.log(Level.SEVERE, "FileSystem watcher watched an OVERFLOW event");
                             continue;
                         }
 
@@ -80,7 +80,7 @@ public class FileWatcher {
 
                         for (Path watchFile : files) {
                             if (Files.isSameFile(watchFile, changed)) {
-                                log.info("File change event: {}", changed);
+                                log.info("File change event: " + changed);
                                 callback.run();
                                 break;
                             }
@@ -91,7 +91,7 @@ public class FileWatcher {
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
-                    log.error("Error while reloading file", e);
+                    log.log(Level.SEVERE, "Error while reloading file", e);
                 } finally {
                     if (wk != null) {
                         wk.reset();
@@ -107,7 +107,7 @@ public class FileWatcher {
         try {
             watchService.close();
         } catch (IOException e) {
-            log.info("Error closing watch service", e);
+            log.log(Level.INFO, "Error closing watch service", e);
         }
     }
 }

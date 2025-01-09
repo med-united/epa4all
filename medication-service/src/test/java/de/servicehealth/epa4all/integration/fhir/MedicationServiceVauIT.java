@@ -19,12 +19,11 @@ import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.StringType;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.common.TestUtils.isDockerContainerRunning;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
@@ -39,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestProfile(ProxyLocalTestProfile.class)
 public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
 
-    private static final Logger log = LoggerFactory.getLogger(MedicationServiceVauIT.class);
+    private final static Logger log = Logger.getLogger(MedicationServiceVauIT.class.getName());
 
     @Test
     public void medicationCreatedAndObtainedThroughVAUProxy() throws Exception {

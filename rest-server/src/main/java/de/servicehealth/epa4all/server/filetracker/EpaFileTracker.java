@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.filetracker;
 
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
 import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
@@ -29,11 +30,16 @@ import static de.health.service.cetp.utils.Utils.saveDataToFile;
 public abstract class EpaFileTracker<T extends FileAction> {
 
     private static final Logger log = Logger.getLogger(EpaFileTracker.class.getName());
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSS");
+    private static final Map<String, RegistryResponseType> resultsMap = new ConcurrentHashMap<>();
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     ManagedExecutor filesTransferExecutor;
-    private static final Map<String, RegistryResponseType> resultsMap = new ConcurrentHashMap<>();
+
+    @Inject
+    EpaCallGuard epaCallGuard;
 
     @Inject
     FolderService folderService;
@@ -49,7 +55,14 @@ public abstract class EpaFileTracker<T extends FileAction> {
 
 
     public RegistryResponseType getResult(String taskId) {
-        return resultsMap.remove(taskId);
+        RegistryResponseType responseType = resultsMap.get(taskId);
+        if (responseType == null) {
+            return null;
+        }
+        if (!responseType.getStatus().contains("InProgress")) {
+            resultsMap.remove(taskId);
+        }
+        return responseType;
     }
 
     public void onTransfer(@ObservesAsync T fileAction) {
@@ -64,9 +77,12 @@ public abstract class EpaFileTracker<T extends FileAction> {
         }
         EpaContext epaContext = fileAction.getEpaContext();
         resultsMap.computeIfAbsent(taskId, (k) -> prepareInProgressResponse(taskId));
-        IDocumentManagementPortType documentPortType = getDocumentManagementPortType(epaContext);
         try {
-            RegistryResponseType responseType = handleTransfer(fileAction, documentPortType);
+            IDocumentManagementPortType documentPortType = getDocumentManagementPortType(epaContext);
+            RegistryResponseType responseType = epaCallGuard.callAndRetry(
+                epaContext.getBackend(),
+                () -> handleTransfer(fileAction, documentPortType)
+            );
             resultsMap.computeIfPresent(taskId, (k, prev) -> responseType);
         } catch (Exception e) {
             String s = fileAction.isUpload() ? "uploading" : "downloading";

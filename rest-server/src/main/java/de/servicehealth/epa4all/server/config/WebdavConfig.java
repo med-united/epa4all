@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.config;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
+import lombok.Setter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.Set;
@@ -13,6 +14,7 @@ public class WebdavConfig {
     public final static String RESOURCE_NAME = "webdav";
 
     @ConfigProperty(name = "webdav.root.folder")
+    @Setter
     String rootFolder;
 
     @ConfigProperty(name = "smcb.folder")

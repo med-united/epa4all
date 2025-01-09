@@ -30,7 +30,7 @@ public class EntitlementService {
         this.insuranceDataService = insuranceDataService;
     }
 
-    public void setEntitlement(
+    public boolean setEntitlement(
         UserRuntimeConfig userRuntimeConfig,
         InsuranceData insuranceData,
         EpaAPI epaAPI,
@@ -58,6 +58,9 @@ public class EntitlementService {
         );
         if (response.getValidTo() != null) {
             insuranceDataService.updateEntitlement(response.getValidTo().toInstant(), telematikId, insurantId);
+            return true;
+        } else {
+            return false;
         }
     }
 }
