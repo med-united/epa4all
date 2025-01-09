@@ -127,6 +127,7 @@ public class IdpClient extends StartableService {
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         IdpFunc idpFunc = IdpFunc.init(
+            idpConfig.getClientId(),
             epaMultiService.getEpaConfig().getEpaUserAgent(),
             backend,
             servicePorts,
@@ -151,6 +152,7 @@ public class IdpClient extends StartableService {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ThreadLocal<String> threadLocalString = new ThreadLocal<String>();
         IdpFunc idpFunc = IdpFunc.init(
+            idpConfig.getClientId(),
             epaMultiService.getEpaConfig().getEpaUserAgent(),
             backend,
             servicePorts,
@@ -285,6 +287,7 @@ public class IdpClient extends StartableService {
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
 
         IdpFunc idpFunc = IdpFunc.init(
+            idpConfig.getClientId(),
             epaMultiService.getEpaConfig().getEpaUserAgent(),
             backend,
             servicePorts,
@@ -301,6 +304,7 @@ public class IdpClient extends StartableService {
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         IdpFunc idpFunc = IdpFunc.init(
+            idpConfig.getClientId(),
             epaMultiService.getEpaConfig().getEpaUserAgent(),
             backend,
             servicePorts,

@@ -71,7 +71,13 @@ public class TestUtils {
             } catch (Exception e) {
                 future.cancel(true);
             } finally {
-                Thread.startVirtualThread(() -> timed(backend, "destroyForcibly", process::destroyForcibly));
+                Thread.startVirtualThread(() -> {
+                    try {
+                        timed(backend, "destroyForcibly", process::destroyForcibly);
+                    } catch (Exception e) {
+                        log.log(Level.SEVERE, "Error while destroyForcibly for " + backend, e);
+                    }
+                });
             }
 
         } catch (Throwable t) {
@@ -83,13 +89,13 @@ public class TestUtils {
         return reachable;
     }
 
-    private static <T> T timed(String subject, String actionName, TimedAction<T> action) {
+    private static <T> T timed(String subject, String actionName, TimedAction<T> action) throws Exception {
         StopWatch watch = StopWatch.createStarted();
         try {
             return action.execute();
         } catch (Exception e) {
             log.log(Level.SEVERE, String.format("[%s] Error while running '%s' action", subject, actionName), e);
-            return null;
+            throw e;
         } finally {
             watch.stop();
             log.info(String.format("[%s] '%s' action took %s", subject, actionName, watch.formatTime()));
@@ -97,7 +103,7 @@ public class TestUtils {
     }
 
     public static void runWithDockerContainers(Set<String> containers, ITAction action) throws Exception {
-        timed("Docker containers", "check running", () -> {
+        timed("Docker containers", "run test", () -> {
             if (containers.parallelStream().allMatch(TestUtils::isDockerContainerRunning)) {
                 containers.forEach(b -> log.info(String.format("[%s] Running", b)));
                 action.execute();
@@ -109,7 +115,7 @@ public class TestUtils {
     }
 
     public static void runWithEpaBackends(Set<String> backends, ITAction action) throws Exception {
-        timed("ePA backends", "check reachable", () -> {
+        timed("ePA backends", "run test", () -> {
             if (backends.parallelStream().allMatch(TestUtils::isBackendReachable)) {
                 backends.forEach(b -> log.info(String.format("[%s] Connected", b)));
                 action.execute();

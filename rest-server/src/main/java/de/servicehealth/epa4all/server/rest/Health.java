@@ -1,6 +1,8 @@
 package de.servicehealth.epa4all.server.rest;
 
+import de.health.service.check.HealthChecker;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -15,6 +17,9 @@ public class Health extends AbstractResource {
 
     @Context
     HttpServletRequest httpServletRequest;
+
+    @Inject
+    HealthChecker healthChecker;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

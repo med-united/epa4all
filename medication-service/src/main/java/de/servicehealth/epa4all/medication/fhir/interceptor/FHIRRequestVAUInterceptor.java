@@ -116,7 +116,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
                 log.log(Level.SEVERE, "Error while sending DIRECT Fhir request, encrypted = " + encrypted, e);
                 if (encrypted) {
                     boolean noUserSession = e.getMessage().contains(NO_USER_SESSION);
-                    vauFacade.forceRelease(vauCid, noUserSession, false);
+                    vauFacade.handleVauSession(vauCid, noUserSession, false);
                 }
                 throw new RuntimeException(e);
             }

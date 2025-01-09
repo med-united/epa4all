@@ -12,6 +12,8 @@ import java.util.Map;
 @ToString
 public class EpaContext {
 
+    private String backend;
+    private boolean entitlementValid;
     private InsuranceData insuranceData;
     private Map<String, String> headers;
 

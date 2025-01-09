@@ -10,8 +10,6 @@ import org.jugs.webdav.jaxrs.xml.properties.GetContentLength;
 import org.jugs.webdav.jaxrs.xml.properties.GetContentType;
 import org.jugs.webdav.jaxrs.xml.properties.GetLastModified;
 import org.jugs.webdav.jaxrs.xml.properties.ResourceType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
@@ -20,10 +18,12 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class PropStatBuilderExt {
 
-    private static final Logger log = LoggerFactory.getLogger(PropStatBuilderExt.class);
+    private final static Logger log = Logger.getLogger(PropStatBuilderExt.class.getName());
+
     private final List<Object> properties;
     private Response.Status status;
     private final Set<String> names;
@@ -106,7 +106,7 @@ public class PropStatBuilderExt {
                     empty = false;
                 }
             } else {
-                log.debug("notfound-object - transformed into: {}", prop.getClass().getSimpleName());
+                log.fine("notfound-object - transformed into: " + prop.getClass().getSimpleName());
             }
         }
 
