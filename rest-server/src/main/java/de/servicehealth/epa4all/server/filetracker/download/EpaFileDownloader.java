@@ -58,7 +58,7 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
             log.info(String.format("[%s/%s] downloaded successfully", folderCode, fileDownload.getFileName()));
 
             if (pushEvent) {
-                fileDownloadedEvent.fireAsync(new FileDownloaded(insurantId, telematikId, response));
+                fileDownloadedEvent.fireAsync(new FileDownloaded(telematikId, response));
             }
         } 
     }

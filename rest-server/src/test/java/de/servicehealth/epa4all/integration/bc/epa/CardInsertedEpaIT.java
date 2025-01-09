@@ -45,7 +45,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
     
     private final String kvnr = "X110485291";
 
-    @TestHTTPResource("/ws/1-SMC-B-Testkarte--883110000162363/X110485291")
+    @TestHTTPResource("/ws/1-SMC-B-Testkarte--883110000162363")
     URI uri;
 
     @ClientEndpoint
@@ -54,8 +54,6 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
         @OnOpen
         public void open(Session session) {
             MESSAGES.add("CONNECT");
-            // Send a message to indicate that we are ready,
-            // as the message handler may not be registered immediately after this callback.
             session.getAsyncRemote().sendText("ready");
         }
 
@@ -71,7 +69,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
         runWithEpaBackends(epaBackends, () -> {
             try (Session session = ContainerProvider.getWebSocketContainer().connectToServer(Client.class, uri)) {
                 assertEquals("CONNECT", MESSAGES.poll(10, TimeUnit.SECONDS));
-                assertEquals("SESSION for " + kvnr + " is created", MESSAGES.poll(10, TimeUnit.SECONDS));
+                assertEquals("[1-SMC-B-Testkarte--883110000162363] SESSION is created", MESSAGES.poll(10, TimeUnit.SECONDS));
 
                 List<String> statuses = vauNpProvider.reload(epaBackends);
                 assertTrue(statuses.getFirst().contains("OK"));
@@ -106,6 +104,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
                 String msg = MESSAGES.poll(20, TimeUnit.SECONDS);
                 assertNotNull(msg);
                 assertTrue(msg.contains("RetrieveDocumentSetResponseType"));
+                assertTrue(msg.contains(kvnr));
             }
         });
     }

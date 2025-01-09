@@ -174,7 +174,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         RetrieveDocumentSetResponseType.DocumentResponse documentResponse = new RetrieveDocumentSetResponseType.DocumentResponse();
         documentResponse.setDocument(bytes);
         documentResponse.setMimeType("application/pdf");
-        documentResponse.setDocumentUniqueId(UUID.randomUUID().toString());
+        documentResponse.setDocumentUniqueId(kvnr);
         response.getDocumentResponse().add(documentResponse);
 
         epaFileDownloader.handleDownloadResponse(fileDownload, response, true);
