@@ -71,13 +71,7 @@ public class TestUtils {
             } catch (Exception e) {
                 future.cancel(true);
             } finally {
-                Thread.startVirtualThread(() -> {
-                    try {
-                        timed(backend, "destroyForcibly", process::destroyForcibly);
-                    } catch (Exception e) {
-                        log.log(Level.SEVERE, "Error while destroyForcibly for " + backend, e);
-                    }
-                });
+                Thread.startVirtualThread(process::destroyForcibly);
             }
 
         } catch (Throwable t) {

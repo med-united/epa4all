@@ -6,6 +6,8 @@ import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
 import java.util.logging.Logger;
@@ -17,21 +19,21 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
 
     @Override
     protected RegistryResponseType handleTransfer(FileDownload fileAction, IDocumentManagementPortType documentPortType) throws Exception {
-        String taskId = fileAction.getTaskId();
+
         String uniqueId = fileAction.getFileName().replace(".xml", "").replace(".pdf", "");
         RetrieveDocumentSetRequestType requestType = xdsDocumentService.get().prepareRetrieveDocumentSetRequestType(
             uniqueId, fileAction.getRepositoryUniqueId()
         );
         RetrieveDocumentSetResponseType responseType = documentPortType.documentRepositoryRetrieveDocumentSet(requestType);
-        handleDownloadResponse(taskId, fileAction, responseType);
+        handleDownloadResponse(fileAction, responseType);
         return responseType.getRegistryResponse();
     }
 
     public void handleDownloadResponse(
-        String taskId,
         FileDownload fileDownload,
         RetrieveDocumentSetResponseType response
     ) throws Exception {
+        String taskId = fileDownload.getTaskId();
         RegistryResponseType registryResponse = response.getRegistryResponse();
         boolean success = registryResponse.getStatus().contains("Success");
         if (success) {
@@ -50,6 +52,6 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
 
             storeNewFile(fileDownload.getFileName(), folderCode, telematikId, insurantId, documentBytes);
             log.info(String.format("[%s/%s] downloaded successfully", folderCode, fileDownload.getFileName()));
-        } 
+        }
     }
 }

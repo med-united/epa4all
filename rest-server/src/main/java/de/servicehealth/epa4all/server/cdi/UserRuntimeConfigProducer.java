@@ -42,7 +42,7 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
     @Produces
     public UserRuntimeConfig userRuntimeConfig() {
         if (info.getQueryParameters().containsKey(X_KONNEKTOR)) {
-            String konnektor = info.getPathParameters().get(X_KONNEKTOR).getFirst();
+            String konnektor = info.getQueryParameters().get(X_KONNEKTOR).getFirst();
             Optional<String> configKey = konnektorsConfigs.keySet().stream().filter(s -> s.startsWith(konnektor)).findAny();
             if (configKey.isPresent()) {
                 IUserConfigurations userConfigurations = konnektorsConfigs.get(configKey.get()).getUserConfigurations();

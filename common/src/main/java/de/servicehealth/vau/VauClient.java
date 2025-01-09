@@ -31,7 +31,8 @@ public class VauClient {
     public static final String X_BACKEND = "x-backend";
     public static final String VAU_NP = "VAU-NP";
     public static final String KVNR = "kvnr";
-    
+    public static final String TELEMATIK_ID = "telematikId";
+
     public static final String CLIENT_ID = "ClientID";
 
     private static final int PERMITS = 1;

@@ -56,19 +56,6 @@ public class Download extends XdsResource {
             uniqueId, repositoryUniqueId
         );
         RetrieveDocumentSetResponseType response = documentManagementPortType.documentRepositoryRetrieveDocumentSet(requestType);
-        handleDownloadResponse(response, uniqueId, epaContext, kvnr, repositoryUniqueId);
-        return response;
-    }
-
-    // TODO refactor to complete event approach
-    private void handleDownloadResponse(
-        RetrieveDocumentSetResponseType response,
-        String uniqueId,
-        EpaContext epaContext,
-        String kvnr,
-        String repositoryUniqueId
-    ) throws Exception {
-        String taskId = UUID.randomUUID().toString();
         RetrieveDocumentSetResponseType.DocumentResponse documentResponse = response.getDocumentResponse().getFirst();
         String mimeType = documentResponse.getMimeType();
         String fileName = uniqueId;
@@ -77,7 +64,10 @@ public class Download extends XdsResource {
         } else if (isPdfCompliant(mimeType)) {
             fileName = fileName + ".pdf";
         }
+        String taskId = UUID.randomUUID().toString();
         FileDownload fileDownload = new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, repositoryUniqueId);
-        epaFileDownloader.handleDownloadResponse(taskId, fileDownload, response);
+
+        epaFileDownloader.handleDownloadResponse(fileDownload, response);
+        return response;
     }
 }
