@@ -87,10 +87,11 @@ public abstract class AbstractResource {
         String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
         String vauNp = vauNpProvider.getVauNp(smcbHandle, konnektorUrl, backend);
 
+        boolean entitlementValid = false;
         if (vauNp != null) {
             Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
             if (validTo == null || validTo.isBefore(Instant.now())) {
-                entitlementService.setEntitlement(
+                entitlementValid = entitlementService.setEntitlement(
                     userRuntimeConfig,
                     insuranceData,
                     epaAPI,
@@ -100,12 +101,13 @@ public abstract class AbstractResource {
                     smcbHandle
                 );
             } else {
+                entitlementValid = true;
                 log.info(String.format("[%s/%s] Entitlement is valid until %s", telematikId, insurantId, validTo));
             }
         } else {
             log.warning(String.format("[%s] VAU session is not found, skipping setEntitlement", backend));
         }
-        return new EpaContext(insuranceData, prepareXHeaders(insurantId, userAgent, backend, vauNp));
+        return new EpaContext(backend, entitlementValid, insuranceData, prepareXHeaders(insurantId, userAgent, backend, vauNp));
     }
 
     private Map<String, String> prepareXHeaders(String insurantId, String userAgent, String backend, String vauNp) {

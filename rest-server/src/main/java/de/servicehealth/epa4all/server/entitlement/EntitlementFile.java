@@ -7,10 +7,14 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class EntitlementFile extends MapDumpFile<String, Instant> {
 
     private static final String ENTITLEMENT_FILE = "entitlement-expiry";
+
+    private static final Lock lock = new ReentrantLock();
 
     private final String insurantId;
 
@@ -42,8 +46,13 @@ public class EntitlementFile extends MapDumpFile<String, Instant> {
     }
 
     public void updateEntitlement(Instant validTo) {
-        Map<String, Instant> entitlementsMap = get();
-        entitlementsMap.put(insurantId, validTo);
-        store(entitlementsMap);
+        lock.lock();
+        try {
+            Map<String, Instant> entitlementsMap = get();
+            entitlementsMap.put(insurantId, validTo);
+            store(entitlementsMap);
+        } finally {
+            lock.unlock();
+        }
     }
 }

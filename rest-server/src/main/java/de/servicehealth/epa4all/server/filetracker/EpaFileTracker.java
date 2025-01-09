@@ -31,9 +31,10 @@ public abstract class EpaFileTracker<T extends FileAction> {
 
     private static final Logger log = Logger.getLogger(EpaFileTracker.class.getName());
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSS");
     private static final Map<String, RegistryResponseType> resultsMap = new ConcurrentHashMap<>();
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     ManagedExecutor filesTransferExecutor;
 
@@ -78,8 +79,9 @@ public abstract class EpaFileTracker<T extends FileAction> {
         resultsMap.computeIfAbsent(taskId, (k) -> prepareInProgressResponse(taskId));
         try {
             IDocumentManagementPortType documentPortType = getDocumentManagementPortType(epaContext);
-            RegistryResponseType responseType = epaCallGuard.callAndRetry(() ->
-                handleTransfer(fileAction, documentPortType)
+            RegistryResponseType responseType = epaCallGuard.callAndRetry(
+                epaContext.getBackend(),
+                () -> handleTransfer(fileAction, documentPortType)
             );
             resultsMap.computeIfPresent(taskId, (k, prev) -> responseType);
         } catch (Exception e) {

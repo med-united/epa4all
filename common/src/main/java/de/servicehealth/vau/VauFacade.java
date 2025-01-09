@@ -59,8 +59,6 @@ public class VauFacade {
     @Getter
     private final boolean tracingEnabled;
 
-    private volatile boolean sessionEstablished = true;
-
     private final ScheduledExecutorService executorService;
     private final BeanRegistry registry;
 
@@ -98,9 +96,8 @@ public class VauFacade {
         registry.unregister(this);
     }
 
-    public void setVauNpSessionStatus(String vauNpStatus, boolean sessionEstablished) {
+    public void setVauNpSessionStatus(String vauNpStatus) {
         this.vauNpStatus = vauNpStatus;
-        this.sessionEstablished = sessionEstablished;
     }
 
     public VauClient acquireVauClient() throws InterruptedException {
@@ -128,14 +125,9 @@ public class VauFacade {
             .orElse(null);
     }
 
-    public void steadyVauSession(String vauCid, boolean noUserSession, boolean decrypted) {
+    public void handleVauSession(String vauCid, boolean noUserSession, boolean decrypted) {
         if (noUserSession) {
-            synchronized (this) {
-                if (sessionEstablished) {
-                    sessionEstablished = false;
-                    vauSessionReloadEvent.fireAsync(new VauSessionReload(backend));
-                }
-            }
+            vauSessionReloadEvent.fireAsync(new VauSessionReload(backend));
         }
         VauClient vauClient = getVauClient(vauCid);
         if (vauClient != null && !decrypted) {

@@ -64,7 +64,7 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
             }
             String body = fullRequest.substring(fullRequest.indexOf("\r\n\r\n") + 1);
             if (body.contains("RegistryError ") && body.contains(SOAP_INVAL_AUTH)) {
-                vauFacade.steadyVauSession(vauCid, true, true);
+                // vauGateway.handleVauSession(vauCid, true, true);
             }
             InputStream is = new ByteArrayInputStream(body.getBytes());
             message.setContent(InputStream.class, is);

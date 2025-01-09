@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -17,11 +16,9 @@ public abstract class MapDumpFile<K, V> {
 
     private static final Logger log = Logger.getLogger(MapDumpFile.class.getName());
 
-    protected final ReentrantReadWriteLock lock;
     protected final File file;
 
     public MapDumpFile(File folder) throws IOException {
-        lock = new ReentrantReadWriteLock();
         String fileName = getFileName();
         file = new File(folder, fileName);
         if (!file.exists()) {
@@ -46,16 +43,10 @@ public abstract class MapDumpFile<K, V> {
     }
 
     public Map<K, V> get() {
-        lock.readLock().lock();
-        try {
-            return load();
-        } finally {
-            lock.readLock().unlock();
-        }
+        return load();
     }
 
     public void store(Map<K, V> vauNpMap) {
-        lock.writeLock().lock();
         try {
             String content = vauNpMap.entrySet()
                 .stream().map(this::serialize)
@@ -65,8 +56,6 @@ public abstract class MapDumpFile<K, V> {
             }
         } catch (Exception e) {
             log.log(Level.SEVERE, String.format("Unable to update '%s' file", getFileName()));
-        } finally {
-            lock.writeLock().unlock();
         }
     }
 

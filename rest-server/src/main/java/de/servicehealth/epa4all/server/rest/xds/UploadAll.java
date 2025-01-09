@@ -28,7 +28,7 @@ public class UploadAll extends XdsResource {
         @QueryParam(X_KONNEKTOR) String konnektor,
         @QueryParam(KVNR) String kvnr
     ) throws Exception {
-        EpaContext epaContext = prepareEpaContext(kvnr);
+        EpaContext epaContext = getEpaContext(kvnr);
         List<String> tasksIds = bulkTransfer.uploadInsurantFiles(epaContext, telematikId, kvnr, languageCode);
         return String.join("\n", tasksIds);
     }

@@ -10,7 +10,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
-import static de.servicehealth.vau.VauFacade.NO_USER_SESSION;
 
 public class JsonbVauReaderProvider extends AbstractJsonbReader {
 
@@ -25,9 +24,7 @@ public class JsonbVauReaderProvider extends AbstractJsonbReader {
         List vauErrorList = (List) httpHeaders.get(VAU_ERROR);
         if (vauErrorList != null && !vauErrorList.isEmpty()) {
             String error = (String) vauErrorList.getFirst();
-            if (!error.contains(NO_USER_SESSION)) {
-                throw new IOException(error);
-            }
+            throw new IOException(error);
         }
         return entityStream.readAllBytes();
     }

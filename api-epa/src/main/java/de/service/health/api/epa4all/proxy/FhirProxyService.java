@@ -72,13 +72,15 @@ public class FhirProxyService implements IFhirProxy {
         HTTPConduit conduit = (HTTPConduit) webClient.getConfiguration().getConduit();
         HTTPClientPolicy policy = new HTTPClientPolicy();
 
-        policy.setConnectionTimeout(vauConfig.getConnectionTimeoutMs());
-        policy.setReceiveTimeout(vauConfig.getRequestTimeoutMs());
+        int connectionTimeoutMs = vauConfig.getConnectionTimeoutMs();
+        policy.setConnectionTimeout(connectionTimeoutMs);
+        policy.setReceiveTimeout(vauConfig.getVauReadTimeoutMs());
         conduit.setClient(policy);
 
         ClientFactory.initClient(
             webClient.getConfiguration(),
-            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade, epaUserAgent)),
+            connectionTimeoutMs,
+            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade, vauConfig, epaUserAgent)),
             List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
         );
         return webClient;

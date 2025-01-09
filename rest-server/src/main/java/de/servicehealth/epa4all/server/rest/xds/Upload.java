@@ -39,8 +39,7 @@ public class Upload extends XdsResource {
         @QueryParam(KVNR) String kvnr,
         InputStream is
     ) throws Exception {
-        EpaContext epaContext = prepareEpaContext(kvnr);
-
+        EpaContext epaContext = getEpaContext(kvnr);
         if (fileName == null) {
             fileName = String.format("%s_%s.%s", kvnr, UUID.randomUUID(), getExtension(contentType));
         }

@@ -103,7 +103,7 @@ public class TestUtils {
     }
 
     public static void runWithDockerContainers(Set<String> containers, ITAction action) throws Exception {
-        timed("Docker containers", "check running", () -> {
+        timed("Docker containers", "run test", () -> {
             if (containers.parallelStream().allMatch(TestUtils::isDockerContainerRunning)) {
                 containers.forEach(b -> log.info(String.format("[%s] Running", b)));
                 action.execute();
@@ -115,7 +115,7 @@ public class TestUtils {
     }
 
     public static void runWithEpaBackends(Set<String> backends, ITAction action) throws Exception {
-        timed("ePA backends", "check reachable", () -> {
+        timed("ePA backends", "run test", () -> {
             if (backends.parallelStream().allMatch(TestUtils::isBackendReachable)) {
                 backends.forEach(b -> log.info(String.format("[%s] Connected", b)));
                 action.execute();

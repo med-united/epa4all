@@ -61,8 +61,9 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
                 if (noUserSession) {
                     putProtocolHeader(message, VAU_NO_SESSION, "true");
                 }
-                vauFacade.steadyVauSession(vauCid, noUserSession, vauResponse.decrypted());
+                vauFacade.handleVauSession(vauCid, noUserSession, vauResponse.decrypted());
             }
+            String operation = (String) message.getExchange().get("org.apache.cxf.resource.operation.name");
             byte[] payload = vauResponse.payload();
             if (payload != null) {
                 vauResponse.headers().stream()
@@ -73,7 +74,8 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
                         if (!MEDIA_TYPES.contains(contentType)) {
                             String content = new String(payload);
                             content = content.substring(0, Math.min(100, content.length())) + " ********* ";
-                            log.info(String.format("[%s] Response PAYLOAD: %s", Thread.currentThread().getName(), content));
+                            String threadName = Thread.currentThread().getName();
+                            log.info(String.format("[%s/%s] Response PAYLOAD: %s", threadName, operation, content));
                         }
                     });
 

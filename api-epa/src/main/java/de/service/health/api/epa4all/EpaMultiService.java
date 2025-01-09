@@ -94,12 +94,12 @@ public class EpaMultiService extends StartableService {
 
                     String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
                     IDocumentManagementPortType documentManagementPortType = epaServicePortProvider.getDocumentManagementPortType(
-                        documentManagementUrl, epaUserAgent, vauFacade
+                        documentManagementUrl, epaUserAgent, vauFacade, vauConfig
                     );
 
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
                     IDocumentManagementInsurantPortType documentManagementInsurantPortType = epaServicePortProvider.getDocumentManagementInsurantPortType(
-                        documentManagementInsurantUrl, epaUserAgent, vauFacade
+                        documentManagementInsurantUrl, epaUserAgent, vauFacade, vauConfig
                     );
 
                     AccountInformationApi accountInformationApi = clientFactory.createPlainClient(

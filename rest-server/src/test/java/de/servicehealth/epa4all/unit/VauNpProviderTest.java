@@ -5,8 +5,10 @@ import de.health.service.cetp.config.KonnektorConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
+import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import io.smallrye.context.SmallRyeManagedExecutor;
 import io.smallrye.context.SmallRyeThreadContext;
@@ -64,7 +66,9 @@ public class VauNpProviderTest {
         IdpClient idpClient = mock(IdpClient.class);
         when(idpClient.getVauNpSync(any(), any(), eq(smcbHandle), eq(epaBackend))).thenReturn(vauNp);
 
-        VauNpProvider vauNpProvider = new VauNpProvider(idpClient, epaMultiService, konnektorClient, null);
+        EpaCallGuard epaCallGuard = new EpaCallGuard(new VauConfig());
+
+        VauNpProvider vauNpProvider = new VauNpProvider(idpClient, epaCallGuard, epaMultiService, konnektorClient, null);
         vauNpProvider.setScheduledThreadPool(
             new SmallRyeManagedExecutor(
                 3, 3, SmallRyeThreadContext.builder().build(), SmallRyeManagedExecutor.newThreadPoolExecutor(3, 3), "point"

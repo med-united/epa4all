@@ -10,6 +10,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
+import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 
 import java.util.Optional;
@@ -33,8 +34,10 @@ public class Download extends XdsResource {
         @QueryParam(X_KONNEKTOR) String konnektor,
         @QueryParam(KVNR) String kvnr
     ) throws Exception {
-        EpaContext epaContext = prepareEpaContext(kvnr);
-        Optional<String> repositoryUniqueIdOpt = getAdhocQueryResponse(kvnr, epaContext).getRegistryObjectList().getIdentifiable()
+        EpaContext epaContext = getEpaContext(kvnr);
+        AdhocQueryResponse adhocQueryResponse = getAdhocQueryResponse(kvnr, epaContext);
+        
+        Optional<String> repositoryUniqueIdOpt = adhocQueryResponse.getRegistryObjectList().getIdentifiable()
             .stream()
             .filter(e -> {
                 Optional<SlotType1> fileNameOpt = e.getValue().getSlot().stream().filter(s -> s.getName().equals("URI")).findFirst();

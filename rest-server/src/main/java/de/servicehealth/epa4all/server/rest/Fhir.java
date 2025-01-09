@@ -40,7 +40,8 @@ public class Fhir extends AbstractResource {
         @QueryParam("subject") String subject,
         @QueryParam("ui5") String ui5
     ) throws Exception {
-        return epaCallGuard.callAndRetry(() ->
+        String backend = epaMultiService.getEpaAPI(xInsurantId).getBackend();
+        return epaCallGuard.callAndRetry(backend, () ->
             forward(true, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null)
         );
     }
@@ -58,7 +59,8 @@ public class Fhir extends AbstractResource {
         @QueryParam("ui5") String ui5,
         byte[] body
     ) throws Exception {
-        return epaCallGuard.callAndRetry(() ->
+        String backend = epaMultiService.getEpaAPI(xInsurantId).getBackend();
+        return epaCallGuard.callAndRetry(backend, () ->
             forward(false, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body)
         );
     }

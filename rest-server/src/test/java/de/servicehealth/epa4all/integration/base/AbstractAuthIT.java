@@ -5,6 +5,7 @@ import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.common.ITAction;
 import de.servicehealth.epa4all.common.TestUtils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
+import de.servicehealth.epa4all.server.idp.IdpConfig;
 import de.servicehealth.model.GetNonce200Response;
 import de.servicehealth.vau.VauFacade;
 import jakarta.inject.Inject;
@@ -19,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public abstract class AbstractAuthIT {
 
     public static final String AUTHORIZATION_SERVICE = "authorization-service";
+
+    @Inject
+    protected IdpConfig idpConfig;
 
     @Inject
     protected EpaConfig epaConfig;
@@ -47,11 +51,12 @@ public abstract class AbstractAuthIT {
             String backendUrl = getBackendUrl(backend, authorizationServiceUrl);
             AuthorizationSmcBApi api = buildApi(vauFacade, AuthorizationSmcBApi.class, backendUrl);
 
+            String clientId = idpConfig.getClientId();
             String epaUserAgent = epaConfig.getEpaUserAgent();
             for (int i = 0; i < 10; i++) {
                 GetNonce200Response nonce = api.getNonce(epaUserAgent);
                 assertNotNull(nonce);
-                try (Response response = api.sendAuthorizationRequestSCWithResponse(epaUserAgent, "test:8080")) {
+                try (Response response = api.sendAuthorizationRequestSCWithResponse(clientId, epaUserAgent, "test:8080")) {
                     String query = response.getLocation().getQuery();
                     assertTrue(query.contains("redirect_uri"));
                 }

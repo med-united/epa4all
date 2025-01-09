@@ -27,7 +27,7 @@ public class Query extends XdsResource {
         @QueryParam(X_KONNEKTOR) String konnektor,
         @QueryParam(KVNR) String kvnr
     ) throws Exception {
-        EpaContext epaContext = prepareEpaContext(kvnr);
+        EpaContext epaContext = getEpaContext(kvnr);
         return getAdhocQueryResponse(kvnr, epaContext);
     }
 

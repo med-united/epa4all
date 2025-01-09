@@ -2,13 +2,12 @@ package de.servicehealth.epa4all.integration.bc.xds;
 
 import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
-import de.servicehealth.epa4all.server.filetracker.EpaFileTracker;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
 import io.restassured.parsing.Parser;
 import io.restassured.response.Response;
-import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
+import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -24,9 +23,7 @@ import static de.servicehealth.vau.VauClient.KVNR;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 @TestProfile(ProxyEpaTestProfile.class)
@@ -38,7 +35,7 @@ public class DownloadAllEpaIT extends AbstractVsdTest {
 
     @Override
     public void afterEach() {
-        System.out.println("keep");
+        super.afterEach();
     }
 
     @Test
@@ -53,25 +50,29 @@ public class DownloadAllEpaIT extends AbstractVsdTest {
         runWithEpaBackends(epaBackends, () -> {
             webdavConfig.setRootFolder(TEST_FOLDER.getAbsolutePath());
 
+            Response adhoc = given().queryParam(KVNR, kvnr).when().get(XDS_DOCUMENT_PATH + "/query");
+            AdhocQueryResponse adhocQueryResponse = adhoc.getBody().as(AdhocQueryResponse.class);
+            int tasksSize = adhocQueryResponse.getRegistryObjectList().getIdentifiable().size();
+
             Response response = given().queryParam(KVNR, kvnr).when().get(XDS_DOCUMENT_PATH + "/downloadAll");
             assertEquals(200, response.getStatusCode());
-            List<String> taskIds = Arrays.asList(response.getBody().toString().split("\n"));
+            List<String> taskIds = Arrays.asList(response.getBody().print().split("\n"));
+            assertEquals(tasksSize, taskIds.size());
 
             boolean done = taskIds.parallelStream().noneMatch(t -> {
-                RegistryResponseType registryResponse = when().get(XDS_DOCUMENT_PATH + "/task/" + t).as(RegistryResponseType.class);
-                return registryResponse == null || registryResponse.getStatus().contains("InProgress");
+                Response r = when().get(XDS_DOCUMENT_PATH + "/task/" + t);
+                return r.body().print().contains("InProgress");
             });
             while (!done) {
                 done = taskIds.parallelStream().noneMatch(t -> {
-                    RegistryResponseType registryResponse = when().get(XDS_DOCUMENT_PATH + "/task/" + t).as(RegistryResponseType.class);
-                    if (registryResponse == null) {
-                        System.out.println("NULL ***");
-                    }
-                    return registryResponse == null || registryResponse.getStatus().contains("InProgress");
+                    Response r = when().get(XDS_DOCUMENT_PATH + "/task/" + t);
+                    return r.body().print().contains("InProgress");
                 });
                 TimeUnit.SECONDS.sleep(1);
                 log.info("Waiting for download completion");
             }
+
+            TimeUnit.SECONDS.sleep(5);
 
             File[] telematikFolders = folderService.getTelematikFolders();
             assertNotNull(telematikFolders);
@@ -90,7 +91,7 @@ public class DownloadAllEpaIT extends AbstractVsdTest {
                         });
                 });
             }).toList();
-            assertFalse(epaFiles.isEmpty());
+            assertEquals(tasksSize, epaFiles.size());
         });
     }
 }

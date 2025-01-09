@@ -1,8 +1,6 @@
 package de.servicehealth.utils;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -17,8 +15,6 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 public class ServerUtils {
-
-    private static final Logger log = LoggerFactory.getLogger(ServerUtils.class);
 
     private ServerUtils() {
     }

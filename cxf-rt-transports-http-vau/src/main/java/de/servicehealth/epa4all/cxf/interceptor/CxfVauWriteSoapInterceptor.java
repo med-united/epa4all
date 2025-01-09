@@ -134,7 +134,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             log.log(Level.SEVERE, "Error while sending Vau SOAP message", e);
             if (encrypted || e instanceof HTTPException) {
                 boolean noUserSession = e.getMessage().contains(NO_USER_SESSION);
-                vauFacade.steadyVauSession(vauCid, noUserSession, false);
+                vauFacade.handleVauSession(vauCid, noUserSession, false);
             }
             throw new Fault(e);
         }

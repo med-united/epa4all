@@ -4,6 +4,7 @@ import de.gematik.vau.lib.data.KdfKey2;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauInfo;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -55,11 +56,13 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
         Security.addProvider(new BouncyCastleProvider());
     }
 
+    private final VauConfig vauConfig;
     private final VauFacade vauFacade;
     private final String epaUserAgent;
 
-    public CxfVauSetupInterceptor(VauFacade vauFacade, String epaUserAgent) {
+    public CxfVauSetupInterceptor(VauFacade vauFacade, VauConfig vauConfig, String epaUserAgent) {
         super(Phase.SETUP);
+        this.vauConfig = vauConfig;
         this.vauFacade = vauFacade;
         this.epaUserAgent = epaUserAgent;
     }
@@ -89,11 +92,13 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                     String mock = vauClient.isMock() ? "/" + Math.abs(vauClient.hashCode()) : "";
 
+                    int connectionTimeoutMs = vauConfig.getConnectionTimeoutMs();
+
                     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
                     String baseAddress = uri + mock + "/VAU";
                     WebClient client1 = WebClient.create(baseAddress, providers);
                     ClientConfiguration configuration = client1.getConfiguration();
-                    ClientFactory.initClient(configuration, List.of(), List.of());
+                    ClientFactory.initClient(configuration, connectionTimeoutMs, List.of(), List.of());
 
                     byte[] message1 = vauClient.generateMessage1();
                     client1.headers(prepareVauOutboundHeaders(uri, message1.length));
@@ -117,7 +122,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     // epa-deployment/doc/html/MedicationFHIR.mhtml -> POST /1719478705211?_count=10&_offset=0&_total=none&_format=json
 
                     WebClient client2 = WebClient.create(uri + mock + vauCid, providers);
-                    ClientFactory.initClient(client2.getConfiguration(), List.of(), List.of());
+                    ClientFactory.initClient(client2.getConfiguration(), connectionTimeoutMs, List.of(), List.of());
                     client2.headers(prepareVauOutboundHeaders(uri, message3.length));
 
                     Response response2 = client2.post(ByteBuffer.wrap(message3));
