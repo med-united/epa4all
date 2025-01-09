@@ -1,0 +1,11 @@
+@startuml
+Patient -> eHealthKT: Inserts card
+eHealthKT -> Konnektor: SICCT Card Insert Event
+Konnektor -> epa4all: CEPT CARD/INSERTED Event
+epa4all -> epa4all: Downloads Medication List PDF
+epa4all -> Browser: Sends through all connected WebSockets (Card Terminal Id, KVNR, byte[] medication list pdf)
+Browser -> Browser: Sets the correct route to show PDF
+Browser -> Browser: Show medication list in patient view
+
+@enduml
+
