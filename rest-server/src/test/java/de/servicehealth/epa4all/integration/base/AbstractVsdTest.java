@@ -23,7 +23,7 @@ import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.vsd.VsdService;
-import de.servicehealth.epa4all.server.ws.CashierPayload;
+import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import de.servicehealth.feature.FeatureConfig;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusMock;
@@ -96,7 +96,7 @@ public abstract class AbstractVsdTest {
     protected EntitlementService entitlementService;
 
     @Inject
-    protected jakarta.enterprise.event.Event<CashierPayload> cashierPayloadEvent;
+    protected jakarta.enterprise.event.Event<WebSocketPayload> webSocketPayloadEvent;
 
     @Inject
     protected InsuranceDataService insuranceDataService;
@@ -205,8 +205,8 @@ public abstract class AbstractVsdTest {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
-            cashierPayloadEvent, cardlinkClient, insuranceDataService, epaFileDownloader,
-            konnektorClient, epaMultiService, vauNpProvider, runtimeConfig, featureConfig
+            webSocketPayloadEvent, insuranceDataService, epaFileDownloader, konnektorClient,
+            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 

@@ -26,10 +26,10 @@ public class TelematikWebsocket {
 
     Map<String, Session> sessions = new ConcurrentHashMap<>();
 
-    public void onTransfer(@ObservesAsync CashierPayload cashierPayload) {
-        String telematikId = cashierPayload.getTelematikId();
+    public void onTransfer(@ObservesAsync WebSocketPayload webSocketPayload) {
+        String telematikId = webSocketPayload.getTelematikId();
         Session session = sessions.get(telematikId);
-        sendMessage(session, telematikId, cashierPayload);
+        sendMessage(session, telematikId, webSocketPayload);
     }
 
     private <T> void sendMessage(Session session, String telematikId, T message) {

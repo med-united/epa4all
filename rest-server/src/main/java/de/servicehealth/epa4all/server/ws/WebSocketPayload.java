@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CashierPayload {
+public class WebSocketPayload {
 
     @JsonbProperty("cardTerminalId")
     String cardTerminalId;

@@ -13,7 +13,7 @@ import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
-import de.servicehealth.epa4all.server.ws.CashierPayload;
+import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import de.servicehealth.feature.FeatureConfig;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.event.Event;
@@ -38,7 +38,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
     private static final Logger log = Logger.getLogger(CETPEventHandler.class.getName());
 
-    private final Event<CashierPayload> cashierPayloadEvent;
+    private final Event<WebSocketPayload> webSocketPayloadEvent;
     private final InsuranceDataService insuranceDataService;
     private final EpaFileDownloader epaFileDownloader;
     private final IKonnektorClient konnektorClient;
@@ -48,20 +48,20 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private final FeatureConfig featureConfig;
 
     public CETPEventHandler(
-        Event<CashierPayload> cashierPayloadEvent,
-        CardlinkClient cardlinkClient,
+        Event<WebSocketPayload> webSocketPayloadEvent,
         InsuranceDataService insuranceDataService,
         EpaFileDownloader epaFileDownloader,
         IKonnektorClient konnektorClient,
         EpaMultiService epaMultiService,
+        CardlinkClient cardlinkClient,
         VauNpProvider vauNpProvider,
         RuntimeConfig runtimeConfig,
         FeatureConfig featureConfig
     ) {
         super(cardlinkClient);
 
+        this.webSocketPayloadEvent = webSocketPayloadEvent;
         this.insuranceDataService = insuranceDataService;
-        this.cashierPayloadEvent = cashierPayloadEvent;
         this.epaFileDownloader = epaFileDownloader;
         this.konnektorClient = konnektorClient;
         this.epaMultiService = epaMultiService;
@@ -172,7 +172,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         String fileName = UUID.randomUUID() + ".pdf";
         FileDownload fileDownload = new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, null);
 
-        cashierPayloadEvent.fireAsync(new CashierPayload(ctId, telematikId, kvnr, Base64.getEncoder().encodeToString(bytes)));
+        webSocketPayloadEvent.fireAsync(new WebSocketPayload(ctId, telematikId, kvnr, Base64.getEncoder().encodeToString(bytes)));
 
         RetrieveDocumentSetResponseType response = new RetrieveDocumentSetResponseType();
         RegistryResponseType registryResponse = new RegistryResponseType();
