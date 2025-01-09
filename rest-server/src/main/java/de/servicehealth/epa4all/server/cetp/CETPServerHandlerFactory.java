@@ -11,9 +11,11 @@ import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.ws.CashierPayload;
 import de.servicehealth.feature.FeatureConfig;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 
 @SuppressWarnings("CdiInjectionPointsInspection")
@@ -25,6 +27,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     private final EpaMultiService epaMultiService;
     private final IKonnektorClient konnektorClient;
     private final EpaFileDownloader epaFileDownloader;
+    private final Event<CashierPayload> cashierPayloadEvent;
     private final InsuranceDataService insuranceDataService;
     private final CardlinkClientFactory cardlinkClientFactory;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
@@ -36,6 +39,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         EpaMultiService epaMultiService,
         IKonnektorClient konnektorClient,
         EpaFileDownloader epaFileDownloader,
+        Event<CashierPayload> cashierPayloadEvent,
         InsuranceDataService insuranceDataService,
         CardlinkClientFactory cardlinkClientFactory,
         KonnektorDefaultConfig konnektorDefaultConfig
@@ -45,6 +49,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         this.epaMultiService = epaMultiService;
         this.konnektorClient = konnektorClient;
         this.epaFileDownloader = epaFileDownloader;
+        this.cashierPayloadEvent = cashierPayloadEvent;
         this.insuranceDataService = insuranceDataService;
         this.cardlinkClientFactory = cardlinkClientFactory;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
@@ -55,7 +60,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, konnektorConfig.getUserConfigurations());
         CardlinkClient cardlinkWebsocketClient = cardlinkClientFactory.build(konnektorConfig);
         CETPEventHandler cetpEventHandler = new CETPEventHandler(
-            cardlinkWebsocketClient, insuranceDataService, epaFileDownloader,
+            cashierPayloadEvent, cardlinkWebsocketClient, insuranceDataService, epaFileDownloader,
             konnektorClient, epaMultiService, vauNpProvider, runtimeConfig, featureConfig
         );
         return new ChannelInboundHandler[] { cetpEventHandler };

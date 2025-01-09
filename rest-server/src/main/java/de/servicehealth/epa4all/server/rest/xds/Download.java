@@ -67,7 +67,7 @@ public class Download extends XdsResource {
         String taskId = UUID.randomUUID().toString();
         FileDownload fileDownload = new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, repositoryUniqueId);
 
-        epaFileDownloader.handleDownloadResponse(fileDownload, response, false);
+        epaFileDownloader.handleDownloadResponse(fileDownload, response);
         return response;
     }
 }

@@ -82,7 +82,8 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
                 konnektorConfig,
                 vauNpProvider,
                 cardlinkClient,
-                egkHandle
+                egkHandle,
+                "ctId-244"
             );
 
             verify(cardlinkClient, never()).sendJson(any(), any(), any(), any());
@@ -117,7 +118,8 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
                 konnektorConfig,
                 vauNpProvider,
                 cardlinkClient,
-                egkHandle
+                egkHandle,
+                "ctId-244"
             );
 
             verify(cardlinkClient, times(1)).sendJson(any(), any(), eq("eRezeptBundlesFromAVS"), any());

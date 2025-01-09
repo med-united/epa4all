@@ -55,7 +55,8 @@ public class CardInsertedDockerIT extends AbstractVsdTest {
                 mockKonnektorConfig(),
                 mockVauNpProvider(),
                 cardlinkClient,
-                egkHandle
+                egkHandle,
+                "ctId-222"
             );
 
             ArgumentCaptor<String> messageTypeCaptor = ArgumentCaptor.forClass(String.class);

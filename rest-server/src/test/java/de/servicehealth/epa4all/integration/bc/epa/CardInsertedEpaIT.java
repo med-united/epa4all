@@ -6,15 +6,20 @@ import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.vsd.VsdService;
+import de.servicehealth.epa4all.server.ws.CashierPayload;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
 import jakarta.websocket.ClientEndpoint;
 import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.OnError;
 import jakarta.websocket.OnMessage;
 import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
+import org.eclipse.yasson.internal.JsonBindingBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,6 +35,7 @@ import static de.servicehealth.epa4all.common.TestUtils.runWithEpaBackends;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -42,7 +48,9 @@ import static org.mockito.Mockito.verify;
 public class CardInsertedEpaIT extends AbstractVsdTest {
 
     private static final LinkedBlockingDeque<String> MESSAGES = new LinkedBlockingDeque<>();
-    
+
+    private final JsonbBuilder jsonbBuilder = new JsonBindingBuilder();
+
     private final String kvnr = "X110485291";
 
     @TestHTTPResource("/ws/1-SMC-B-Testkarte--883110000162363")
@@ -61,6 +69,11 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
         void message(String msg) {
             MESSAGES.add(msg);
         }
+
+        @OnError
+        public void onError(Session session, Throwable throwable) {
+            assertNull(throwable);
+        }
     }
 
     @Test
@@ -74,6 +87,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
                 List<String> statuses = vauNpProvider.reload(epaBackends);
                 assertTrue(statuses.getFirst().contains("OK"));
 
+                String ctId = "cardTerminal-124";
                 String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
                 CardlinkClient cardlinkClient = mock(CardlinkClient.class);
 
@@ -84,7 +98,8 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
                     konnektorConfigs.values().iterator().next(),
                     vauNpProvider,
                     cardlinkClient,
-                    egkHandle
+                    egkHandle,
+                    ctId
                 );
 
                 ArgumentCaptor<String> messageTypeCaptor = ArgumentCaptor.forClass(String.class);
@@ -103,8 +118,12 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
 
                 String msg = MESSAGES.poll(20, TimeUnit.SECONDS);
                 assertNotNull(msg);
-                assertTrue(msg.contains("RetrieveDocumentSetResponseType"));
-                assertTrue(msg.contains(kvnr));
+                try (Jsonb build = jsonbBuilder.build()) {
+                    CashierPayload cashierPayload = build.fromJson(msg, CashierPayload.class);
+                    assertEquals(kvnr, cashierPayload.getKvnr());
+                    assertEquals(ctId, cashierPayload.getCardTerminalId());
+                    assertNotNull(cashierPayload.getMedicationPdfBase64());
+                }
             }
         });
     }

@@ -17,9 +17,6 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
 
     private static final Logger log = Logger.getLogger(EpaFileDownloader.class.getName());
 
-    @Inject
-    Event<FileDownloaded> fileDownloadedEvent;
-
     @Override
     protected RegistryResponseType handleTransfer(FileDownload fileAction, IDocumentManagementPortType documentPortType) throws Exception {
 
@@ -28,14 +25,13 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
             uniqueId, fileAction.getRepositoryUniqueId()
         );
         RetrieveDocumentSetResponseType responseType = documentPortType.documentRepositoryRetrieveDocumentSet(requestType);
-        handleDownloadResponse(fileAction, responseType, false);
+        handleDownloadResponse(fileAction, responseType);
         return responseType.getRegistryResponse();
     }
 
     public void handleDownloadResponse(
         FileDownload fileDownload,
-        RetrieveDocumentSetResponseType response,
-        boolean pushEvent
+        RetrieveDocumentSetResponseType response
     ) throws Exception {
         String taskId = fileDownload.getTaskId();
         RegistryResponseType registryResponse = response.getRegistryResponse();
@@ -56,10 +52,6 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
 
             storeNewFile(fileDownload.getFileName(), folderCode, telematikId, insurantId, documentBytes);
             log.info(String.format("[%s/%s] downloaded successfully", folderCode, fileDownload.getFileName()));
-
-            if (pushEvent) {
-                fileDownloadedEvent.fireAsync(new FileDownloaded(telematikId, response));
-            }
-        } 
+        }
     }
 }

@@ -1,6 +1,5 @@
 package de.servicehealth.epa4all.server.ws;
 
-import de.servicehealth.epa4all.server.filetracker.download.FileDownloaded;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.websocket.OnClose;
@@ -19,7 +18,7 @@ import java.util.logging.Logger;
 import static de.servicehealth.vau.VauClient.TELEMATIK_ID;
 
 @SuppressWarnings({"resource", "unused"})
-@ServerEndpoint(value = "/ws/{telematikId}", encoders = {XmlEncoder.class})
+@ServerEndpoint(value = "/ws/{telematikId}", encoders = {JsonEncoder.class})
 @ApplicationScoped
 public class TelematikWebsocket {
 
@@ -27,10 +26,10 @@ public class TelematikWebsocket {
 
     Map<String, Session> sessions = new ConcurrentHashMap<>();
 
-    public void onTransfer(@ObservesAsync FileDownloaded fileDownloaded) {
-        String telematikId = fileDownloaded.getTelematikId();
+    public void onTransfer(@ObservesAsync CashierPayload cashierPayload) {
+        String telematikId = cashierPayload.getTelematikId();
         Session session = sessions.get(telematikId);
-        sendMessage(session, telematikId, fileDownloaded.getResponse());
+        sendMessage(session, telematikId, cashierPayload);
     }
 
     private <T> void sendMessage(Session session, String telematikId, T message) {

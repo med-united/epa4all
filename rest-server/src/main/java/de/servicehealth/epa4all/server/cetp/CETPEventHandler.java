@@ -13,8 +13,10 @@ import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
+import de.servicehealth.epa4all.server.ws.CashierPayload;
 import de.servicehealth.feature.FeatureConfig;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
+import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.Response;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.jboss.logging.MDC;
@@ -36,6 +38,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
     private static final Logger log = Logger.getLogger(CETPEventHandler.class.getName());
 
+    private final Event<CashierPayload> cashierPayloadEvent;
     private final InsuranceDataService insuranceDataService;
     private final EpaFileDownloader epaFileDownloader;
     private final IKonnektorClient konnektorClient;
@@ -45,6 +48,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private final FeatureConfig featureConfig;
 
     public CETPEventHandler(
+        Event<CashierPayload> cashierPayloadEvent,
         CardlinkClient cardlinkClient,
         InsuranceDataService insuranceDataService,
         EpaFileDownloader epaFileDownloader,
@@ -57,6 +61,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         super(cardlinkClient);
 
         this.insuranceDataService = insuranceDataService;
+        this.cashierPayloadEvent = cashierPayloadEvent;
         this.epaFileDownloader = epaFileDownloader;
         this.konnektorClient = konnektorClient;
         this.epaMultiService = epaMultiService;
@@ -123,7 +128,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 try (Response response = epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders)) {
                     byte[] bytes = response.readEntity(byte[].class);
                     EpaContext epaContext = new EpaContext(epaApi.getBackend(), true, insuranceData, Map.of());
-                    handleDownloadResponse(bytes, telematikId, epaContext, insurantId);
+                    handleDownloadResponse(bytes, ctId, telematikId, epaContext, insurantId);
                     String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                     Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
                     cardlinkClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
@@ -158,6 +163,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
     private void handleDownloadResponse(
         byte[] bytes,
+        String ctId,
         String telematikId,
         EpaContext epaContext,
         String kvnr
@@ -165,6 +171,8 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         String taskId = UUID.randomUUID().toString();
         String fileName = UUID.randomUUID() + ".pdf";
         FileDownload fileDownload = new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, null);
+
+        cashierPayloadEvent.fireAsync(new CashierPayload(ctId, telematikId, kvnr, Base64.getEncoder().encodeToString(bytes)));
 
         RetrieveDocumentSetResponseType response = new RetrieveDocumentSetResponseType();
         RegistryResponseType registryResponse = new RegistryResponseType();
@@ -177,6 +185,6 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         documentResponse.setDocumentUniqueId(kvnr);
         response.getDocumentResponse().add(documentResponse);
 
-        epaFileDownloader.handleDownloadResponse(fileDownload, response, true);
+        epaFileDownloader.handleDownloadResponse(fileDownload, response);
     }
 }
