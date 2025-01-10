@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.vau.VauClient.CLIENT_ID;
+import static de.servicehealth.vau.VauClient.TASK_ID;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
@@ -88,6 +89,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             addOuterHeader(message, httpHeaders, CLIENT_ID);
             addOuterHeader(message, httpHeaders, X_USER_AGENT);
             addOuterHeader(message, httpHeaders, X_INSURANT_ID);
+            addOuterHeader(message, httpHeaders, TASK_ID);
 
             /*2. Mirror Message.PROTOCOL_HEADERS into inner HttpRequest headers*/
             List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend);
@@ -107,7 +109,13 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));
             String statusLine = methodWithPath + " HTTP/1.1";
             HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);
-            log.info("SOAP Inner Request: " + httpParcel.toString(false, false));
+            String threadName = Thread.currentThread().getName();
+            log.info(String.format("[%s] SOAP Inner Request: %s", threadName, httpParcel.toString(false, false)));
+
+            httpHeaders.remove(TASK_ID);
+            httpParcel.getHeaders().stream().filter(p -> p.getKey().equals(TASK_ID)).findFirst().ifPresent(p ->
+                httpParcel.getHeaders().remove(p)
+            );
 
             /*4. Prepare Vau message*/
             byte[] vauMessage;

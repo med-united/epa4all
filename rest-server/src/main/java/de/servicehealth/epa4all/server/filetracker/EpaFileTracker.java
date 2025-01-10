@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import static de.health.service.cetp.utils.Utils.saveDataToFile;
+import static de.servicehealth.vau.VauClient.TASK_ID;
 
 public abstract class EpaFileTracker<T extends FileAction> {
 
@@ -78,11 +79,12 @@ public abstract class EpaFileTracker<T extends FileAction> {
         EpaContext epaContext = fileAction.getEpaContext();
         resultsMap.computeIfAbsent(taskId, (k) -> prepareInProgressResponse(taskId));
         try {
-            IDocumentManagementPortType documentPortType = getDocumentManagementPortType(epaContext);
+            IDocumentManagementPortType documentPortType = getDocumentManagementPortType(taskId, epaContext);
             RegistryResponseType responseType = epaCallGuard.callAndRetry(
                 epaContext.getBackend(),
                 () -> handleTransfer(fileAction, documentPortType)
             );
+            responseType.setRequestId(taskId);
             resultsMap.computeIfPresent(taskId, (k, prev) -> responseType);
         } catch (Exception e) {
             String s = fileAction.isUpload() ? "uploading" : "downloading";
@@ -119,11 +121,15 @@ public abstract class EpaFileTracker<T extends FileAction> {
         }
     }
 
-    public IDocumentManagementPortType getDocumentManagementPortType(EpaContext epaContext) {
+    public IDocumentManagementPortType getDocumentManagementPortType(String taskId, EpaContext epaContext) {
         EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
         IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
         if (documentManagementPortType instanceof BindingProvider bindingProvider) {
-            bindingProvider.getRequestContext().putAll(epaContext.getXHeaders());
+            Map<String, Object> requestContext = bindingProvider.getRequestContext();
+            requestContext.putAll(epaContext.getXHeaders());
+            if (taskId != null) {
+                requestContext.put(TASK_ID, taskId);
+            }
         }
         return documentManagementPortType;
     }

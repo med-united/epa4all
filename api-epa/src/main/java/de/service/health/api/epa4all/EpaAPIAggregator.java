@@ -10,13 +10,15 @@ import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 
+import java.util.function.Supplier;
+
 public class EpaAPIAggregator implements EpaAPI {
 
     private final String backend;
     private final VauFacade vauFacade;
     private final IRenderClient renderClient;
     private final IMedicationClient medicationClient;
-    private final IDocumentManagementPortType documentManagementPortType;
+    private final Supplier<IDocumentManagementPortType> documentManagementPortType;
     private final IDocumentManagementInsurantPortType documentManagementInsurantPortType;
     private final AccountInformationApi accountInformationApi;
     private final AuthorizationSmcBApi authorizationSmcBApi;
@@ -28,7 +30,7 @@ public class EpaAPIAggregator implements EpaAPI {
         VauFacade vauFacade,
         IRenderClient renderClient,
         IMedicationClient medicationClient,
-        IDocumentManagementPortType documentManagementPortType,
+        Supplier<IDocumentManagementPortType> documentManagementPortType,
         IDocumentManagementInsurantPortType documentManagementInsurantPortType,
         AccountInformationApi accountInformationApi,
         AuthorizationSmcBApi authorizationSmcBApi,
@@ -64,7 +66,7 @@ public class EpaAPIAggregator implements EpaAPI {
 
     @Override
     public IDocumentManagementPortType getDocumentManagementPortType() {
-        return documentManagementPortType;
+        return documentManagementPortType.get();
     }
 
     @Override

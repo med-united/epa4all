@@ -18,7 +18,6 @@ import de.servicehealth.feature.FeatureConfig;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.Response;
-import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.jboss.logging.MDC;
 
 import java.util.Base64;
@@ -174,17 +173,11 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
         webSocketPayloadEvent.fireAsync(new WebSocketPayload(ctId, telematikId, kvnr, Base64.getEncoder().encodeToString(bytes)));
 
-        RetrieveDocumentSetResponseType response = new RetrieveDocumentSetResponseType();
-        RegistryResponseType registryResponse = new RegistryResponseType();
-        registryResponse.setStatus("Success");
-        response.setRegistryResponse(registryResponse);
-
         RetrieveDocumentSetResponseType.DocumentResponse documentResponse = new RetrieveDocumentSetResponseType.DocumentResponse();
         documentResponse.setDocument(bytes);
         documentResponse.setMimeType("application/pdf");
         documentResponse.setDocumentUniqueId(kvnr);
-        response.getDocumentResponse().add(documentResponse);
 
-        epaFileDownloader.handleDownloadResponse(fileDownload, response);
+        epaFileDownloader.handleDownloadResponse(fileDownload, documentResponse);
     }
 }

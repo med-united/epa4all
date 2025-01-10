@@ -12,6 +12,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
+import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -50,24 +51,32 @@ public class Download extends XdsResource {
                 .findFirst().map(st -> st.getValueList().getValue().getFirst())
             );
 
+        String taskId = UUID.randomUUID().toString();
         String repositoryUniqueId = repositoryUniqueIdOpt.orElse("undefined");
-        IDocumentManagementPortType documentManagementPortType = epaFileDownloader.getDocumentManagementPortType(epaContext);
+        IDocumentManagementPortType documentManagementPortType = epaFileDownloader.getDocumentManagementPortType(taskId, epaContext);
         RetrieveDocumentSetRequestType requestType = xdsDocumentService.get().prepareRetrieveDocumentSetRequestType(
             uniqueId, repositoryUniqueId
         );
-        RetrieveDocumentSetResponseType response = documentManagementPortType.documentRepositoryRetrieveDocumentSet(requestType);
-        RetrieveDocumentSetResponseType.DocumentResponse documentResponse = response.getDocumentResponse().getFirst();
-        String mimeType = documentResponse.getMimeType();
+        RetrieveDocumentSetResponseType responseType = documentManagementPortType.documentRepositoryRetrieveDocumentSet(requestType);
+        RegistryResponseType registryResponse = responseType.getRegistryResponse();
+        boolean success = registryResponse.getStatus().contains("Success");
+        if (success) {
+            RetrieveDocumentSetResponseType.DocumentResponse documentResponse = responseType.getDocumentResponse().getFirst();
+            String fileName = getFileName(uniqueId, documentResponse.getMimeType());
+            FileDownload fileDownload = new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, repositoryUniqueId);
+
+            epaFileDownloader.handleDownloadResponse(fileDownload, documentResponse);
+        }
+        return responseType;
+    }
+
+    private String getFileName(String uniqueId, String mimeType) {
         String fileName = uniqueId;
         if (isXmlCompliant(mimeType)) {
             fileName = fileName + ".xml";
         } else if (isPdfCompliant(mimeType)) {
             fileName = fileName + ".pdf";
         }
-        String taskId = UUID.randomUUID().toString();
-        FileDownload fileDownload = new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, repositoryUniqueId);
-
-        epaFileDownloader.handleDownloadResponse(fileDownload, response);
-        return response;
+        return fileName;
     }
 }

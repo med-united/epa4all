@@ -50,7 +50,7 @@ public abstract class XdsResource extends AbstractResource {
     }
 
     protected AdhocQueryResponse getAdhocQueryResponse(String kvnr, EpaContext epaContext) throws Exception {
-        IDocumentManagementPortType documentManagementPortType = epaFileDownloader.getDocumentManagementPortType(epaContext);
+        IDocumentManagementPortType documentManagementPortType = epaFileDownloader.getDocumentManagementPortType(kvnr, epaContext);
         AdhocQueryRequest request = xdsDocumentService.get().prepareAdhocQueryRequest(kvnr);
         return epaCallGuard.callAndRetry(
             epaContext.getBackend(),

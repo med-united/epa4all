@@ -92,11 +92,6 @@ public class EpaMultiService extends StartableService {
 
                     String epaUserAgent = epaConfig.getEpaUserAgent();
 
-                    String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
-                    IDocumentManagementPortType documentManagementPortType = epaServicePortProvider.getDocumentManagementPortType(
-                        documentManagementUrl, epaUserAgent, vauFacade, vauConfig
-                    );
-
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
                     IDocumentManagementInsurantPortType documentManagementInsurantPortType = epaServicePortProvider.getDocumentManagementInsurantPortType(
                         documentManagementInsurantUrl, epaUserAgent, vauFacade, vauConfig
@@ -141,7 +136,7 @@ public class EpaMultiService extends StartableService {
                         vauFacade,
                         renderClient,
                         medicationClient,
-                        documentManagementPortType,
+                        () -> buildIDocumentManagementPortType(backend, vauFacade),
                         documentManagementInsurantPortType,
                         accountInformationApi,
                         authorizationSmcBApi,
@@ -153,6 +148,17 @@ public class EpaMultiService extends StartableService {
                     throw new RuntimeException(e);
                 }
             }));
+    }
+
+    private IDocumentManagementPortType buildIDocumentManagementPortType(String backend, VauFacade vauFacade) {
+        try {
+            String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
+            return epaServicePortProvider.getDocumentManagementPortType(
+                documentManagementUrl, epaConfig.getEpaUserAgent(), vauFacade, vauConfig
+            );
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to create IDocumentManagementPortType", e);
+        }
     }
 
     private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl, VauFacade vauFacade) throws Exception {

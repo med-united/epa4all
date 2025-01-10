@@ -12,6 +12,7 @@ import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
 import static de.servicehealth.vau.VauClient.KVNR;
+import static de.servicehealth.vau.VauClient.TASK_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 
@@ -33,7 +34,7 @@ public class Query extends XdsResource {
 
     @GET
     @Path("task/{taskId}")
-    public RegistryResponseType checkTask(@PathParam("taskId") String taskId) {
+    public RegistryResponseType checkTask(@PathParam(TASK_ID) String taskId) {
         return epaFileDownloader.getResult(taskId);
     }
 }
