@@ -1,11 +1,11 @@
 #!/bin/sh
 
-#../mvnw clean install
+#./mvnw clean install
 
 docker rm epa4all
 docker build --progress=plain --no-cache -t epa4all .
 
-docker run --network host -d --name epa4all \
+docker run -d --name epa4all \
   -p 8090:8090 \
   -v /Users/bona/Work/ere.health/secret:/opt/epa4all/secret epa4all
 
