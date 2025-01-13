@@ -42,7 +42,7 @@ public abstract class StartableService implements StartupEventListener {
                 log.info(String.format("[%s] STARTED in %d ms", className, delta));
             }
         } else {
-            throw new IllegalStateException("Konnektor config directory is corrupted");
+            throw new IllegalStateException("Konnektor config directory is not correct. Should exist as directory here: "+(configDirectory != null ? configDirectory.getAbsolutePath() : "null"));
         }
     }
 
