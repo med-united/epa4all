@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import javax.net.ssl.KeyManagerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,12 +31,16 @@ public class SecretsManagerService implements ISecretsManager {
     }
 
     private void initFromConfig(KonnektorDefaultConfig konnektorDefaultConfig) {
-        String certAuthStorePass = konnektorDefaultConfig.getCertAuthStoreFilePassword();
-        try (FileInputStream certInputStream = new FileInputStream(konnektorDefaultConfig.getCertAuthStoreFile())) {
-            SSLResult sslResult = initSSLContext(certInputStream, certAuthStorePass);
-            keyManagerFactory = sslResult.getKeyManagerFactory();
-        } catch (Exception e) {
-            log.log(Level.SEVERE, "There was a problem when creating the SSLContext:", e);
+        Optional<String> certAuthStoreFile = konnektorDefaultConfig.getCertAuthStoreFile();
+        Optional<String> certAuthStoreFilePassword = konnektorDefaultConfig.getCertAuthStoreFilePassword();
+        if (certAuthStoreFile.isPresent() && certAuthStoreFilePassword.isPresent()) {
+            String certAuthStorePass = certAuthStoreFilePassword.get();
+            try (FileInputStream certInputStream = new FileInputStream(certAuthStoreFile.get())) {
+                SSLResult sslResult = initSSLContext(certInputStream, certAuthStorePass);
+                keyManagerFactory = sslResult.getKeyManagerFactory();
+            } catch (Exception e) {
+                log.log(Level.SEVERE, "There was a problem when creating the SSLContext", e);
+            }
         }
     }
 
