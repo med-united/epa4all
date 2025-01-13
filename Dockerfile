@@ -12,6 +12,7 @@ RUN apk add --no-cache curl bash ca-certificates \
     && mkdir /opt/epa4all/webdav \
     && mkdir /opt/epa4all/config \
     && mkdir /opt/epa4all/quarkus \
+    && mkdir /opt/epa4all/secret \
     && mkdir /opt/epa4all/ig-schema \
     && mkdir /opt/epa4all/config/konnektoren \
     && mkdir /opt/epa4all/config/konnektoren/8588 \
