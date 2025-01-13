@@ -76,7 +76,7 @@ public class VauNpProviderTest {
         );
         vauNpProvider.setKonnektorsConfigs(Map.of("8588_192.168.178.42", new KonnektorConfig()));
         vauNpProvider.setConfigFolder(TEST_FOLDER.getAbsolutePath());
-        vauNpProvider.onStart();
+        vauNpProvider.onStart(null);
 
         assertEquals(vauNp, vauNpProvider.getVauNp(smcbHandle, konnektorBaseUrl, epaBackend));
     }

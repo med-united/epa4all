@@ -40,6 +40,7 @@
                     <wsdlOptions>
                         <wsdlOption>
                             <wsdl>src/main/resources/schema/XDSDocumentService.wsdl</wsdl>
+                            <wsdlLocation>classpath:/schema/XDSDocumentService.wsdl</wsdlLocation>
                         </wsdlOption>
                     </wsdlOptions>
                 </configuration>
