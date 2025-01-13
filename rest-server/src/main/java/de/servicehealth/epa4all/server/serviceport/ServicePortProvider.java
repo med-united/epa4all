@@ -45,8 +45,11 @@ import java.io.InputStream;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.utils.SSLUtils.createSSLContext;
 import static de.servicehealth.utils.SSLUtils.initSSLContext;
 
@@ -55,7 +58,7 @@ public class ServicePortProvider extends StartableService {
 
     private static final Logger log = Logger.getLogger(ServicePortProvider.class.getName());
 
-    private final SSLContext defaultSSLContext;
+    private SSLContext defaultSSLContext;
 
     @Getter
     @Setter
@@ -75,11 +78,28 @@ public class ServicePortProvider extends StartableService {
     }
 
     @Inject
-    public ServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) throws Exception {
-        String certPass = konnektorDefaultConfig.getCertAuthStoreFilePassword();
-        try (FileInputStream certInputStream = new FileInputStream(konnektorDefaultConfig.getCertAuthStoreFile())) {
-            SSLResult sslResult = initSSLContext(certInputStream, certPass);
-            defaultSSLContext = sslResult.getSslContext();
+    public ServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) {
+        Optional<String> certAuthStoreFile = konnektorDefaultConfig.getCertAuthStoreFile();
+        Optional<String> certAuthStoreFilePassword = konnektorDefaultConfig.getCertAuthStoreFilePassword();
+        if (certAuthStoreFile.isPresent() && certAuthStoreFilePassword.isPresent()) {
+            String certPass = certAuthStoreFilePassword.get();
+            try (FileInputStream certInputStream = new FileInputStream(certAuthStoreFile.get())) {
+                SSLResult sslResult = initSSLContext(certInputStream, certPass);
+                defaultSSLContext = sslResult.getSslContext();
+            } catch (Exception e) {
+                log.log(Level.SEVERE, "There was a problem when creating the SSLContext", e);
+                defaultSSLContext = createFakeDefaultSSLContext();
+            }
+        } else {
+            defaultSSLContext = createFakeDefaultSSLContext();
+        }
+    }
+
+    private SSLContext createFakeDefaultSSLContext() {
+        try {
+            return createFakeSSLContext();
+        } catch (Exception e) {
+            return null;
         }
     }
 
