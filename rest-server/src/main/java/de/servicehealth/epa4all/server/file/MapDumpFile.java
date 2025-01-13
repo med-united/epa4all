@@ -21,6 +21,7 @@ public abstract class MapDumpFile<K, V> {
     public MapDumpFile(File folder) throws IOException {
         String fileName = getFileName();
         file = new File(folder, fileName);
+        log.info(String.format("Creating '%s' in the folder '%s'", fileName, folder.getAbsolutePath()));
         if (!file.exists()) {
             file.createNewFile();
         }
