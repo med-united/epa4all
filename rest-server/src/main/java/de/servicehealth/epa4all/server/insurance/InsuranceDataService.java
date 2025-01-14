@@ -52,8 +52,11 @@ public class InsuranceDataService {
     }
 
     public InsuranceData getLocalInsuranceData(String telematikId, String kvnr) {
-        File localVsdFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-        return localVsdFolder == null ? null : new VsdResponseFile(localVsdFolder).load(kvnr);
+        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        if (localFolder == null) {
+            return null;
+        }
+        return new VsdResponseFile(localFolder).load(kvnr);
     }
 
     public InsuranceData readVsd(
@@ -83,9 +86,9 @@ public class InsuranceDataService {
     }
 
     public void cleanUpInsuranceData(String telematikId, String kvnr) {
-        File localVSDFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-        if (localVSDFolder != null) {
-            new VsdResponseFile(localVSDFolder).cleanUp();
+        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        if (localFolder != null) {
+            new VsdResponseFile(localFolder).cleanUp();
         }
     }
 

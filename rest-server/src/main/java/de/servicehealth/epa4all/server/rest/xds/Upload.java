@@ -43,14 +43,19 @@ public class Upload extends XdsResource {
         if (fileName == null) {
             fileName = String.format("%s_%s.%s", kvnr, UUID.randomUUID(), getExtension(contentType));
         }
-
-        String folderName = null;
-
-        byte[] documentBytes = is.readAllBytes();
         String taskId = UUID.randomUUID().toString();
-        eventFileUpload.fireAsync(new FileUpload(
-            epaContext, taskId, contentType, languageCode, telematikId, kvnr, fileName, folderName, documentBytes
-        ));
+        FileUpload fileUpload = new FileUpload(
+            epaContext,
+            taskId,
+            contentType,
+            languageCode,
+            telematikId,
+            kvnr,
+            fileName,
+            null,
+            is.readAllBytes()
+        );
+        eventFileUpload.fireAsync(fileUpload);
         return taskId;
     }
 

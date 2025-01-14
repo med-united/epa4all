@@ -60,30 +60,23 @@ public class EpaFileUploader extends EpaFileTracker<FileUpload> {
         EpaContext epaContext,
         StructureDefinition structureDefinition
     ) {
-        String telematikId = fileUpload.getTelematikId();
-        String insurantId = fileUpload.getKvnr();
-        String fileName = fileUpload.getFileName();
-        String contentType = fileUpload.getContentType();
-        String languageCode = fileUpload.getLanguageCode();
-        byte[] documentBytes = fileUpload.getDocumentBytes();
-
+        String kvnr = fileUpload.getKvnr();
         UCPersoenlicheVersichertendatenXML versichertendaten = epaContext.getInsuranceData().getPersoenlicheVersichertendaten();
-        UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
-        String firstName = person.getVorname();
-        String lastName = person.getNachname();
-        String title = person.getTitel();
-
-        return xdsDocumentService.get().prepareDocumentSetRequest(
-            structureDefinition.getElements().getFirst().getMetadata(),
-            documentBytes,
-            telematikId,
-            insurantId,
-            fileName,
-            contentType,
-            languageCode,
-            firstName,
-            lastName,
-            title
-        );
+        if (versichertendaten != null) {
+            UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
+            return xdsDocumentService.get().prepareDocumentSetRequest(
+                structureDefinition.getElements().getFirst().getMetadata(),
+                fileUpload.getDocumentBytes(),
+                fileUpload.getTelematikId(),
+                kvnr,
+                fileUpload.getFileName(),
+                fileUpload.getContentType(),
+                fileUpload.getLanguageCode(),
+                person.getVorname(),
+                person.getNachname(),
+                person.getTitel()
+            );
+        }
+        throw new IllegalStateException(String.format("[%s] versichertendaten is empty, please insert the card of the\npatient into a eHealth Card Terminal to generate this data.", kvnr));
     }
 }
