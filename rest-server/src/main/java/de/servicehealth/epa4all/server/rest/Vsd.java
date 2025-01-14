@@ -20,6 +20,7 @@ import static de.servicehealth.epa4all.server.smcb.VsdResponseFile.extractInsura
 import static de.servicehealth.epa4all.server.vsd.VsdService.buildSyntheticVSDResponse;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 
+@SuppressWarnings("unused")
 @RequestScoped
 @Path("vsd")
 public class Vsd extends AbstractResource {

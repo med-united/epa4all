@@ -27,9 +27,10 @@ public class Vau {
     public Response reload(
         @QueryParam("backends") String backends
     ) throws Exception {
-        Set<String> set = backends == null || backends.isEmpty()
-            ? Set.of()
-            : Arrays.stream(backends.split(",")).collect(Collectors.toSet());
+        Set<String> set = Set.of();
+        if (backends != null && !backends.isEmpty()) {
+            set = Arrays.stream(backends.split(",")).map(String::trim).collect(Collectors.toSet());
+        }
         return Response.ok(vauNpProvider.reload(set)).build();
     }
 }
