@@ -1,0 +1,56 @@
+<mvc:View
+        xmlns:mvc="sap.ui.core.mvc"
+        xmlns="sap.m"
+        xmlns:core="sap.ui.core"
+        controllerName="medunited.care.controller.SettingsDialog">
+    <Dialog id="settingsDialog" title="{i18n>settings}">
+        <content>
+            <VBox class="sapUiSmallMarginBottom">
+                <SegmentedButton id="menuOptions" selectedKey="KonnektorOptions" selectionChange="onMenuOptionChange">
+                    <layoutData>
+                        <FlexItemData styleClass="sapUiSmallMarginBottom"/>
+                    </layoutData>
+                    <items>
+                        <SegmentedButtonItem key="KonnektorOptions" text="{i18n>konnektorOptions}"/>
+                        <SegmentedButtonItem key="CardOptions" text="{i18n>cardOptions}"/>
+                    </items>
+                </SegmentedButton>
+
+                <VBox id="contentContainer">
+                    <VBox id="konnektorOptionsContent" visible="true">
+                        <Label text="{i18n>selectAKonnektor}"/>
+                        <ComboBox id="settingsKonnektorComboBox" selectedKey="{konnektorComboBoxModel>/selectedKey}">
+                            <items>
+                                <core:Item key="{konnektorComboBoxModel>key}" text="{konnektorComboBoxModel>text}"/>
+                            </items>
+                        </ComboBox>
+                    </VBox>
+
+                    <VBox id="cardOptionsContent" visible="false">
+                        <Label text="{i18n>selectAnSMCB}"/>
+                        <ComboBox id="cardOptionsComboBox"
+                                  placeholder="{i18n>smcbCards}"
+                                  items="{
+                                            path: 'comboBoxModel>/options'
+                                  }">
+                            <core:Item key="{comboBoxModel>key}"
+                                       text="{
+                                  parts: [
+                                      {path: 'comboBoxModel>key'},
+                                      {path: 'comboBoxModel>text'}
+                                  ],
+                                  formatter: '.formatKeyAndText'
+                                }"/>
+                        </ComboBox>
+                    </VBox>
+                </VBox>
+            </VBox>
+        </content>
+        <beginButton>
+            <Button text="{i18n>save}" type="Emphasized" press="onSavePress"/>
+        </beginButton>
+        <endButton>
+            <Button text="{i18n>cancel}" type="Transparent" press="onCancelPress"/>
+        </endButton>
+    </Dialog>
+</mvc:View>

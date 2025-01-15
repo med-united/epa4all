@@ -121,6 +121,34 @@ sap.ui.define([
 				});
 			}
 			this.oLogoutDialog.open();
-		}
+		},
+		onAvatarPress: function (oEvent) {
+        	var oButton = oEvent.getSource();
+        	if (!this._oMenu) {
+        		this._oMenu = new sap.m.Menu({
+        			items: [
+        			    new sap.m.MenuItem({
+                            text: this.translate("settings"),
+                            press: this.onSettingsPress.bind(this)
+                        }),
+        				new sap.m.MenuItem({
+        					text: this.translate("logOut"),
+        					press: this.dialogToLogOut.bind(this)
+        				})
+        			]
+        		});
+        	}
+        	this._oMenu.openBy(oButton);
+        },
+        onSettingsPress: function () {
+          if (!this._oDialog) {
+            this._oDialog = sap.ui.xmlview({
+              viewName: "medunited.care.view.SettingsDialog",
+              type: sap.ui.core.mvc.ViewType.XML
+            });
+            this.getView().addDependent(this._oDialog);
+          }
+          this._oDialog.byId("settingsDialog").open();
+        }
 	});
 }, true);
