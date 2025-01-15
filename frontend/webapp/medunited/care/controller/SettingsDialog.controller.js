@@ -30,6 +30,10 @@ sap.ui.define([
                         console.log("Telematik ID Response:", sRawResponse);
 
                         localStorage.setItem("telematikId", sRawResponse);
+
+                        sap.ui.getCore().getEventBus().publish("WebdavModel", "TelematikIdUpdated", {
+                            telematikId: sRawResponse
+                        });
                     },
                     error: function (oError) {
                         console.error("Error fetching Telematik ID:", oError);

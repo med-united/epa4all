@@ -13,7 +13,7 @@
 				"type": "FHIR"
 			},
 			"webdav": {
-				"uri": "http://localhost:8090/webdav/3-SMC-B-Testkarte-883110000116352",
+				"uri": "http://localhost:8090/webdav/",
 				"type": "webdav"
 			},
 			"app-state": {
