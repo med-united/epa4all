@@ -28,6 +28,8 @@ sap.ui.define([
                     success: function (oData) {
                         var sRawResponse = typeof oData === "string" ? oData : new XMLSerializer().serializeToString(oData);
                         console.log("Telematik ID Response:", sRawResponse);
+
+                        localStorage.setItem("telematikId", sRawResponse);
                     },
                     error: function (oError) {
                         console.error("Error fetching Telematik ID:", oError);
