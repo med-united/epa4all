@@ -70,10 +70,13 @@
 								<!-- Section: Immunizations -->
 								<Panel headerText="Immunizations" expandable="true"
 									expanded="true" id="simpleFormImmunization">
-									<Table items="{/}" inset="true">
+									<Table inset="true">
 										<columns>
 											<Column>
 												<Text text="Vaccine Code" />
+											</Column>
+											<Column>
+												<Text text="Vaccine Name" />
 											</Column>
 											<Column>
 												<Text text="Occurrence Date" />
@@ -88,10 +91,11 @@
 										<items>
 											<ColumnListItem>
 												<cells>
-													<Input value="{vaccineCode/coding/display/@value}" />
+													<Input value="{vaccineCode/coding/code/@value}" />
+													<Input value="{vaccineCode/text/@value}" />
 													<DatePicker value="{occurrenceDateTime/@value}" />
 													<Input value="{manufacturer/display/@value}" />
-													<Input value="{lotNumber/@value)}" />
+													<Input value="{lotNumber/@value}" />
 												</cells>
 											</ColumnListItem>
 										</items>
