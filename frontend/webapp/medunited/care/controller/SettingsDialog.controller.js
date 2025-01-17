@@ -1,21 +1,35 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
+    "medunited/base/controller/AbstractController",
     "sap/m/MessageToast",
     "sap/ui/model/json/JSONModel"
-], function (Controller, MessageToast, JSONModel) {
+], function (AbstractController, MessageToast, JSONModel) {
     "use strict";
 
-    return Controller.extend("medunited.care.controller.SettingsDialog", {
+    return AbstractController.extend("medunited.care.controller.SettingsDialog", {
+        onInit: function () {
+            this._loadKonnektorConfigs();
+            this._loadGetCardsResponse();
+            this._previousSMCBKey = null;
+            this._telematikIdAvailable = !!localStorage.getItem("telematikId");
+        },
         onSavePress: function () {
             var oKonnektorComboBox = this.byId("settingsKonnektorComboBox");
             var sSelectedKonnektor = oKonnektorComboBox.getSelectedKey();
-            MessageToast.show("Konnektor selected option: " + sSelectedKonnektor);
-
             var oSmcbComboBox = this.byId("cardOptionsComboBox");
             var sSelectedSmcb = oSmcbComboBox.getSelectedKey();
-            MessageToast.show("SMC-B selected option: " + sSelectedSmcb);
-            var oSelectedItem = oSmcbComboBox.getSelectedItem();
 
+            if (!this._telematikIdAvailable && !sSelectedSmcb) {
+                MessageToast.show(this.translate("pleaseSelectAnSmcbAndSaveBeforeProceeding"));
+
+                var oCardOptionsContent = this.byId("cardOptionsContent");
+                var oKonnektorOptionsContent = this.byId("konnektorOptionsContent");
+                oKonnektorOptionsContent.setVisible(false);
+                oCardOptionsContent.setVisible(true);
+                this.byId("menuOptions").setSelectedKey("CardOptions");
+                return;
+            }
+
+            var oSelectedItem = oSmcbComboBox.getSelectedItem();
             if (oSelectedItem) {
                 var sSelectedIccsn = oSelectedItem.getBindingContext("comboBoxModel").getObject().iccsn;
             }
@@ -45,11 +59,17 @@ sap.ui.define([
             this.byId("settingsDialog").close();
         },
         onCancelPress: function () {
+            if (!this._telematikIdAvailable) {
+                MessageToast.show(this.translate("pleaseSelectAnSmcbAndSaveBeforeProceeding"));
+
+                var oCardOptionsContent = this.byId("cardOptionsContent");
+                var oKonnektorOptionsContent = this.byId("konnektorOptionsContent");
+                oKonnektorOptionsContent.setVisible(false);
+                oCardOptionsContent.setVisible(true);
+                this.byId("menuOptions").setSelectedKey("CardOptions");
+                return;
+            }
             this.byId("settingsDialog").close();
-        },
-        onInit: function () {
-            this._loadKonnektorConfigs();
-            this._previousSMCBKey = null;
         },
         _loadKonnektorConfigs: function () {
             var oKonnektorConfigsModel = new JSONModel();
@@ -168,7 +188,7 @@ sap.ui.define([
 
                     oGetCardsResponseModel.setData({
                         options: aOptions,
-                        selectedKey: aOptions.length > 0 ? aOptions[0].key : null
+                        selectedKey: ""
                     });
                     this.getView().setModel(oGetCardsResponseModel, "comboBoxModel");
 

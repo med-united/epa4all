@@ -30,6 +30,7 @@
                         <Label text="{i18n>selectAnSMCB}"/>
                         <ComboBox id="cardOptionsComboBox"
                                   placeholder="{i18n>smcbCards}"
+                                  selectedKey="{comboBoxModel>/selectedKey}"
                                   items="{
                                             path: 'comboBoxModel>/options'
                                   }">

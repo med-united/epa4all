@@ -24,6 +24,15 @@ sap.ui.define([
 			} else {
 				Log.warning("Could not get component for AbstractAppController for entity: " + this.getEntityName());
 			}
+
+			var sTelematikId = localStorage.getItem("telematikId");
+            if (sTelematikId) {
+                sap.ui.getCore().getEventBus().publish("WebdavModel", "TelematikIdUpdated", {
+                    telematikId: sTelematikId
+                });
+            } else {
+                this.showSettingsDialog();
+            }
 		},
 		changeTab: function (oEvent) {
 			this.getOwnerComponent().getRouter().navTo(oEvent.getParameter("key"));
@@ -129,7 +138,7 @@ sap.ui.define([
         			items: [
         			    new sap.m.MenuItem({
                             text: this.translate("settings"),
-                            press: this.onSettingsPress.bind(this)
+                            press: this.showSettingsDialog.bind(this)
                         }),
         				new sap.m.MenuItem({
         					text: this.translate("logOut"),
@@ -140,7 +149,7 @@ sap.ui.define([
         	}
         	this._oMenu.openBy(oButton);
         },
-        onSettingsPress: function () {
+        showSettingsDialog: function () {
           if (!this._oDialog) {
             this._oDialog = sap.ui.xmlview({
               viewName: "medunited.care.view.SettingsDialog",
