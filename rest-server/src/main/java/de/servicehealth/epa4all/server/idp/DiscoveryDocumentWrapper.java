@@ -43,13 +43,4 @@ public class DiscoveryDocumentWrapper implements Serializable {
             authorizationEndpoint, ssoEndpoint, tokenEndpoint, pairingEndpoint, authPairEndpoint, idpSig, idpEnc, discSig
         );
     }
-
-    public DiscoveryDocumentWrapper changeEndpoints(String target, String replacement) {
-        authorizationEndpoint = authorizationEndpoint.replace(target, replacement);
-        ssoEndpoint = ssoEndpoint.replace(target, replacement);
-        tokenEndpoint = tokenEndpoint.replace(target, replacement);
-        pairingEndpoint = pairingEndpoint.replace(target, replacement);
-        authPairEndpoint = authPairEndpoint.replace(target, replacement);
-        return this;
-    }
 }

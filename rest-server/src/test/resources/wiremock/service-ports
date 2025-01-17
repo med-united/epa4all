@@ -1,6 +1,6 @@
-https://localhost:8070_authSignatureServiceEndpointAddress_https://localhost:8070/ws/AuthSignatureService
-https://localhost:8070_signatureServiceEndpointAddress_https://localhost:8070/ws/SignatureService
-https://localhost:8070_cardServiceEndpointAddress_https://localhost:8070/ws/CardService
-https://localhost:8070_vsdServiceEndpointAddress_https://localhost:8070/ws/VSDService
-https://localhost:8070_eventServiceEndpointAddress_https://localhost:8070/ws/EventService
-https://localhost:8070_certificateServiceEndpointAddress_https://localhost:8070/ws/CertificateService
+https://localhost:9443/konnektor_authSignatureServiceEndpointAddress_https://localhost:9443/konnektor/ws/AuthSignatureService
+https://localhost:9443/konnektor_cardServiceEndpointAddress_https://localhost:9443/konnektor/ws/CardService
+https://localhost:9443/konnektor_signatureServiceEndpointAddress_https://localhost:9443/konnektor/ws/SignatureService
+https://localhost:9443/konnektor_eventServiceEndpointAddress_https://localhost:9443/konnektor/ws/EventService
+https://localhost:9443/konnektor_vsdServiceEndpointAddress_https://localhost:9443/konnektor/ws/VSDService
+https://localhost:9443/konnektor_certificateServiceEndpointAddress_https://localhost:9443/konnektor/ws/CertificateService

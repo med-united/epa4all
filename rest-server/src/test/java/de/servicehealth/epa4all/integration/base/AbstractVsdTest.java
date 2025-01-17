@@ -18,6 +18,7 @@ import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
@@ -36,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -67,6 +69,9 @@ public abstract class AbstractVsdTest {
 
     @Inject
     protected EventMapper eventMapper;
+    
+    @Inject
+    protected EpaCallGuard epaCallGuard;
 
     @Inject
     protected WebdavConfig webdavConfig;
@@ -183,7 +188,7 @@ public abstract class AbstractVsdTest {
 
     protected VauNpProvider mockVauNpProvider() {
         VauNpProvider vauNpProviderMock = mock(VauNpProvider.class);
-        when(vauNpProviderMock.getVauNp(any(), any(), any())).thenReturn("f5931e8c19c21bca44fa");
+        when(vauNpProviderMock.getVauNp(any(), any(), any())).thenReturn(Optional.of("f5931e8c19c21bca44fa"));
         QuarkusMock.installMockForType(vauNpProviderMock, VauNpProvider.class);
         return vauNpProviderMock;
     }
@@ -206,7 +211,7 @@ public abstract class AbstractVsdTest {
 
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
             webSocketPayloadEvent, insuranceDataService, epaFileDownloader, konnektorClient,
-            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig
+            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 

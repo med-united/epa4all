@@ -4,7 +4,6 @@ import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpFile;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpKey;
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
-@QuarkusTestResource(value = WiremockTestResource.class, restrictToAnnotatedClass = true)
 public class RequestVauNpIT extends AbstractWiremockTest {
 
     @Test

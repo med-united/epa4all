@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.unit;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.service.health.api.epa4all.EpaAPI;
+import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
@@ -18,10 +19,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static de.servicehealth.epa4all.server.idp.vaunp.VauNpFile.VAU_NP_FILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -43,7 +47,7 @@ public class VauNpProviderTest {
 
     @Test
     public void vauNpProviderCreatesFileWithValueOnStart() throws Exception {
-        String konnektorBaseUrl = "http://192.168.178.42";
+        String konnektorHost = "192.168.178.42";
         String epaBackend = "epa-as-1.dev.epa4all.de:443";
         String smcbHandle = "SMC-B-123";
 
@@ -63,6 +67,10 @@ public class VauNpProviderTest {
         map.put(epaBackend, epaAPI);
         when(epaMultiService.getEpaBackendMap()).thenReturn(map);
 
+        EpaConfig epaConfig = mock(EpaConfig.class);
+        when(epaConfig.getEpaBackends()).thenReturn(Set.of(epaBackend));
+        when(epaMultiService.getEpaConfig()).thenReturn(epaConfig);
+
         IdpClient idpClient = mock(IdpClient.class);
         when(idpClient.getVauNpSync(any(), any(), eq(smcbHandle), eq(epaBackend))).thenReturn(vauNp);
 
@@ -78,6 +86,8 @@ public class VauNpProviderTest {
         vauNpProvider.setConfigFolder(TEST_FOLDER.getAbsolutePath());
         vauNpProvider.onStart(null);
 
-        assertEquals(vauNp, vauNpProvider.getVauNp(smcbHandle, konnektorBaseUrl, epaBackend));
+        Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, epaBackend);
+        assertTrue(vauNpOpt.isPresent());
+        assertEquals(vauNp, vauNpOpt.get());
     }
 }

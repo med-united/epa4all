@@ -34,9 +34,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileInputStream;
@@ -166,6 +164,7 @@ public class ServicePortProvider extends StartableService {
         return sslContext;
     }
 
+    @SuppressWarnings("resource")
     private void lookupWebServiceURLsIfNecessary(SSLContext sslContext, IUserConfigurations userConfigurations) {
         if (userConfigurations2endpointMap.containsKey(userConfigurations.getConnectorBaseURL())) {
             return;
@@ -174,13 +173,7 @@ public class ServicePortProvider extends StartableService {
         clientBuilder.sslContext(sslContext);
 
         // disable hostname verification
-        clientBuilder = clientBuilder.hostnameVerifier(new HostnameVerifier() {
-
-            @Override
-            public boolean verify(String arg0, SSLSession arg1) {
-                return true;
-            }
-        });
+        clientBuilder = clientBuilder.hostnameVerifier((h, s) -> true);
         if (userConfigurations.getConnectorBaseURL() == null) {
             log.warning("ConnectorBaseURL is null, won't read connector.sds");
             return;
