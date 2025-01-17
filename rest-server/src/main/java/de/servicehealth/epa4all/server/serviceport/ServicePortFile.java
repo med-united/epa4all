@@ -13,8 +13,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toMap;
-
 public class ServicePortFile extends MapDumpFile<String, Map<String, String>> {
 
     private static final Logger log = Logger.getLogger(VauNpFile.class.getName());
@@ -66,19 +64,5 @@ public class ServicePortFile extends MapDumpFile<String, Map<String, String>> {
             .stream()
             .map(e -> konnektorUrl + "_" + e.getKey() + "_" + e.getValue())
             .collect(Collectors.joining("\n"));
-    }
-
-    public Map<String, Map<String, String>> changeEndpoints(Map<String, String> replacementMap) {
-        Map<String, Map<String, String>> map = get();
-        return replacementMap.entrySet().stream().flatMap(er ->
-            map.entrySet().stream()
-                .filter(ep -> ep.getKey().contains(er.getKey()))
-                .map(ep ->
-                    Pair.of(ep.getKey().replace(er.getKey(), er.getValue()), ep.getValue().entrySet().stream().map(ec ->
-                        Pair.of(ec.getKey(), ec.getValue().replace(er.getKey(), er.getValue())
-                        )).collect(toMap(Pair::getKey, Pair::getValue))
-                    )
-                )
-        ).collect(toMap(Pair::getKey, Pair::getValue));
     }
 }

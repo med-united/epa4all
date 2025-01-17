@@ -18,6 +18,7 @@ import jakarta.ws.rs.client.ResponseProcessingException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -84,41 +85,39 @@ public abstract class AbstractResource {
         EpaAPI epaAPI = epaMultiService.getEpaAPI(insurantId);
         String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
         String backend = epaAPI.getBackend();
-        String konnektorUrl = userRuntimeConfig.getConnectorBaseURL();
-        String vauNp = vauNpProvider.getVauNp(smcbHandle, konnektorUrl, backend);
 
-        boolean entitlementValid = false;
-        if (vauNp != null) {
-            Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
-            if (validTo == null || validTo.isBefore(Instant.now())) {
-                entitlementValid = entitlementService.setEntitlement(
-                    userRuntimeConfig,
-                    insuranceData,
-                    epaAPI,
-                    telematikId,
-                    vauNp,
-                    userAgent,
-                    smcbHandle
-                );
-            } else {
-                entitlementValid = true;
-                log.info(String.format("[%s/%s] Entitlement is valid until %s", telematikId, insurantId, validTo));
-            }
-        } else {
-            log.warning(String.format("[%s] VAU session is not found, skipping setEntitlement", backend));
+        Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
+        boolean entitlementValid = validTo != null && validTo.isAfter(Instant.now());
+        Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, userRuntimeConfig.getKonnektorHost(), backend);
+        if (!entitlementValid && vauNpOpt.isPresent()) {
+            entitlementValid = entitlementService.setEntitlement(
+                userRuntimeConfig,
+                insuranceData,
+                epaAPI,
+                telematikId,
+                vauNpOpt.get(),
+                userAgent,
+                smcbHandle
+            );
         }
-        return new EpaContext(backend, entitlementValid, insuranceData, prepareXHeaders(insurantId, userAgent, backend, vauNp));
+
+        Map<String, String> xHeaders = prepareXHeaders(insurantId, userAgent, backend, vauNpOpt);
+        return new EpaContext(backend, entitlementValid, insuranceData, xHeaders);
     }
 
-    private Map<String, String> prepareXHeaders(String insurantId, String userAgent, String backend, String vauNp) {
+    private Map<String, String> prepareXHeaders(
+        String insurantId,
+        String userAgent,
+        String backend,
+        Optional<String> vauNpOpt
+    ) {
         Map<String, String> attributes = new HashMap<>();
         attributes.put(X_INSURANT_ID, insurantId);
         attributes.put(X_USER_AGENT, userAgent);
         attributes.put(X_BACKEND, backend);
         attributes.put(CLIENT_ID, idpConfig.getClientId());
-        if (vauNp != null) {
-            attributes.put(VAU_NP, vauNp);
-        }
+        
+        vauNpOpt.ifPresent(vauNp -> attributes.put(VAU_NP, vauNp));
         return attributes;
     }
 }

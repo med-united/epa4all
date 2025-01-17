@@ -12,6 +12,7 @@ import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage1Transformer;
 import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage3Transformer;
 import de.servicehealth.epa4all.server.idp.IdpClient;
+import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
@@ -59,12 +60,15 @@ public abstract class AbstractWiremockTest {
     ClientFactory clientFactory;
 
     @Inject
-    EpaMultiService epaMultiService;
-
-    @Inject
     ServicePortProvider servicePortProvider;
 
     protected File configFolder = getResourcePath("wiremock").toFile();
+    
+    @Inject
+    protected EpaMultiService epaMultiService;
+    
+    @Inject
+    protected VauNpProvider vauNpProvider;
 
     @BeforeAll
     public static void beforeAll() {

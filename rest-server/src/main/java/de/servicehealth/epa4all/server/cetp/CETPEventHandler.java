@@ -7,6 +7,7 @@ import de.health.service.config.api.IUserConfigurations;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.filetracker.download.FileDownload;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
@@ -21,6 +22,7 @@ import jakarta.ws.rs.core.Response;
 import org.jboss.logging.MDC;
 
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -45,6 +47,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private final RuntimeConfig runtimeConfig;
     private final VauNpProvider vauNpProvider;
     private final FeatureConfig featureConfig;
+    private final EpaCallGuard epaCallGuard;
 
     public CETPEventHandler(
         Event<WebSocketPayload> webSocketPayloadEvent,
@@ -55,7 +58,8 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         CardlinkClient cardlinkClient,
         VauNpProvider vauNpProvider,
         RuntimeConfig runtimeConfig,
-        FeatureConfig featureConfig
+        FeatureConfig featureConfig,
+        EpaCallGuard epaCallGuard
     ) {
         super(cardlinkClient);
 
@@ -67,6 +71,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         this.runtimeConfig = runtimeConfig;
         this.vauNpProvider = vauNpProvider;
         this.featureConfig = featureConfig;
+        this.epaCallGuard = epaCallGuard;
     }
 
     @Override
@@ -121,12 +126,11 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 }
                 String insurantId = insuranceData.getInsurantId();
                 EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
-                Map<String, String> xHeaders = prepareXHeaders(
-                    epaApi, insurantId, smcbHandle, configurations.getConnectorBaseURL()
-                );
-                try (Response response = epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders)) {
+                String backend = epaApi.getBackend();
+                Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, smcbHandle, configurations.getKonnektorHost());
+                try (Response response = epaCallGuard.callAndRetry(backend, () -> epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders))) {
                     byte[] bytes = response.readEntity(byte[].class);
-                    EpaContext epaContext = new EpaContext(epaApi.getBackend(), true, insuranceData, Map.of());
+                    EpaContext epaContext = new EpaContext(backend, true, insuranceData, Map.of());
                     handleDownloadResponse(bytes, ctId, telematikId, epaContext, insurantId);
                     String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                     Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
@@ -148,16 +152,16 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         }
     }
 
-    private Map<String, String> prepareXHeaders(EpaAPI epaApi, String insurantId, String smcbHandle, String konnectorBaseURL) {
+    private Map<String, String> prepareXHeaders(EpaAPI epaApi, String insurantId, String smcbHandle, String konnectorHost) {
         String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
         String epaBackend = epaApi.getBackend();
-        String vauNp = vauNpProvider.getVauNp(smcbHandle, konnectorBaseURL, epaBackend);
-        return Map.of(
+        Map<String, String> map = new HashMap<>(Map.of(
             X_INSURANT_ID, insurantId,
-            VAU_NP, vauNp,
             X_BACKEND, epaBackend,
             X_USER_AGENT, userAgent
-        );
+        ));
+        vauNpProvider.getVauNp(smcbHandle, konnectorHost, epaBackend).ifPresent(vauNp -> map.put(VAU_NP, vauNp));
+        return map;
     }
 
     private void handleDownloadResponse(
@@ -176,7 +180,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         RetrieveDocumentSetResponseType.DocumentResponse documentResponse = new RetrieveDocumentSetResponseType.DocumentResponse();
         documentResponse.setDocument(bytes);
         documentResponse.setMimeType("application/pdf");
-        documentResponse.setDocumentUniqueId(kvnr);
+        documentResponse.setDocumentUniqueId(fileName);
 
         epaFileDownloader.handleDownloadResponse(fileDownload, documentResponse);
     }

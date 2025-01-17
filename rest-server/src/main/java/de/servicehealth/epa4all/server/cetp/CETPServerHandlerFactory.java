@@ -8,6 +8,7 @@ import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.cetp.cardlink.CardlinkClientFactory;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
@@ -22,6 +23,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
+    private final EpaCallGuard epaCallGuard;
     private final FeatureConfig featureConfig;
     private final VauNpProvider vauNpProvider;
     private final EpaMultiService epaMultiService;
@@ -34,6 +36,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
     @Inject
     public CETPServerHandlerFactory(
+        EpaCallGuard epaCallGuard,
         FeatureConfig featureConfig,
         VauNpProvider vauNpProvider,
         EpaMultiService epaMultiService,
@@ -44,6 +47,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         Event<WebSocketPayload> webSocketPayloadEvent,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
+        this.epaCallGuard = epaCallGuard;
         this.featureConfig = featureConfig;
         this.vauNpProvider = vauNpProvider;
         this.epaMultiService = epaMultiService;
@@ -61,7 +65,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         CardlinkClient cardlinkClient = cardlinkClientFactory.build(konnektorConfig);
         CETPEventHandler cetpEventHandler = new CETPEventHandler(
             webSocketPayloadEvent, insuranceDataService, epaFileDownloader, konnektorClient,
-            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig
+            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard
         );
         return new ChannelInboundHandler[] { cetpEventHandler };
     }

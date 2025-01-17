@@ -2,11 +2,14 @@ package de.servicehealth.epa4all.integration.bc.epa;
 
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
+import de.health.service.cetp.config.KonnektorConfig;
 import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
+import de.servicehealth.epa4all.integration.precondition.NoVauNpPrecondition;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -19,6 +22,7 @@ import jakarta.websocket.OnError;
 import jakarta.websocket.OnMessage;
 import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.yasson.internal.JsonBindingBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +31,7 @@ import org.mockito.ArgumentCaptor;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -42,9 +47,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "unchecked"})
 @QuarkusTest
 @TestProfile(ProxyEpaTestProfile.class)
+@QuarkusTestResource(NoVauNpPrecondition.class)
 public class CardInsertedEpaIT extends AbstractVsdTest {
 
     private static final LinkedBlockingDeque<String> MESSAGES = new LinkedBlockingDeque<>();
@@ -52,6 +58,9 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
     private final JsonbBuilder jsonbBuilder = new JsonBindingBuilder();
 
     private final String kvnr = "X110485291";
+
+    @ConfigProperty(name = "ere.per.konnektor.config.folder")
+    String configFolder;
 
     @TestHTTPResource("/ws/1-SMC-B-Testkarte--883110000162363")
     URI uri;
@@ -81,21 +90,31 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
         Set<String> epaBackends = epaConfig.getEpaBackends();
         runWithEpaBackends(epaBackends, () -> {
             try (Session session = ContainerProvider.getWebSocketContainer().connectToServer(Client.class, uri)) {
-                assertEquals("CONNECT", MESSAGES.poll(10, TimeUnit.SECONDS));
-                assertEquals("[1-SMC-B-Testkarte--883110000162363] SESSION is created", MESSAGES.poll(10, TimeUnit.SECONDS));
 
-                List<String> statuses = vauNpProvider.reload(epaBackends);
-                assertTrue(statuses.getFirst().contains("OK"));
+                String telematikId = "1-SMC-B-Testkarte--883110000162363";
+
+                assertEquals("CONNECT", MESSAGES.poll(10, TimeUnit.SECONDS));
+                assertEquals("[" + telematikId + "] SESSION is created", MESSAGES.poll(10, TimeUnit.SECONDS));
 
                 String ctId = "cardTerminal-124";
                 String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
                 CardlinkClient cardlinkClient = mock(CardlinkClient.class);
 
+                String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
+                KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
+                String konnektorHost = konnektorConfig.getHost();
+                String epaBackend = epaBackends.iterator().next();
+
+                vauNpProvider.invalidate();
+
+                Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, epaBackend);
+                assertFalse(vauNpOpt.isPresent());
+
                 // epa-deployment doesn't work for some reason:
                 // {"MessageType":"Error","ErrorMessage":"Transcript Error: 500 : [no body]","ErrorCode":5}
                 // but epa-as-2.dev.epa4all.de:443 works
                 receiveCardInsertedEvent(
-                    konnektorConfigs.values().iterator().next(),
+                    konnektorConfig,
                     vauNpProvider,
                     cardlinkClient,
                     egkHandle,
