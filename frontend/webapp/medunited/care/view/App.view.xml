@@ -16,9 +16,11 @@
 			}
 			</html:style>
 			<customHeader>
-				<f:ShellBar title="{i18n>medicationsTitle}" secondTitle="" homeIcon="./images/logo_med-united_white.png" showCopilot="false" showSearch="false" showNotifications="false" showProductSwitcher="false" showNavButton="{= ${/layout} === 'EndColumnFullScreen'}" notificationsNumber="0" navButtonPressed="handleBackButtonPressed">
+				<f:ShellBar title="{i18n>medicationsTitle}" secondTitle="" homeIcon="./images/logo_med-united_white.png"
+							showCopilot="false" showSearch="false" showNotifications="false" showProductSwitcher="false"
+							showNavButton="{= ${/layout} === 'EndColumnFullScreen'}" notificationsNumber="0" navButtonPressed="handleBackButtonPressed">
 					<f:profile>
-						<Avatar initials="" tooltip="" press="dialogToLogOut" />
+						<Avatar initials="" tooltip="" press="onAvatarPress" />
 					</f:profile>
 				</f:ShellBar>
 			</customHeader>
