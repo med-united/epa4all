@@ -13,6 +13,7 @@ RUN apk add --no-cache curl bash ca-certificates \
     && mkdir /opt/epa4all/config \
     && mkdir /opt/epa4all/quarkus \
     && mkdir /opt/epa4all/secret \
+    && mkdir /opt/epa4all/tls \
     && mkdir /opt/epa4all/ig-schema \
     && mkdir /opt/epa4all/config/konnektoren \
     && mkdir /opt/epa4all/config/konnektoren/8588 \
@@ -23,8 +24,8 @@ RUN apk add --no-cache curl bash ca-certificates \
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
 COPY --chown=1001 tls/epa-certs/*.pem /opt/epa4all/certs
 COPY --chown=1001 linux-service/run.sh /opt/epa4all
-COPY --chown=1001 tls/server/key-store/keystore.p12 /opt/epa4all/secret
-COPY --chown=1001 tls/server/trust-store/truststore.p12 /opt/epa4all/secret
+COPY --chown=1001 tls/server/key-store/keystore.p12 /opt/epa4all/tls
+COPY --chown=1001 tls/server/trust-store/truststore.p12 /opt/epa4all/tls
 COPY --chown=1001 rest-server/target/quarkus-app/app/* /opt/epa4all/app
 COPY --chown=1001 rest-server/target/quarkus-app/lib/boot/* /opt/epa4all/lib/boot
 COPY --chown=1001 rest-server/target/quarkus-app/lib/main/* /opt/epa4all/lib/main
