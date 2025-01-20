@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * AbstractMedicationClient ancestors don't clear ThreadLocals
+ * AbstractMedicationClient descendants don't clear ThreadLocals
  * because they are used for testing purposes only.
  */
 public abstract class AbstractMedicationClient extends GenericClient implements IMedicationClient {

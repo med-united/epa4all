@@ -21,8 +21,10 @@ RUN apk add --no-cache curl bash ca-certificates \
     && echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/default-jvm/lib/security/java.security
 
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
-COPY --chown=1001 doc/certs/*.pem /opt/epa4all/certs
+COPY --chown=1001 tls/epa-certs/*.pem /opt/epa4all/certs
 COPY --chown=1001 linux-service/run.sh /opt/epa4all
+COPY --chown=1001 tls/server/key-store/keystore.p12 /opt/epa4all/secret
+COPY --chown=1001 tls/server/trust-store/truststore.p12 /opt/epa4all/secret
 COPY --chown=1001 rest-server/target/quarkus-app/app/* /opt/epa4all/app
 COPY --chown=1001 rest-server/target/quarkus-app/lib/boot/* /opt/epa4all/lib/boot
 COPY --chown=1001 rest-server/target/quarkus-app/lib/main/* /opt/epa4all/lib/main

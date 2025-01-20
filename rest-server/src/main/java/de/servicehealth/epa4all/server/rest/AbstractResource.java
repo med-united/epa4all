@@ -87,10 +87,10 @@ public abstract class AbstractResource {
         String backend = epaAPI.getBackend();
 
         Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
-        boolean entitlementValid = validTo != null && validTo.isAfter(Instant.now());
+        boolean entitlementIsSet = validTo != null && validTo.isAfter(Instant.now());
         Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, userRuntimeConfig.getKonnektorHost(), backend);
-        if (!entitlementValid && vauNpOpt.isPresent()) {
-            entitlementValid = entitlementService.setEntitlement(
+        if (vauNpOpt.isPresent() && !entitlementIsSet) {
+            entitlementIsSet = entitlementService.setEntitlement(
                 userRuntimeConfig,
                 insuranceData,
                 epaAPI,
@@ -102,7 +102,7 @@ public abstract class AbstractResource {
         }
 
         Map<String, String> xHeaders = prepareXHeaders(insurantId, userAgent, backend, vauNpOpt);
-        return new EpaContext(backend, entitlementValid, insuranceData, xHeaders);
+        return new EpaContext(backend, entitlementIsSet, insuranceData, xHeaders);
     }
 
     private Map<String, String> prepareXHeaders(
