@@ -52,14 +52,18 @@ openssl x509 -req -days 9999 -in tls/server/trust-store/server.csr \
 
 * OPTIONAL: p12 keystore for server key&certificate
 ```
-openssl pkcs12 -export -in tls/server/trust-store/server-crt.pem -inkey tls/server/trust-store/server-key.pem -out tls/server/trust-store/server.p12 -name epa4all -CAfile tls/server/trust-store/ca-crt.pem -caname selfsignedroot
+openssl pkcs12 -export -in tls/server/trust-store/server-crt.pem \
+ -inkey tls/server/trust-store/server-key.pem \
+ -out tls/server/trust-store/server.p12 -name epa4all \
+ -CAfile tls/server/trust-store/ca-crt.pem -caname selfsignedroot
 ```
 
 * OPTIONAL: convert to JKS
 ```
-keytool -importkeystore -srckeystore tls/server/trust-store/server.p12 -srcstoretype PKCS12 \ 
--destkeystore tls/server/trust-store/server.jks -deststoretype JKS -alias epa4all \
--deststorepass changeit -destkeypass changeit
+keytool -importkeystore -srckeystore tls/server/trust-store/server.p12 \
+ -srcstoretype PKCS12 -destkeystore tls/server/trust-store/server.jks \
+ -deststoretype JKS -alias epa4all \
+ -deststorepass changeit -destkeypass changeit
 ```
 
 * import root & server CA into truststore
@@ -78,7 +82,8 @@ keytool -import -trustcacerts -file tls/server/trust-store/server-crt.pem \
 openssl genrsa -out tls/server/trust-store/client/client.key 2048
 ```
 
-* prepare CSR (Certificate Signing Request)
+* prepare CSR (Certificate Signing Request).
+This cert works only for **vsd.test.smcb.cardholder.name=Praxis Xenia Gräfin d' AubertinóTEST-ONLY**
 ```
 openssl req -new -key tls/server/trust-store/client/client.key \
  -out tls/server/trust-store/client/client.csr \
@@ -107,4 +112,9 @@ openssl pkcs12 -export \
 ### Verify
 ```
 openssl verify -CAfile tls/server/trust-store/ca-crt.pem tls/server/trust-store/client/client.pem
+```
+
+```
+curl -v -k https://localhost:8443/health \                                                                              [17:04:05]
+   --cert tls/server/trust-store/client/client.p12:changeit --cert-type P12
 ```

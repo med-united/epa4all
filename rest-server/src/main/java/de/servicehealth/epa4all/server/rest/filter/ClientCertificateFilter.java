@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.rest.filter;
 
 import de.servicehealth.epa4all.server.cdi.TelematikIdLiteral;
+import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.resteasy.runtime.standalone.QuarkusResteasySecurityContext;
 import io.quarkus.security.AuthenticationFailedException;
 import io.vertx.core.http.HttpServerRequest;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
 @SuppressWarnings("rawtypes")
 @Provider
 @ApplicationScoped
+@IfBuildProperty(name = "quarkus.ssl.native", stringValue = "true")
 public class ClientCertificateFilter implements ContainerRequestFilter {
 
     private static final Logger log = Logger.getLogger(ClientCertificateFilter.class.getName());
