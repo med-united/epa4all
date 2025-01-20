@@ -115,6 +115,5 @@ openssl verify -CAfile tls/server/trust-store/ca-crt.pem tls/server/trust-store/
 ```
 
 ```
-curl -v -k https://localhost:8443/health \                                                                              [17:04:05]
-   --cert tls/server/trust-store/client/client.p12:changeit --cert-type P12
+curl -v -k https://localhost:8443/health --cert tls/server/trust-store/client/client.p12:changeit --cert-type P12 | jq
 ```
