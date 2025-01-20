@@ -55,7 +55,6 @@ RUN ls -la /opt/epa4all/lib/main
 RUN ls -la /opt/epa4all/quarkus
 RUN ls -la /usr/bin/java
 
-EXPOSE 8090 8443
 USER 1001
 
 ENTRYPOINT [ "/bin/bash", "/opt/epa4all/run.sh" ]
