@@ -9,11 +9,11 @@
 		"title": "{{appTitle}}",
 		"dataSources": {
 			"fhir": {
-				"uri": "http://localhost:8090/fhir/",
+				"uri": "/fhir/",
 				"type": "FHIR"
 			},
 			"webdav": {
-				"uri": "http://localhost:8090/webdav/",
+				"uri": "/webdav/",
 				"type": "webdav"
 			},
 			"app-state": {

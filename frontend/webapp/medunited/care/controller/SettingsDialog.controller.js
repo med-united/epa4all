@@ -35,7 +35,8 @@ sap.ui.define([
             }
 
             if (this._previousSMCBKey !== sSelectedSmcb) {
-                var sQueryUrl = "http://localhost:8090/telematik/id?iccsn=" + encodeURIComponent(sSelectedIccsn);
+                var sQueryUrl = "/telematik/id?iccsn=" + encodeURIComponent(sSelectedIccsn);
+
                 jQuery.ajax({
                     url: sQueryUrl,
                     method: "GET",
@@ -73,7 +74,7 @@ sap.ui.define([
         },
         _loadKonnektorConfigs: function () {
             var oKonnektorConfigsModel = new JSONModel();
-            var sUrl = "http://localhost:8090/konnektor/configs";
+            var sUrl = "/konnektor/configs";
 
             jQuery.ajax({
                 url: sUrl,
@@ -166,7 +167,7 @@ sap.ui.define([
         },
         _loadGetCardsResponse: function () {
             var oGetCardsResponseModel = new JSONModel();
-            var sUrl = "http://localhost:8090/event/cards";
+            var sUrl = "/event/cards";
 
             jQuery.ajax({
                 url: sUrl,
