@@ -71,7 +71,7 @@ sap.ui.define([
 		_onTelematikIdUpdated: function(sChannelId, sEventId, oData) {
             if (oData && oData.telematikId) {
                 console.log("Updating WebdavModel with new telematikId:", oData.telematikId);
-                this.sServiceUrl = `http://localhost:8090/webdav/${oData.telematikId}`;
+                this.sServiceUrl = `/webdav/${oData.telematikId}`;
                 this._setupData(this.sServiceUrl);
             }
         }
