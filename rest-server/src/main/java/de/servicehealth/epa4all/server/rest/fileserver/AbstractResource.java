@@ -1,5 +1,7 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -39,6 +41,15 @@ public class AbstractResource implements WebDavResource {
 
     private static final Logger log = Logger.getLogger(AbstractResource.class.getName());
 
+    @Inject
+    Instance<DirectoryResource> directoryResources;
+
+    @Inject
+    Instance<UnknownResource> unknownResources;
+
+    @Inject
+    Instance<FileResource> fileResources;
+
     protected String url;
     protected File resource;
     protected String rootFolder;
@@ -46,7 +57,7 @@ public class AbstractResource implements WebDavResource {
     public AbstractResource() {
     }
 
-    public AbstractResource(String rootFolder, File resource, String url) {
+    protected void init(String rootFolder, File resource, String url) {
         this.rootFolder = rootFolder;
         this.resource = resource;
         this.url = url;
@@ -139,10 +150,6 @@ public class AbstractResource implements WebDavResource {
         out.flush();
         out.close();
 
-        /*
-         * End of #154 workaround
-         */
-
         log.fine(String.format("STORED: %s", resource.getName()));
         return logResponse("PUT", uriInfo, Response.created(uriInfo.getRequestUriBuilder().path(url).build()).build());
     }
@@ -154,7 +161,14 @@ public class AbstractResource implements WebDavResource {
     }
 
     @Override
-    public Response propfind(final UriInfo uriInfo, final String depth, final InputStream entityStream, final long contentLength, final Providers providers, final HttpHeaders httpHeaders) throws IOException {
+    public Response propfind(
+        UriInfo uriInfo,
+        String depth,
+        Long contentLength,
+        Providers providers,
+        HttpHeaders httpHeaders,
+        InputStream entityStream
+    ) throws Exception {
         logRequest("PROPFIND", uriInfo);
         return logResponse("PROPFIND", uriInfo, Response.status(404).build());
     }
@@ -185,12 +199,7 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Response options() {
-        log.fine("Abstract - options(..)");
         Response.ResponseBuilder builder = withDavHeader(Response.ok());// noContent();
-        /*
-         * builder.header("Allow","");
-         * OPTIONS, GET, HEAD, DELETE, PROPPATCH, COPY, MOVE, LOCK, UNLOCK, PROPFIND, PUT
-         */
         builder.header("Allow", "OPTIONS,GET,HEAD,POST,DELETE,PROPPATCH,PROPFIND,COPY,MOVE,PUT,MKCOL,LOCK,UNLOCK");
         return logResponse("OPTIONS", builder.build());
     }
@@ -203,22 +212,18 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Object findResource(final String res) {
-        log.fine("Abstract - findResource(..) - " + res);
         String path = resource.getPath() + File.separator + res;
         File newResource = new File(path);
         String newUrl = url + "/" + res;
 
+        AbstractResource resource;
         if (newResource.exists()) {
-            if (newResource.isDirectory()) {
-                log.fine("Abstract - findResource(..) - isDirectory");
-                return new DirectoryResource(rootFolder, newResource, newUrl);
-            } else {
-                log.fine("Abstract - findResource(..) - isFile");
-                return new FileResource(rootFolder, newResource, newUrl);
-            }
+            resource = newResource.isDirectory() ? directoryResources.get() : fileResources.get();
         } else {
-            return new UnknownResource(rootFolder, newResource, newUrl);
+            resource = unknownResources.get();
         }
+        resource.init(rootFolder, newResource, newUrl);
+        return resource;
     }
 
     @Override

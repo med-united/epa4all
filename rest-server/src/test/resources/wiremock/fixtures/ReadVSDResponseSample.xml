@@ -1,0 +1,24 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Header/>
+    <SOAP-ENV:Body>
+        <ns2:ReadVSDResponse xmlns:ns2="http://ws.gematik.de/conn/vsds/VSDService/v5.2">
+            <ns2:PersoenlicheVersichertendaten>H4sIAAAAAAAAAI1Sy27bMBD8FYH3iJITIXaxYhDERewijoO6dXMzGGltCSWXBUk5rb81H9NVHo4d9NALyRnOcpYcwsVva5It+tA6KkWeZiJBqlzd0qYU08X8ZDgsRid5IZIQNdXaOMJS/
+                MEgLhR8v1rdcalDMm3V4LI/hmcfkZU83M9ukqvxbLX8/HUxnd+WokgHvQN7UihFE+OvT1I+hnSDVsf2Z1qjXGu5DbXtB7llvVBwcK4/QrSajtV9nmdnw2IwykF+3IPn9kjBNT50PgbuqrMqH50Ps7PBOcgjGpbOk7aovrhGEyWXZu0oJIvWOko
+                m2Nbo2eFVA7e6ap5XT/5BE8g9Zq9QNQarJqpZb7FHXGORwq4LOu7UtdfrvuyAgm9tRKPuvFunydinIF8IWESvQ0C6rD3yzPdyIRps4043Rg2y06IAecTB3Ec10ZbvtwHZA7jh/BT8cA0FFhnNIaHnqFGNQf6LBvlS8uquJs4EfthHbQzINxImu
+                gvUWcvZnGYgD+Be9N63fAtEHocq/+Mrqb+FySMvrQIAAA==</ns2:PersoenlicheVersichertendaten>
+            <ns2:AllgemeineVersicherungsdaten>H4sIAAAAAAAAAM1S30/CMBD+V5a9sysjM8x0JQjGEASM6DS+LHU7toXtZtaCxr/ejhCzEYKvvrS57+77kV756KssrD3WKq8osPsOsy2kuEpySgN7tl71hkPP7/U9eyT48yQaF0WKJeaEYc
+                OJM6x3lKpEaqTXxb1l1EgFdqb1xzXAp3LMtNT51kkQNhL2KimbA/ae49rWZLqIwtvH9Wy1DGyDGHfBf4U11q2qsVFxttPfgt9gmhMJl7mM9d0BhyPA55UyQXQtMW3InXKLREZE9JnvMeZf+RzO9rusQiIlWJsXQTE9YbR7fClLFE+otHU3D3vr
+                kMMB4eP3GuOMDpP/MB5cyAen9dllvO2U1N85bSrVKYxPZ5kkay0GLZEj1OZExzRGPzrwX1YPgrkcmpvDpUk4tYZOMOh+K/j7L4sfalSq3xwDAAA=</ns2:AllgemeineVersicherungsdaten>
+            <ns2:GeschuetzteVersichertendaten>H4sIAAAAAAAAAIVQbUvDMBD+KyXf19uEQidphpsiA+fE4pB9GaG5JWVtWpJLlf56MxRUhvjlXp7n7rkXvnhvm2RA5+vOFmyWTlmCtupUbXXB1uV2kufZfDLL2ELwl9XhHn1lAtJIuDs3VQ
+                YdoVUymtfNQxLVrC+YIeqvAd58qrGVVJ9ShXCUMHjVng0MWXrFktXt5rC7ey7X28eCRSROF3wfRmmaYLX3JCl4wctPP+XwFXG4LFqi76xCh09xr86i1S70PYqcw18UL7HBE9VDvJ+cRB2hG3QjNfEuMefwnfC9NFb+5H4DcbVLLfj/YeIDuu9+
+                s4EBAAA=</ns2:GeschuetzteVersichertendaten>
+            <ns2:VSD_Status>
+                <ns2:Status>0</ns2:Status>
+                <ns2:Timestamp>2020-01-23T09:40:34.000Z</ns2:Timestamp>
+                <ns2:Version>5.2.0</ns2:Version>
+            </ns2:VSD_Status>
+            <ns2:Pruefungsnachweis>H4sIAAAAAAAA/w2MSw6CMBQAr0I4AK8UScCULrBN/FFRENSNQUDkKxEChNPLZhaTyRBXSBvmPAN+8XYnYcmqghQkS1NdNZ0lf/q+XQOMnZKlddTnpZKk8I5g6JIa2maEYellSnyPYoR1pGJVRbqJTQKLI
+                pxiApwS90FDxieHnUeHZStRcM2ZYyT8eBJFFYRsa7z286Ux8ht8cXmIMDJCG93t/Hc9agVOOovAMlkg6B8Z1vy7swAAAA==</ns2:Pruefungsnachweis>
+        </ns2:ReadVSDResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

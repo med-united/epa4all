@@ -1,22 +1,18 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
 import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.epa4all.server.rest.fileserver.prop.FileProp;
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Providers;
-import org.jugs.webdav.jaxrs.xml.elements.HRef;
 import org.jugs.webdav.jaxrs.xml.elements.MultiStatus;
-import org.jugs.webdav.jaxrs.xml.elements.Prop;
-import org.jugs.webdav.jaxrs.xml.elements.PropStat;
+import org.jugs.webdav.jaxrs.xml.elements.PropFind;
 import org.jugs.webdav.jaxrs.xml.elements.Rfc1123DateFormat;
-import org.jugs.webdav.jaxrs.xml.elements.Status;
-import org.jugs.webdav.jaxrs.xml.properties.CreationDate;
-import org.jugs.webdav.jaxrs.xml.properties.GetContentLength;
-import org.jugs.webdav.jaxrs.xml.properties.GetContentType;
-import org.jugs.webdav.jaxrs.xml.properties.GetLastModified;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -31,14 +27,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.logging.Logger;
 
+@Dependent
 public class FileResource extends AbstractResource {
 
     private static final Logger log = Logger.getLogger(FileResource.class.getName());
 
-    private final String davFolder;
+    @Inject
+    FileProp fileProp;
 
-    public FileResource(String davFolder, File resource, String url) {
-        super(davFolder, resource, url);
+    private String davFolder;
+
+    public void init(String davFolder, File resource, String url) {
+        super.init(davFolder, resource, url);
         this.davFolder = davFolder;
     }
 
@@ -57,13 +57,7 @@ public class FileResource extends AbstractResource {
             }
             builder.header("Last-Modified", new Rfc1123DateFormat().format(new Date(resource.lastModified())));
             builder.header("Content-Length", resource.length());
-            
-            if(resource.getName().endsWith(".pdf")) {
-            	builder.type("application/pdf");
-            } else {
-            	builder.type("application/octet-stream");
-            }
-
+            builder.type(fileProp.resolveMimeType(resource.getName()));
             return logResponse("GET", builder.entity(in).build());
         }
     }
@@ -117,20 +111,21 @@ public class FileResource extends AbstractResource {
     }
 
     @Override
-    public Response propfind(final UriInfo uriInfo, final String depth, final InputStream entityStream, final long contentLength, final Providers providers, final HttpHeaders httpHeaders) {
+    public Response propfind(
+        final UriInfo uriInfo,
+        final String depth,
+        final Long contentLength,
+        final Providers providers,
+        final HttpHeaders httpHeaders,
+        final InputStream entityStream
+    ) throws Exception {
         logRequest("PROPFIND", uriInfo);
-
-        Date lastModified = new Date(resource.lastModified());
-        org.jugs.webdav.jaxrs.xml.elements.Response davFile = new org.jugs.webdav.jaxrs.xml.elements.Response(new HRef(uriInfo.getRequestUri()), null, null, null, new PropStat(new Prop(
-            new CreationDate(lastModified), new GetLastModified(lastModified),
-            new GetContentType("application/octet-stream"), new GetContentLength(resource.length())),
-            new Status(Response.Status.OK)));
-
-        MultiStatus st = new MultiStatus(davFile);
-
-        return logResponse("PROPFIND", uriInfo, Response.ok(st).build());
+        PropFind propFind = getPropFind(contentLength, providers, httpHeaders, entityStream);
+        URI requestUri = uriInfo.getRequestUri();
+        UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
+        MultiStatus multiStatus = fileProp.propfind(resource, propFind, requestUri, uriBuilder, resolveDepth(depth));
+        return logResponse("PROPFIND", uriInfo, Response.ok(multiStatus).build());
     }
-
 
     @Override
     public Response put(final UriInfo uriInfo, final InputStream entityStream, final long contentLength) throws IOException {

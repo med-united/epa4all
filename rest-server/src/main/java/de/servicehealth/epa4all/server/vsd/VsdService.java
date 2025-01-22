@@ -4,8 +4,6 @@ import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSD;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.conn.vsds.vsdservice.v5.VSDStatusType;
-import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.domain.eventservice.Subscription;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
@@ -14,12 +12,9 @@ import jakarta.inject.Inject;
 
 import javax.xml.datatype.DatatypeFactory;
 import java.util.GregorianCalendar;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import static de.servicehealth.utils.ServerUtils.compress;
 
@@ -28,17 +23,8 @@ public class VsdService {
 
     private static final Logger log = Logger.getLogger(VsdService.class.getName());
 
-    private final MultiKonnektorService multiKonnektorService;
-    private final IKonnektorClient konnektorClient;
-
     @Inject
-    public VsdService(
-        MultiKonnektorService multiKonnektorService,
-        IKonnektorClient konnektorClient
-    ) {
-        this.multiKonnektorService = multiKonnektorService;
-        this.konnektorClient = konnektorClient;
-    }
+    MultiKonnektorService multiKonnektorService;
 
     public static ReadVSDResponse buildSyntheticVSDResponse(String xml, byte[] bytes) throws Exception {
         ReadVSDResponse readVSDResponse = new ReadVSDResponse();
@@ -86,17 +72,5 @@ public class VsdService {
         readVSD.setReadOnlineReceipt(true);
         readVSD.setPerformOnlineCheck(true);
         return readVSD;
-    }
-
-    private String getSubscriptionsInfo(UserRuntimeConfig runtimeConfig) {
-        try {
-            List<Subscription> subscriptions = konnektorClient.getSubscriptions(runtimeConfig);
-            return subscriptions.stream()
-                .map(s -> String.format("[id=%s eventTo=%s topic=%s]", s.getSubscriptionId(), s.getEventTo(), s.getTopic()))
-                .collect(Collectors.joining(","));
-        } catch (Throwable e) {
-            log.log(Level.SEVERE, "Could not get active getSubscriptions", e);
-            return "not available";
-        }
     }
 }
