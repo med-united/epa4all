@@ -12,7 +12,6 @@ import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage1Transformer;
 import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage3Transformer;
 import de.servicehealth.epa4all.server.idp.IdpClient;
-import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
@@ -39,7 +38,7 @@ import static de.servicehealth.epa4all.common.TestUtils.getFixture;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 
-public abstract class AbstractWiremockTest {
+public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     public final static String VAU = WIREMOCK + "vau";
 
@@ -67,9 +66,6 @@ public abstract class AbstractWiremockTest {
     @Inject
     protected EpaMultiService epaMultiService;
     
-    @Inject
-    protected VauNpProvider vauNpProvider;
-
     @BeforeAll
     public static void beforeAll() {
         System.setProperty(
@@ -140,6 +136,12 @@ public abstract class AbstractWiremockTest {
                 }
             });
         });
+    }
+
+    protected void prepareVsdStubs() throws Exception {
+        String soapReadVSDResponseEnvelop = getFixture("ReadVSDResponseSample.xml");
+        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/VSDService"))
+            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapReadVSDResponseEnvelop)).build());
     }
 
     protected void prepareKonnektorStubs() throws Exception {

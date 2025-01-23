@@ -1,5 +1,8 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
+import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.BirthDay;
+import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.FirstName;
+import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.LastName;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
@@ -56,7 +59,7 @@ public class MultiStatusMessageBodyWriter implements MessageBodyWriter<MultiStat
             NoConflictingLock.class, NoExternalEntities.class, Owner.class, PreservedLiveProperties.class, Prop.class,
             PropertyUpdate.class, PropFind.class, PropFindFiniteDepth.class, PropName.class, PropStat.class, Remove.class,
             ResourceType.class, Response.class, ResponseDescription.class, Set.class, Shared.class, Status.class,
-            SupportedLock.class, TimeOut.class, Write.class
+            SupportedLock.class, TimeOut.class, Write.class, FirstName.class, LastName.class, BirthDay.class
         };
         try {
             jaxbContext = JAXBContext.newInstance(webDavClasses);

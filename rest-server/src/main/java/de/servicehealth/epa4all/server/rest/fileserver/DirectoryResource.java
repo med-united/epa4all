@@ -1,46 +1,29 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
 import de.servicehealth.epa4all.server.config.WebdavConfig;
-import de.servicehealth.epa4all.server.rest.fileserver.tools.PropStatBuilderExt;
+import jakarta.enterprise.context.Dependent;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
-import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.Providers;
-import org.jugs.webdav.jaxrs.xml.elements.HRef;
-import org.jugs.webdav.jaxrs.xml.elements.MultiStatus;
-import org.jugs.webdav.jaxrs.xml.elements.Prop;
-import org.jugs.webdav.jaxrs.xml.elements.PropFind;
-import org.jugs.webdav.jaxrs.xml.elements.PropStat;
-import org.jugs.webdav.jaxrs.xml.elements.Status;
-import org.jugs.webdav.jaxrs.xml.properties.CreationDate;
-import org.jugs.webdav.jaxrs.xml.properties.GetLastModified;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.logging.Logger;
 
-import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
-import static org.jugs.webdav.jaxrs.xml.properties.ResourceType.COLLECTION;
-
+@Dependent
 public class DirectoryResource extends AbstractResource {
 
     private static final Logger log = Logger.getLogger(DirectoryResource.class.getName());
 
-    private final String davFolder;
+    private String davFolder;
 
-    public DirectoryResource(String davFolder, File resource, String url) {
-        super(davFolder, resource, url);
+    public void init(String davFolder, File resource, String url) {
+        super.init(davFolder, resource, url);
         this.davFolder = davFolder;
     }
 
@@ -80,106 +63,19 @@ public class DirectoryResource extends AbstractResource {
     }
 
     @Override
-    public Response propfind(final UriInfo uriInfo, final String depth, final InputStream entityStream, final long contentLength, final Providers providers, final HttpHeaders httpHeaders) throws IOException {
+    public Response propfind(
+        final UriInfo uriInfo,
+        final String depth,
+        final Long contentLength,
+        final Providers providers,
+        final HttpHeaders httpHeaders,
+        final InputStream entityStream
+    ) throws Exception {
         logRequest("PROPFIND", uriInfo);
-        if (!resource.exists()) {
+        if (resource.exists()) {
+            return getDirectoryPropfindResponse(uriInfo, depth, contentLength, providers, httpHeaders, entityStream);
+        } else {
             return logResponse("PROPFIND", uriInfo, Response.status(404).build());
         }
-
-        Prop prop = null;
-        if (contentLength > 0) {
-            final MessageBodyReader<PropFind> reader = providers.getMessageBodyReader(PropFind.class, PropFind.class, new Annotation[0], APPLICATION_XML_TYPE);
-            final PropFind entity = reader.readFrom(
-                PropFind.class,
-                PropFind.class,
-                new Annotation[0],
-                APPLICATION_XML_TYPE, httpHeaders.getRequestHeaders(),
-                entityStream
-            );
-            prop = entity.getProp();
-        }
-
-        Date lastModified = new Date(resource.lastModified());
-        final org.jugs.webdav.jaxrs.xml.elements.Response davResource = new org.jugs.webdav.jaxrs.xml.elements.Response(
-            new HRef(uriInfo.getRequestUri()),
-            null,
-            null,
-            null,
-            new PropStat(
-                new Prop(
-                    new CreationDate(lastModified),
-                    new GetLastModified(lastModified),
-                    COLLECTION
-                ),
-                new Status(Response.Status.OK)
-            )
-        );
-
-        return logResponse("PROPFIND", uriInfo, propfind(uriInfo, depth, prop, davResource));
     }
-
-    private Response propfind(UriInfo uriInfo, String depth, Prop prop, org.jugs.webdav.jaxrs.xml.elements.Response davResource) {
-        if ("0".equals(depth)) {
-            return Response.ok(new MultiStatus(davResource)).build();
-        }
-        if (resource != null && resource.isDirectory()) {
-            List<org.jugs.webdav.jaxrs.xml.elements.Response> responses = getResponses(uriInfo.getRequestUriBuilder(), prop, davResource, depth);
-
-            MultiStatus st = new MultiStatus(
-                responses.toArray(
-                    new org.jugs.webdav.jaxrs.xml.elements.Response[responses.size()]
-                )
-            );
-            return Response.ok(st).build();
-        }
-        return Response.noContent().build();
-    }
-
-	public List<org.jugs.webdav.jaxrs.xml.elements.Response> getResponses(UriBuilder uriBuilder, Prop prop,
-			org.jugs.webdav.jaxrs.xml.elements.Response davResource, String depth) {
-		Date lastModified;
-		File[] files = resource.listFiles();
-		List<org.jugs.webdav.jaxrs.xml.elements.Response> responses = new ArrayList<>();
-		responses.add(davResource);
-		for (File file : files) {
-		    org.jugs.webdav.jaxrs.xml.elements.Response davFile;
-
-		    lastModified = new Date(file.lastModified());
-		    String fileName = file.getName();
-		    PropStatBuilderExt props = new PropStatBuilderExt();
-		    props.lastModified(lastModified).creationDate(lastModified).displayName(fileName).status(Response.Status.OK);
-
-		    PropStat found = props.build();
-		    PropStat notFound = null;
-		    if (prop != null) {
-//					props.isHidden(false);
-//					props.lastAccessed(lastModified);
-		    	notFound = props.notFound(prop);
-		    }
-		    
-		    if (notFound != null)
-		    	davFile = new org.jugs.webdav.jaxrs.xml.elements.Response(
-		    			new HRef(uriBuilder.clone().path(fileName).build()),
-		    			null, null, null, found, notFound
-		    			);
-		    else
-		    	davFile = new org.jugs.webdav.jaxrs.xml.elements.Response(
-		    			new HRef(uriBuilder.clone().path(fileName).build()),
-		    			null, null, null, found
-		    			);
-		    if (file.isDirectory()) {
-		        props.isCollection();
-		        if("Infinity".equals(depth)) {
-		        	DirectoryResource directoryResource = new DirectoryResource(rootFolder+"/"+fileName, file, url+"/"+fileName);
-		        	responses.addAll(directoryResource.getResponses(uriBuilder.clone().path(fileName), prop, davFile, depth));
-		        } else {
-		        	responses.add(davFile);
-		        }
-		    } else {
-		        props.isResource(file.length(), "application/octet-stream");
-		        responses.add(davFile);
-		    }
-		}
-		return responses;
-	}
 }
