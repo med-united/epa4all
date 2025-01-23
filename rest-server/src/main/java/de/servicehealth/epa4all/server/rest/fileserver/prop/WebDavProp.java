@@ -134,18 +134,21 @@ public interface WebDavProp {
 
 
         List<String> existingNames = getExistingNames(prop.getProperties());
-        List<Object> missed = propFind.getProp().getProperties().stream()
-            .filter(obj -> {
+        Object[] missed = propFind.getProp().getProperties().stream()
+            .map(obj -> {
                 if (obj instanceof Element element) {
-                    return !existingNames.contains(element.getLocalName());
+                    return element.getLocalName();
                 } else {
-                    return false;
+                    return null;
                 }
             })
-            .toList();
+            .filter(Objects::nonNull)
+            .filter(n -> !existingNames.contains(n))
+            .map(p -> new JAXBElement<>(new QName("", p), String.class, ""))
+            .toArray(Object[]::new);
 
         List<PropStat> propStats = new ArrayList<>();
-        if (!missed.isEmpty()) {
+        if (missed.length > 0) {
             propStats.add(new PropStat(new Prop(missed), new Status(notFound())));
         }
         return new PropStatInfo(

@@ -8,13 +8,20 @@ import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.response.ValidatableResponse;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 import java.nio.file.Path;
 import java.time.LocalDate;
 
@@ -22,8 +29,10 @@ import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LO
 import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYY_MM_DD;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.io.CleanupMode.ALWAYS;
 
 @QuarkusTest
@@ -109,9 +118,25 @@ public class WebdavIT extends AbstractWiremockTest {
         assertFalse(responseBody.contains(firstname));
         assertFalse(responseBody.contains(lastname));
         assertFalse(responseBody.contains(birthday));
-        assertFalse(responseBody.contains("firstname"));
-        assertFalse(responseBody.contains("lastname"));
-        assertFalse(responseBody.contains("birthday"));
+        assertTrue(responseBody.contains("firstname"));
+        assertTrue(responseBody.contains("lastname"));
+        assertTrue(responseBody.contains("birthday"));
+
+        resource = "/webdav/" + telematikId + "/" + kvnr;
+        response = propfindCall(prop, resource, 1);
+        responseBody = response.extract().body().xmlPath().prettify();
+        System.out.println(responseBody);
+        response
+            .body(containsString(firstname))
+            .body(containsString(lastname))
+            .body(containsString(birthday));
+
+        Document document = InsuranceXmlUtils.createDocument(responseBody.getBytes());
+        XPathFactory xPathFactory = XPathFactory.newInstance();
+        XPath xPath = xPathFactory.newXPath();
+        XPathExpression xPathExpression = xPath.compile("/multistatus/response");
+        NodeList nodes = (NodeList) xPathExpression.evaluate(document, XPathConstants.NODESET);
+        assertEquals(4, nodes.getLength());
     }
 
     private ValidatableResponse propfindCall(String prop, String resource, int depth) {
