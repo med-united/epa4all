@@ -27,6 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.logging.Logger;
 
+import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.resolveMimeType;
+
 @Dependent
 public class FileResource extends AbstractResource {
 
@@ -57,7 +59,7 @@ public class FileResource extends AbstractResource {
             }
             builder.header("Last-Modified", new Rfc1123DateFormat().format(new Date(resource.lastModified())));
             builder.header("Content-Length", resource.length());
-            builder.type(fileProp.resolveMimeType(resource.getName()));
+            builder.type(resolveMimeType(resource.getName()));
             return logResponse("GET", builder.entity(in).build());
         }
     }

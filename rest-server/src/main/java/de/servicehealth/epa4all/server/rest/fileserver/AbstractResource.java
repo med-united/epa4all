@@ -1,11 +1,13 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
+import de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Providers;
 import org.apache.commons.io.FileUtils;
@@ -17,8 +19,10 @@ import org.jugs.webdav.jaxrs.xml.elements.LockRoot;
 import org.jugs.webdav.jaxrs.xml.elements.LockScope;
 import org.jugs.webdav.jaxrs.xml.elements.LockToken;
 import org.jugs.webdav.jaxrs.xml.elements.LockType;
+import org.jugs.webdav.jaxrs.xml.elements.MultiStatus;
 import org.jugs.webdav.jaxrs.xml.elements.Owner;
 import org.jugs.webdav.jaxrs.xml.elements.Prop;
+import org.jugs.webdav.jaxrs.xml.elements.PropFind;
 import org.jugs.webdav.jaxrs.xml.elements.TimeOut;
 import org.jugs.webdav.jaxrs.xml.properties.LockDiscovery;
 
@@ -49,6 +53,9 @@ public class AbstractResource implements WebDavResource {
 
     @Inject
     Instance<FileResource> fileResources;
+
+    @Inject
+    DirectoryProp directoryProp;
 
     protected String url;
     protected File resource;
@@ -171,6 +178,23 @@ public class AbstractResource implements WebDavResource {
     ) throws Exception {
         logRequest("PROPFIND", uriInfo);
         return logResponse("PROPFIND", uriInfo, Response.status(404).build());
+    }
+
+    protected Response getDirectoryPropfindResponse(
+        final UriInfo uriInfo,
+        final String depth,
+        final Long contentLength,
+        final Providers providers,
+        final HttpHeaders httpHeaders,
+        final InputStream entityStream
+    ) throws Exception {
+        PropFind propFind = getPropFind(contentLength, providers, httpHeaders, entityStream);
+        URI requestUri = uriInfo.getRequestUri();
+        UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
+        MultiStatus multiStatus = directoryProp.propfind(resource, propFind, requestUri, uriBuilder, resolveDepth(depth));
+        return multiStatus.getResponses().isEmpty()
+            ? logResponse("PROPFIND", uriInfo, Response.noContent().build())
+            : logResponse("PROPFIND", uriInfo, Response.ok(multiStatus).build());
     }
 
     @Override

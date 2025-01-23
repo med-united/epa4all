@@ -4,6 +4,7 @@ import de.servicehealth.epa4all.server.config.WebdavConfig;
 import io.quarkus.test.junit.QuarkusMock;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Set;
 
 import static org.mockito.Mockito.mock;
@@ -15,6 +16,8 @@ public class AbstractWebdavIT {
     protected WebdavConfig mockWebdavConfig(File tempDir) {
         WebdavConfig webdavConfig = mock(WebdavConfig.class);
         when(webdavConfig.getRootFolder()).thenReturn(tempDir.getAbsolutePath());
+        when(webdavConfig.getDirectoryProps()).thenReturn(Arrays.asList("creationdate,getlastmodified,displayname,resourcetype,firstname,lastname,birthday".split(",")));
+        when(webdavConfig.getFileProps()).thenReturn(Arrays.asList("creationdate,getlastmodified,displayname,getcontenttype,getcontentlength,firstname,lastname,birthday".split(",")));
         when(webdavConfig.getSmcbFolders()).thenReturn(
             Set.of(
                 "eab_2ed345b1-35a3-49e1-a4af-d71ca4f23e57",

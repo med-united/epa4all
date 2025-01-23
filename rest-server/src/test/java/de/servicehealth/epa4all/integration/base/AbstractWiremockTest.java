@@ -139,7 +139,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     }
 
     protected void prepareVsdStubs() throws Exception {
-        String soapReadVSDResponseEnvelop = getFixture("ReadVSDResponse.xml");
+        String soapReadVSDResponseEnvelop = getFixture("ReadVSDResponseSample.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/VSDService"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapReadVSDResponseEnvelop)).build());
     }

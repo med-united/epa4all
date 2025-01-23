@@ -1,17 +1,11 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
 import de.servicehealth.epa4all.server.config.WebdavConfig;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.FileProp;
 import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Providers;
-import org.jugs.webdav.jaxrs.xml.elements.MultiStatus;
-import org.jugs.webdav.jaxrs.xml.elements.PropFind;
 
 import java.io.File;
 import java.io.InputStream;
@@ -25,9 +19,6 @@ import java.util.logging.Logger;
 public class DirectoryResource extends AbstractResource {
 
     private static final Logger log = Logger.getLogger(DirectoryResource.class.getName());
-
-    @Inject
-    DirectoryProp directoryProp;
 
     private String davFolder;
 
@@ -82,13 +73,7 @@ public class DirectoryResource extends AbstractResource {
     ) throws Exception {
         logRequest("PROPFIND", uriInfo);
         if (resource.exists()) {
-            PropFind propFind = getPropFind(contentLength, providers, httpHeaders, entityStream);
-            URI requestUri = uriInfo.getRequestUri();
-            UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
-            MultiStatus multiStatus = directoryProp.propfind(resource, propFind, requestUri, uriBuilder, resolveDepth(depth));
-            return multiStatus.getResponses().isEmpty()
-                ? logResponse("PROPFIND", uriInfo, Response.noContent().build())
-                : logResponse("PROPFIND", uriInfo, Response.ok(multiStatus).build());
+            return getDirectoryPropfindResponse(uriInfo, depth, contentLength, providers, httpHeaders, entityStream);
         } else {
             return logResponse("PROPFIND", uriInfo, Response.status(404).build());
         }

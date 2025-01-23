@@ -21,14 +21,10 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.io.CleanupMode.ALWAYS;
-import static org.junit.jupiter.api.io.CleanupMode.NEVER;
 
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
 public class WebdavTest extends AbstractWiremockTest {
-
-    private final String kvnr = "X110400886";
-    private final String telematikId = "1-SMC-B-Testkarte--883110000162363";
 
     @Inject
     InsuranceDataService insuranceDataService;
@@ -41,6 +37,9 @@ public class WebdavTest extends AbstractWiremockTest {
 
     @Test
     public void webdavPropertiesAreReturned(@TempDir(cleanup = ALWAYS) Path tempDir) throws Exception {
+        String kvnr = "X110400886";
+        String telematikId = "1-SMC-B-Testkarte--883110000162363";
+
         mockWebdavConfig(tempDir.toFile());
 
         prepareVsdStubs();
@@ -58,7 +57,7 @@ public class WebdavTest extends AbstractWiremockTest {
         String lastname = person.getNachname();
         String birthdate = person.getGeburtsdatum();
 
-        String resource = "/webdav/" + telematikId + "/" + kvnr + "/local/ReadVSDResponseSample.xml";
+        String resource = "/webdav/" + telematikId + "/" + kvnr + "/local/ReadVSDResponse.xml";
 
         String propName = """
             <propfind xmlns="DAV:">
@@ -69,20 +68,23 @@ public class WebdavTest extends AbstractWiremockTest {
         String responseBody = response.extract().body().xmlPath().prettify();
         System.out.println(responseBody);
         response
-            .body(containsString("first-name"))
-            .body(containsString("last-name"))
-            .body(containsString("birthdate"));
+            .body(containsString("firstname"))
+            .body(containsString("lastname"))
+            .body(containsString("birthday"));
 
         String prop = """
             <propfind xmlns="DAV:">
                 <prop>
-                    <first-name/>
-                    <last-name/>
-                    <birthdate/>
+                    <firstname/>
+                    <lastname/>
+                    <birthday/>
                 </prop>
             </propfind>
             """;
-        propfindCall(prop, resource, 0)
+        response = propfindCall(prop, resource, 0);
+        responseBody = response.extract().body().xmlPath().prettify();
+        System.out.println(responseBody);
+        response
             .body(containsString(firstname))
             .body(containsString(lastname))
             .body(containsString(birthdate));
