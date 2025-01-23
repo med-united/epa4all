@@ -20,9 +20,13 @@ public abstract class AbstractWebDavProp implements WebDavProp {
         if (path.startsWith("/")) {
             path = path.substring(1);
         }
-        String telematikId = path.split("/")[0].trim();
-        String kvnr = path.split("/")[1].trim();
+        try {
+            String telematikId = path.split("/")[1].trim();
+            String kvnr = path.split("/")[2].trim();
 
-        return insuranceDataService.getLocalInsuranceData(telematikId, kvnr);
+            return insuranceDataService.getLocalInsuranceData(telematikId, kvnr);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

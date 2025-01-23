@@ -16,15 +16,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.time.LocalDate;
 
+import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYYMMDD;
+import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYY_MM_DD;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.io.CleanupMode.ALWAYS;
 
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
-public class WebdavTest extends AbstractWiremockTest {
+public class WebdavIT extends AbstractWiremockTest {
 
     @Inject
     InsuranceDataService insuranceDataService;
@@ -55,7 +59,7 @@ public class WebdavTest extends AbstractWiremockTest {
         assertNotNull(person);
         String firstname = person.getVorname();
         String lastname = person.getNachname();
-        String birthdate = person.getGeburtsdatum();
+        String birthday = LocalDate.parse(person.getGeburtsdatum(), LOCALDATE_YYYYMMDD).format(LOCALDATE_YYYY_MM_DD);
 
         String resource = "/webdav/" + telematikId + "/" + kvnr + "/local/ReadVSDResponse.xml";
 
@@ -87,7 +91,27 @@ public class WebdavTest extends AbstractWiremockTest {
         response
             .body(containsString(firstname))
             .body(containsString(lastname))
-            .body(containsString(birthdate));
+            .body(containsString(birthday));
+
+        resource = "/webdav/" + telematikId + "/" + kvnr;
+        response = propfindCall(prop, resource, 0);
+        responseBody = response.extract().body().xmlPath().prettify();
+        System.out.println(responseBody);
+        response
+            .body(containsString(firstname))
+            .body(containsString(lastname))
+            .body(containsString(birthday));
+
+        resource = "/webdav/" + telematikId;
+        response = propfindCall(prop, resource, 0);
+        responseBody = response.extract().body().xmlPath().prettify();
+        System.out.println(responseBody);
+        assertFalse(responseBody.contains(firstname));
+        assertFalse(responseBody.contains(lastname));
+        assertFalse(responseBody.contains(birthday));
+        assertFalse(responseBody.contains("firstname"));
+        assertFalse(responseBody.contains("lastname"));
+        assertFalse(responseBody.contains("birthday"));
     }
 
     private ValidatableResponse propfindCall(String prop, String resource, int depth) {

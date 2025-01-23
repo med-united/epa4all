@@ -24,6 +24,7 @@ import org.w3c.dom.Element;
 import javax.xml.namespace.QName;
 import java.io.File;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -46,7 +47,9 @@ import static org.jugs.webdav.jaxrs.xml.properties.ResourceType.COLLECTION;
 
 public interface WebDavProp {
 
-    DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
+    DateTimeFormatter LOCALDATE_YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
+    DateTimeFormatter LOCALDATE_YYYY_MM_DD = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    SimpleDateFormat DATE_YYYY_MM_DD = new SimpleDateFormat("yyyy-MM-dd");
 
     String APPLICATION_PDF = "application/pdf";
 
@@ -66,12 +69,11 @@ public interface WebDavProp {
         "getcontenttype", propSource -> new GetContentType(resolveMimeType(propSource.file.getName())),
         "getcontentlength", propSource -> new GetContentLength(propSource.file.length()),
         "resourcetype", propSource -> COLLECTION,
-        "firstname", propSource -> new FirstName(propSource.person != null ? propSource.person.getVorname() : "undefined"),
-        "lastname", propSource -> new LastName(propSource.person != null ? propSource.person.getNachname() : "undefined"),
-        "birthday", propSource -> new BirthDay(propSource.person != null
-            ? asDate(LocalDate.parse(propSource.person.getGeburtsdatum(), FORMATTER))
-            : asDate(LocalDate.parse("19700101", FORMATTER))
-        )
+        "firstname", propSource -> propSource.person != null ? new FirstName(propSource.person.getVorname()) : null,
+        "lastname", propSource -> propSource.person != null ? new LastName(propSource.person.getNachname()) : null,
+        "birthday", propSource -> propSource.person != null
+            ? new BirthDay(asDate(LocalDate.parse(propSource.person.getGeburtsdatum(), LOCALDATE_YYYYMMDD)))
+            : null
     );
 
     static Date asDate(LocalDate localDate) {
@@ -108,14 +110,26 @@ public interface WebDavProp {
     default PropStatInfo getPropStatInfo(List<String> props, InsuranceData insuranceData, File resource, PropFind propFind) {
         UCPersoenlicheVersichertendatenXML.Versicherter.Person person = null;
         if (insuranceData != null && insuranceData.getPersoenlicheVersichertendaten() != null) {
-            UCPersoenlicheVersichertendatenXML.Versicherter versicherter = insuranceData.getPersoenlicheVersichertendaten() .getVersicherter();
+            UCPersoenlicheVersichertendatenXML.Versicherter versicherter = insuranceData.getPersoenlicheVersichertendaten().getVersicherter();
             person = versicherter.getPerson();
         }
+        Set<String> targetProps = propFind.getProp().getProperties().stream().map(obj -> {
+                if (obj instanceof Element element) {
+                    return element.getLocalName();
+                } else {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
         PropSource propSource = new PropSource(resource, person);
         Prop prop = new Prop(props.stream()
+            .filter(targetProps::contains)
             .map(propSupplierMap::get)
             .filter(Objects::nonNull)
             .map(f -> f.apply(propSource))
+            .filter(Objects::nonNull)
             .toArray(Object[]::new));
 
 

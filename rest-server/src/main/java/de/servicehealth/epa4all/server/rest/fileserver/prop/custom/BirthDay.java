@@ -4,14 +4,17 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlValue;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jugs.webdav.jaxrs.ConstantsAdapter;
-import org.jugs.webdav.jaxrs.xml.elements.Rfc1123DateFormat;
 import org.jugs.webdav.util.Utilities;
 
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Objects;
 
+import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYY_MM_DD;
+import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.DATE_YYYY_MM_DD;
+import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.asDate;
 import static java.util.Collections.singleton;
 import static org.jugs.webdav.util.Utilities.notNull;
 
@@ -30,22 +33,22 @@ public class BirthDay {
         this.dateTime = notNull(dateTime, "dateTime");
     }
 
-    public final Date getDateTime() {
+    public Date getDateTime() {
         return this.dateTime == null ? null : (Date) this.dateTime.clone();
     }
 
     @XmlValue
     private String getXmlValue() {
-        return this.dateTime == null ? null : new Rfc1123DateFormat().format(this.dateTime);
+        return this.dateTime == null ? null : DATE_YYYY_MM_DD.format(dateTime);
     }
 
     @SuppressWarnings("unused")
-    private final void setXmlValue(final String xmlValue) throws ParseException {
-        this.dateTime = xmlValue == null || xmlValue.isEmpty() ? null : new Rfc1123DateFormat().parse(xmlValue);
+    private void setXmlValue(final String xmlValue) throws ParseException {
+        this.dateTime = xmlValue == null || xmlValue.isEmpty() ? null : asDate(LocalDate.parse(xmlValue, LOCALDATE_YYYY_MM_DD));
     }
 
     @Override
-    public final boolean equals(final Object other) {
+    public boolean equals(final Object other) {
         if (!(other instanceof BirthDay that)) {
             return false;
         }
@@ -53,19 +56,19 @@ public class BirthDay {
     }
 
     @Override
-    public final int hashCode() {
+    public int hashCode() {
         return Objects.hashCode(this.dateTime);
     }
     
     protected static final class Adapter extends ConstantsAdapter<BirthDay> {
         @Override
-        protected final Collection<BirthDay> getConstants() {
+        protected Collection<BirthDay> getConstants() {
             return singleton(BIRTHDAY);
         }
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         return Utilities.toString(this, this.dateTime);
     }
 }
