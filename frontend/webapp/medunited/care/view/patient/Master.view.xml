@@ -26,12 +26,33 @@
 			<Table id="patientTable" inset="false" items="{/response}" width="auto" class="sapFDynamicPageAlignContent">
 				<columns>
 					<Column>
-						<Text text="Name" />
+						<Text text="KVNR" />
+					</Column>
+					<Column width="20%" importance="Medium" autoPopinWidth="10">
+						<Text text="{i18n>GivenName}" />
+					</Column>
+					<Column width="20%" importance="High">
+						<Text text="{i18n>FamilyName}" />
+					</Column>
+					<Column width="20%" importance="High">
+						<Text text="{i18n>BirthDate}" />
 					</Column>
 				</columns>
 				<ColumnListItem type="Navigation" press="onListItemPress">
 					<cells>
 						<Text text="{propstat/prop/displayname}" />
+						<Text text="{propstat/prop/firstname}" />
+						<Text text="{propstat/prop/lastname}" />
+						<Text text="{
+						  path: 'propstat/prop/birthday',
+						  type: 'sap.ui.model.type.Date',
+						  formatOptions: {
+							  style: 'medium',
+							  source: {
+							  	pattern: 'dd-MM-yyyy'
+							  }
+						  }
+  						}" />
 					</cells>
 				</ColumnListItem>
 			</Table>
