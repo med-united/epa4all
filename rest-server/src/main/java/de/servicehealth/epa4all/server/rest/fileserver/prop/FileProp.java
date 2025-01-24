@@ -15,7 +15,7 @@ import java.util.Map;
 import static java.util.stream.Collectors.toMap;
 
 @ApplicationScoped
-public class FileProp extends AbstractWebDavProp {
+public class FileProp extends AbstractProp {
 
     @Override
     public MultiStatus propfind(
@@ -29,7 +29,8 @@ public class FileProp extends AbstractWebDavProp {
     }
 
     @Override
-    public List<String> resolveLevelProps(Map<String, List<String>> availableProps, File resource, URI requestUri) {
+    public List<String> resolveLevelProps(File resource, URI requestUri) {
+        Map<String, List<String>> availableProps = webdavConfig.getAvailableProps(false);
         Map<FileType, List<String>> fileTypeMap = availableProps.entrySet().stream().collect(toMap(
             e -> FileType.valueOf(e.getKey()), e -> e.getValue().stream().filter(s -> !s.isEmpty()).toList()
         ));

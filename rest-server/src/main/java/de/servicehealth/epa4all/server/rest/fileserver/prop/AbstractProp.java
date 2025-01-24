@@ -14,7 +14,9 @@ import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.LastName;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.Smcb;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.ValidTo;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import org.jugs.webdav.jaxrs.xml.elements.HRef;
 import org.jugs.webdav.jaxrs.xml.elements.MultiStatus;
 import org.jugs.webdav.jaxrs.xml.elements.Prop;
@@ -34,12 +36,12 @@ import java.io.File;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -48,11 +50,11 @@ import static de.servicehealth.epa4all.server.rest.fileserver.prop.MimeHelper.re
 import static de.servicehealth.utils.ServerUtils.asDate;
 import static org.jugs.webdav.jaxrs.xml.properties.ResourceType.COLLECTION;
 
-public abstract class AbstractWebDavProp implements WebDavProp {
+public abstract class AbstractProp implements WebDavProp {
 
     private static final Map<String, Function<PropSource, Object>> propSupplierMap;
 
-    static  {
+    static {
         propSupplierMap = new HashMap<>();
         propSupplierMap.put("entries", propSource -> new Entries(propSource.checksumsCount));
         propSupplierMap.put("validto", propSource -> propSource.expiry != null ? new ValidTo(propSource.expiry) : null);
@@ -87,28 +89,18 @@ public abstract class AbstractWebDavProp implements WebDavProp {
 
     @Inject
     InsuranceDataService insuranceDataService;
-    
-    protected InsuranceData getInsuranceData(URI requestUri) {
-        String path = requestUri.getPath();
-        if (path.startsWith("/")) {
-            path = path.substring(1);
-        }
-        try {
-            String[] parts = path.split("/");
-            String telematikId = parts[1].trim();
-            String kvnr = parts[2].trim();
-            return insuranceDataService.getLocalInsuranceData(telematikId, kvnr);
-        } catch (Exception e) {
-            return null;
-        }
+
+    private PropStatInfo getPropStatNamesInfo(File resource, URI requestUri) {
+        List<String> props = resolveLevelProps(resource, requestUri);
+        Prop prop = new Prop(props.stream()
+            .map(p -> new JAXBElement<>(new QName("", p), String.class, ""))
+            .toArray(Object[]::new));
+        PropStat okStat = new PropStat(prop, new Status(okStatus()));
+        PropStat[] notFoundStat = new PropStat[0];
+        return new PropStatInfo(okStat, notFoundStat);
     }
 
-    private PropFind getDefaultLevelPropFind(File resource, URI requestUri, boolean directory) {
-        Map<String, List<String>> availableProps = webdavConfig.getAvailableProps(directory);
-        List<String> props = resolveLevelProps(availableProps, resource, requestUri);
-        Prop prop = new Prop(props.toArray(Object[]::new));
-        return new PropFind(prop);
-    }
+    protected abstract List<String> resolveLevelProps(File resource, URI requestUri);
 
     protected MultiStatus buildDavResponseStatus(
         File resource,
@@ -121,13 +113,14 @@ public abstract class AbstractWebDavProp implements WebDavProp {
         }
         PropFind levelPropFind = propFind;
         if (levelPropFind == null) {
-            levelPropFind = getDefaultLevelPropFind(resource, requestUri, directory);
+            List<String> props = resolveLevelProps(resource, requestUri);
+            Prop prop = new Prop(props.toArray(Object[]::new));
+            levelPropFind = new PropFind(prop);
         }
-        InsuranceData insuranceData = getInsuranceData(requestUri);
-        Map<String, List<String>> availableProps = webdavConfig.getAvailableProps(directory);
+
         PropStatInfo propStatInfo = levelPropFind.getPropName() != null
-            ? getPropStatNamesInfo(availableProps, resource, requestUri)
-            : getPropStatInfo(insuranceData, webdavConfig.getSmcbFolders(), availableProps, levelPropFind, resource, requestUri);
+            ? getPropStatNamesInfo(resource, requestUri)
+            : getPropStatInfo(levelPropFind, resource, requestUri);
 
         return new MultiStatus(new Response(
             new HRef(requestUri),
@@ -139,20 +132,7 @@ public abstract class AbstractWebDavProp implements WebDavProp {
         ));
     }
 
-    @Override
-    public PropStatInfo getPropStatInfo(
-        InsuranceData insuranceData,
-        Set<String> smcbFolders,
-        Map<String, List<String>> availableProps,
-        PropFind propFind,
-        File resource,
-        URI requestUri
-    ) {
-        UCPersoenlicheVersichertendatenXML.Versicherter.Person person = null;
-        if (insuranceData != null && insuranceData.getPersoenlicheVersichertendaten() != null) {
-            UCPersoenlicheVersichertendatenXML.Versicherter versicherter = insuranceData.getPersoenlicheVersichertendaten().getVersicherter();
-            person = versicherter.getPerson();
-        }
+    private PropStatInfo getPropStatInfo(@NotNull PropFind propFind, File resource, URI requestUri) {
         Set<String> targetProps = propFind.getProp().getProperties().stream().map(obj -> {
                 if (obj instanceof Element element) {
                     return element.getLocalName();
@@ -165,34 +145,8 @@ public abstract class AbstractWebDavProp implements WebDavProp {
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
 
-
-        Date expiry = null;
-        String smcb = null;
-        int checksumsCount;
-        if (insuranceData != null) {
-            String telematikId = insuranceData.getTelematikId();
-            String insurantId = insuranceData.getInsurantId();
-
-            checksumsCount = folderService.getChecksums(telematikId, insurantId).size();
-            try {
-                long epochSecond = insuranceDataService.getEntitlementExpiry(telematikId, insurantId).getEpochSecond();
-                expiry = new Date(epochSecond * 1000);
-            } catch (Exception ignored) {
-            }
-
-            Optional<String> smcbOpt = konnektorClient.getTelematikMap().entrySet().stream()
-                .filter(e -> e.getValue().equals(telematikId))
-                .findFirst()
-                .map(Map.Entry::getKey);
-            if (smcbOpt.isPresent()) {
-                smcb = smcbOpt.get();
-            }
-        } else {
-            checksumsCount = 0;
-        }
-
-        List<String> props = resolveLevelProps(availableProps, resource, requestUri);
-        PropSource propSource = new PropSource(resource, person, smcbFolders, checksumsCount, expiry, smcb);
+        PropSource propSource = buildPropSource(resource, requestUri);
+        List<String> props = resolveLevelProps(resource, requestUri);
         Prop prop = new Prop(props.stream()
             .filter(targetProps::contains)
             .map(propSupplierMap::get)
@@ -201,8 +155,48 @@ public abstract class AbstractWebDavProp implements WebDavProp {
             .filter(Objects::nonNull)
             .toArray(Object[]::new));
 
+        Object[] missed = getMissedProperties(propFind, prop);
+        List<PropStat> propStats = new ArrayList<>();
+        if (missed.length > 0) {
+            propStats.add(new PropStat(new Prop(missed), new Status(notFound())));
+        }
+        return new PropStatInfo(
+            new PropStat(prop, new Status(okStatus())),
+            propStats.toArray(PropStat[]::new)
+        );
+    }
+
+    protected List<String> getPathParts(URI requestUri) {
+        return Arrays.stream(requestUri.getPath().split("/")).filter(s -> !s.isEmpty()).toList();
+    }
+
+    private PropSource buildPropSource(File resource, URI requestUri) {
+        List<String> pathParts = getPathParts(requestUri);
+
+        UCPersoenlicheVersichertendatenXML.Versicherter.Person person = null;
+        String telematikId = pathParts.size() > 1 ? pathParts.get(1).trim() : null;
+        String insurantId = pathParts.size() > 2 ? pathParts.get(2).trim() : null;
+        InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, insurantId);
+        if (insuranceData != null && insuranceData.getPersoenlicheVersichertendaten() != null) {
+            UCPersoenlicheVersichertendatenXML.Versicherter versicherter = insuranceData.getPersoenlicheVersichertendaten().getVersicherter();
+            person = versicherter.getPerson();
+        }
+        Date expiry = null;
+        try {
+            expiry = Date.from(insuranceDataService.getEntitlementExpiry(telematikId, insurantId));
+        } catch (Exception ignored) {
+        }
+        int checksumsCount = folderService.getChecksums(telematikId, insurantId).size();
+        String smcb = konnektorClient.getTelematikMap().entrySet().stream()
+            .filter(e -> e.getValue().equals(telematikId))
+            .findFirst()
+            .map(Map.Entry::getKey).orElse(null);
+        return new PropSource(resource, person, webdavConfig.getSmcbFolders(), checksumsCount, expiry, smcb);
+    }
+
+    private Object[] getMissedProperties(PropFind propFind, Prop prop) {
         List<String> existingNames = getExistingNames(prop.getProperties());
-        Object[] missed = propFind.getProp().getProperties().stream()
+        return propFind.getProp().getProperties().stream()
             .map(obj -> {
                 if (obj instanceof Element element) {
                     return element.getLocalName();
@@ -216,14 +210,13 @@ public abstract class AbstractWebDavProp implements WebDavProp {
             .filter(n -> !existingNames.contains(n))
             .map(p -> new JAXBElement<>(new QName("", p), String.class, ""))
             .toArray(Object[]::new);
+    }
 
-        List<PropStat> propStats = new ArrayList<>();
-        if (missed.length > 0) {
-            propStats.add(new PropStat(new Prop(missed), new Status(notFound())));
-        }
-        return new PropStatInfo(
-            new PropStat(prop, new Status(okStatus())),
-            propStats.toArray(PropStat[]::new)
-        );
+    private List<String> getExistingNames(List<Object> existingProperties) {
+        return existingProperties.stream()
+            .filter(obj -> obj.getClass().isAnnotationPresent(XmlRootElement.class))
+            .map(obj -> obj.getClass().getAnnotation(XmlRootElement.class).name())
+            .filter(name -> !name.isEmpty())
+            .collect(Collectors.toList());
     }
 }

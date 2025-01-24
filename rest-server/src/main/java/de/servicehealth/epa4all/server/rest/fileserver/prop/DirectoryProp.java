@@ -17,7 +17,7 @@ import java.util.Map;
 import static java.util.stream.Collectors.toMap;
 
 @ApplicationScoped
-public class DirectoryProp extends AbstractWebDavProp {
+public class DirectoryProp extends AbstractProp {
 
     @Inject
     FileProp fileProp;
@@ -41,9 +41,10 @@ public class DirectoryProp extends AbstractWebDavProp {
     }
 
     @Override
-    public List<String> resolveLevelProps(Map<String, List<String>> availableProps, File resource, URI requestUri) {
+    public List<String> resolveLevelProps(File resource, URI requestUri) {
+        Map<String, List<String>> availableProps = webdavConfig.getAvailableProps(true);
         Map<DirectoryType, List<String>> directoryTypeMap = availableProps.entrySet().stream().collect(toMap(
-            e -> DirectoryType.valueOf(e.getKey()), Map.Entry::getValue
+            e -> DirectoryType.valueOf(e.getKey()), e -> e.getValue().stream().filter(s -> !s.isEmpty()).toList()
         ));
         List<String> props = new ArrayList<>(directoryTypeMap.get(DirectoryType.Mandatory));
         directoryTypeMap.entrySet().stream()
@@ -51,6 +52,10 @@ public class DirectoryProp extends AbstractWebDavProp {
             .findFirst()
             .map(e -> e.getValue().stream().filter(s -> !s.isEmpty()).toList()).ifPresent(props::addAll);
         return props;
+    }
+
+    private int getLevel(URI requestUri) {
+        return getPathParts(requestUri).size() - 1;
     }
 
     private void collectNestedResources(
