@@ -56,7 +56,7 @@ public class InsuranceDataService {
         if (localFolder == null) {
             return null;
         }
-        return new VsdResponseFile(localFolder).load(kvnr);
+        return new VsdResponseFile(localFolder).load(telematikId, kvnr);
     }
 
     public InsuranceData readVsd(

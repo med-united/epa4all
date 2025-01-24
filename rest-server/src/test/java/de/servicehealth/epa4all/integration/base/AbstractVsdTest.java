@@ -42,6 +42,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
+import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -121,22 +122,6 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
     @AfterEach
     public void afterEach() {
         deleteFiles(TEST_FOLDER.listFiles());
-    }
-
-    protected void deleteFiles(File[] files) {
-        if (files != null) {
-            Stream.of(files).forEach(f -> {
-                if (f.isDirectory()) {
-                    try {
-                        deleteDirectory(f);
-                    } catch (IOException e) {
-                        log.log(Level.SEVERE, e.getMessage());
-                    }
-                } else {
-                    f.delete();
-                }
-            });
-        }
     }
 
     protected ReadVSDResponse prepareReadVSDResponse() throws Exception {

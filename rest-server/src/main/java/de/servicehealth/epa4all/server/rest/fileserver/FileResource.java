@@ -1,9 +1,7 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
 import de.servicehealth.epa4all.server.config.WebdavConfig;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.FileProp;
 import jakarta.enterprise.context.Dependent;
-import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
@@ -27,15 +25,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.logging.Logger;
 
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.resolveMimeType;
+import static de.servicehealth.epa4all.server.rest.fileserver.prop.MimeHelper.resolveMimeType;
 
 @Dependent
 public class FileResource extends AbstractResource {
 
     private static final Logger log = Logger.getLogger(FileResource.class.getName());
-
-    @Inject
-    FileProp fileProp;
 
     private String davFolder;
 

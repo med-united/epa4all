@@ -41,6 +41,7 @@ import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.epa4all.server.vsd.VsdConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
+import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -70,6 +71,8 @@ public class KonnektorClient implements IKonnektorClient {
     private static final Logger log = Logger.getLogger(KonnektorClient.class.getName());
 
     private final ConcurrentHashMap<KonnektorKey, String> smcbMap = new ConcurrentHashMap<>();
+
+    @Getter
     private final ConcurrentHashMap<String, String> telematikMap = new ConcurrentHashMap<>();
 
     private final Object emptyInput = new Object();

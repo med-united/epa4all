@@ -24,8 +24,12 @@ public class FolderService {
     @Inject
     public FolderService(WebdavConfig webdavConfig) {
         rootFolder = new File(webdavConfig.getRootFolder());
+        if (!rootFolder.exists()) {
+        	log.info("Creating webdav directory: "+rootFolder.getAbsolutePath());
+        	rootFolder.mkdirs();
+        }
         if (!rootFolder.exists() || !rootFolder.isDirectory()) {
-            throw new IllegalStateException("Webdav directory is corrupted");
+            throw new IllegalStateException("Webdav directory is does not exist or is not a directory. "+rootFolder.getAbsolutePath());
         }
     }
 

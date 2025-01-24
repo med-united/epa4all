@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class EntitlementFile extends MapDumpFile<String, Instant> {
 
-    private static final String ENTITLEMENT_FILE = "entitlement-expiry";
+    public static final String ENTITLEMENT_FILE = "entitlement-expiry";
 
     private static final Lock lock = new ReentrantLock();
 

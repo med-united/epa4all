@@ -8,6 +8,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,6 +69,10 @@ public class ServerUtils {
         } catch (Exception e) {
             return bytes;
         }
+    }
+
+    public static Date asDate(LocalDate localDate) {
+        return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
 
     public static String getHeaderValue(List<Pair<String, String>> headers, String headerName) {

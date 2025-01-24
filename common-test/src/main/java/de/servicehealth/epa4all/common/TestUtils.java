@@ -3,6 +3,8 @@ package de.servicehealth.epa4all.common;
 import org.apache.commons.lang3.time.StopWatch;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +16,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 public class TestUtils {
 
@@ -126,5 +131,21 @@ public class TestUtils {
 
     public static String getFixture(String fileName) throws Exception {
         return Files.readString(getResourcePath(FIXTURES, fileName));
+    }
+
+    public static void deleteFiles(File[] files) {
+        if (files != null) {
+            Stream.of(files).forEach(f -> {
+                if (f.isDirectory()) {
+                    try {
+                        deleteDirectory(f);
+                    } catch (IOException e) {
+                        log.log(Level.SEVERE, e.getMessage());
+                    }
+                } else {
+                    f.delete();
+                }
+            });
+        }
     }
 }
