@@ -1,6 +1,5 @@
 package de.servicehealth.epa4all.server.filetracker;
 
-import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.rest.EpaContext;
@@ -11,7 +10,6 @@ import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import jakarta.xml.ws.BindingProvider;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
@@ -26,7 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import static de.health.service.cetp.utils.Utils.saveDataToFile;
-import static de.servicehealth.vau.VauClient.TASK_ID;
 
 public abstract class EpaFileTracker<T extends FileAction> {
 
@@ -79,10 +76,14 @@ public abstract class EpaFileTracker<T extends FileAction> {
         EpaContext epaContext = fileAction.getEpaContext();
         resultsMap.computeIfAbsent(taskId, (k) -> prepareInProgressResponse(taskId));
         try {
-            IDocumentManagementPortType documentPortType = getDocumentManagementPortType(taskId, epaContext);
+            String insurantId = epaContext.getInsuranceData().getInsurantId();
+            Map<String, String> xHeaders = epaContext.getXHeaders();
+            IDocumentManagementPortType documentManagementPortType = epaMultiService
+                .getEpaAPI(insurantId)
+                .getDocumentManagementPortType(taskId, xHeaders);
             RegistryResponseType responseType = epaCallGuard.callAndRetry(
                 epaContext.getBackend(),
-                () -> handleTransfer(fileAction, documentPortType)
+                () -> handleTransfer(fileAction, documentManagementPortType)
             );
             responseType.setRequestId(taskId);
             resultsMap.computeIfPresent(taskId, (k, prev) -> responseType);
@@ -119,19 +120,6 @@ public abstract class EpaFileTracker<T extends FileAction> {
                 saveDataToFile(documentBytes, file);
             }
         }
-    }
-
-    public IDocumentManagementPortType getDocumentManagementPortType(String taskId, EpaContext epaContext) {
-        EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
-        IDocumentManagementPortType documentManagementPortType = epaAPI.getDocumentManagementPortType();
-        if (documentManagementPortType instanceof BindingProvider bindingProvider) {
-            Map<String, Object> requestContext = bindingProvider.getRequestContext();
-            requestContext.putAll(epaContext.getXHeaders());
-            if (taskId != null) {
-                requestContext.put(TASK_ID, taskId);
-            }
-        }
-        return documentManagementPortType;
     }
 
     private RegistryResponseType prepareInProgressResponse(String taskId) {

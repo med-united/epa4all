@@ -16,6 +16,9 @@ import jakarta.inject.Inject;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 
+import java.util.Map;
+import java.util.UUID;
+
 public abstract class XdsResource extends AbstractResource {
 
     public static final String XDS_DOCUMENT_PATH = "xds-document";
@@ -50,7 +53,10 @@ public abstract class XdsResource extends AbstractResource {
     }
 
     protected AdhocQueryResponse getAdhocQueryResponse(String kvnr, EpaContext epaContext) throws Exception {
-        IDocumentManagementPortType documentManagementPortType = epaFileDownloader.getDocumentManagementPortType(kvnr, epaContext);
+        Map<String, String> xHeaders = epaContext.getXHeaders();
+        IDocumentManagementPortType documentManagementPortType = epaMultiService
+            .getEpaAPI(epaContext.getInsuranceData().getInsurantId())
+            .getDocumentManagementPortType(UUID.randomUUID().toString(), xHeaders);
         AdhocQueryRequest request = xdsDocumentService.get().prepareAdhocQueryRequest(kvnr);
         return epaCallGuard.callAndRetry(
             epaContext.getBackend(),
