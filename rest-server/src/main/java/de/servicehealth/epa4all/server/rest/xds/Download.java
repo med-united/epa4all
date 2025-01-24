@@ -14,6 +14,7 @@ import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -53,7 +54,12 @@ public class Download extends XdsResource {
 
         String taskId = UUID.randomUUID().toString();
         String repositoryUniqueId = repositoryUniqueIdOpt.orElse("undefined");
-        IDocumentManagementPortType documentManagementPortType = epaFileDownloader.getDocumentManagementPortType(taskId, epaContext);
+        String insurantId = epaContext.getInsuranceData().getInsurantId();
+        Map<String, String> xHeaders = epaContext.getXHeaders();
+        IDocumentManagementPortType documentManagementPortType = epaMultiService
+            .getEpaAPI(insurantId)
+            .getDocumentManagementPortType(taskId, xHeaders);
+
         RetrieveDocumentSetRequestType requestType = xdsDocumentService.get().prepareRetrieveDocumentSetRequestType(
             uniqueId, repositoryUniqueId
         );

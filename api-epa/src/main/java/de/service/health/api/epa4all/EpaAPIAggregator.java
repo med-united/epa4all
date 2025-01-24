@@ -9,8 +9,12 @@ import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRender
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
+import jakarta.xml.ws.BindingProvider;
 
+import java.util.Map;
 import java.util.function.Supplier;
+
+import static de.servicehealth.vau.VauClient.TASK_ID;
 
 public class EpaAPIAggregator implements EpaAPI {
 
@@ -65,8 +69,16 @@ public class EpaAPIAggregator implements EpaAPI {
     }
 
     @Override
-    public IDocumentManagementPortType getDocumentManagementPortType() {
-        return documentManagementPortType.get();
+    public IDocumentManagementPortType getDocumentManagementPortType(String taskId, Map<String, String> xHeaders) {
+        IDocumentManagementPortType documentPortType = documentManagementPortType.get();
+        if (documentPortType instanceof BindingProvider bindingProvider) {
+            Map<String, Object> requestContext = bindingProvider.getRequestContext();
+            requestContext.putAll(xHeaders);
+            if (taskId != null) {
+                requestContext.put(TASK_ID, taskId);
+            }
+        }
+        return documentPortType;
     }
 
     @Override

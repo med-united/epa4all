@@ -10,6 +10,8 @@ import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 
+import java.util.Map;
+
 public interface EpaAPI {
 
     String getBackend();
@@ -18,7 +20,7 @@ public interface EpaAPI {
 
     IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType();
 
-    IDocumentManagementPortType getDocumentManagementPortType();
+    IDocumentManagementPortType getDocumentManagementPortType(String taskId, Map<String, String> xHeaders);
 
     AccountInformationApi getAccountInformationApi();
 
