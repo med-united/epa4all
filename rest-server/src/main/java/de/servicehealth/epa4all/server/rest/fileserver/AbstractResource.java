@@ -1,6 +1,9 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
+import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp;
+import de.servicehealth.epa4all.server.rest.fileserver.prop.FileProp;
+import de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -9,7 +12,9 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.Providers;
+import jakarta.xml.bind.JAXBElement;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jugs.webdav.jaxrs.xml.elements.ActiveLock;
@@ -26,20 +31,26 @@ import org.jugs.webdav.jaxrs.xml.elements.PropFind;
 import org.jugs.webdav.jaxrs.xml.elements.TimeOut;
 import org.jugs.webdav.jaxrs.xml.properties.LockDiscovery;
 
+import javax.xml.namespace.QName;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.jugs.webdav.jaxrs.Headers.DAV;
+import static org.jugs.webdav.jaxrs.xml.elements.PropName.PROPNAME;
 
 public class AbstractResource implements WebDavResource {
 
@@ -56,6 +67,12 @@ public class AbstractResource implements WebDavResource {
 
     @Inject
     DirectoryProp directoryProp;
+
+    @Inject
+    FileProp fileProp;
+
+    @Inject
+    WebdavConfig webdavConfig;
 
     protected String url;
     protected File resource;
@@ -178,6 +195,32 @@ public class AbstractResource implements WebDavResource {
     ) throws Exception {
         logRequest("PROPFIND", uriInfo);
         return logResponse("PROPFIND", uriInfo, Response.status(404).build());
+    }
+
+    protected PropFind getPropFind(
+        Long contentLength,
+        Providers providers,
+        HttpHeaders httpHeaders,
+        InputStream entityStream
+    ) {
+        if (contentLength == null || contentLength == 0) {
+            return null;
+        }
+        try {
+            MessageBodyReader<PropFind> reader = providers.getMessageBodyReader(
+                PropFind.class, PropFind.class, new Annotation[0], APPLICATION_XML_TYPE
+            );
+            return reader.readFrom(
+                PropFind.class,
+                PropFind.class,
+                new Annotation[0],
+                APPLICATION_XML_TYPE,
+                httpHeaders.getRequestHeaders(),
+                entityStream
+            );
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     protected Response getDirectoryPropfindResponse(

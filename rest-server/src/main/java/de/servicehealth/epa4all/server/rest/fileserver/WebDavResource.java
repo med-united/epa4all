@@ -22,7 +22,9 @@ import org.jugs.webdav.jaxrs.methods.MOVE;
 import org.jugs.webdav.jaxrs.methods.PROPFIND;
 import org.jugs.webdav.jaxrs.methods.PROPPATCH;
 import org.jugs.webdav.jaxrs.methods.UNLOCK;
+import org.jugs.webdav.jaxrs.xml.elements.Prop;
 import org.jugs.webdav.jaxrs.xml.elements.PropFind;
+import org.jugs.webdav.jaxrs.xml.elements.PropName;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +36,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.jugs.webdav.jaxrs.Headers.DEPTH;
 import static org.jugs.webdav.jaxrs.Headers.DESTINATION;
 import static org.jugs.webdav.jaxrs.Headers.OVERWRITE;
+import static org.jugs.webdav.jaxrs.xml.elements.PropName.PROPNAME;
 
 public interface WebDavResource {
 
@@ -71,28 +74,6 @@ public interface WebDavResource {
         @Context HttpHeaders httpHeaders,
         InputStream entityStream
     ) throws Exception;
-
-    default PropFind getPropFind(
-        Long contentLength,
-        Providers providers,
-        HttpHeaders httpHeaders,
-        InputStream entityStream
-    ) throws Exception {
-        if (contentLength == null || contentLength == 0) {
-            return null;
-        }
-        MessageBodyReader<PropFind> reader = providers.getMessageBodyReader(
-            PropFind.class, PropFind.class, new Annotation[0], APPLICATION_XML_TYPE
-        );
-        return reader.readFrom(
-            PropFind.class,
-            PropFind.class,
-            new Annotation[0],
-            APPLICATION_XML_TYPE,
-            httpHeaders.getRequestHeaders(),
-            entityStream
-        );
-    }
 
     default int resolveDepth(String depth) {
         try {

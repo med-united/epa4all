@@ -95,7 +95,7 @@ public class VsdResponseFile {
             : nodes.pzNode.getTextContent();
     }
 
-    public InsuranceData load(String kvnr) {
+    public InsuranceData load(String telematikId, String kvnr) {
         if (readVSDResponseFile.exists()) {
             lock.readLock().lock();
             try {
@@ -111,6 +111,7 @@ public class VsdResponseFile {
                 return new InsuranceData(
                     extractPz(pruefungsnachweis),
                     kvnr,
+                    telematikId,
                     createUCEntity(persoenlicheVersichertendaten),
                     createUCEntity(geschuetzteVersichertendaten),
                     createUCEntity(allgemeineVersicherungsdaten)

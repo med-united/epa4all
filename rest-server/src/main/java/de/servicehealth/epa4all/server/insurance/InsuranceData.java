@@ -9,11 +9,12 @@ import lombok.ToString;
 
 @Data
 @AllArgsConstructor
-@ToString(of = {"insurantId"})
+@ToString(of = {"telematikId", "insurantId"})
 public class InsuranceData {
 
     private String pz;
     private String insurantId;
+    private String telematikId;
     private UCPersoenlicheVersichertendatenXML persoenlicheVersichertendaten;
     private UCGeschuetzteVersichertendatenXML geschuetzteVersichertendaten;
     private UCAllgemeineVersicherungsdatenXML allgemeineVersicherungsdaten;

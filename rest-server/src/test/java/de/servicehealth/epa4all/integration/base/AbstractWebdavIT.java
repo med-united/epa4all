@@ -5,8 +5,10 @@ import io.quarkus.test.junit.QuarkusMock;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -16,8 +18,19 @@ public class AbstractWebdavIT {
     protected WebdavConfig mockWebdavConfig(File tempDir) {
         WebdavConfig webdavConfig = mock(WebdavConfig.class);
         when(webdavConfig.getRootFolder()).thenReturn(tempDir.getAbsolutePath());
-        when(webdavConfig.getDirectoryProps()).thenReturn(Arrays.asList("creationdate,getlastmodified,displayname,resourcetype,firstname,lastname,birthday".split(",")));
-        when(webdavConfig.getFileProps()).thenReturn(Arrays.asList("creationdate,getlastmodified,displayname,getcontenttype,getcontentlength,firstname,lastname,birthday".split(",")));
+        when(webdavConfig.getAvailableProps(eq(true))).thenReturn(Map.of(
+            "Mandatory", Arrays.asList("creationdate,getlastmodified,displayname,resourcetype".split(",")),
+            "Root", Arrays.asList("".split("root")),
+            "Telematik", Arrays.asList("smcb".split(",")),
+            "Insurant", Arrays.asList("firstname,lastname,birthday".split(",")),
+            "Category", Arrays.asList("firstname,lastname,birthday,entryuuid".split(","))
+        ));
+        when(webdavConfig.getAvailableProps(eq(false))).thenReturn(Map.of(
+            "Mandatory", Arrays.asList("creationdate,getlastmodified,displayname".split(",")),
+            "Checksum", Arrays.asList("entries".split(",")),
+            "Entitlement", Arrays.asList("firstname,lastname,birthday,validto".split(",")),
+            "Other", Arrays.asList("firstname,lastname,birthday,getcontenttype,getcontentlength".split(","))
+        ));
         when(webdavConfig.getSmcbFolders()).thenReturn(
             Set.of(
                 "eab_2ed345b1-35a3-49e1-a4af-d71ca4f23e57",

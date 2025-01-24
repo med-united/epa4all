@@ -7,7 +7,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Getter
 @ApplicationScoped
@@ -20,25 +22,18 @@ public class WebdavConfig {
     String rootFolder;
 
     @ConfigProperty(name = "webdav.prop.directory")
-    String directoryProps;
+    Map<String, String> directoryPropsMap;
 
     @ConfigProperty(name = "webdav.prop.file")
-    String fileProps;
+    Map<String, String> filePropsMap;
 
     @ConfigProperty(name = "smcb.folder")
     Set<String> smcbFolders;
 
-    public List<String> getDirectoryProps() {
-        if (directoryProps == null || directoryProps.isEmpty()) {
-            return List.of();
-        }
-        return Arrays.asList(directoryProps.split(","));
-    }
-
-    public List<String> getFileProps() {
-        if (fileProps == null || fileProps.isEmpty()) {
-            return List.of();
-        }
-        return Arrays.asList(fileProps.split(","));
+    public Map<String, List<String>> getAvailableProps(boolean directory) {
+        Map<String, String> propsMap = directory ? directoryPropsMap : filePropsMap;
+        return propsMap.entrySet().stream().collect(Collectors.toMap(
+            Map.Entry::getKey, e -> Arrays.stream(e.getValue().split(",")).filter(s -> !s.isEmpty()).toList()
+        ));
     }
 }

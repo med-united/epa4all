@@ -20,7 +20,7 @@ public class ChecksumFile {
 
     private static final Logger log = Logger.getLogger(ChecksumFile.class.getName());
 
-    private static final String CHECKSUM_FILE_NAME = "sha256checksums";
+    public static final String CHECKSUM_FILE_NAME = "sha256checksums";
 
     private final ReentrantReadWriteLock lock;
     private final String insurantId;
