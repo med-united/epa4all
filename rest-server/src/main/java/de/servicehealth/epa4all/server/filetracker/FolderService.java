@@ -8,7 +8,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -129,6 +128,9 @@ public class FolderService {
 
     public boolean appendChecksumFor(String telematikId, String insurantId, byte[] documentBytes) throws Exception {
         File insurantFolder = getInsurantFolder(telematikId, insurantId);
+        if (insurantFolder == null) {
+            return false;
+        }
         ChecksumFile checksumFile = new ChecksumFile(insurantFolder, insurantId);
         return checksumFile.appendChecksumFor(documentBytes);
     }

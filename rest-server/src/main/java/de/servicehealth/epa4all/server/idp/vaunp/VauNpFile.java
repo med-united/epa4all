@@ -6,14 +6,13 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class VauNpFile extends MapDumpFile<VauNpKey, String> {
 
     public static final String VAU_NP_FILE_NAME = "vau-np";
 
-    private static final Lock lock = new ReentrantLock();
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public VauNpFile(File configFolder) throws IOException {
         super(configFolder);
@@ -40,14 +39,35 @@ public class VauNpFile extends MapDumpFile<VauNpKey, String> {
         return key.getSmcbHandle() + "_" + key.getKonnektor() + "_" + key.getEpaBackend() + "_" + entry.getValue();
     }
 
-    public void update(Map<VauNpKey, String> vauNpMap) {
-        lock.lock();
+    @Override
+    public Map<VauNpKey, String> get() {
+        lock.readLock().lock();
         try {
-            Map<VauNpKey, String> cachedMap = get();
+            return load();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public void update(Map<VauNpKey, String> vauNpMap) {
+        lock.writeLock().lock();
+        try {
+            Map<VauNpKey, String> cachedMap = load();
             cachedMap.putAll(vauNpMap);
             store(cachedMap);
         } finally {
-            lock.unlock();
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void reset() {
+        lock.writeLock().lock();
+        try {
+            store(Map.of());
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 }

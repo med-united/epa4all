@@ -7,14 +7,13 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class EntitlementFile extends MapDumpFile<String, Instant> {
 
     public static final String ENTITLEMENT_FILE = "entitlement-expiry";
 
-    private static final Lock lock = new ReentrantLock();
+    private final static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final String insurantId;
 
@@ -45,14 +44,44 @@ public class EntitlementFile extends MapDumpFile<String, Instant> {
         return get().get(insurantId);
     }
 
-    public void updateEntitlement(Instant validTo) {
-        lock.lock();
+    @Override
+    public Map<String, Instant> get() {
+        lock.readLock().lock();
         try {
-            Map<String, Instant> entitlementsMap = get();
+            return load();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public void update(Map<String, Instant> entitlementsMap) {
+        lock.writeLock().lock();
+        try {
+            store(entitlementsMap);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void reset() {
+        lock.writeLock().lock();
+        try {
+            store(Map.of());
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    public void updateEntitlement(Instant validTo) {
+        lock.writeLock().lock();
+        try {
+            Map<String, Instant> entitlementsMap = load();
             entitlementsMap.put(insurantId, validTo);
             store(entitlementsMap);
         } finally {
-            lock.unlock();
+            lock.writeLock().unlock();
         }
     }
 }

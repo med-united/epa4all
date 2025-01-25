@@ -44,7 +44,7 @@ public class VsdResponseFile {
         }
     }
 
-    private final ReentrantReadWriteLock lock;
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final File readVSDResponseFile;
     private final File pruefungsnachweisFile;
@@ -56,8 +56,6 @@ public class VsdResponseFile {
         if (localMedFolder == null || !localMedFolder.isDirectory()) {
             throw new IllegalArgumentException("Local med folder is corrupted");
         }
-
-        lock = new ReentrantReadWriteLock();
 
         readVSDResponseFile = new File(localMedFolder, READ_VSD_RESPONSE_XML);
         pruefungsnachweisFile = new File(localMedFolder, PRUEFUNGSNACHWEIS_XML);

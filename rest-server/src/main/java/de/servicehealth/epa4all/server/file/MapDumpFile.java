@@ -6,11 +6,12 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public abstract class MapDumpFile<K, V> {
 
@@ -27,13 +28,17 @@ public abstract class MapDumpFile<K, V> {
         }
     }
 
+    public abstract Map<K, V> get();
+    public abstract void update(Map<K, V> map);
+    public abstract void reset();
+
     protected abstract String getFileName();
     protected abstract Pair<K, V> deserialize(String line);
     protected abstract String serialize(Map.Entry<K, V> entry);
 
     protected Map<K, V> load() {
         try {
-            return Files.readLines(file, StandardCharsets.ISO_8859_1)
+            return Files.readLines(file, ISO_8859_1)
                 .stream()
                 .map(this::deserialize)
                 .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
@@ -43,11 +48,7 @@ public abstract class MapDumpFile<K, V> {
         }
     }
 
-    public Map<K, V> get() {
-        return load();
-    }
-
-    public void store(Map<K, V> vauNpMap) {
+    protected void store(Map<K, V> vauNpMap) {
         try {
             String content = vauNpMap.entrySet()
                 .stream().map(this::serialize)
@@ -58,9 +59,5 @@ public abstract class MapDumpFile<K, V> {
         } catch (Exception e) {
             log.log(Level.SEVERE, String.format("Unable to update '%s' file", getFileName()));
         }
-    }
-
-    public void reset() {
-        store(Map.of());
     }
 }

@@ -66,7 +66,7 @@ public class ServicePortProvider extends StartableService {
 
     // this must be started after MultiEpaService
     public void onStart() throws Exception {
-        Map<String, Map<String, String>> map = new ServicePortFile(configDirectory).load();
+        Map<String, Map<String, String>> map = new ServicePortFile(configDirectory).get();
         userConfigurations2endpointMap.putAll(map);
         
         loggingFeature.setPrettyLogging(true);
