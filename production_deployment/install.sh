@@ -29,8 +29,6 @@ else
     fi
 fi
 
-
-
 echo "EPA4All Installer: Current configuration:"
 echo "-----------------------------------  epa4all.properties START  -------------------------------"
 cat "$CONFIG_FILE"
@@ -81,12 +79,12 @@ fi
 echo
 echo "EPA4All Installer: STEP 3: Create application.properties, user.properties and copy p12 file"
 echo "EPA4All Installer: Copying p12 file to secret directory ..."
-p12_file=$(grep '^konnektor.default.cert.auth.store.file=' epa4all.properties | cut -d'=' -f2)
-cp "$p12_file" epa4all_config/secret
+p12_file=$(grep '^konnektor.p12.path=' epa4all.properties | cut -d'=' -f2)
+cp "$p12_file" epa4all_config/secret/default_connector.p12
 echo "EPA4All Installer: Copied p12 file to secret directory"
 
 # Copy the application.properties entrys from epa4all.properties
-head -n 17 epa4all.properties >epa4all_config/config/application.properties
+head -n 16 epa4all.properties >epa4all_config/config/application.properties
 truncate -s -1 epa4all_config/config/application.properties
 
 echo "EPA4All Installer: application.properties:"
@@ -97,7 +95,6 @@ echo "-------------------------------  application.properties END  -------------
 
 # Create the user.properties entrys from epa4all.properties
 # clientCertificate
-p12_file=$(grep '^konnektor.default.cert.auth.store.file=' epa4all.properties | cut -d'=' -f2)
 if [[ "$(uname)" == "Darwin" ]]; then
     clientCertificate=$(echo -n "data\\:application/x-pkcs12;base64," && cat $p12_file | base64 | sed 's/=/\\=/g')
 else
@@ -106,7 +103,7 @@ fi
 # clientCertificatePassword
 clientCertificatePassword=$(grep '^konnektor.default.cert.auth.store.file.password=' epa4all.properties | cut -d'=' -f2)
 # clientSystemId
-clientSystemId=$(grep '^clientSystemId=' epa4all.properties | cut -d'=' -f2)
+clientSystemId=$(grep '^konnektor.default.client-system-id=' epa4all.properties | cut -d'=' -f2)
 # connectorBaseURL
 connectorBaseURL=$(grep '^konnektor.default.url=' epa4all.properties | cut -d'=' -f2 | sed 's/:/\\:/' | cut -d':' -f1,2)
 # mandantId
@@ -187,8 +184,8 @@ echo "EPA4All Installer: STEP 6: Checking EPA4All WebDAV volume"
 if docker volume ls -q | grep -q "^epa4all-webdav$"; then
     read -p "EPA4All Installer: Volume epa4all-webdav already exists. Override? (y/n): " override
     if [ "$override" == "y" ]; then
-        docker volume rm epa4all-webdav > /dev/null 2>&1
-        docker volume create epa4all-webdav > /dev/null 2>&1
+        docker volume rm epa4all-webdav >/dev/null 2>&1
+        docker volume create epa4all-webdav >/dev/null 2>&1
         echo "EPA4All Installer: Created new epa4all-webdav volume"
     else
         echo "EPA4All Installer: Using existing epa4all-webdav volume"
@@ -205,15 +202,15 @@ echo "EPA4All Installer: STEP 7: Running EPA4All container"
 
 quarkus_profile=$(grep '^quarkus.profile=' epa4all.properties | cut -d'=' -f2)
 docker run \
-   --detach \
-   --name epa4all \
-   --publish 8090:8090 \
-   --publish 8588:8588 \
-   --volume "$(pwd)/epa4all_config/secret:/opt/epa4all/secret" \
-   --volume "$(pwd)/epa4all_config/config:/opt/epa4all/config" \
-   --volume epa4all-webdav:/opt/epa4all/webdav \
-   --env QUARKUS_PROFILE=$quarkus_profile \
-   servicehealtherxgmbh/epa4all:latest
+    --detach \
+    --name epa4all \
+    --publish 8090:8090 \
+    --publish 8588:8588 \
+    --volume "$(pwd)/epa4all_config/secret:/opt/epa4all/secret" \
+    --volume "$(pwd)/epa4all_config/config:/opt/epa4all/config" \
+    --volume epa4all-webdav:/opt/epa4all/webdav \
+    --env QUARKUS_PROFILE=$quarkus_profile \
+    servicehealtherxgmbh/epa4all:latest
 
 echo "EPA4All Installer: Container started"
 echo
