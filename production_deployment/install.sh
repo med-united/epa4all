@@ -213,6 +213,16 @@ docker run \
     --env QUARKUS_PROFILE=$quarkus_profile \
     servicehealtherxgmbh/epa4all:latest
 
+docker run \
+    --detach \
+    --name watchtower \
+    --restart unless-stopped \
+    --volume /var/run/docker.sock:/var/run/docker.sock \
+    containrrr/watchtower \
+    --cleanup \
+    --interval 60 \
+    epa4all
+
 echo "EPA4All Installer: Container started"
 echo
 echo "EPA4All Installer: Useful Docker commands:"
