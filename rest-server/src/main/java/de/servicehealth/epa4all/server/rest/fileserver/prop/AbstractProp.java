@@ -73,9 +73,17 @@ public abstract class AbstractProp implements WebDavProp {
 
         propSupplierMap.put("firstname", propSource -> propSource.person != null ? new FirstName(propSource.person.getVorname()) : null);
         propSupplierMap.put("lastname", propSource -> propSource.person != null ? new LastName(propSource.person.getNachname()) : null);
-        propSupplierMap.put("birthday", propSource -> propSource.person != null
-            ? new BirthDay(asDate(LocalDate.parse(propSource.person.getGeburtsdatum(), LOCALDATE_YYYYMMDD)))
-            : null);
+        propSupplierMap.put("birthday", propSource -> {
+            if (propSource.person != null) {
+                try {
+                    return new BirthDay(asDate(LocalDate.parse(propSource.person.getGeburtsdatum(), LOCALDATE_YYYYMMDD)));
+                } catch (Exception e) {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        });
     }
 
     @Inject
