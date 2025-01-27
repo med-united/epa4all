@@ -200,6 +200,7 @@ fi
 echo
 echo "EPA4All Installer: STEP 7: Running EPA4All container"
 
+chown -R 1001 epa4all_config/config epa4all_config/secret
 quarkus_profile=$(grep '^quarkus.profile=' epa4all.properties | cut -d'=' -f2)
 docker run \
     --detach \
