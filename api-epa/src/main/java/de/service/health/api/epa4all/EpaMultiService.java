@@ -42,6 +42,9 @@ public class EpaMultiService extends StartableService {
 
     private static final Logger log = Logger.getLogger(EpaMultiService.class.getName());
 
+    // TODO: indirectly used in the Retrier lib-cetp
+    public static final String EPA_RECORD_IS_NOT_FOUND = "ePA record is not found";
+
     @Getter
     private final ConcurrentHashMap<String, EpaAPI> epaBackendMap = new ConcurrentHashMap<>();
 
@@ -176,7 +179,7 @@ public class EpaMultiService extends StartableService {
                     return api;
                 }
             }
-            String msg = String.format("Insurant [%s] - ePA record is not found in ePA backends", insurantId);
+            String msg = String.format("Insurant [%s] - %s in ePA backends", insurantId, EPA_RECORD_IS_NOT_FOUND);
             throw new IllegalStateException(msg);
         }
     }

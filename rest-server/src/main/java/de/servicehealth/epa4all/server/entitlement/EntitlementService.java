@@ -21,6 +21,8 @@ public class EntitlementService {
 
     private static final Logger log = Logger.getLogger(EntitlementService.class.getName());
 
+    public static final String AUDIT_EVIDENCE_NO_DEFINED = "AuditEvidence is not defined";
+
     IdpClient idpClient;
     InsuranceDataService insuranceDataService;
 
@@ -42,7 +44,7 @@ public class EntitlementService {
         String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
         if (UNDEFINED_PZ.equalsIgnoreCase(pz)) {
-            String msg = String.format("AuditEvidence is not defined for KVNR=%s, skipping the request", insurantId);
+            String msg = String.format("%s for KVNR=%s, skipping the request", AUDIT_EVIDENCE_NO_DEFINED, insurantId);
             throw new AuditEvidenceException(msg);
         }
         String backend = epaAPI.getBackend();

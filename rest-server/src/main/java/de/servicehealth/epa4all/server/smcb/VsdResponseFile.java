@@ -19,6 +19,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static de.servicehealth.epa4all.server.entitlement.EntitlementService.AUDIT_EVIDENCE_NO_DEFINED;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
 import static de.servicehealth.utils.ServerUtils.unzipAndSaveDataToFile;
 
@@ -156,7 +157,7 @@ public class VsdResponseFile {
     ) throws Exception {
         PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis);
         if (forcePz && nodes.pzNode == null) {
-            throw new AuditEvidenceException("[Pruefungsnachweis] AuditEvidence is not defined");
+            throw new AuditEvidenceException("[Pruefungsnachweis] " + AUDIT_EVIDENCE_NO_DEFINED);
         }
         if (nodes.eNode.getTextContent().equals("3") && nodes.pzNode == null) {
             return patient.getVersicherter().getVersichertenID();

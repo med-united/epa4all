@@ -17,6 +17,7 @@ import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public abstract class XdsResource extends AbstractResource {
@@ -46,6 +47,7 @@ public abstract class XdsResource extends AbstractResource {
             vauConfig.getVauCallRetries(),
             vauConfig.getVauCallRetryPeriodMs(),
             true,
+            Set.of(),
             () -> prepareEpaContext(kvnr),
             () -> false,
             EpaContext::isEntitlementValid
