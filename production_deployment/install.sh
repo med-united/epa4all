@@ -260,6 +260,7 @@ if docker run \
     --name epa4all \
     --publish 8090:8090 \
     --publish 8588:8588 \
+    --publish 5005:5005 \
     --volume "$(pwd)/epa4all_config/secret:/opt/epa4all/secret" \
     --volume "$(pwd)/epa4all_config/config:/opt/epa4all/config" \
     --volume epa4all-webdav:/opt/epa4all/webdav \
