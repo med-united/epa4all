@@ -54,7 +54,8 @@ echo "EPA4All: STEP 2: Create configuration directory structure"
 if [ -d "epa4all_config" ]; then
     read -p "EPA4All: Directory ./epa4all_config already exists. Override? (y/n): " override
     if [ "$override" == "y" ]; then
-        rm -rf "epa4all_config"
+        echo "EPA4All: Removing existing ./epa4all_config: sudo rm -rf epa4all_config"
+        sudo rm -rf "epa4all_config"
         mkdir -p "epa4all_config/secret"
         mkdir -p "epa4all_config/config/konnektoren/8588"
         echo "EPA4All: Created directory structure in ./epa4all_config"
@@ -190,7 +191,7 @@ if [ "$found_containers" = true ]; then
     read -p "EPA4All: Would you like to remove the existing setup and perform a fresh installation? (y/n): " fresh_install
 
     if [ "$fresh_install" == "y" ]; then
-        echo "EPA4All: Removing existing containers..."
+        echo "EPA4All: Removing existing containers ..."
         docker stop epa4all epa4all_watchtower >/dev/null 2>&1
         docker rm epa4all epa4all_watchtower >/dev/null 2>&1
         echo "EPA4All: Existing containers removed"
@@ -203,12 +204,12 @@ fi
 if docker images servicehealtherxgmbh/epa4all -q | grep -q .; then
     read -p "EPA4All: EPA4All image already exists. Pull latest version? (y/n): " pull
     if [ "$pull" == "y" ]; then
-        echo "EPA4All: Pulling EPA4All image..."
+        echo "EPA4All: Pulling EPA4All image ..."
         docker pull servicehealtherxgmbh/epa4all >/dev/null 2>&1
         echo "EPA4All: Finished pulling"
     fi
 else
-    echo "EPA4All: Pulling EPA4All image..."
+    echo "EPA4All: Pulling EPA4All image ..."
     docker pull servicehealtherxgmbh/epa4all >/dev/null 2>&1
     echo "EPA4All: Finished pulling"
 fi
@@ -216,12 +217,12 @@ fi
 if docker images containrrr/watchtower -q | grep -q .; then
     read -p "EPA4All: Watchtower image already exists. Pull latest version? (y/n): " pull_watchtower
     if [ "$pull_watchtower" == "y" ]; then
-        echo "EPA4All: Pulling Watchtower image..."
+        echo "EPA4All: Pulling Watchtower image ..."
         docker pull containrrr/watchtower >/dev/null 2>&1
         echo "EPA4All: Finished pulling"
     fi
 else
-    echo "EPA4All: Pulling Watchtower image..."
+    echo "EPA4All: Pulling Watchtower image ..."
     docker pull containrrr/watchtower >/dev/null 2>&1
     echo "EPA4All: Finished pulling"
 fi
@@ -251,6 +252,8 @@ echo
 echo "EPA4All: STEP 7: Running EPA4All container"
 
 quarkus_profile=$(grep '^quarkus.profile=' epa4all.properties | cut -d'=' -f2)
+echo "EPA4All: Changing permissions for mounted volumes: sudo chown -R 1001 epa4all_config"
+sudo chown -R 1001 epa4all_config
 if docker run \
     --detach \
     --user 1001 \
