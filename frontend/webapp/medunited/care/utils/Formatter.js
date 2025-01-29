@@ -55,7 +55,7 @@ sap.ui.define(["sap/ui/core/format/DateFormat"], function(DateFormat) {
             if(oFHIRAttachment && oFHIRAttachment.url){
                 return oFHIRAttachment.url;
             } else {
-                return "images/Avatar-Sizes-Custom-1.png"
+                return "images/patient_avatar.jpg"
             }
         }
     };
