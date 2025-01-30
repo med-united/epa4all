@@ -8,7 +8,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,8 +23,12 @@ public class FolderService {
     @Inject
     public FolderService(WebdavConfig webdavConfig) {
         rootFolder = new File(webdavConfig.getRootFolder());
+        if (!rootFolder.exists()) {
+        	log.info("Creating webdav directory: "+rootFolder.getAbsolutePath());
+        	rootFolder.mkdirs();
+        }
         if (!rootFolder.exists() || !rootFolder.isDirectory()) {
-            throw new IllegalStateException("Webdav directory is corrupted");
+            throw new IllegalStateException("Webdav directory is does not exist or is not a directory. "+rootFolder.getAbsolutePath());
         }
     }
 
@@ -125,6 +128,9 @@ public class FolderService {
 
     public boolean appendChecksumFor(String telematikId, String insurantId, byte[] documentBytes) throws Exception {
         File insurantFolder = getInsurantFolder(telematikId, insurantId);
+        if (insurantFolder == null) {
+            return false;
+        }
         ChecksumFile checksumFile = new ChecksumFile(insurantFolder, insurantId);
         return checksumFile.appendChecksumFor(documentBytes);
     }

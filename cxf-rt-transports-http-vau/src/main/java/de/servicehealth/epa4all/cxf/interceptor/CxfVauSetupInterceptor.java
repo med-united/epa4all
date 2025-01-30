@@ -110,7 +110,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     String vauDebugCS = getHeaderValue(response, VAU_DEBUG_SK1_C2S);
                     String contentLength = getHeaderValue(response, CONTENT_LENGTH);
 
-                    printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
+                    printCborMessage(true, message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
 
                     byte[] message3 = vauClient.receiveMessage2(message2);
 
@@ -132,7 +132,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                     vauDebugCS = getHeaderValue(response2, VAU_DEBUG_SK2_C2S_INFO);
                     contentLength = getHeaderValue(response2, CONTENT_LENGTH);
 
-                    printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
+                    printCborMessage(false, message4, null, vauDebugSC, vauDebugCS, contentLength);
 
                     vauClient.receiveMessage4(message4);
 

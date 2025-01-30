@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.rest;
 
 import de.service.health.api.epa4all.EpaAPI;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
+import de.servicehealth.epa4all.server.epa.FhirResponseAction;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -17,6 +18,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
+
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 
@@ -24,6 +29,8 @@ import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 @RequestScoped
 @Path("{fhirPath: fhir/.*}")
 public class Fhir extends AbstractResource {
+
+    private static final ConcurrentHashMap<Integer, Semaphore> deduplicationMap = new ConcurrentHashMap<>();
 
     @Inject
     EpaCallGuard epaCallGuard;
@@ -40,10 +47,36 @@ public class Fhir extends AbstractResource {
         @QueryParam("subject") String subject,
         @QueryParam("ui5") String ui5
     ) throws Exception {
+        if (xInsurantId == null) {
+            log.warning(String.format("[Bad Request] Path %s xInsurantId == null", fhirPath));
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
         String backend = epaMultiService.getEpaAPI(xInsurantId).getBackend();
-        return epaCallGuard.callAndRetry(backend, () ->
+        return deduplicatedCall(fhirPath, uriInfo, xInsurantId, () -> epaCallGuard.callAndRetry(backend, () ->
             forward(true, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, null)
-        );
+        ));
+    }
+
+    private Response deduplicatedCall(
+        String fhirPath,
+        UriInfo uriInfo,
+        String xInsurantId,
+        FhirResponseAction action
+    ) throws Exception {
+        Integer hash = Objects.hash(fhirPath, uriInfo.getRequestUri().getQuery(), xInsurantId);
+        if (deduplicationMap.computeIfAbsent(hash, key -> new Semaphore(1)).tryAcquire()) {
+            try {
+                return action.execute();
+            } finally {
+                Semaphore semaphore = deduplicationMap.remove(hash);
+                if (semaphore != null) {
+                    semaphore.release();
+                }
+            }
+        } else {
+            log.warning(String.format("[DUPLICATED Request] Path=%s xInsurantId=%s", fhirPath, xInsurantId));
+            return Response.status(Response.Status.TOO_MANY_REQUESTS).build();
+        }
     }
 
     @POST
@@ -59,10 +92,14 @@ public class Fhir extends AbstractResource {
         @QueryParam("ui5") String ui5,
         byte[] body
     ) throws Exception {
+        if (xInsurantId == null) {
+            log.warning(String.format("[Bad Request] Path %s xInsurantId == null", fhirPath));
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
         String backend = epaMultiService.getEpaAPI(xInsurantId).getBackend();
-        return epaCallGuard.callAndRetry(backend, () ->
+        return deduplicatedCall(fhirPath, uriInfo, xInsurantId, () -> epaCallGuard.callAndRetry(backend, () ->
             forward(false, Boolean.parseBoolean(ui5), fhirPath, uriInfo, httpHeaders, xInsurantId, subject, body)
-        );
+        ));
     }
 
     private Response forward(

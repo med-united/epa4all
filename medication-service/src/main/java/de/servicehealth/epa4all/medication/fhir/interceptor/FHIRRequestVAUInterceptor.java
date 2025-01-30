@@ -204,7 +204,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         byte[] message2 = httpResponse.getEntity().getContent().readAllBytes();
 
-        printCborMessage(message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
+        printCborMessage(true, message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
 
         byte[] message3 = vauClient.receiveMessage2(message2);
 
@@ -228,7 +228,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         byte[] message4 = httpResponse.getEntity().getContent().readAllBytes();
 
-        printCborMessage(message4, null, vauDebugSC, vauDebugCS, contentLength);
+        printCborMessage(false, message4, null, vauDebugSC, vauDebugCS, contentLength);
 
         vauClient.receiveMessage4(message4);
         vauClient.setVauInfo(vauInfo);

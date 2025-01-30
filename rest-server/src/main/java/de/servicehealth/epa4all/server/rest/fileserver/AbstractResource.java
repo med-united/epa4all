@@ -1,11 +1,20 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
+import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp;
+import de.servicehealth.epa4all.server.rest.fileserver.prop.FileProp;
+import de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.Providers;
+import jakarta.xml.bind.JAXBElement;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jugs.webdav.jaxrs.xml.elements.ActiveLock;
@@ -15,29 +24,55 @@ import org.jugs.webdav.jaxrs.xml.elements.LockRoot;
 import org.jugs.webdav.jaxrs.xml.elements.LockScope;
 import org.jugs.webdav.jaxrs.xml.elements.LockToken;
 import org.jugs.webdav.jaxrs.xml.elements.LockType;
+import org.jugs.webdav.jaxrs.xml.elements.MultiStatus;
 import org.jugs.webdav.jaxrs.xml.elements.Owner;
 import org.jugs.webdav.jaxrs.xml.elements.Prop;
+import org.jugs.webdav.jaxrs.xml.elements.PropFind;
 import org.jugs.webdav.jaxrs.xml.elements.TimeOut;
 import org.jugs.webdav.jaxrs.xml.properties.LockDiscovery;
 
+import javax.xml.namespace.QName;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.jugs.webdav.jaxrs.Headers.DAV;
+import static org.jugs.webdav.jaxrs.xml.elements.PropName.PROPNAME;
 
 public class AbstractResource implements WebDavResource {
 
     private static final Logger log = Logger.getLogger(AbstractResource.class.getName());
+
+    @Inject
+    Instance<DirectoryResource> directoryResources;
+
+    @Inject
+    Instance<UnknownResource> unknownResources;
+
+    @Inject
+    Instance<FileResource> fileResources;
+
+    @Inject
+    DirectoryProp directoryProp;
+
+    @Inject
+    FileProp fileProp;
+
+    @Inject
+    WebdavConfig webdavConfig;
 
     protected String url;
     protected File resource;
@@ -46,7 +81,7 @@ public class AbstractResource implements WebDavResource {
     public AbstractResource() {
     }
 
-    public AbstractResource(String rootFolder, File resource, String url) {
+    protected void init(String rootFolder, File resource, String url) {
         this.rootFolder = rootFolder;
         this.resource = resource;
         this.url = url;
@@ -139,10 +174,6 @@ public class AbstractResource implements WebDavResource {
         out.flush();
         out.close();
 
-        /*
-         * End of #154 workaround
-         */
-
         log.fine(String.format("STORED: %s", resource.getName()));
         return logResponse("PUT", uriInfo, Response.created(uriInfo.getRequestUriBuilder().path(url).build()).build());
     }
@@ -154,9 +185,59 @@ public class AbstractResource implements WebDavResource {
     }
 
     @Override
-    public Response propfind(final UriInfo uriInfo, final String depth, final InputStream entityStream, final long contentLength, final Providers providers, final HttpHeaders httpHeaders) throws IOException {
+    public Response propfind(
+        UriInfo uriInfo,
+        String depth,
+        Long contentLength,
+        Providers providers,
+        HttpHeaders httpHeaders,
+        InputStream entityStream
+    ) throws Exception {
         logRequest("PROPFIND", uriInfo);
         return logResponse("PROPFIND", uriInfo, Response.status(404).build());
+    }
+
+    protected PropFind getPropFind(
+        Long contentLength,
+        Providers providers,
+        HttpHeaders httpHeaders,
+        InputStream entityStream
+    ) {
+        if (contentLength == null || contentLength == 0) {
+            return null;
+        }
+        try {
+            MessageBodyReader<PropFind> reader = providers.getMessageBodyReader(
+                PropFind.class, PropFind.class, new Annotation[0], APPLICATION_XML_TYPE
+            );
+            return reader.readFrom(
+                PropFind.class,
+                PropFind.class,
+                new Annotation[0],
+                APPLICATION_XML_TYPE,
+                httpHeaders.getRequestHeaders(),
+                entityStream
+            );
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    protected Response getDirectoryPropfindResponse(
+        final UriInfo uriInfo,
+        final String depth,
+        final Long contentLength,
+        final Providers providers,
+        final HttpHeaders httpHeaders,
+        final InputStream entityStream
+    ) throws Exception {
+        PropFind propFind = getPropFind(contentLength, providers, httpHeaders, entityStream);
+        URI requestUri = uriInfo.getRequestUri();
+        UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
+        MultiStatus multiStatus = directoryProp.propfind(resource, propFind, requestUri, uriBuilder, resolveDepth(depth));
+        return multiStatus.getResponses().isEmpty()
+            ? logResponse("PROPFIND", uriInfo, Response.noContent().build())
+            : logResponse("PROPFIND", uriInfo, Response.ok(multiStatus).build());
     }
 
     @Override
@@ -185,12 +266,7 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Response options() {
-        log.fine("Abstract - options(..)");
         Response.ResponseBuilder builder = withDavHeader(Response.ok());// noContent();
-        /*
-         * builder.header("Allow","");
-         * OPTIONS, GET, HEAD, DELETE, PROPPATCH, COPY, MOVE, LOCK, UNLOCK, PROPFIND, PUT
-         */
         builder.header("Allow", "OPTIONS,GET,HEAD,POST,DELETE,PROPPATCH,PROPFIND,COPY,MOVE,PUT,MKCOL,LOCK,UNLOCK");
         return logResponse("OPTIONS", builder.build());
     }
@@ -203,22 +279,18 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Object findResource(final String res) {
-        log.fine("Abstract - findResource(..) - " + res);
         String path = resource.getPath() + File.separator + res;
         File newResource = new File(path);
         String newUrl = url + "/" + res;
 
+        AbstractResource resource;
         if (newResource.exists()) {
-            if (newResource.isDirectory()) {
-                log.fine("Abstract - findResource(..) - isDirectory");
-                return new DirectoryResource(rootFolder, newResource, newUrl);
-            } else {
-                log.fine("Abstract - findResource(..) - isFile");
-                return new FileResource(rootFolder, newResource, newUrl);
-            }
+            resource = newResource.isDirectory() ? directoryResources.get() : fileResources.get();
         } else {
-            return new UnknownResource(rootFolder, newResource, newUrl);
+            resource = unknownResources.get();
         }
+        resource.init(rootFolder, newResource, newUrl);
+        return resource;
     }
 
     @Override

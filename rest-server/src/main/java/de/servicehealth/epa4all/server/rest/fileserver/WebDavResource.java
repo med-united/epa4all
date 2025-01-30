@@ -13,6 +13,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.Providers;
 import org.jugs.webdav.jaxrs.methods.COPY;
 import org.jugs.webdav.jaxrs.methods.LOCK;
@@ -21,15 +22,21 @@ import org.jugs.webdav.jaxrs.methods.MOVE;
 import org.jugs.webdav.jaxrs.methods.PROPFIND;
 import org.jugs.webdav.jaxrs.methods.PROPPATCH;
 import org.jugs.webdav.jaxrs.methods.UNLOCK;
+import org.jugs.webdav.jaxrs.xml.elements.Prop;
+import org.jugs.webdav.jaxrs.xml.elements.PropFind;
+import org.jugs.webdav.jaxrs.xml.elements.PropName;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
 
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.jugs.webdav.jaxrs.Headers.DEPTH;
 import static org.jugs.webdav.jaxrs.Headers.DESTINATION;
 import static org.jugs.webdav.jaxrs.Headers.OVERWRITE;
+import static org.jugs.webdav.jaxrs.xml.elements.PropName.PROPNAME;
 
 public interface WebDavResource {
 
@@ -60,13 +67,21 @@ public interface WebDavResource {
     @Produces("application/xml")
     @PROPFIND
     Response propfind(
-        @Context final UriInfo uriInfo,
-        @HeaderParam(DEPTH) final String depth,
-        final InputStream entityStream,
-        @HeaderParam(CONTENT_LENGTH) final long contentLength,
-        @Context final Providers providers,
-        @Context final HttpHeaders httpHeaders
-    ) throws URISyntaxException, IOException;
+        @Context UriInfo uriInfo,
+        @HeaderParam(DEPTH) String depth,
+        @HeaderParam(CONTENT_LENGTH) Long contentLength,
+        @Context Providers providers,
+        @Context HttpHeaders httpHeaders,
+        InputStream entityStream
+    ) throws Exception;
+
+    default int resolveDepth(String depth) {
+        try {
+            return Integer.parseInt(depth);
+        } catch (NumberFormatException e) {
+            return Integer.MAX_VALUE;
+        }
+    }
 
     @PROPPATCH
     Response proppatch();

@@ -48,7 +48,7 @@ public class MultiKonnektorService {
 
             try {
                 Map<String, Map<String, String>> map = servicePortProvider.getUserConfigurations2endpointMap();
-                new ServicePortFile(new File(configFolder)).store(map);
+                new ServicePortFile(new File(configFolder)).update(map);
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Error while saving service-ports file");
             }

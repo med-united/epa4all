@@ -23,8 +23,8 @@ public class DiscoveryDocumentFile<T extends Serializable> {
     public DiscoveryDocumentFile(File configFolder) throws IOException {
         lock = new ReentrantReadWriteLock();
         file = new File(configFolder, DISCOVERY_DOC_FILE_NAME);
-        log.info(String.format("Creating '%s' in the folder '%s'", DISCOVERY_DOC_FILE_NAME, configFolder.getAbsolutePath()));
         if (!file.exists()) {
+            log.info(String.format("Creating '%s' in the folder '%s'", DISCOVERY_DOC_FILE_NAME, configFolder.getAbsolutePath()));
             file.createNewFile();
         }
     }

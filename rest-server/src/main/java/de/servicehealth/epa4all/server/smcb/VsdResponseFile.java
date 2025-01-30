@@ -19,6 +19,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static de.servicehealth.epa4all.server.entitlement.EntitlementService.AUDIT_EVIDENCE_NO_DEFINED;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
 import static de.servicehealth.utils.ServerUtils.unzipAndSaveDataToFile;
 
@@ -44,7 +45,7 @@ public class VsdResponseFile {
         }
     }
 
-    private final ReentrantReadWriteLock lock;
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final File readVSDResponseFile;
     private final File pruefungsnachweisFile;
@@ -56,8 +57,6 @@ public class VsdResponseFile {
         if (localMedFolder == null || !localMedFolder.isDirectory()) {
             throw new IllegalArgumentException("Local med folder is corrupted");
         }
-
-        lock = new ReentrantReadWriteLock();
 
         readVSDResponseFile = new File(localMedFolder, READ_VSD_RESPONSE_XML);
         pruefungsnachweisFile = new File(localMedFolder, PRUEFUNGSNACHWEIS_XML);
@@ -95,7 +94,7 @@ public class VsdResponseFile {
             : nodes.pzNode.getTextContent();
     }
 
-    public InsuranceData load(String kvnr) {
+    public InsuranceData load(String telematikId, String kvnr) {
         if (readVSDResponseFile.exists()) {
             lock.readLock().lock();
             try {
@@ -111,6 +110,7 @@ public class VsdResponseFile {
                 return new InsuranceData(
                     extractPz(pruefungsnachweis),
                     kvnr,
+                    telematikId,
                     createUCEntity(persoenlicheVersichertendaten),
                     createUCEntity(geschuetzteVersichertendaten),
                     createUCEntity(allgemeineVersicherungsdaten)
@@ -157,7 +157,7 @@ public class VsdResponseFile {
     ) throws Exception {
         PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis);
         if (forcePz && nodes.pzNode == null) {
-            throw new AuditEvidenceException("[Pruefungsnachweis] AuditEvidence is not defined");
+            throw new AuditEvidenceException("[Pruefungsnachweis] " + AUDIT_EVIDENCE_NO_DEFINED);
         }
         if (nodes.eNode.getTextContent().equals("3") && nodes.pzNode == null) {
             return patient.getVersicherter().getVersichertenID();

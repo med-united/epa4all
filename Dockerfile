@@ -43,8 +43,6 @@ RUN for cert in /opt/epa4all/certs/*.pem; do \
   keytool -importcert -file "$cert" -alias "$(basename "$cert" .pem)" -cacerts -storepass changeit -noprompt; \
 done
 
-VOLUME ["/opt/epa4all/webdav"]
-
 WORKDIR /opt/epa4all
 
 RUN ls -la /opt/epa4all

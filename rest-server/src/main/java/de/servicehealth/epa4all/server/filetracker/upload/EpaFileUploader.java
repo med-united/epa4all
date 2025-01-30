@@ -6,12 +6,12 @@ import de.servicehealth.epa4all.server.rest.EpaContext;
 import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
-import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 
 import java.util.logging.Logger;
 
-@RequestScoped
+@ApplicationScoped
 public class EpaFileUploader extends EpaFileTracker<FileUpload> {
 
     private static final Logger log = Logger.getLogger(EpaFileUploader.class.getName());

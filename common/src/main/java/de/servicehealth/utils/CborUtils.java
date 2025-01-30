@@ -12,6 +12,7 @@ public class CborUtils {
     private static final java.util.logging.Logger log = Logger.getLogger(CborUtils.class.getName());
 
     public static void printCborMessage(
+        boolean m2,
         byte[] message,
         String vauCid,
         String vauDebugSC,
@@ -43,7 +44,8 @@ public class CborUtils {
                 ));
             }
         } catch (Exception ex) {
-            log.log(Level.SEVERE, "CBOR message is corrupted");
+            String messageType = m2 ? "M2" : "M4";
+            log.log(Level.SEVERE, String.format("[%s] CBOR message is corrupted: %s", messageType, new String(message)));
         }
     }
 }

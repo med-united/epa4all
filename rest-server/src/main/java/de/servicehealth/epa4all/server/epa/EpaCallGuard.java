@@ -10,6 +10,9 @@ import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.ehcache.impl.internal.concurrent.ConcurrentHashMap;
 
+import java.util.Set;
+
+import static de.service.health.api.epa4all.EpaMultiService.EPA_RECORD_IS_NOT_FOUND;
 import static de.servicehealth.epa4all.cxf.interceptor.CxfVauReadSoapInterceptor.SOAP_INVAL_AUTH;
 import static de.servicehealth.vau.VauClient.VAU_NO_SESSION;
 
@@ -34,6 +37,7 @@ public class EpaCallGuard {
             vauConfig.getVauCallRetries(),
             vauConfig.getVauCallRetryPeriodMs(),
             true,
+            Set.of(EPA_RECORD_IS_NOT_FOUND),
             action::execute,
             () -> blockedBackends.get(backend),
             registryResponse -> {
@@ -52,6 +56,7 @@ public class EpaCallGuard {
             vauConfig.getVauCallRetries(),
             vauConfig.getVauCallRetryPeriodMs(),
             true,
+            Set.of(EPA_RECORD_IS_NOT_FOUND, "Die eGK hat bereits eine Kartensitzung"),
             action::execute,
             () -> blockedBackends.get(backend),
             response -> response.getHeaderString(VAU_NO_SESSION) == null

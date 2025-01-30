@@ -25,7 +25,7 @@ public class InsuranceDataIT extends AbstractVsdTest {
         String egkHandle = "EGK-123";
         String smcbHandle = "SMC-B-123";
 
-        mockWebdavConfig();
+        mockWebdavConfig(TEST_FOLDER);
         mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
         mockVsdService();
 

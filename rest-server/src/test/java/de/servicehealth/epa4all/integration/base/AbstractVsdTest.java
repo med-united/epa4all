@@ -38,11 +38,11 @@ import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
+import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -50,7 +50,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("UnusedReturnValue")
-public abstract class AbstractVsdTest {
+public abstract class AbstractVsdTest extends AbstractWebdavIT {
 
     private static final Logger log = Logger.getLogger(AbstractVsdTest.class.getName());
 
@@ -124,39 +124,9 @@ public abstract class AbstractVsdTest {
         deleteFiles(TEST_FOLDER.listFiles());
     }
 
-    protected void deleteFiles(File[] files) {
-        if (files != null) {
-            Stream.of(files).forEach(f -> {
-                if (f.isDirectory()) {
-                    try {
-                        deleteDirectory(f);
-                    } catch (IOException e) {
-                        log.log(Level.SEVERE, e.getMessage());
-                    }
-                } else {
-                    f.delete();
-                }
-            });
-        }
-    }
-
     protected ReadVSDResponse prepareReadVSDResponse() throws Exception {
         String xml = "<PN CDM_VERSION=\"1.0.0\" xmlns=\"http://ws.gematik.de/fa/vsdm/pnw/v1.0\"><TS>20241121115318</TS><E>2</E><PZ>WDExMDQ4NTI5MTE3MzIxODk5OTdVWDFjxzDPSFvdIrRmmmOWFP/aP5rakVUqQj8=</PZ></PN>";
         return VsdService.buildSyntheticVSDResponse(xml, null);
-    }
-
-    protected WebdavConfig mockWebdavConfig() {
-        WebdavConfig webdavConfig = mock(WebdavConfig.class);
-        when(webdavConfig.getRootFolder()).thenReturn(TEST_FOLDER.getAbsolutePath());
-        when(webdavConfig.getSmcbFolders()).thenReturn(
-            Set.of(
-                "eab_2ed345b1-35a3-49e1-a4af-d71ca4f23e57",
-                "other_605a9f3c-bfe8-4830-a3e3-25a4ec6612cb",
-                "local_00000000-0000-0000-0000-000000000000"
-            )
-        );
-        QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
-        return webdavConfig;
     }
 
     protected KonnektorClient mockKonnectorClient(

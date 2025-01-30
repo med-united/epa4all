@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
+import jakarta.enterprise.context.Dependent;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.jugs.webdav.jaxrs.methods.MKCOL;
@@ -9,12 +10,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
+@Dependent
 public class UnknownResource extends AbstractResource {
 
     private static final Logger log = Logger.getLogger(UnknownResource.class.getName());
 
-    public UnknownResource(String davFolder, File resource, String url) {
-        super(davFolder, resource, url);
+    public void init(String davFolder, File resource, String url) {
+        super.init(davFolder, resource, url);
     }
 
     @MKCOL

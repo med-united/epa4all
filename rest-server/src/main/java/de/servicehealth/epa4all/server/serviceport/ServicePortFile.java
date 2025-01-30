@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -18,6 +19,8 @@ public class ServicePortFile extends MapDumpFile<String, Map<String, String>> {
     private static final Logger log = Logger.getLogger(VauNpFile.class.getName());
 
     private static final String SERVICE_PORTS_FILE_NAME = "service-ports";
+
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public ServicePortFile(File configFolder) throws IOException {
         super(configFolder);
@@ -32,6 +35,36 @@ public class ServicePortFile extends MapDumpFile<String, Map<String, String>> {
     protected Pair<String, Map<String, String>> deserialize(String line) {
         String[] parts = line.split("_");
         return Pair.of(parts[0], Map.of(parts[1], parts[2]));
+    }
+
+    @Override
+    public Map<String, Map<String, String>> get() {
+        lock.readLock().lock();
+        try {
+            return load();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public void update(Map<String, Map<String, String>> servicePortMap) {
+        lock.writeLock().lock();
+        try {
+            store(servicePortMap);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void reset() {
+        lock.writeLock().lock();
+        try {
+            store(Map.of());
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     @Override

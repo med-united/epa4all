@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public class XDSUtils {
 
-    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    public static final DateTimeFormatter LOCALDATE_YYYYMMDDHHMMSS = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private static final Set<String> xmlCompliantMimeTypes = Set.of(
         "application/fhir+xml",
@@ -70,6 +70,6 @@ public class XDSUtils {
     }
 
     public static String getNumericISO8601Timestamp(LocalDateTime dateTime) {
-        return dateTime.format(FORMATTER);
+        return dateTime.format(LOCALDATE_YYYYMMDDHHMMSS);
     }
 }
