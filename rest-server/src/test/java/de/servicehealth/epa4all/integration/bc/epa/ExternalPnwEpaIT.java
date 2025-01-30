@@ -17,14 +17,12 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static de.servicehealth.epa4all.common.TestUtils.runWithEpaBackends;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,7 +36,7 @@ import static org.mockito.Mockito.verify;
 @TestProfile(ExternalEpaTestProfile.class)
 public class ExternalPnwEpaIT extends AbstractVsdTest {
 
-    private final String kvnr = "X110485291";
+    private final String kvnr = "X110548258";
 
     private String egkHandle;
     private String telematikId;
@@ -57,8 +55,8 @@ public class ExternalPnwEpaIT extends AbstractVsdTest {
     public void medicationPdfUploadedForExternalPnw() throws Exception {
         Set<String> epaBackends = epaConfig.getEpaBackends();
         runWithEpaBackends(epaBackends, () -> {
-            List<String> statuses = vauNpProvider.reload(epaBackends);
-            assertTrue(statuses.getFirst().contains("OK"));
+            Set<String> statuses = vauNpProvider.reload(epaBackends);
+            assertTrue(statuses.iterator().next().contains("OK"));
 
             CardlinkClient cardlinkClient = mock(CardlinkClient.class);
             receiveCardInsertedEvent(
@@ -85,7 +83,7 @@ public class ExternalPnwEpaIT extends AbstractVsdTest {
             assertNotNull(validTo);
 
             InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, kvnr);
-            assertEquals("WDExMDQ4NTI5MTE3MzIxODk5OTdVWDFjxzDPSFvdIrRmmmOWFP/aP5rakVUqQj8=", insuranceData.getPz());
+            assertNotNull(insuranceData.getPz());
 
             receiveCardInsertedEvent(
                 konnektorConfigs.values().iterator().next(),

@@ -32,7 +32,7 @@ public class DownloadAllEpaIT extends AbstractVsdTest {
 
     private static final Logger log = Logger.getLogger(DownloadAllEpaIT.class.getName());
 
-    private final String kvnr = "X110485291";
+    private final String kvnr = "X110548258";
 
     @Override
     public void afterEach() {

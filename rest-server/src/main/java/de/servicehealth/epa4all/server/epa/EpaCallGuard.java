@@ -59,7 +59,10 @@ public class EpaCallGuard {
             Set.of(EPA_RECORD_IS_NOT_FOUND, "Die eGK hat bereits eine Kartensitzung"),
             action::execute,
             () -> blockedBackends.get(backend),
-            response -> response.getHeaderString(VAU_NO_SESSION) == null
+            response -> {
+                String header = response.getHeaderString(VAU_NO_SESSION);
+                return header == null;
+            }
         );
     }
 }

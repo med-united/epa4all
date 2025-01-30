@@ -88,7 +88,9 @@ public abstract class AbstractResource {
 
         Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
         boolean entitlementIsSet = validTo != null && validTo.isAfter(Instant.now());
-        Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, userRuntimeConfig.getKonnektorHost(), backend);
+        String konnektorHost = userRuntimeConfig.getKonnektorHost();
+        String workplaceId = userRuntimeConfig.getWorkplaceId();
+        Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, workplaceId, backend);
         if (vauNpOpt.isPresent() && !entitlementIsSet) {
             entitlementIsSet = entitlementService.setEntitlement(
                 userRuntimeConfig,

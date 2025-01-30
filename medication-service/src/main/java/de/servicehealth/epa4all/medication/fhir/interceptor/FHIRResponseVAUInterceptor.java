@@ -23,7 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static de.servicehealth.vau.VauFacade.NO_USER_SESSION;
+import static de.servicehealth.utils.ServerUtils.isAuthError;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 
 public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
@@ -54,7 +54,7 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
         if (error != null) {
             String msg = "Error while receiving DIRECT Fhir response, decrypted = " + vauResponse.decrypted() + " : " + error;
             log.log(Level.SEVERE, msg);
-            boolean noUserSession = error.contains(NO_USER_SESSION);
+            boolean noUserSession = isAuthError(error);
             vauFacade.handleVauSession(vauCid, noUserSession, vauResponse.decrypted());
         }
 

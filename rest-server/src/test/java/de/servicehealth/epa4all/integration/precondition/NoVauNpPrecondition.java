@@ -19,7 +19,7 @@ public class NoVauNpPrecondition implements QuarkusTestResourceLifecycleManager 
         try {
             new VauNpFile(new File(configFolder)).reset();
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while start()", e);
+            log.log(Level.SEVERE, "Error while NoVauNpPrecondition.start()", e);
         }
         return Map.of();
     }

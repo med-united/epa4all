@@ -15,10 +15,10 @@ import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.getProtocolHeaders;
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.putProtocolHeader;
+import static de.servicehealth.utils.ServerUtils.isAuthError;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
 import static de.servicehealth.vau.VauClient.VAU_NO_SESSION;
-import static de.servicehealth.vau.VauFacade.NO_USER_SESSION;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
@@ -57,7 +57,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             String error = vauResponse.error();
             if (error != null) {
                 putProtocolHeader(message, VAU_ERROR, error);
-                boolean noUserSession = error.contains(NO_USER_SESSION);
+                boolean noUserSession = isAuthError(error);
                 if (noUserSession) {
                     putProtocolHeader(message, VAU_NO_SESSION, "true");
                 }

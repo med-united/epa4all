@@ -24,6 +24,14 @@ public class VauFacade {
     private static final Logger log = Logger.getLogger(VauFacade.class.getName());
 
     public static final String NO_USER_SESSION = "no userSession";
+    public static final String ACCESS_DENIED = "accessDenied";
+    public static final String INVAL_AUTH = "invalAuth";
+
+    public static final Set<String> AUTH_ERRORS = Set.of(
+        NO_USER_SESSION,
+        ACCESS_DENIED,
+        INVAL_AUTH
+    );
 
     @Inject
     Event<VauSessionReload> vauSessionReloadEvent;

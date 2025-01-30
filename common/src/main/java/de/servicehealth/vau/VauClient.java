@@ -28,6 +28,8 @@ public class VauClient {
     public static final String X_INSURANT_ID = "x-insurantid";
     public static final String X_USER_AGENT = "x-useragent";
     public static final String X_KONNEKTOR = "x-konnektor";
+    public static final String X_WORKPLACE = "x-workplace";
+    public static final String X_SUBJECT = "subject";
     public static final String X_BACKEND = "x-backend";
     public static final String VAU_NP = "VAU-NP";
     public static final String KVNR = "kvnr";

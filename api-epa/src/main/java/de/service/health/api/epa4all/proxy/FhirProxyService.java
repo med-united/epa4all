@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static de.servicehealth.vau.VauClient.X_SUBJECT;
+import static de.servicehealth.vau.VauClient.X_WORKPLACE;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpHeaders.ACCEPT;
@@ -116,7 +118,7 @@ public class FhirProxyService implements IFhirProxy {
             map.add(UPGRADE, "h2c");
         }
 
-        String query = excludeQueryParams(baseQuery, Set.of("subject", X_INSURANT_ID, X_KONNEKTOR));
+        String query = excludeQueryParams(baseQuery, Set.of(X_SUBJECT, X_INSURANT_ID, X_KONNEKTOR, X_WORKPLACE));
 
         log.info("Forwarding : " + fhirPath + "?" + query);
 
