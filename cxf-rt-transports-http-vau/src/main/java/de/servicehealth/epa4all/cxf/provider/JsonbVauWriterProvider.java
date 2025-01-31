@@ -25,11 +25,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
+import static de.servicehealth.utils.ServerUtils.isAuthError;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
-import static de.servicehealth.vau.VauFacade.NO_USER_SESSION;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -109,7 +109,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
         } catch (Exception e) {
             log.log(Level.SEVERE, "Error while sending Vau REST message", e);
             if (encrypted) {
-                boolean noUserSession = e.getMessage().contains(NO_USER_SESSION);
+                boolean noUserSession = isAuthError(e.getMessage());
                 vauFacade.handleVauSession(vauCid, noUserSession, false);
             }
             throw new IOException(e);

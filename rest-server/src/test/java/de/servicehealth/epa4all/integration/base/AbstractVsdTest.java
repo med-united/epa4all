@@ -158,7 +158,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
 
     protected VauNpProvider mockVauNpProvider() {
         VauNpProvider vauNpProviderMock = mock(VauNpProvider.class);
-        when(vauNpProviderMock.getVauNp(any(), any(), any())).thenReturn(Optional.of("f5931e8c19c21bca44fa"));
+        when(vauNpProviderMock.getVauNp(any(), any(), any(), any())).thenReturn(Optional.of("f5931e8c19c21bca44fa"));
         QuarkusMock.installMockForType(vauNpProviderMock, VauNpProvider.class);
         return vauNpProviderMock;
     }

@@ -1,6 +1,6 @@
-https://localhost:9443/konnektor_authSignatureServiceEndpointAddress_https://localhost:9443/konnektor/ws/AuthSignatureService
-https://localhost:9443/konnektor_cardServiceEndpointAddress_https://localhost:9443/konnektor/ws/CardService
-https://localhost:9443/konnektor_signatureServiceEndpointAddress_https://localhost:9443/konnektor/ws/SignatureService
-https://localhost:9443/konnektor_eventServiceEndpointAddress_https://localhost:9443/konnektor/ws/EventService
-https://localhost:9443/konnektor_vsdServiceEndpointAddress_https://localhost:9443/konnektor/ws/VSDService
-https://localhost:9443/konnektor_certificateServiceEndpointAddress_https://localhost:9443/konnektor/ws/CertificateService
+https://localhost:9443/konnektor<sep>authSignatureServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/AuthSignatureService
+https://localhost:9443/konnektor<sep>cardServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/CardService
+https://localhost:9443/konnektor<sep>signatureServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/SignatureService
+https://localhost:9443/konnektor<sep>eventServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/EventService
+https://localhost:9443/konnektor<sep>vsdServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/VSDService
+https://localhost:9443/konnektor<sep>certificateServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/CertificateService

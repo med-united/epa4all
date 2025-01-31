@@ -7,13 +7,12 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static de.health.service.cetp.konnektorconfig.FSConfigService.CONFIG_DELIMETER;
 
 public class EntitlementFile extends MapDumpFile<String, Instant> {
 
     public static final String ENTITLEMENT_FILE = "entitlement-expiry";
-
-    private final static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final String insurantId;
 
@@ -29,7 +28,7 @@ public class EntitlementFile extends MapDumpFile<String, Instant> {
 
     @Override
     protected Pair<String, Instant> deserialize(String line) {
-        String[] parts = line.split("_");
+        String[] parts = line.split(CONFIG_DELIMETER);
         String insurantId = parts[0].trim();
         Instant validTo = Instant.parse(parts[1].trim());
         return Pair.of(insurantId, validTo);
@@ -37,51 +36,16 @@ public class EntitlementFile extends MapDumpFile<String, Instant> {
 
     @Override
     protected String serialize(Map.Entry<String, Instant> entry) {
-        return entry.getKey() + "_" + entry.getValue();
+        return String.join(CONFIG_DELIMETER, entry.getKey(), entry.getValue().toString());
     }
 
     public Instant getEntitlement() {
         return get().get(insurantId);
     }
 
-    @Override
-    public Map<String, Instant> get() {
-        lock.readLock().lock();
-        try {
-            return load();
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    @Override
-    public void update(Map<String, Instant> entitlementsMap) {
-        lock.writeLock().lock();
-        try {
-            store(entitlementsMap);
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    @Override
-    public void reset() {
-        lock.writeLock().lock();
-        try {
-            store(Map.of());
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
     public void updateEntitlement(Instant validTo) {
-        lock.writeLock().lock();
-        try {
-            Map<String, Instant> entitlementsMap = load();
-            entitlementsMap.put(insurantId, validTo);
-            store(entitlementsMap);
-        } finally {
-            lock.writeLock().unlock();
-        }
+        Map<String, Instant> map = get();
+        map.put(insurantId, validTo);
+        update(map);
     }
 }

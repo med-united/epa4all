@@ -127,7 +127,9 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 String insurantId = insuranceData.getInsurantId();
                 EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
                 String backend = epaApi.getBackend();
-                Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, smcbHandle, configurations.getKonnektorHost());
+                String konnektorHost = configurations.getKonnektorHost();
+                String workplaceId = configurations.getWorkplaceId();
+                Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, smcbHandle, konnektorHost, workplaceId);
                 try (Response response = epaCallGuard.callAndRetry(backend, () -> epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders))) {
                     byte[] bytes = response.readEntity(byte[].class);
                     EpaContext epaContext = new EpaContext(backend, true, insuranceData, Map.of());
@@ -152,7 +154,13 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         }
     }
 
-    private Map<String, String> prepareXHeaders(EpaAPI epaApi, String insurantId, String smcbHandle, String konnectorHost) {
+    private Map<String, String> prepareXHeaders(
+        EpaAPI epaApi,
+        String insurantId,
+        String smcbHandle,
+        String konnectorHost,
+        String workplaceId
+    ) {
         String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
         String epaBackend = epaApi.getBackend();
         Map<String, String> map = new HashMap<>(Map.of(
@@ -160,7 +168,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             X_BACKEND, epaBackend,
             X_USER_AGENT, userAgent
         ));
-        vauNpProvider.getVauNp(smcbHandle, konnectorHost, epaBackend).ifPresent(vauNp -> map.put(VAU_NP, vauNp));
+        vauNpProvider.getVauNp(smcbHandle, konnectorHost, workplaceId, epaBackend).ifPresent(vauNp -> map.put(VAU_NP, vauNp));
         return map;
     }
 

@@ -74,6 +74,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Getter
     private final ConcurrentHashMap<String, String> telematikMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> egkMap = new ConcurrentHashMap<>();
 
     private final Object emptyInput = new Object();
 
@@ -131,34 +132,26 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {
-        try {
-            return smcbMap.computeIfAbsent(new KonnektorKey(userRuntimeConfig), konnektorKey -> {
-                try {
-                    List<Card> cards = getCards(userRuntimeConfig, SMC_B);
-                    if (vsdConfig.isHandlesTestMode()) {
-                        Optional<Card> cardOpt = cards.stream()
-                            .filter(c -> vsdConfig.getTestSmcbCardholderName().equals(c.getCardHolderName()))
-                            .findAny();
-                        return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
-                    } else {
-                        String primaryIccsn = vsdConfig.getPrimaryIccsn();
-                        return cards.stream()
-                            .filter(c -> primaryIccsn.equals(c.getIccsn()))
-                            .findAny()
-                            .map(Card::getCardHandle)
-                            .orElseThrow(() -> new CetpFault(String.format("Could not get SMC-B card for ICCSN: %s", primaryIccsn)));
-                    }
-                } catch (CetpFault e) {
-                    throw new IllegalStateException(e);
+        return computeIfAbsentCetpEx(
+            smcbMap,
+            new KonnektorKey(userRuntimeConfig),
+            userRuntimeConfig,
+            (key, config) -> {
+                List<Card> cards = getCards(config, SMC_B);
+                if (vsdConfig.isHandlesTestMode()) {
+                    Optional<Card> cardOpt = cards.stream()
+                        .filter(c -> vsdConfig.getTestSmcbCardholderName().equals(c.getCardHolderName()))
+                        .findAny();
+                    return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
+                } else {
+                    String primaryIccsn = vsdConfig.getPrimaryIccsn();
+                    return cards.stream()
+                        .filter(c -> primaryIccsn.equals(c.getIccsn()))
+                        .findAny()
+                        .map(Card::getCardHandle)
+                        .orElseThrow(() -> new CetpFault(String.format("Could not get SMC-B card for ICCSN: %s", primaryIccsn)));
                 }
             });
-        } catch (IllegalStateException e) {
-            if (e.getCause() instanceof CetpFault cetpFault) {
-                throw cetpFault;
-            } else {
-                throw new CetpFault(e.getMessage());
-            }
-        }
     }
 
     public String getKvnr(UserRuntimeConfig userRuntimeConfig, String egkHandle) throws CetpFault {
@@ -171,11 +164,20 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public String getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) throws CetpFault {
-        List<Card> cards = getCards(userRuntimeConfig, EGK);
-        Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
-        return vsdConfig.isHandlesTestMode()
-            ? card.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle())
-            : card.map(Card::getCardHandle).orElseThrow(() -> new CetpFault(String.format("Could not get card for insurantId: %s", insurantId)));
+        return computeIfAbsentCetpEx(
+            egkMap,
+            insurantId,
+            userRuntimeConfig,
+            (key, config) -> {
+                List<Card> cards = getCards(config, EGK);
+                Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
+                return vsdConfig.isHandlesTestMode()
+                    ? card.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle())
+                    : card.map(Card::getCardHandle).orElseThrow(() ->
+                    new CetpFault(String.format("Could not get EGK card for insurantId: %s", insurantId))
+                );
+            }
+        );
     }
 
     @Override

@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import static de.servicehealth.vau.VauFacade.AUTH_ERRORS;
+
 public class ServerUtils {
 
     private ServerUtils() {
@@ -58,6 +60,10 @@ public class ServerUtils {
                 return bytes;
             }
         }
+    }
+
+    public static boolean isAuthError(String error) {
+        return AUTH_ERRORS.stream().anyMatch(error::contains);
     }
 
     public static byte[] decompress(final byte[] bytes) {
