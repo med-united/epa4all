@@ -77,9 +77,9 @@ public abstract class AbstractResource {
     }
 
     protected EpaContext buildEpaContext(String kvnr) throws Exception {
-        InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, kvnr);
+        InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
         if (insuranceData == null) {
-            insuranceData = insuranceDataService.readVsd(telematikId, null, kvnr, smcbHandle, userRuntimeConfig);
+            insuranceData = insuranceDataService.initData(telematikId, null, kvnr, smcbHandle, userRuntimeConfig);
         }
         String insurantId = insuranceData.getInsurantId();
         EpaAPI epaAPI = epaMultiService.getEpaAPI(insurantId);

@@ -113,7 +113,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
                 String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
 
-                InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, egkHandle, runtimeConfig);
+                InsuranceData insuranceData = insuranceDataService.getData(telematikId, egkHandle, runtimeConfig);
                 if (insuranceData == null) {
                     if (featureConfig.isExternalPnwEnabled()) {
                         log.warning(String.format(
@@ -121,7 +121,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                         ));
                         return;
                     } else {
-                        insuranceData = insuranceDataService.readVsd(telematikId, egkHandle, null, smcbHandle, runtimeConfig);
+                        insuranceData = insuranceDataService.initData(telematikId, egkHandle, null, smcbHandle, runtimeConfig);
                     }
                 }
                 String insurantId = insuranceData.getInsurantId();

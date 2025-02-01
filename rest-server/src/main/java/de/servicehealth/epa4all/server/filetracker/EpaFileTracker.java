@@ -16,14 +16,11 @@ import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.logmanager.Level;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-
-import static de.health.service.cetp.utils.Utils.saveDataToFile;
 
 public abstract class EpaFileTracker<T extends FileAction> {
 
@@ -40,7 +37,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
     EpaCallGuard epaCallGuard;
 
     @Inject
-    FolderService folderService;
+    protected FolderService folderService;
 
     @Inject
     EpaMultiService epaMultiService;
@@ -106,22 +103,6 @@ public abstract class EpaFileTracker<T extends FileAction> {
         return map.get("code");
     }
 
-    protected void storeNewFile(
-        String fileName,
-        String folderCode,
-        String telematikId,
-        String insurantId,
-        byte[] documentBytes
-    ) throws Exception {
-        if (folderService.appendChecksumFor(telematikId, insurantId, documentBytes)) {
-            File medFolder = getMedFolder(telematikId, insurantId, folderCode);
-            File file = new File(medFolder, fileName);
-            if (!file.exists()) {
-                saveDataToFile(documentBytes, file);
-            }
-        }
-    }
-
     private RegistryResponseType prepareInProgressResponse(String taskId) {
         RegistryResponseType registryResponse = new RegistryResponseType();
         String startedAt = LocalDateTime.now().format(FORMATTER);
@@ -142,15 +123,5 @@ public abstract class EpaFileTracker<T extends FileAction> {
         registryErrorList.getRegistryError().add(registryError);
         responseType.setRegistryErrorList(registryErrorList);
         return responseType;
-    }
-
-    private File getMedFolder(String telematikId, String insurantId, String folderCode) {
-        File medFolder = folderService.getInsurantMedFolder(telematikId, insurantId, folderCode);
-        if (medFolder == null || !medFolder.exists()) {
-            String insurantFolderPath = folderService.getInsurantFolder(telematikId, insurantId).getAbsolutePath();
-            File otherFolder = folderService.getInsurantMedFolder(telematikId, insurantId, "other");
-            medFolder = folderService.createFolder(insurantFolderPath + File.separator + folderCode, otherFolder);
-        }
-        return medFolder;
     }
 }

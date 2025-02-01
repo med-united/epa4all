@@ -1,83 +1,65 @@
 package de.servicehealth.epa4all.server.insurance;
 
-import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
-import de.servicehealth.epa4all.server.smcb.VsdResponseFile;
+import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.logging.Logger;
 
-import static de.servicehealth.epa4all.server.smcb.VsdResponseFile.extractInsurantId;
+import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
 
 @ApplicationScoped
 public class InsuranceDataService {
 
-    private static final Logger log = Logger.getLogger(InsuranceDataService.class.getName());
-
     private final IKonnektorClient konnektorClient;
     private final FolderService folderService;
     private final VsdService vsdService;
-    private final Event<ReadVSDResponseEx> readVSDResponseExEvent;
 
     @Inject
     public InsuranceDataService(
         IKonnektorClient konnektorClient,
         FolderService folderService,
-        VsdService vsdService,
-        Event<ReadVSDResponseEx> readVSDResponseExEvent
+        VsdService vsdService
     ) {
         this.konnektorClient = konnektorClient;
         this.folderService = folderService;
         this.vsdService = vsdService;
-        this.readVSDResponseExEvent = readVSDResponseExEvent;
     }
 
-    public InsuranceData getLocalInsuranceData(
+    public InsuranceData getData(
         String telematikId,
         String egkHandle,
         UserRuntimeConfig runtimeConfig
     ) throws CetpFault {
         String kvnr = konnektorClient.getKvnr(runtimeConfig, egkHandle);
-        return getLocalInsuranceData(telematikId, kvnr);
+        return getData(telematikId, kvnr);
     }
 
-    public InsuranceData getLocalInsuranceData(String telematikId, String kvnr) {
-        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-        if (localFolder == null) {
-            return null;
-        }
+    public InsuranceData getData(String telematikId, String kvnr) {
+        File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
         return new VsdResponseFile(localFolder).load(telematikId, kvnr);
     }
 
-    public InsuranceData readVsd(
+    public InsuranceData initData(
         String telematikId,
         String egkHandle,
         String kvnr,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
-        folderService.applyTelematikPath(telematikId);
-
         if (egkHandle == null) {
             egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
         }
-        
-        ReadVSDResponse readVSDResponse = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig);
-        String insurantId = extractInsurantId(readVSDResponse, false);
-
-        // ReadVSDResponseEx must be sent synchronously to get valid local InsuranceData.
-        readVSDResponseExEvent.fire(new ReadVSDResponseEx(telematikId, insurantId, readVSDResponse));
-        InsuranceData localInsuranceData = getLocalInsuranceData(telematikId, insurantId);
+        String insurantId = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig, telematikId);
+        InsuranceData localInsuranceData = getData(telematikId, insurantId);
         if (localInsuranceData == null) {
             String msg = String.format("Unable to read VSD: KVNR=%s, EGK=%s, SMCB=%s", insurantId, egkHandle, smcbHandle);
             throw new CetpFault(msg);
@@ -86,19 +68,17 @@ public class InsuranceDataService {
     }
 
     public void cleanUpInsuranceData(String telematikId, String kvnr) {
-        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
-        if (localFolder != null) {
-            new VsdResponseFile(localFolder).cleanUp();
-        }
+        File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
+        new VsdResponseFile(localFolder).cleanUp();
     }
 
     public Instant getEntitlementExpiry(String telematikId, String kvnr) throws IOException {
-        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
         return new EntitlementFile(localFolder, kvnr).getEntitlement();
     }
 
     public void updateEntitlement(Instant validTo, String telematikId, String kvnr) throws IOException {
-        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
         new EntitlementFile(localFolder, kvnr).updateEntitlement(validTo);
     }
 }

@@ -6,7 +6,7 @@ import de.servicehealth.epa4all.common.profile.ExternalEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
-import de.servicehealth.epa4all.server.smcb.VsdResponseFile;
+import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static de.servicehealth.epa4all.common.TestUtils.runWithEpaBackends;
+import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,7 +48,7 @@ public class ExternalPnwEpaIT extends AbstractVsdTest {
         String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
         telematikId = konnektorClient.getTelematikId(defaultUserConfig, smcbHandle);
 
-        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
         new VsdResponseFile(localFolder).cleanUp();
     }
 
@@ -82,7 +83,7 @@ public class ExternalPnwEpaIT extends AbstractVsdTest {
             Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, kvnr);
             assertNotNull(validTo);
 
-            InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, kvnr);
+            InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
             assertNotNull(insuranceData.getPz());
 
             receiveCardInsertedEvent(

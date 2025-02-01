@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.smcb;
+package de.servicehealth.epa4all.server.vsd;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
@@ -25,7 +25,7 @@ import static de.servicehealth.utils.ServerUtils.unzipAndSaveDataToFile;
 
 public class VsdResponseFile {
 
-    private static final Logger log = Logger.getLogger(WebdavSmcbManager.class.getName());
+    private static final Logger log = Logger.getLogger(VsdResponseFile.class.getName());
 
     public static final String UNDEFINED_PZ = "undefined";
 

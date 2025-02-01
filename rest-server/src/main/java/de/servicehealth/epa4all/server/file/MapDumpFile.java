@@ -23,7 +23,7 @@ public abstract class MapDumpFile<K, V> {
     protected final File file;
 
     public MapDumpFile(File folder) throws IOException {
-        filesLocks.computeIfAbsent(getClass(), (clazz) -> new ReentrantReadWriteLock(true));
+        filesLocks.putIfAbsent(getClass(), new ReentrantReadWriteLock(true));
 
         String fileName = getFileName();
         file = new File(folder, fileName);
@@ -87,7 +87,7 @@ public abstract class MapDumpFile<K, V> {
                 os.write(content.getBytes());
             }
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Unable to update '%s' file", getFileName()));
+            log.log(Level.SEVERE, String.format("Unable to store '%s' file", getFileName()));
         }
     }
 }

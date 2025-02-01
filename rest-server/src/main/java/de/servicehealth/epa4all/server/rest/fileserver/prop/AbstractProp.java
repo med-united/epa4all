@@ -184,7 +184,7 @@ public abstract class AbstractProp implements WebDavProp {
         UCPersoenlicheVersichertendatenXML.Versicherter.Person person = null;
         String telematikId = pathParts.size() > 1 ? pathParts.get(1).trim() : null;
         String insurantId = pathParts.size() > 2 ? pathParts.get(2).trim() : null;
-        InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, insurantId);
+        InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
         if (insuranceData != null && insuranceData.getPersoenlicheVersichertendaten() != null) {
             UCPersoenlicheVersichertendatenXML.Versicherter versicherter = insuranceData.getPersoenlicheVersichertendaten().getVersicherter();
             person = versicherter.getPerson();

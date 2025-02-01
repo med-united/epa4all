@@ -24,13 +24,12 @@ public class ChecksumFile {
 
     private final static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private final String insurantId;
     private final File file;
 
-    public ChecksumFile(File insurantFolder, String insurantId) throws IOException {
-        this.insurantId = insurantId;
+    public ChecksumFile(File insurantFolder) throws IOException {
         file = new File(insurantFolder, CHECKSUM_FILE_NAME);
         if (!file.exists()) {
+            log.info(String.format("Creating 'sha256checksums' in the folder '%s'", insurantFolder.getAbsolutePath()));
             file.createNewFile();
         }
     }
@@ -38,21 +37,26 @@ public class ChecksumFile {
     public Set<String> getChecksums() throws Exception {
         lock.readLock().lock();
         try {
-            return new HashSet<>(readLines(file, ISO_8859_1).stream().filter(s -> !s.trim().isEmpty()).toList());
+            return new HashSet<>(readLines(file, ISO_8859_1));
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    public boolean appendChecksumFor(byte[] bytes) {
+    public boolean appendChecksumFor(byte[] bytes, String insurantId) {
         lock.writeLock().lock();
         try {
+            if (bytes == null || bytes.length == 0) {
+                log.warning("[ChecksumFile] attempt to add checksum for empty bytes array");
+                return false;
+            }
             String checksum = calculateChecksum(bytes);
-            if (new HashSet<>(readLines(file, ISO_8859_1)).contains(checksum)) {
+            HashSet<String> checksums = new HashSet<>(readLines(file, ISO_8859_1));
+            if (checksums.contains(checksum)) {
                 return false;
             }
             try (FileOutputStream os = new FileOutputStream(file, true)) {
-                String newLine = checksum + "\n";
+                String newLine = checksums.isEmpty() ? checksum : "\n" + checksum;
                 os.write(newLine.getBytes());
             }
             return true;

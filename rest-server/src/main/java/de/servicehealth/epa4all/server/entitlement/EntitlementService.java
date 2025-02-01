@@ -13,7 +13,7 @@ import jakarta.inject.Inject;
 
 import java.util.logging.Logger;
 
-import static de.servicehealth.epa4all.server.smcb.VsdResponseFile.UNDEFINED_PZ;
+import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.UNDEFINED_PZ;
 
 @ApplicationScoped
 public class EntitlementService {

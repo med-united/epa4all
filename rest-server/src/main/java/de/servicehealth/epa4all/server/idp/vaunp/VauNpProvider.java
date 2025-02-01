@@ -25,7 +25,6 @@ import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.Response;
 import lombok.Setter;
-import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jboss.logmanager.Level;
 
@@ -209,7 +208,7 @@ public class VauNpProvider extends StartableService {
                                     try (Response response = smcBApi.sendAuthorizationRequestSCWithResponse(clientId, userAgent, backend)) {
                                         URI location = response.getLocation();
                                         log.info(String.format("[%s] nonce=%s query=%s", entry.getKey(), nonce, location.getQuery()));
-                                        return getSendAuthCodeSC(entry.getKey(), entry.getValue(), backend, nonce, location);
+                                        return getIdpAuthCode(entry.getKey(), entry.getValue(), backend, nonce, location);
                                     }
                                 })
                             ).map(f -> {
@@ -221,15 +220,20 @@ public class VauNpProvider extends StartableService {
                                 }
                             }).filter(
                                 Objects::nonNull
-                            ).collect(
-                                Collectors.toMap(Pair::getKey, Pair::getValue)
-                            ).forEach((vauNpKey, authCode) -> {
-                                VauNpInfo sameKonnektorVauInfo = getVauInfoForSameKonnektor(vauNpInfos, vauNpKey);
+                            ).forEach(idpResult -> {
                                 VauNpInfo vauNpInfo;
-                                if (sameKonnektorVauInfo == null) {
-                                    vauNpInfo = addVauNpInfo(smcBApi, vauFacade, clientId, userAgent, backend, vauNpKey, authCode);
+                                if (idpResult.isError()) {
+                                    String errorStatus = String.format(STATUS_TEMPLATE, backend, idpResult.delta, idpResult.error);
+                                    vauFacade.setVauNpSessionStatus(errorStatus);
+                                    vauNpInfo = new VauNpInfo(null, null, errorStatus);
                                 } else {
-                                    vauNpInfo = new VauNpInfo(vauNpKey, sameKonnektorVauInfo.vauNp, sameKonnektorVauInfo.status);
+                                    VauNpKey vauNpKey = idpResult.vauNpKey;
+                                    VauNpInfo sameKonnektorVauInfo = getVauInfoForSameKonnektor(vauNpInfos, vauNpKey);
+                                    if (sameKonnektorVauInfo == null) {
+                                        vauNpInfo = createVauSession(smcBApi, vauFacade, clientId, userAgent, backend, vauNpKey, idpResult);
+                                    } else {
+                                        vauNpInfo = new VauNpInfo(vauNpKey, sameKonnektorVauInfo.vauNp, sameKonnektorVauInfo.status);
+                                    }
                                 }
                                 vauNpInfos.add(vauNpInfo);
                             });
@@ -254,22 +258,22 @@ public class VauNpProvider extends StartableService {
             .findFirst().orElse(null);
     }
 
-    private VauNpInfo addVauNpInfo(
+    private VauNpInfo createVauSession(
         AuthorizationSmcBApi smcBApi,
         VauFacade vauFacade,
         String clientId,
         String userAgent,
         String backend,
         VauNpKey vauNpKey,
-        SendAuthCodeSCtype authCode
+        IdpResult idpResult
     ) {
         long start = System.currentTimeMillis();
         try {
-            SendAuthCodeSC200Response sc200Response = smcBApi.sendAuthCodeSC(clientId, userAgent, backend, authCode);
+            SendAuthCodeSC200Response sc200Response = smcBApi.sendAuthCodeSC(clientId, userAgent, backend, idpResult.authCode);
             String vauNp = sc200Response.getVauNp();
             long delta = System.currentTimeMillis() - start;
 
-            String okStatus = String.format(STATUS_TEMPLATE, backend, delta, "OK");
+            String okStatus = String.format(STATUS_TEMPLATE, backend, delta + idpResult.delta, "OK");
             vauFacade.setVauNpSessionStatus(okStatus);
             return new VauNpInfo(vauNpKey, vauNp, okStatus);
         } catch (Throwable t) {
@@ -277,25 +281,56 @@ public class VauNpProvider extends StartableService {
             String msg = String.format("Error while sendAuthCodeSC konnektor=%s, ePA=%s", konnektorWorkplace, backend);
             log.log(Level.SEVERE, msg, t);
             long delta = System.currentTimeMillis() - start;
-            String errorStatus = String.format(STATUS_TEMPLATE, backend, delta, t.getMessage());
+            String errorStatus = String.format(STATUS_TEMPLATE, backend, delta + idpResult.delta, t.getMessage());
             vauFacade.setVauNpSessionStatus(errorStatus);
             return new VauNpInfo(null, null, errorStatus);
         }
     }
 
-    private Pair<VauNpKey, SendAuthCodeSCtype> getSendAuthCodeSC(
+    private IdpResult getIdpAuthCode(
         String konnektorWorkplace,
         KonnektorConfig config,
         String backend,
         String nonce,
         URI location
-    ) throws Exception {
-        RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
-        String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-        KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
-        VauNpKey key = new VauNpKey(smcbHandle, info.konnektor, info.workplaceId, backend);
+    ) {
+        long start = System.currentTimeMillis();
+        try {
+            RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
+            String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
+            KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
+            VauNpKey key = new VauNpKey(smcbHandle, info.konnektor, info.workplaceId, backend);
+            long delta = System.currentTimeMillis() - start;
+            return new IdpResult(key, idpClient.getAuthCodeSync(nonce, location, runtimeConfig, smcbHandle), null, delta);
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Error while getSendAuthCodeSC", e);
+            long delta = System.currentTimeMillis() - start;
+            StringBuilder sb = new StringBuilder(e.getMessage());
+            if (e instanceof RuntimeException runtimeEx) {
+                Throwable cause = runtimeEx.getCause();
+                if (cause != null) {
+                    sb.append(": ").append(cause.getMessage());
+                }
+            }
+            return new IdpResult(null, null, sb.toString(), delta);
+        }
+    }
 
-        return Pair.of(key, idpClient.getAuthCodeSync(nonce, location, runtimeConfig, smcbHandle));
+    private static class IdpResult {
+        VauNpKey vauNpKey;
+        SendAuthCodeSCtype authCode;
+        String error;
+        long delta;
+
+        public IdpResult(VauNpKey vauNpKey, SendAuthCodeSCtype authCode, String error, long delta) {
+            this.vauNpKey = vauNpKey;
+            this.authCode = authCode;
+            this.error = error;
+        }
+
+        boolean isError() {
+            return vauNpKey == null && error != null;
+        }
     }
 
     private static class KonnektorWorkplaceInfo {
@@ -308,23 +343,16 @@ public class VauNpProvider extends StartableService {
         }
     }
 
-    private KonnektorWorkplaceInfo getKonnektorWorkplaceInfo(String konnektorWorkplace) {
+    private static KonnektorWorkplaceInfo getKonnektorWorkplaceInfo(String konnektorWorkplace) {
         String konnektor = null;
         String workplaceId = null;
-        boolean corrupted = konnektorWorkplace.trim().isEmpty();
-        if (!corrupted) {
+        try {
             String[] parts = konnektorWorkplace.split(CONFIG_DELIMETER);
-            if (parts.length == 1) {
-                konnektor = parts[0];
-            } else if (parts.length == 2) {
-                konnektor = parts[0];
-                workplaceId = parts[1];
-            } else {
-                corrupted = true;
-            }
-        }
-        if (corrupted) {
-            log.warning(String.format("KonnektorConfig key is corrupted: '%s', check if property has old format", konnektorWorkplace));
+            konnektor = parts[0].isEmpty() ? null : parts[0];
+            workplaceId = parts[1];
+        } catch (Exception e) {
+            String msg = "KonnektorConfig key is corrupted: '%s', check if property has old format";
+            log.warning(String.format(msg, konnektorWorkplace));
         }
         return new KonnektorWorkplaceInfo(konnektor, workplaceId);
     }

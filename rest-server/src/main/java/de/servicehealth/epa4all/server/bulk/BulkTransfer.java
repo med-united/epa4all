@@ -77,7 +77,7 @@ public class BulkTransfer {
         String languageCode
     ) {
         String insurantId = epaContext.getInsuranceData().getInsurantId();
-        List<File> files = folderService.getInsurantMedFoldersFiles(telematikId, insurantId, Set.of(".xml", ".pdf"));
+        List<File> files = folderService.getAllMedFiles(telematikId, insurantId, Set.of(".xml", ".pdf"));
         return files.stream()
             .map(f -> {
                 String folderName = f.getParentFile().getName();

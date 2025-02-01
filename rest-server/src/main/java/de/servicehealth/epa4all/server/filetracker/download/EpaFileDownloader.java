@@ -50,7 +50,7 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
         String insurantId = fileDownload.getKvnr();
         String folderCode = getFolderCode(structureDefinition);
 
-        storeNewFile(fileDownload.getFileName(), folderCode, telematikId, insurantId, documentBytes);
+        folderService.storeNewFile(fileDownload.getFileName(), folderCode, telematikId, insurantId, documentBytes);
         log.info(String.format("[%s/%s] downloaded successfully", folderCode, fileDownload.getFileName()));
     }
 }

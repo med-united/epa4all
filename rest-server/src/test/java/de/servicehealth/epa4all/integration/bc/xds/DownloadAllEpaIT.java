@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.runWithEpaBackends;
+import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
 import static de.servicehealth.vau.VauClient.KVNR;
 import static io.restassured.RestAssured.given;
@@ -76,7 +77,6 @@ public class DownloadAllEpaIT extends AbstractVsdTest {
             TimeUnit.SECONDS.sleep(5);
 
             File[] telematikFolders = folderService.getTelematikFolders();
-            assertNotNull(telematikFolders);
             List<File> epaFiles = Arrays.stream(telematikFolders).flatMap(f -> {
                 File[] kvnrFolders = folderService.getNestedFolders(f);
                 assertNotNull(kvnrFolders);
@@ -84,7 +84,7 @@ public class DownloadAllEpaIT extends AbstractVsdTest {
                     File[] dataFolders = folderService.getNestedFolders(nf);
                     assertNotNull(dataFolders);
                     return Arrays.stream(dataFolders)
-                        .filter(df -> !df.getName().equals("local"))
+                        .filter(df -> !df.getName().equals(LOCAL_FOLDER))
                         .flatMap(df -> {
                             File[] dataFiles = folderService.getNestedFiles(df);
                             assertNotNull(dataFiles);

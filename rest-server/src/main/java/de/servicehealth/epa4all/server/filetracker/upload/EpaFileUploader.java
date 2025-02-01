@@ -50,7 +50,7 @@ public class EpaFileUploader extends EpaFileTracker<FileUpload> {
             byte[] documentBytes = fileUpload.getDocumentBytes();
 
             String folderCode = folderName == null ? getFolderCode(structureDefinition) : folderName;
-            storeNewFile(fileName, folderCode, telematikId, insurantId, documentBytes);
+            folderService.storeNewFile(fileName, folderCode, telematikId, insurantId, documentBytes);
             log.info(String.format("[%s/%s] uploaded successfully", folderCode, fileName));
         }
     }
