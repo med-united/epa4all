@@ -1,6 +1,8 @@
 package de.servicehealth.epa4all.server.filetracker;
 
 import jakarta.xml.bind.DatatypeConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,15 +12,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static com.google.common.io.Files.readLines;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class ChecksumFile {
 
-    private static final Logger log = Logger.getLogger(ChecksumFile.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ChecksumFile.class.getName());
 
     public static final String CHECKSUM_FILE_NAME = "sha256checksums";
 
@@ -47,7 +47,7 @@ public class ChecksumFile {
         lock.writeLock().lock();
         try {
             if (bytes == null || bytes.length == 0) {
-                log.warning("[ChecksumFile] attempt to add checksum for empty bytes array");
+                log.warn("[ChecksumFile] attempt to add checksum for empty bytes array");
                 return false;
             }
             String checksum = calculateChecksum(bytes);
@@ -61,7 +61,7 @@ public class ChecksumFile {
             }
             return true;
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Unable to append 'sha256checksums' file for " + insurantId, e);
+            log.error("Unable to append 'sha256checksums' file for " + insurantId, e);
         } finally {
             lock.writeLock().unlock();
         }

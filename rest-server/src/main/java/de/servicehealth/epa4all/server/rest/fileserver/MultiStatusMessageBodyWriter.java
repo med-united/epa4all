@@ -35,12 +35,12 @@ import org.jugs.webdav.jaxrs.xml.properties.GetLastModified;
 import org.jugs.webdav.jaxrs.xml.properties.LockDiscovery;
 import org.jugs.webdav.jaxrs.xml.properties.ResourceType;
 import org.jugs.webdav.jaxrs.xml.properties.SupportedLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
@@ -49,7 +49,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 @Provider
 public class MultiStatusMessageBodyWriter implements MessageBodyWriter<MultiStatus> {
 
-    private static final Logger log = Logger.getLogger(MultiStatusMessageBodyWriter.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(MultiStatusMessageBodyWriter.class.getName());
 
     static JAXBContext jaxbContext;
 
@@ -69,7 +69,7 @@ public class MultiStatusMessageBodyWriter implements MessageBodyWriter<MultiStat
         try {
             jaxbContext = JAXBContext.newInstance(webDavClasses);
         } catch (JAXBException e) {
-            log.log(Level.SEVERE, "Could not build JAXB context", e);
+            log.error("Could not build JAXB context", e);
         }
     }
 

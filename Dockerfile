@@ -2,7 +2,7 @@ FROM azul/zulu-openjdk-alpine:21-jre-headless-latest
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
-RUN apk add --no-cache curl bash ca-certificates \
+RUN apk add --no-cache curl bash ca-certificates promtail \
     && mkdir /opt/epa4all \
     && mkdir /opt/epa4all/app \
     && mkdir /opt/epa4all/lib \
@@ -21,6 +21,7 @@ RUN apk add --no-cache curl bash ca-certificates \
     && chmod -R "g+rwX" /opt/epa4all \
     && echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/default-jvm/lib/security/java.security
 
+COPY production_deployment/promtail.yml /etc/promtail/config.yml
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
 COPY --chown=1001 tls/epa-certs/*.pem /opt/epa4all/certs
 COPY --chown=1001 linux-service/run.sh /opt/epa4all

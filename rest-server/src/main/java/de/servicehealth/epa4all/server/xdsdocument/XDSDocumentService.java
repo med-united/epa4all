@@ -10,9 +10,10 @@ import jakarta.enterprise.context.Dependent;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.ResponseOptionType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.AdhocQueryType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
 import static de.servicehealth.epa4all.xds.XDSUtils.generateUrnUuid;
@@ -20,7 +21,7 @@ import static de.servicehealth.epa4all.xds.XDSUtils.generateUrnUuid;
 @Dependent
 public class XDSDocumentService {
 
-    private static final Logger log = Logger.getLogger(XDSDocumentService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(XDSDocumentService.class.getName());
 
     private final ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder;
 

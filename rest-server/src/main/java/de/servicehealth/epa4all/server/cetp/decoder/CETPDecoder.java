@@ -9,24 +9,24 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class CETPDecoder extends ByteToMessageDecoder {
 
-    private static final Logger log = Logger.getLogger(CETPDecoder.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CETPDecoder.class.getName());
 
     static JAXBContext jaxbContext;
     static {
         try {
             jaxbContext = JAXBContext.newInstance(Event.class);
         } catch (JAXBException e) {
-            log.log(Level.SEVERE, "Failed to create JAXB context", e);
+            log.error("Failed to create JAXB context", e);
         }
     }
 
@@ -59,7 +59,7 @@ public class CETPDecoder extends ByteToMessageDecoder {
             Event eventType = (Event) jaxbContext.createUnmarshaller().unmarshal(new StringReader(message));
             out.add(new DecodeResult(eventMapper.toDomain(eventType), configurations));
         } catch (JAXBException e) {
-            log.log(Level.SEVERE, "Failed to unmarshal CETP message", e);
+            log.error("Failed to unmarshal CETP message", e);
         }
     }
 }

@@ -20,6 +20,8 @@ import org.apache.cxf.transport.Conduit;
 import org.apache.cxf.transport.http.HttpClientHTTPConduit;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,8 +30,6 @@ import java.nio.ByteBuffer;
 import java.security.Security;
 import java.util.Base64;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.utils.CborUtils.printCborMessage;
 import static de.servicehealth.utils.ServerUtils.decompress;
@@ -49,7 +49,7 @@ import static org.apache.cxf.helpers.HttpHeaderHelper.CONNECTION;
 
 public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
-    private static final Logger log = Logger.getLogger(CxfVauSetupInterceptor.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CxfVauSetupInterceptor.class.getName());
 
     static {
         Security.addProvider(new BouncyCastlePQCProvider());
@@ -143,7 +143,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
                 }
             }
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while VAU handshake", e);
+            log.error("Error while VAU handshake", e);
             throw new Fault(e);
         }
     }

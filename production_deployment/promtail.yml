@@ -1,0 +1,33 @@
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://localhost:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: "stdin"
+    stdin:
+      labels:
+        job: "console-logs"
+    pipeline_stages:
+      - json:
+          expressions:
+            time: '"@timestamp"'
+            level: level
+            exception:
+      - json:
+          expressions:
+            exception_class:
+          source: exception
+      - template:
+          source: level
+          template: '{{ if eq .Value "FINER" }}TRACE{{ else if eq .Value "FINE" }}DEBUG{{ else if eq .Value "INFO" }}INFO{{ else if eq .Value "WARNING" }}WARN{{ else if eq .Value "SEVERE" }}ERROR{{ else }}{{ .Value }}{{ end }}'
+      - labels:
+          level:
+          exception_class:
+      - timestamp:
+          format: RFC3339
+          source: time
+          location: Europe/Berlin
+      - labeldrop:
+          - time

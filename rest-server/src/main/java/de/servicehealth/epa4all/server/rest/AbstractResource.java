@@ -14,13 +14,13 @@ import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.ResponseProcessingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.vau.VauClient.CLIENT_ID;
 import static de.servicehealth.vau.VauClient.VAU_NP;
@@ -30,7 +30,7 @@ import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 public abstract class AbstractResource {
 
-    protected final Logger log = Logger.getLogger(getClass().getName());
+    protected final Logger log = LoggerFactory.getLogger(getClass().getName());
 
     @Inject
     InsuranceDataService insuranceDataService;
@@ -65,11 +65,11 @@ public abstract class AbstractResource {
         try {
             epaContext = buildEpaContext(kvnr);
         } catch (AuditEvidenceException e) {
-            log.log(Level.SEVERE, errMsg, e);
+            log.error(errMsg, e);
             insuranceDataService.cleanUpInsuranceData(telematikId, kvnr);
             throw e;
         } catch (Exception e) {
-            log.log(Level.SEVERE, errMsg, e instanceof ResponseProcessingException ? e.getCause() : e);
+            log.error(errMsg, e instanceof ResponseProcessingException ? e.getCause() : e);
             insuranceDataService.cleanUpInsuranceData(telematikId, kvnr);
             epaContext = buildEpaContext(kvnr);
         }

@@ -21,12 +21,13 @@ import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
@@ -43,7 +44,7 @@ import static org.apache.http.HttpHeaders.UPGRADE;
 
 public class FhirProxyService implements IFhirProxy {
 
-    private static final Logger log = Logger.getLogger(FhirProxyService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(FhirProxyService.class.getName());
 
     private final WebClient apiClient;
     private final WebClient renderClient;

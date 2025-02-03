@@ -11,6 +11,8 @@ import jakarta.ws.rs.ext.Providers;
 import org.jugs.webdav.jaxrs.xml.elements.MultiStatus;
 import org.jugs.webdav.jaxrs.xml.elements.PropFind;
 import org.jugs.webdav.jaxrs.xml.elements.Rfc1123DateFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -23,14 +25,13 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.server.rest.fileserver.prop.MimeHelper.resolveMimeType;
 
 @Dependent
 public class FileResource extends AbstractResource {
 
-    private static final Logger log = Logger.getLogger(FileResource.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(FileResource.class.getName());
 
     private String davFolder;
 
@@ -131,7 +132,7 @@ public class FileResource extends AbstractResource {
 
     @Override
     public Response options() {
-        log.fine("File - options(..)");
+        log.debug("File - options(..)");
         Response.ResponseBuilder builder = withDavHeader(Response.ok());// noContent();
         /*
          * builder.header("Allow","");

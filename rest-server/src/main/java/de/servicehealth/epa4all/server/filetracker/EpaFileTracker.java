@@ -14,17 +14,17 @@ import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.jboss.logmanager.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 public abstract class EpaFileTracker<T extends FileAction> {
 
-    private static final Logger log = Logger.getLogger(EpaFileTracker.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EpaFileTracker.class.getName());
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSS");
     private static final Map<String, RegistryResponseType> resultsMap = new ConcurrentHashMap<>();
@@ -86,7 +86,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
             resultsMap.computeIfPresent(taskId, (k, prev) -> responseType);
         } catch (Exception e) {
             String s = fileAction.isUpload() ? "uploading" : "downloading";
-            log.log(Level.SEVERE, String.format("[%s] Error while %s %s", taskId, s, fileAction), e);
+            log.error(String.format("[%s] Error while %s %s", taskId, s, fileAction), e);
 
             resultsMap.computeIfPresent(taskId, (k, prev) -> {
                 String startedAt = prev.getStatus().split(" ")[1];

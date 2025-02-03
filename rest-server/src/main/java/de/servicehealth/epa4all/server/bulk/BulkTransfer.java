@@ -1,8 +1,8 @@
 package de.servicehealth.epa4all.server.bulk;
 
+import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.download.FileDownload;
 import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
-import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -10,7 +10,8 @@ import jakarta.inject.Inject;
 import jakarta.xml.bind.JAXBElement;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.IdentifiableType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
-import org.jboss.logmanager.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -19,12 +20,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 @ApplicationScoped
 public class BulkTransfer {
 
-    private static final Logger log = Logger.getLogger(BulkTransfer.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(BulkTransfer.class.getName());
 
     private final FolderService folderService;
     private final Event<FileUpload> eventFileUpload;
@@ -99,7 +99,7 @@ public class BulkTransfer {
                     String msg = String.format(
                         "[%s] Error while preparing file [%s/%s] to upload", kvnr, folderName, fileName
                     );
-                    log.log(Level.SEVERE, msg);
+                    log.error(msg);
                     return null;
                 }
             })

@@ -19,14 +19,14 @@ import de.servicehealth.feature.FeatureConfig;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.Response;
-import org.jboss.logging.MDC;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
@@ -37,7 +37,7 @@ import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 public class CETPEventHandler extends AbstractCETPEventHandler {
 
-    private static final Logger log = Logger.getLogger(CETPEventHandler.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CETPEventHandler.class.getName());
 
     private final Event<WebSocketPayload> webSocketPayloadEvent;
     private final InsuranceDataService insuranceDataService;
@@ -84,7 +84,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             .filter(p -> !p.getKey().equals("CardHolderName"))
             .map(p -> String.format("key=%s value=%s", p.getKey(), p.getValue())).collect(Collectors.joining(", "));
 
-        log.fine(String.format("[%s] Card inserted: params: %s", correlationId, paramsStr));
+        log.debug(String.format("[%s] Card inserted: params: %s", correlationId, paramsStr));
     }
 
     @Override
@@ -116,7 +116,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 InsuranceData insuranceData = insuranceDataService.getData(telematikId, egkHandle, runtimeConfig);
                 if (insuranceData == null) {
                     if (featureConfig.isExternalPnwEnabled()) {
-                        log.warning(String.format(
+                        log.warn(String.format(
                             "PNW is not found for EGK=%s, ReadVSD is disabled, use external PNW call", egkHandle
                         ));
                         return;
@@ -139,7 +139,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     cardlinkClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
                 }
             } catch (Exception e) {
-                log.log(Level.WARNING, String.format("[%s] Could not get medication PDF", correlationId), e);
+                log.warn(String.format("[%s] Could not get medication PDF", correlationId), e);
                 String error = printException(e);
                 cardlinkClient.sendJson(
                     correlationId,
@@ -150,7 +150,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             }
         } else {
             String msgFormat = "Ignored \"CARD/INSERTED\" values=%s";
-            log.log(Level.INFO, String.format(msgFormat, paramsMap));
+            log.info(String.format(msgFormat, paramsMap));
         }
     }
 

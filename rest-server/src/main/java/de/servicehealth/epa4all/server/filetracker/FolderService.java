@@ -3,12 +3,12 @@ package de.servicehealth.epa4all.server.filetracker;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.health.service.cetp.utils.Utils.saveDataToFile;
 import static java.io.File.separator;
@@ -16,7 +16,7 @@ import static java.io.File.separator;
 @ApplicationScoped
 public class FolderService implements IFolderService {
 
-    private static final Logger log = Logger.getLogger(FolderService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(FolderService.class.getName());
 
     private final File rootFolder;
     private final WebdavConfig webdavConfig;
@@ -53,7 +53,7 @@ public class FolderService implements IFolderService {
                 try {
                     getOrCreateFolder(String.join(separator, telematikFolderPath, insurantId, parts[0]));
                 } catch (Exception e) {
-                    log.log(Level.SEVERE, String.format("Error while creating folder '%s'", folderProperty), e);
+                    log.error(String.format("Error while creating folder '%s'", folderProperty), e);
                 }
             }
         );
@@ -84,7 +84,7 @@ public class FolderService implements IFolderService {
         try {
             return new ChecksumFile(getInsurantFolder(telematikId, insurantId)).getChecksums();
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Error while getting unique checksums for %s", insurantId), e);
+            log.error(String.format("Error while getting unique checksums for %s", insurantId), e);
         }
         return Set.of();
     }

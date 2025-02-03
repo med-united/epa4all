@@ -10,14 +10,14 @@ import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.DatatypeFactory;
 import java.io.File;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
 import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.extractInsurantId;
@@ -26,7 +26,7 @@ import static de.servicehealth.utils.ServerUtils.compress;
 @ApplicationScoped
 public class VsdService {
 
-    private static final Logger log = Logger.getLogger(VsdService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(VsdService.class.getName());
 
     private final MultiKonnektorService multiKonnektorService;
     private final FolderService folderService;
@@ -87,7 +87,7 @@ public class VsdService {
             File localFolder = folderService.getMedFolder(telematikId, insurantId, LOCAL_FOLDER);
             new VsdResponseFile(localFolder).store(readVSDResponse);
         } catch (Exception e) {
-            log.log(Level.WARNING, "Could not save ReadVSDResponse", e);
+            log.warn("Could not save ReadVSDResponse", e);
         }
     }
 

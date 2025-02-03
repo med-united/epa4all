@@ -43,6 +43,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.ByteArrayInputStream;
@@ -55,7 +57,6 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.gematik.ws.conn.certificateservice.v6.CryptType.RSA;
@@ -68,7 +69,7 @@ import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 @ApplicationScoped
 public class KonnektorClient implements IKonnektorClient {
 
-    private static final Logger log = Logger.getLogger(KonnektorClient.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(KonnektorClient.class.getName());
 
     private final ConcurrentHashMap<KonnektorKey, String> smcbMap = new ConcurrentHashMap<>();
 

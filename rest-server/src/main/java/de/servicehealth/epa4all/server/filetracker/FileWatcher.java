@@ -1,5 +1,8 @@
 package de.servicehealth.epa4all.server.filetracker;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -11,15 +14,13 @@ import java.nio.file.WatchService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Taken from <a href="https://gist.github.com/danielflower/f54c2fe42d32356301c68860a4ab21ed">...</a>
  */
 public class FileWatcher {
 
-    private final static Logger log = Logger.getLogger(FileWatcher.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(FileWatcher.class.getName());
 
     private Thread thread;
     private WatchService watchService;
@@ -60,13 +61,13 @@ public class FileWatcher {
 
                     Path keyParent = watchKeyToDirectory.get(wk);
                     if (keyParent == null) {
-                        log.log(Level.SEVERE, "WatchKey not recognized");
+                        log.error("WatchKey not recognized");
                         continue;
                     }
 
                     for (WatchEvent<?> event : wk.pollEvents()) {
                         if (event.kind() == StandardWatchEventKinds.OVERFLOW) {
-                            log.log(Level.SEVERE, "FileSystem watcher watched an OVERFLOW event");
+                            log.error("FileSystem watcher watched an OVERFLOW event");
                             continue;
                         }
 
@@ -91,7 +92,7 @@ public class FileWatcher {
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
-                    log.log(Level.SEVERE, "Error while reloading file", e);
+                    log.error("Error while reloading file", e);
                 } finally {
                     if (wk != null) {
                         wk.reset();
@@ -107,7 +108,7 @@ public class FileWatcher {
         try {
             watchService.close();
         } catch (IOException e) {
-            log.log(Level.INFO, "Error closing watch service", e);
+            log.info("Error closing watch service", e);
         }
     }
 }

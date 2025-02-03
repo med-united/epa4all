@@ -15,11 +15,12 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static de.servicehealth.vau.VauClient.X_WORKPLACE;
@@ -27,7 +28,7 @@ import static de.servicehealth.vau.VauClient.X_WORKPLACE;
 @Provider
 public class UserRuntimeConfigProducer implements ContainerRequestFilter {
 
-    private static final Logger log = Logger.getLogger(UserRuntimeConfigProducer.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(UserRuntimeConfigProducer.class.getName());
 
     @Inject
     DefaultUserConfig defaultUserConfig;
@@ -56,7 +57,7 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
         if (foundConfigs.size() != 1) {
             String c = foundConfigs.isEmpty() ? "Zero" : "Multiple";
             String msg = "%s KonnektorConfigs found for konnektor=%s workplace=%s, using default";
-            log.warning(String.format(msg, c, konnektor, workplaceId));
+            log.warn(String.format(msg, c, konnektor, workplaceId));
             return defaultUserConfig;
         }
         return new RuntimeConfig(konnektorDefaultConfig, foundConfigs.getFirst().getUserConfigurations());

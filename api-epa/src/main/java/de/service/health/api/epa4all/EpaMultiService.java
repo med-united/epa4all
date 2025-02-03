@@ -27,11 +27,11 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import org.apache.http.client.fluent.Executor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
@@ -40,7 +40,7 @@ import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 @Startup
 public class EpaMultiService extends StartableService {
 
-    private static final Logger log = Logger.getLogger(EpaMultiService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EpaMultiService.class.getName());
 
     // TODO: indirectly used in the Retrier lib-cetp
     public static final String EPA_RECORD_IS_NOT_FOUND = "ePA record is not found";
@@ -147,7 +147,7 @@ public class EpaMultiService extends StartableService {
                         fhirProxy
                     );
                 } catch (Exception e) {
-                    log.log(Level.SEVERE, "Error while instantiating EPA API", e);
+                    log.error("Error while instantiating EPA API", e);
                     throw new RuntimeException(e);
                 }
             }));

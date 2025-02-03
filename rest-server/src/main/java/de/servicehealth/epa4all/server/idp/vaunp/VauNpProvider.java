@@ -26,7 +26,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.Response;
 import lombok.Setter;
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.jboss.logmanager.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -39,7 +40,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.konnektorconfig.FSConfigService.CONFIG_DELIMETER;
@@ -48,7 +48,7 @@ import static de.health.service.cetp.konnektorconfig.FSConfigService.CONFIG_DELI
 @ApplicationScoped
 public class VauNpProvider extends StartableService {
 
-    private static final Logger log = Logger.getLogger(VauNpProvider.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(VauNpProvider.class.getName());
 
     private static final String STATUS_TEMPLATE = "[%s] Took %d ms - %s";
 
@@ -127,7 +127,7 @@ public class VauNpProvider extends StartableService {
                     }
                 } catch (CetpFault e) {
                     String msg = String.format("Error while getting SMC-B handle: Konnektor=%s", konnektorWorkplace);
-                    log.log(Level.SEVERE, msg, e);
+                    log.error(msg, e);
                     return false;
                 }
             }
@@ -178,7 +178,7 @@ public class VauNpProvider extends StartableService {
         try {
             reload(Set.of(backend));
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Error while reloading Vau NP for '%s'", backend), e);
+            log.error(String.format("Error while reloading Vau NP for '%s'", backend), e);
         }
     }
 
@@ -215,7 +215,7 @@ public class VauNpProvider extends StartableService {
                                 try {
                                     return f.get(30, TimeUnit.SECONDS);
                                 } catch (Exception ex) {
-                                    log.log(Level.SEVERE, "Error while getSendAuthCodeSC", ex);
+                                    log.error("Error while getSendAuthCodeSC", ex);
                                     return null;
                                 }
                             }).filter(
@@ -279,7 +279,7 @@ public class VauNpProvider extends StartableService {
         } catch (Throwable t) {
             String konnektorWorkplace = String.join(CONFIG_DELIMETER, vauNpKey.getKonnektor(), vauNpKey.getWorkplaceId());
             String msg = String.format("Error while sendAuthCodeSC konnektor=%s, ePA=%s", konnektorWorkplace, backend);
-            log.log(Level.SEVERE, msg, t);
+            log.error(msg, t);
             long delta = System.currentTimeMillis() - start;
             String errorStatus = String.format(STATUS_TEMPLATE, backend, delta + idpResult.delta, t.getMessage());
             vauFacade.setVauNpSessionStatus(errorStatus);
@@ -303,7 +303,7 @@ public class VauNpProvider extends StartableService {
             long delta = System.currentTimeMillis() - start;
             return new IdpResult(key, idpClient.getAuthCodeSync(nonce, location, runtimeConfig, smcbHandle), null, delta);
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while getSendAuthCodeSC", e);
+            log.error("Error while getSendAuthCodeSC", e);
             long delta = System.currentTimeMillis() - start;
             StringBuilder sb = new StringBuilder(e.getMessage());
             if (e instanceof RuntimeException runtimeEx) {
@@ -352,7 +352,7 @@ public class VauNpProvider extends StartableService {
             workplaceId = parts[1];
         } catch (Exception e) {
             String msg = "KonnektorConfig key is corrupted: '%s', check if property has old format";
-            log.warning(String.format(msg, konnektorWorkplace));
+            log.warn(String.format(msg, konnektorWorkplace));
         }
         return new KonnektorWorkplaceInfo(konnektor, workplaceId);
     }

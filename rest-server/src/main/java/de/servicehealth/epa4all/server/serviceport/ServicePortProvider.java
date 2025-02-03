@@ -28,6 +28,8 @@ import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.ext.logging.LoggingFeature;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -43,8 +45,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.utils.SSLUtils.createSSLContext;
@@ -53,7 +53,7 @@ import static de.servicehealth.utils.SSLUtils.initSSLContext;
 @ApplicationScoped
 public class ServicePortProvider extends StartableService {
 
-    private static final Logger log = Logger.getLogger(ServicePortProvider.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ServicePortProvider.class.getName());
 
     private SSLContext defaultSSLContext;
 
@@ -76,7 +76,7 @@ public class ServicePortProvider extends StartableService {
         try {
             new ServicePortFile(configDirectory).update(konnektorsEndpoints);
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while saving service-ports file", e);
+            log.error("Error while saving service-ports file", e);
         }
     }
 
@@ -90,7 +90,7 @@ public class ServicePortProvider extends StartableService {
                 SSLResult sslResult = initSSLContext(certInputStream, certPass);
                 defaultSSLContext = sslResult.getSslContext();
             } catch (Exception e) {
-                log.log(Level.SEVERE, "There was a problem when creating the SSLContext", e);
+                log.error("There was a problem when creating the SSLContext", e);
                 defaultSSLContext = createFakeDefaultSSLContext();
             }
         } else {
@@ -180,7 +180,7 @@ public class ServicePortProvider extends StartableService {
         // disable hostname verification
         clientBuilder = clientBuilder.hostnameVerifier((h, s) -> true);
         if (userConfigurations.getConnectorBaseURL() == null) {
-            log.warning("ConnectorBaseURL is null, won't read connector.sds");
+            log.warn("ConnectorBaseURL is null, won't read connector.sds");
             return;
         }
 
@@ -282,7 +282,7 @@ public class ServicePortProvider extends StartableService {
 
             location = endpointNode.getAttributes().getNamedItem("Location").getTextContent();
             if (!location.startsWith(userConfig.getConnectorBaseURL())) {
-                log.warning("Invalid service node. Maybe location: " + location + " does not start with: " + userConfig.getConnectorBaseURL());
+                log.warn("Invalid service node. Maybe location: " + location + " does not start with: " + userConfig.getConnectorBaseURL());
             }
             return location;
         }

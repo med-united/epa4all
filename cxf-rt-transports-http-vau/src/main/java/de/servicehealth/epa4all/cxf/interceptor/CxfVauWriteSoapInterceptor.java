@@ -13,13 +13,13 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.transport.http.HTTPException;
 import org.apache.cxf.transport.http.Headers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
@@ -39,7 +39,7 @@ import static org.apache.cxf.phase.Phase.PRE_STREAM;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message> implements VauHeaders {
 
-    private static final Logger log = Logger.getLogger(CxfVauWriteSoapInterceptor.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CxfVauWriteSoapInterceptor.class.getName());
 
     private final VauFacade vauFacade;
 
@@ -139,7 +139,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
                 os.close();
             }
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while sending Vau SOAP message", e);
+            log.error("Error while sending Vau SOAP message", e);
             if (encrypted || e instanceof HTTPException) {
                 boolean noUserSession = isAuthError(e.getMessage());
                 vauFacade.handleVauSession(vauCid, noUserSession, false);

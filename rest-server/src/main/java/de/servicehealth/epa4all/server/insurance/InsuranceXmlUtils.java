@@ -4,6 +4,8 @@ import de.gematik.ws.fa.vsdm.vsd.v5.UCAllgemeineVersicherungsdatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCGeschuetzteVersichertendatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import jakarta.xml.bind.JAXBContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -12,14 +14,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.utils.ServerUtils.decompress;
 
 public class InsuranceXmlUtils {
 
-    private static final Logger log = Logger.getLogger(InsuranceXmlUtils.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(InsuranceXmlUtils.class.getName());
 
     private static DocumentBuilder documentBuilder;
     private static JAXBContext jaxbContext;
@@ -31,7 +31,7 @@ public class InsuranceXmlUtils {
             documentBuilder = factory.newDocumentBuilder();
             jaxbContext = createJaxbContext();
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Could create parser", e);
+            log.error("Could create parser", e);
         }
     }
 
