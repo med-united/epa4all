@@ -17,8 +17,10 @@ public interface IFhirProxy {
         Map<String, String> xHeaders
     );
 
-    Response forwardGet(
+    default Response forwardGet(
         String fhirPath,
         Map<String, String> xHeaders
-    );
+    ) {
+        return forward(true, false, fhirPath, null, null, null, xHeaders);
+    }
 }

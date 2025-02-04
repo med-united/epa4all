@@ -1,9 +1,9 @@
-package de.servicehealth.epa4all.server.logging;
+package de.servicehealth.logging;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.MDC;
 
-import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -29,7 +29,7 @@ public class LogContext implements Closeable {
         Map<LogContextConstant, String> ctx,
         ThrowingRunnable<T> method
     ) throws T {
-        try (LogContext ignored = new LogContext(ctx)) {
+        try (LogContext context = new LogContext(ctx)) {
             method.run();
         }
     }
@@ -95,14 +95,14 @@ public class LogContext implements Closeable {
         }
 
         return switch (ctx) {
-            case SESSION_ID, PROTOCOL, JSON_MESSAGE_TYPE, WEBSOCKET_CONNECTION_ID, CONNECTION_KONNEKTOR -> value;
-            case ICCSN -> anonymizeICCSN(value);
+            case VAU_SESSION, PROTOCOL, JSON_MESSAGE_TYPE, KONNEKTOR -> value;
+            case ICCSN, KVNR -> anonymizeICCSN(value);
             case REMOTE_ADDR -> anonymizeRemoteAddr(value);
         };
     }
 
     @VisibleForTesting
-    String anonymizeICCSN(@Nonnull String value) {
+    String anonymizeICCSN(@NotNull String value) {
         // ICCSN is 20 digits
         // gemSpec_Karten_Fach_TIP_G2_1 hints that ICCSN is administrated by GS1 Germany GmbH in germany
         // GS1 published a document about ICCSN here: https://www.gs1-germany.de/fileadmin/gs1/basis_informationen/einheitliche_nummerierung_fuer_identifikationskarten_im_.pdf
@@ -117,7 +117,7 @@ public class LogContext implements Closeable {
     }
 
     @VisibleForTesting
-    String anonymizeRemoteAddr(@Nonnull String value) {
+    String anonymizeRemoteAddr(@NotNull String value) {
         // The EuGH (Europäsche Gerichtshof) ruled that IP-addresses (static and dynamic) can be
         // considered personal-related data. Hence, we need to anonymize it, at least as long as it is not originating
         // from our internal networks (non-public ip address ranges)

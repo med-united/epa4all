@@ -31,16 +31,15 @@ public abstract class StartableService implements StartupEventListener {
     }
 
     public void onStart(StartupEvent ev) throws Exception {
-        String className = getClass().getSimpleName();
         configDirectory = new File(configFolder);
         if (configDirectory.exists() && configDirectory.isDirectory()) {
             if (startupEventsDisabled) {
-                log.warn(String.format("[%s] STARTUP events are disabled by config property, initialization is SKIPPED", className));
+                log.warn("STARTUP events are disabled by config property, initialization is SKIPPED");
             } else {
                 long start = System.currentTimeMillis();
                 onStart();
                 long delta = System.currentTimeMillis() - start;
-                log.info(String.format("[%s] STARTED in %d ms", className, delta));
+                log.info(String.format("STARTED in %d ms", delta));
             }
         } else {
             throw new IllegalStateException("Konnektor config directory is not correct. Should exist as directory here: "+(configDirectory != null ? configDirectory.getAbsolutePath() : "null"));

@@ -1,8 +1,8 @@
-FROM azul/zulu-openjdk-alpine:21-jre-headless-latest
+FROM azul/zulu-openjdk-debian:21-jre-latest
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
-RUN apk add --no-cache curl bash ca-certificates promtail \
+RUN apt-get update && apt-get install -y --no-install-recommends curl bash tini unzip ca-certificates bash-completion \
     && mkdir /opt/epa4all \
     && mkdir /opt/epa4all/app \
     && mkdir /opt/epa4all/lib \
@@ -19,7 +19,19 @@ RUN apk add --no-cache curl bash ca-certificates promtail \
     && mkdir /opt/epa4all/config/konnektoren/8588 \
     && chown -R 1001:root /opt/epa4all \
     && chmod -R "g+rwX" /opt/epa4all \
-    && echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/default-jvm/lib/security/java.security
+    && echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/zulu21-ca-amd64/lib/security/java.security
+
+RUN ls -la /usr/local/bin
+
+WORKDIR /usr/local/bin
+
+COPY production_deployment/promtail.yml /etc/promtail/config.yml
+
+RUN curl -O -L "https://github.com/grafana/loki/releases/download/v3.2.0/promtail-linux-amd64.zip" \
+    && unzip "promtail-linux-amd64.zip" \
+    && mv promtail-linux-amd64 promtail \
+    && chmod a+x promtail \
+    && /usr/local/bin/promtail -version
 
 COPY production_deployment/promtail.yml /etc/promtail/config.yml
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
@@ -56,6 +68,7 @@ RUN ls -la /usr/bin/java
 
 USER 1001
 
+#ENTRYPOINT ["/sbin/tini", "--", "/bin/bash", "/opt/epa4all/run.sh"]
 ENTRYPOINT [ "/bin/bash", "/opt/epa4all/run.sh" ]
 
 

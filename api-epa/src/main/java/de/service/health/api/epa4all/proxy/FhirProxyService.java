@@ -89,13 +89,6 @@ public class FhirProxyService implements IFhirProxy {
         return webClient;
     }
 
-    public Response forwardGet(
-        String fhirPath,
-        Map<String, String> xHeaders
-    ) {
-        return forward(true, false, fhirPath, null, null, null, xHeaders);
-    }
-
     public Response forward(
         boolean isGet,
         boolean ui5,

@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.logging;
+package de.servicehealth.logging;
 
 @FunctionalInterface
 public interface ThrowingRunnable<T extends Exception> {

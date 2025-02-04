@@ -43,6 +43,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.konnektorconfig.FSConfigService.CONFIG_DELIMETER;
+import static de.servicehealth.logging.LogContext.withLogContext;
+import static de.servicehealth.logging.LogContextConstant.KONNEKTOR;
 
 @SuppressWarnings("CdiInjectionPointsInspection")
 @ApplicationScoped
@@ -303,7 +305,9 @@ public class VauNpProvider extends StartableService {
             long delta = System.currentTimeMillis() - start;
             return new IdpResult(key, idpClient.getAuthCodeSync(nonce, location, runtimeConfig, smcbHandle), null, delta);
         } catch (Exception e) {
-            log.error("Error while getSendAuthCodeSC", e);
+            withLogContext(Map.of(KONNEKTOR, config.getHost()), () ->
+                log.error("Error while getSendAuthCodeSC", e)
+            );
             long delta = System.currentTimeMillis() - start;
             StringBuilder sb = new StringBuilder(e.getMessage());
             if (e instanceof RuntimeException runtimeEx) {

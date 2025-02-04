@@ -45,10 +45,15 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.utils.SSLUtils.createSSLContext;
 import static de.servicehealth.utils.SSLUtils.initSSLContext;
+import static de.servicehealth.vau.VauClient.CLIENT_ID;
+import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 @ApplicationScoped
 public class ServicePortProvider extends StartableService {
@@ -70,6 +75,14 @@ public class ServicePortProvider extends StartableService {
         loggingFeature.setVerbose(true);
         loggingFeature.setLogMultipart(true);
         loggingFeature.setLogBinary(false);
+
+        loggingFeature.setSensitiveElementNames(Set.of(
+            "ReadCardCertificateResponse",
+            "ExternalAuthenticateResponse",
+            "vau-np",
+            "GetCardsResponse"
+        ));
+        loggingFeature.setSensitiveProtocolHeaderNames(Set.of(VAU_NP, X_USER_AGENT, X_INSURANT_ID, CLIENT_ID));
     }
 
     void saveEndpointsConfiguration() {

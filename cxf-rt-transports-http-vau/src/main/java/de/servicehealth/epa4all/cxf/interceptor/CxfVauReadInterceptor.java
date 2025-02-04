@@ -74,6 +74,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
                         message.put(CONTENT_TYPE, contentType);
                         if (!MEDIA_TYPES.contains(contentType)) {
                             String content = new String(payload);
+                            content = content.substring(0, Math.min(200, content.length())) + " ********* ";
                             log.info(String.format("[%s] Response PAYLOAD: %s", operation, content));
                         }
                     });
