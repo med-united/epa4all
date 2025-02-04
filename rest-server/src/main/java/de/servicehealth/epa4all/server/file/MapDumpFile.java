@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -43,7 +44,7 @@ public abstract class MapDumpFile<K, V> {
             filesLocks.get(getClass()).readLock().unlock();
         }
         reset();
-        return Map.of();
+        return new HashMap<>();
     }
 
     protected interface MapAction<K, V> {
@@ -60,7 +61,7 @@ public abstract class MapDumpFile<K, V> {
     }
 
     public void reset() {
-        writeLock(Map.of(), this::store);
+        writeLock(new HashMap<>(), this::store);
     }
 
     public void update(Map<K, V> map) {

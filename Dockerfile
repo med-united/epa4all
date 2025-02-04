@@ -1,8 +1,8 @@
-FROM azul/zulu-openjdk-debian:21-jre-latest
+FROM azul/zulu-openjdk-alpine:21-jre-headless-latest
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl bash tini unzip ca-certificates bash-completion \
+RUN apk add --no-cache curl bash tini ca-certificates libc6-compat tcpdump less iproute2-ss logger sudo nano socat \
     && mkdir /opt/epa4all \
     && mkdir /opt/epa4all/app \
     && mkdir /opt/epa4all/lib \
@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl bash tini 
     && mkdir /opt/epa4all/config/konnektoren/8588 \
     && chown -R 1001:root /opt/epa4all \
     && chmod -R "g+rwX" /opt/epa4all \
-    && echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/zulu21-ca-amd64/lib/security/java.security
+    && echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/default-jvm/lib/security/java.security
 
 RUN ls -la /usr/local/bin
 
@@ -68,7 +68,6 @@ RUN ls -la /usr/bin/java
 
 USER 1001
 
-#ENTRYPOINT ["/sbin/tini", "--", "/bin/bash", "/opt/epa4all/run.sh"]
-ENTRYPOINT [ "/bin/bash", "/opt/epa4all/run.sh" ]
+ENTRYPOINT ["/sbin/tini", "--", "/bin/bash", "/opt/epa4all/run.sh"]
 
 

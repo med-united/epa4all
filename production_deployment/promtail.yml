@@ -8,43 +8,55 @@ clients:
   - url: http://host.docker.internal:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: "epa4all"
-#    stdin: {}
-
-    syslog:
-      listen_address: "0.0.0.0:4560"
-      idle_timeout: 300s
+  - job_name: epa4all
+    static_configs:
+    - targets:
+        - localhost
       labels:
         job: epa4all
-        source: "socket"
-
-#    file_sd_configs:
-#      - files:
-#          - /tmp/quarkus-logs
-
-#    static_configs:
-#      - targets:
-#          - localhost
-#        labels:
-#          job: epa4all
-#          __path__: /tmp/quarkus-logs
-    
+        __path__: /tmp/epa4all.log
     pipeline_stages:
       - json:
           expressions:
-            time: '"@timestamp"'
+            time: timestamp
+            loggerName: loggerName
+            message: message
+            thread: threadName
             level: level
-            exception:
-      - json:
-          expressions:
-            exception_class:
-          source: exception
+#            exception: stackTrace
+            client: servicehealth_client_id
+#            mdc: mdc
+#      - json:
+#          expressions:
+#            vauSession: vauSession
+#            iccsn: iccsn
+#            konnektor: konnektor
+#          source: mdc
+#      - template:
+#          source: vauSession
+#          template: '{{ if eq .vauSession nil }}n/a{{ else }}{{ .vauSession }}{{ end }}'
+#      - template:
+#          source: iccsn
+#          template: '{{ if eq .iccsn nil }}n/a{{ else }}{{ .iccsn }}{{ end }}'
+#      - template:
+#          source: konnektor
+#          template: '{{ if eq .konnektor nil }}n/a{{ else }}{{ .konnektor }}{{ end }}'
+#      - template:
+#          source: exception
+#          template: '{{ if eq .exception nil }}n/a{{ else }}{{ .exception }}{{ end }}'
       - labels:
+          loggerName:
+          message:
+          thread:
           level:
-          exception_class:
+          client:
+#          exception:
+#          vauSession:
+#          iccsn:
+#          konnektor:
       - timestamp:
-          format: RFC3339
           source: time
+          format: RFC3339
           location: Europe/Berlin
       - labeldrop:
           - time

@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.idp;
 
 import de.gematik.idp.authentication.AuthenticationChallenge;
+import de.gematik.idp.brainPoolExtension.BrainpoolCurves;
 import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.idp.client.data.AuthorizationRequest;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
@@ -82,6 +83,7 @@ public class IdpClient extends StartableService {
 
     public void onStart() throws Exception {
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
+        BrainpoolCurves.init();
         retrieveDiscoveryDocument();
     }
 
