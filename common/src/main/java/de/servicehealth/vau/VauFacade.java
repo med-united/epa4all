@@ -8,6 +8,8 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.Set;
@@ -15,15 +17,21 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @Dependent
 public class VauFacade {
 
-    private static final Logger log = Logger.getLogger(VauFacade.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(VauFacade.class.getName());
 
     public static final String NO_USER_SESSION = "no userSession";
+    public static final String ACCESS_DENIED = "accessDenied";
+    public static final String INVAL_AUTH = "invalAuth";
+
+    public static final Set<String> AUTH_ERRORS = Set.of(
+        NO_USER_SESSION,
+        ACCESS_DENIED,
+        INVAL_AUTH
+    );
 
     @Inject
     Event<VauSessionReload> vauSessionReloadEvent;
@@ -82,11 +90,11 @@ public class VauFacade {
                     if (hangsTime != null) {
                         String vauCid = vauClient.forceRelease(hangsTime);
                         String threadName = Thread.currentThread().getName();
-                        log.warning(String.format("[%s] Timeout force release CID=%s", threadName, vauCid));
+                        log.warn(String.format("[%s] Timeout force release CID=%s", threadName, vauCid));
                     }
                 }
             } catch (Throwable t) {
-                log.log(Level.SEVERE, "Error while VauClient forceRelease", t);
+                log.error("Error while VauClient forceRelease", t);
             }
         }, 100, 100, TimeUnit.MILLISECONDS);
     }
@@ -108,7 +116,7 @@ public class VauFacade {
                 .findFirst();
             if (vauClientOpt.isEmpty()) {
                 String threadName = Thread.currentThread().getName();
-                log.warning(String.format("[%s] WAITING FOR VAU CLIENT ********", threadName));
+                log.warn(String.format("[%s] WAITING FOR VAU CLIENT ********", threadName));
                 TimeUnit.MILLISECONDS.sleep(300);
             } else {
                 break;
@@ -131,7 +139,7 @@ public class VauFacade {
         }
         VauClient vauClient = getVauClient(vauCid);
         if (vauClient != null && !decrypted) {
-            log.warning(String.format("[%s] Error force release CID=%s", Thread.currentThread().getName(), vauCid));
+            log.warn(String.format("[%s] Error force release CID=%s", Thread.currentThread().getName(), vauCid));
             vauClient.forceRelease(null);
         }
     }

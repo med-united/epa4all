@@ -12,13 +12,13 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.ext.Provider;
 import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
 import org.jboss.resteasy.core.interception.jaxrs.PreMatchContainerRequestContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLSession;
 import java.lang.reflect.Field;
 import java.security.cert.X509Certificate;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 @SuppressWarnings("rawtypes")
@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 @IfBuildProperty(name = "quarkus.ssl.native", stringValue = "true")
 public class ClientCertificateFilter implements ContainerRequestFilter {
 
-    private static final Logger log = Logger.getLogger(ClientCertificateFilter.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ClientCertificateFilter.class.getName());
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
@@ -65,7 +65,7 @@ public class ClientCertificateFilter implements ContainerRequestFilter {
                     throw unauthorized;
                 }
             } catch (Exception e) {
-                log.log(Level.SEVERE, "Error while authenticating client request", e);
+                log.error("Error while authenticating client request", e);
                 if (e instanceof AuthenticationFailedException authenticationFailedException) {
                     throw authenticationFailedException;
                 } else {

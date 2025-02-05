@@ -57,7 +57,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
 
     private final JsonbBuilder jsonbBuilder = new JsonBindingBuilder();
 
-    private final String kvnr = "X110485291";
+    private final String kvnr = "X110548258";
 
     @ConfigProperty(name = "ere.per.konnektor.config.folder")
     String configFolder;
@@ -103,11 +103,12 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
                 String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
                 KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
                 String konnektorHost = konnektorConfig.getHost();
+                String workplaceId = konnektorConfig.getUserConfigurations().getWorkplaceId();
                 String epaBackend = epaBackends.iterator().next();
 
                 vauNpProvider.invalidate();
 
-                Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, epaBackend);
+                Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, workplaceId, epaBackend);
                 assertFalse(vauNpOpt.isPresent());
 
                 // epa-deployment doesn't work for some reason:

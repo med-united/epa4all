@@ -9,16 +9,18 @@ import io.restassured.parsing.Parser;
 import io.restassured.response.Response;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.runWithEpaBackends;
+import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
 import static de.servicehealth.vau.VauClient.KVNR;
 import static io.restassured.RestAssured.given;
@@ -30,9 +32,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @TestProfile(ProxyEpaTestProfile.class)
 public class DownloadAllEpaIT extends AbstractVsdTest {
 
-    private static final Logger log = Logger.getLogger(DownloadAllEpaIT.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(DownloadAllEpaIT.class.getName());
 
-    private final String kvnr = "X110485291";
+    private final String kvnr = "X110548258";
 
     @Override
     public void afterEach() {
@@ -76,7 +78,6 @@ public class DownloadAllEpaIT extends AbstractVsdTest {
             TimeUnit.SECONDS.sleep(5);
 
             File[] telematikFolders = folderService.getTelematikFolders();
-            assertNotNull(telematikFolders);
             List<File> epaFiles = Arrays.stream(telematikFolders).flatMap(f -> {
                 File[] kvnrFolders = folderService.getNestedFolders(f);
                 assertNotNull(kvnrFolders);
@@ -84,7 +85,7 @@ public class DownloadAllEpaIT extends AbstractVsdTest {
                     File[] dataFolders = folderService.getNestedFolders(nf);
                     assertNotNull(dataFolders);
                     return Arrays.stream(dataFolders)
-                        .filter(df -> !df.getName().equals("local"))
+                        .filter(df -> !df.getName().equals(LOCAL_FOLDER))
                         .flatMap(df -> {
                             File[] dataFiles = folderService.getNestedFiles(df);
                             assertNotNull(dataFiles);

@@ -13,22 +13,22 @@ import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static de.servicehealth.vau.VauFacade.NO_USER_SESSION;
+import static de.servicehealth.utils.ServerUtils.isAuthError;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 
 public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
 
-    private static final Logger log = Logger.getLogger(FHIRResponseVAUInterceptor.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(FHIRResponseVAUInterceptor.class.getName());
 
     private final VauFacade vauFacade;
     private final VauResponseReader vauResponseReader;
@@ -53,8 +53,8 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
         String error = vauResponse.error();
         if (error != null) {
             String msg = "Error while receiving DIRECT Fhir response, decrypted = " + vauResponse.decrypted() + " : " + error;
-            log.log(Level.SEVERE, msg);
-            boolean noUserSession = error.contains(NO_USER_SESSION);
+            log.error(msg);
+            boolean noUserSession = isAuthError(error);
             vauFacade.handleVauSession(vauCid, noUserSession, vauResponse.decrypted());
         }
 

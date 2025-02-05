@@ -13,10 +13,10 @@ import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.common.TestUtils.getFixture;
 import static io.restassured.RestAssured.when;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.mock;
 @TestProfile(ProxyEpaTestProfile.class)
 public class EventServiceEpaIT {
 
-    private static final Logger log = Logger.getLogger(EventServiceEpaIT.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EventServiceEpaIT.class.getName());
 
     static JAXBContext getCardsJaxbContext;
 
@@ -38,7 +38,7 @@ public class EventServiceEpaIT {
         try {
             getCardsJaxbContext = JAXBContext.newInstance(GetCardsResponse.class);
         } catch (JAXBException e) {
-            log.log(Level.SEVERE, "Could not create JAXBContext", e);
+            log.error("Could not create JAXBContext", e);
         }
     }
 

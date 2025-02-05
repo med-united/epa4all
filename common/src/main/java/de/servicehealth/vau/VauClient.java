@@ -4,15 +4,16 @@ import de.gematik.vau.lib.VauClientStateMachine;
 import de.gematik.vau.lib.data.KdfKey2;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Logger;
 
 public class VauClient {
     
-    private static final Logger log = Logger.getLogger(VauClient.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(VauClient.class.getName());
 
     public static final String VAU_CID = "VAU-CID";
 
@@ -28,6 +29,8 @@ public class VauClient {
     public static final String X_INSURANT_ID = "x-insurantid";
     public static final String X_USER_AGENT = "x-useragent";
     public static final String X_KONNEKTOR = "x-konnektor";
+    public static final String X_WORKPLACE = "x-workplace";
+    public static final String X_SUBJECT = "subject";
     public static final String X_BACKEND = "x-backend";
     public static final String VAU_NP = "VAU-NP";
     public static final String KVNR = "kvnr";
@@ -70,7 +73,7 @@ public class VauClient {
             broken.set(false);
             acquiredAt.set(System.currentTimeMillis());
             String threadName = Thread.currentThread().getName();
-            log.fine(String.format("[VauClient %d] ACQUIRED by %s acquiredAt=%d", hashCode(), threadName, acquiredAt.get()));
+            log.debug(String.format("[VauClient %d] ACQUIRED by %s acquiredAt=%d", hashCode(), threadName, acquiredAt.get()));
         }
         return acquired;
     }
@@ -125,7 +128,7 @@ public class VauClient {
             return vauStateMachine.decryptVauMessage(bytes);
         } finally {
             String threadName = Thread.currentThread().getName();
-            log.fine(String.format("[VauClient %d] RELEASE by %s acquiredAt=%d", hashCode(), threadName, acquiredAt.get()));
+            log.debug(String.format("[VauClient %d] RELEASE by %s acquiredAt=%d", hashCode(), threadName, acquiredAt.get()));
             release();
         }
     }
@@ -136,7 +139,7 @@ public class VauClient {
         if (hangsTime == null || hangsTime <= delta) {
             try {
                 String threadName = Thread.currentThread().getName();
-                log.fine(
+                log.debug(
                     String.format(
                         "[VauClient %d] FORCE RELEASE by %s hangsTime=%d delta=%d acquiredAt=%d",
                         hashCode(), threadName, hangsTime, delta, acquiredAt

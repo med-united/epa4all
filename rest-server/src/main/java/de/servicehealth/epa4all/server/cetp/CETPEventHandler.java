@@ -19,14 +19,14 @@ import de.servicehealth.feature.FeatureConfig;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.Response;
-import org.jboss.logging.MDC;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
@@ -37,7 +37,7 @@ import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 public class CETPEventHandler extends AbstractCETPEventHandler {
 
-    private static final Logger log = Logger.getLogger(CETPEventHandler.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CETPEventHandler.class.getName());
 
     private final Event<WebSocketPayload> webSocketPayloadEvent;
     private final InsuranceDataService insuranceDataService;
@@ -84,7 +84,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             .filter(p -> !p.getKey().equals("CardHolderName"))
             .map(p -> String.format("key=%s value=%s", p.getKey(), p.getValue())).collect(Collectors.joining(", "));
 
-        log.fine(String.format("[%s] Card inserted: params: %s", correlationId, paramsStr));
+        log.debug(String.format("[%s] Card inserted: params: %s", correlationId, paramsStr));
     }
 
     @Override
@@ -113,21 +113,23 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
                 String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
 
-                InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, egkHandle, runtimeConfig);
+                InsuranceData insuranceData = insuranceDataService.getData(telematikId, egkHandle, runtimeConfig);
                 if (insuranceData == null) {
                     if (featureConfig.isExternalPnwEnabled()) {
-                        log.warning(String.format(
+                        log.warn(String.format(
                             "PNW is not found for EGK=%s, ReadVSD is disabled, use external PNW call", egkHandle
                         ));
                         return;
                     } else {
-                        insuranceData = insuranceDataService.readVsd(telematikId, egkHandle, null, smcbHandle, runtimeConfig);
+                        insuranceData = insuranceDataService.initData(telematikId, egkHandle, null, smcbHandle, runtimeConfig);
                     }
                 }
                 String insurantId = insuranceData.getInsurantId();
                 EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
                 String backend = epaApi.getBackend();
-                Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, smcbHandle, configurations.getKonnektorHost());
+                String konnektorHost = configurations.getKonnektorHost();
+                String workplaceId = configurations.getWorkplaceId();
+                Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, smcbHandle, konnektorHost, workplaceId);
                 try (Response response = epaCallGuard.callAndRetry(backend, () -> epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders))) {
                     byte[] bytes = response.readEntity(byte[].class);
                     EpaContext epaContext = new EpaContext(backend, true, insuranceData, Map.of());
@@ -137,7 +139,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     cardlinkClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
                 }
             } catch (Exception e) {
-                log.log(Level.WARNING, String.format("[%s] Could not get medication PDF", correlationId), e);
+                log.warn(String.format("[%s] Could not get medication PDF", correlationId), e);
                 String error = printException(e);
                 cardlinkClient.sendJson(
                     correlationId,
@@ -148,11 +150,17 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             }
         } else {
             String msgFormat = "Ignored \"CARD/INSERTED\" values=%s";
-            log.log(Level.INFO, String.format(msgFormat, paramsMap));
+            log.info(String.format(msgFormat, paramsMap));
         }
     }
 
-    private Map<String, String> prepareXHeaders(EpaAPI epaApi, String insurantId, String smcbHandle, String konnectorHost) {
+    private Map<String, String> prepareXHeaders(
+        EpaAPI epaApi,
+        String insurantId,
+        String smcbHandle,
+        String konnectorHost,
+        String workplaceId
+    ) {
         String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
         String epaBackend = epaApi.getBackend();
         Map<String, String> map = new HashMap<>(Map.of(
@@ -160,7 +168,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             X_BACKEND, epaBackend,
             X_USER_AGENT, userAgent
         ));
-        vauNpProvider.getVauNp(smcbHandle, konnectorHost, epaBackend).ifPresent(vauNp -> map.put(VAU_NP, vauNp));
+        vauNpProvider.getVauNp(smcbHandle, konnectorHost, workplaceId, epaBackend).ifPresent(vauNp -> map.put(VAU_NP, vauNp));
         return map;
     }
 

@@ -13,12 +13,12 @@ import java.util.function.Consumer;
 
 public class VauNpAction extends AbstractAuthAction {
 
-    private final Consumer<String> authConsumer;
+    private final Consumer<SendAuthCodeSCtype> authConsumer;
 
     public VauNpAction(
         AuthenticatorClient authenticatorClient,
         DiscoveryDocumentResponse discoveryDocumentResponse,
-        Consumer<String> authConsumer,
+        Consumer<SendAuthCodeSCtype> authConsumer,
         IdpFunc idpFunc
     ) {
         super(idpFunc, authenticatorClient, discoveryDocumentResponse);
@@ -41,7 +41,6 @@ public class VauNpAction extends AbstractAuthAction {
         SendAuthCodeSCtype sendAuthCodeSC = new SendAuthCodeSCtype();
         sendAuthCodeSC.setAuthorizationCode(authenticationResponse.getCode());
         sendAuthCodeSC.setClientAttest(clientAttest);
-        SendAuthCodeSC200Response sendAuthCodeSC200Response = idpFunc.getSendAuthCodeFunc().apply(sendAuthCodeSC);
-        authConsumer.accept(sendAuthCodeSC200Response.getVauNp());
+        authConsumer.accept(sendAuthCodeSC);
     }
 }

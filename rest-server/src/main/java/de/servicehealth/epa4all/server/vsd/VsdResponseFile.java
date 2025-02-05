@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.smcb;
+package de.servicehealth.epa4all.server.vsd;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
@@ -8,6 +8,8 @@ import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
 import jakarta.xml.bind.DatatypeConverter;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -16,8 +18,6 @@ import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.server.entitlement.EntitlementService.AUDIT_EVIDENCE_NO_DEFINED;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
@@ -25,7 +25,7 @@ import static de.servicehealth.utils.ServerUtils.unzipAndSaveDataToFile;
 
 public class VsdResponseFile {
 
-    private static final Logger log = Logger.getLogger(WebdavSmcbManager.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(VsdResponseFile.class.getName());
 
     public static final String UNDEFINED_PZ = "undefined";
 
@@ -41,7 +41,7 @@ public class VsdResponseFile {
         try {
             readVSDJaxbContext = JAXBContext.newInstance(ReadVSDResponse.class);
         } catch (JAXBException e) {
-            log.log(Level.SEVERE, "Could not create JAXBContext", e);
+            log.error("Could not create JAXBContext", e);
         }
     }
 
@@ -81,7 +81,7 @@ public class VsdResponseFile {
                 try {
                     f.createNewFile();
                 } catch (Exception e) {
-                    log.log(Level.SEVERE, "Can't create a file: " + f.getAbsolutePath());
+                    log.error("Can't create a file: " + f.getAbsolutePath());
                 }
             }
         });
@@ -117,7 +117,7 @@ public class VsdResponseFile {
                 );
             } catch (Exception e) {
                 String msg = String.format("Error while reading insurance data for KVNR=%s", kvnr);
-                log.log(Level.SEVERE, msg, e);
+                log.error(msg, e);
                 return null;
             } finally {
                 lock.readLock().unlock();
@@ -178,7 +178,7 @@ public class VsdResponseFile {
             unzipAndSaveDataToFile(readVSDResponse.getGeschuetzteVersichertendaten(), geschuetzteVersichertendatenFile);
             unzipAndSaveDataToFile(readVSDResponse.getPruefungsnachweis(), pruefungsnachweisFile);
         } catch (Exception e) {
-            log.log(Level.WARNING, "Could not save ReadVSDResponse", e);
+            log.warn("Could not save ReadVSDResponse", e);
         } finally {
             lock.writeLock().unlock();
         }

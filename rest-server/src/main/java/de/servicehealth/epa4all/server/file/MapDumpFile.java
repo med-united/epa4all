@@ -2,24 +2,30 @@ package de.servicehealth.epa4all.server.file;
 
 import com.google.common.io.Files;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public abstract class MapDumpFile<K, V> {
 
-    private static final Logger log = Logger.getLogger(MapDumpFile.class.getName());
+    protected static final Logger log = LoggerFactory.getLogger(MapDumpFile.class.getName());
+    private static final Map<Class<?>, ReentrantReadWriteLock> filesLocks = new ConcurrentHashMap<>();
 
     protected final File file;
 
     public MapDumpFile(File folder) throws IOException {
+        filesLocks.putIfAbsent(getClass(), new ReentrantReadWriteLock(true));
+
         String fileName = getFileName();
         file = new File(folder, fileName);
         if (!file.exists()) {
@@ -28,24 +34,49 @@ public abstract class MapDumpFile<K, V> {
         }
     }
 
-    public abstract Map<K, V> get();
-    public abstract void update(Map<K, V> map);
-    public abstract void reset();
+    public Map<K, V> get() {
+        filesLocks.get(getClass()).readLock().lock();
+        try {
+            return load();
+        } catch (Exception e) {
+            log.error(String.format("Unable to load '%s' file, resetting", getFileName()));
+        } finally {
+            filesLocks.get(getClass()).readLock().unlock();
+        }
+        reset();
+        return new HashMap<>();
+    }
+
+    protected interface MapAction<K, V> {
+        void execute(Map<K, V> map);
+    }
+
+    protected void writeLock(Map<K, V> map, MapAction<K, V> action) {
+        filesLocks.get(getClass()).writeLock().lock();
+        try {
+            action.execute(map);
+        } finally {
+            filesLocks.get(getClass()).writeLock().unlock();
+        }
+    }
+
+    public void reset() {
+        writeLock(new HashMap<>(), this::store);
+    }
+
+    public void update(Map<K, V> map) {
+        writeLock(map, this::store);
+    }
 
     protected abstract String getFileName();
     protected abstract Pair<K, V> deserialize(String line);
     protected abstract String serialize(Map.Entry<K, V> entry);
 
-    protected Map<K, V> load() {
-        try {
-            return Files.readLines(file, ISO_8859_1)
-                .stream()
-                .map(this::deserialize)
-                .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
-        } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Unable to load '%s' file", getFileName()));
-            return Map.of();
-        }
+    protected Map<K, V> load() throws Exception {
+        return Files.readLines(file, ISO_8859_1)
+            .stream()
+            .map(this::deserialize)
+            .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
     protected void store(Map<K, V> vauNpMap) {
@@ -57,7 +88,7 @@ public abstract class MapDumpFile<K, V> {
                 os.write(content.getBytes());
             }
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Unable to update '%s' file", getFileName()));
+            log.error(String.format("Unable to store '%s' file", getFileName()));
         }
     }
 }

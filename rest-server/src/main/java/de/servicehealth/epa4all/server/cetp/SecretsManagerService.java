@@ -7,13 +7,13 @@ import de.health.service.config.api.IUserConfigurations;
 import de.servicehealth.utils.SSLResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.utils.SSLUtils.getClientCertificateBytes;
 import static de.servicehealth.utils.SSLUtils.initSSLContext;
@@ -21,7 +21,7 @@ import static de.servicehealth.utils.SSLUtils.initSSLContext;
 @ApplicationScoped
 public class SecretsManagerService implements ISecretsManager {
 
-    private static final Logger log = Logger.getLogger(SecretsManagerService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(SecretsManagerService.class.getName());
 
     private KeyManagerFactory keyManagerFactory;
 
@@ -39,7 +39,7 @@ public class SecretsManagerService implements ISecretsManager {
                 SSLResult sslResult = initSSLContext(certInputStream, certAuthStorePass);
                 keyManagerFactory = sslResult.getKeyManagerFactory();
             } catch (Exception e) {
-                log.log(Level.SEVERE, "There was a problem when creating the SSLContext", e);
+                log.error("There was a problem when creating the SSLContext", e);
             }
         }
     }
@@ -56,7 +56,7 @@ public class SecretsManagerService implements ISecretsManager {
                 SSLResult sslResult = initSSLContext(certInputStream, userConfigurations.getClientCertificatePassword());
                 return sslResult.getKeyManagerFactory();
             } catch (Exception e) {
-                log.log(Level.SEVERE, "Could not create keyManagerFactory", e);
+                log.error("Could not create keyManagerFactory", e);
             }
         }
         return null;

@@ -6,6 +6,8 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Providers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStream;
@@ -13,12 +15,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.logging.Logger;
 
 @Dependent
 public class DirectoryResource extends AbstractResource {
 
-    private static final Logger log = Logger.getLogger(DirectoryResource.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(DirectoryResource.class.getName());
 
     private String davFolder;
 

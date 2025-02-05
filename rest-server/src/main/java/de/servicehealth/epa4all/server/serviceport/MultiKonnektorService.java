@@ -10,28 +10,16 @@ import de.health.service.config.api.UserRuntimeConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.Setter;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.io.File;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @ApplicationScoped
 public class MultiKonnektorService {
-
-    private static final Logger log = Logger.getLogger(MultiKonnektorService.class.getName());
 
     @Getter
     private final ConcurrentHashMap<KonnektorKey, IKonnektorServicePortsAPI> portMap = new ConcurrentHashMap<>();
 
     private final ServicePortProvider servicePortProvider;
-
-    @Setter
-    @ConfigProperty(name = "ere.per.konnektor.config.folder")
-    String configFolder;
 
     @Inject
     public MultiKonnektorService(ServicePortProvider servicePortProvider) {
@@ -46,12 +34,7 @@ public class MultiKonnektorService {
             CertificateServicePortType certificateService = servicePortProvider.getCertificateServicePort(userRuntimeConfig);
             AuthSignatureServicePortType authSignatureService = servicePortProvider.getAuthSignatureServicePortType(userRuntimeConfig);
 
-            try {
-                Map<String, Map<String, String>> map = servicePortProvider.getUserConfigurations2endpointMap();
-                new ServicePortFile(new File(configFolder)).update(map);
-            } catch (Exception e) {
-                log.log(Level.SEVERE, "Error while saving service-ports file");
-            }
+            servicePortProvider.saveEndpointsConfiguration();
 
             return new KonnektorServicePortAggregator(
                 buildContextType(userRuntimeConfig),

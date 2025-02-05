@@ -14,20 +14,17 @@ import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryError;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.jboss.logmanager.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
-
-import static de.health.service.cetp.utils.Utils.saveDataToFile;
 
 public abstract class EpaFileTracker<T extends FileAction> {
 
-    private static final Logger log = Logger.getLogger(EpaFileTracker.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EpaFileTracker.class.getName());
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSS");
     private static final Map<String, RegistryResponseType> resultsMap = new ConcurrentHashMap<>();
@@ -40,7 +37,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
     EpaCallGuard epaCallGuard;
 
     @Inject
-    FolderService folderService;
+    protected FolderService folderService;
 
     @Inject
     EpaMultiService epaMultiService;
@@ -89,7 +86,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
             resultsMap.computeIfPresent(taskId, (k, prev) -> responseType);
         } catch (Exception e) {
             String s = fileAction.isUpload() ? "uploading" : "downloading";
-            log.log(Level.SEVERE, String.format("[%s] Error while %s %s", taskId, s, fileAction), e);
+            log.error(String.format("[%s] Error while %s %s", taskId, s, fileAction), e);
 
             resultsMap.computeIfPresent(taskId, (k, prev) -> {
                 String startedAt = prev.getStatus().split(" ")[1];
@@ -104,22 +101,6 @@ public abstract class EpaFileTracker<T extends FileAction> {
     protected String getFolderCode(StructureDefinition structureDefinition) {
         Map<String, String> map = (Map<String, String>) structureDefinition.getMetadata().getValue();
         return map.get("code");
-    }
-
-    protected void storeNewFile(
-        String fileName,
-        String folderCode,
-        String telematikId,
-        String insurantId,
-        byte[] documentBytes
-    ) throws Exception {
-        if (folderService.appendChecksumFor(telematikId, insurantId, documentBytes)) {
-            File medFolder = getMedFolder(telematikId, insurantId, folderCode);
-            File file = new File(medFolder, fileName);
-            if (!file.exists()) {
-                saveDataToFile(documentBytes, file);
-            }
-        }
     }
 
     private RegistryResponseType prepareInProgressResponse(String taskId) {
@@ -142,15 +123,5 @@ public abstract class EpaFileTracker<T extends FileAction> {
         registryErrorList.getRegistryError().add(registryError);
         responseType.setRegistryErrorList(registryErrorList);
         return responseType;
-    }
-
-    private File getMedFolder(String telematikId, String insurantId, String folderCode) {
-        File medFolder = folderService.getInsurantMedFolder(telematikId, insurantId, folderCode);
-        if (medFolder == null || !medFolder.exists()) {
-            String insurantFolderPath = folderService.getInsurantFolder(telematikId, insurantId).getAbsolutePath();
-            File otherFolder = folderService.getInsurantMedFolder(telematikId, insurantId, "other");
-            medFolder = folderService.createFolder(insurantFolderPath + File.separator + folderCode, otherFolder);
-        }
-        return medFolder;
     }
 }

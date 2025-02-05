@@ -5,13 +5,12 @@ import jakarta.json.bind.JsonbBuilder;
 import jakarta.websocket.Encoder;
 import jakarta.websocket.EndpointConfig;
 import org.eclipse.yasson.internal.JsonBindingBuilder;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonEncoder<T> implements Encoder.Text<T> {
 
-    private static final Logger log = Logger.getLogger(JsonEncoder.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(JsonEncoder.class.getName());
 
     private JsonbBuilder jsonbBuilder;
 
@@ -25,7 +24,7 @@ public class JsonEncoder<T> implements Encoder.Text<T> {
         try (Jsonb build = jsonbBuilder.build()) {
             return build.toJson(object);
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while serializing CashierPayload", e);
+            log.error("Error while serializing CashierPayload", e);
             return e.getMessage();
         }
     }

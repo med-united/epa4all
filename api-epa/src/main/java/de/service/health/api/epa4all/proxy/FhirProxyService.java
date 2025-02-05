@@ -21,17 +21,20 @@ import org.apache.cxf.ext.logging.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static de.servicehealth.vau.VauClient.X_SUBJECT;
+import static de.servicehealth.vau.VauClient.X_WORKPLACE;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpHeaders.ACCEPT;
@@ -41,7 +44,7 @@ import static org.apache.http.HttpHeaders.UPGRADE;
 
 public class FhirProxyService implements IFhirProxy {
 
-    private static final Logger log = Logger.getLogger(FhirProxyService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(FhirProxyService.class.getName());
 
     private final WebClient apiClient;
     private final WebClient renderClient;
@@ -86,13 +89,6 @@ public class FhirProxyService implements IFhirProxy {
         return webClient;
     }
 
-    public Response forwardGet(
-        String fhirPath,
-        Map<String, String> xHeaders
-    ) {
-        return forward(true, false, fhirPath, null, null, null, xHeaders);
-    }
-
     public Response forward(
         boolean isGet,
         boolean ui5,
@@ -116,7 +112,7 @@ public class FhirProxyService implements IFhirProxy {
             map.add(UPGRADE, "h2c");
         }
 
-        String query = excludeQueryParams(baseQuery, Set.of("subject", X_INSURANT_ID, X_KONNEKTOR));
+        String query = excludeQueryParams(baseQuery, Set.of(X_SUBJECT, X_INSURANT_ID, X_KONNEKTOR, X_WORKPLACE));
 
         log.info("Forwarding : " + fhirPath + "?" + query);
 

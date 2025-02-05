@@ -2,7 +2,6 @@ package de.servicehealth.epa4all.server.entitlement;
 
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
@@ -11,15 +10,15 @@ import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.ValidToResponseType;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.logging.Logger;
-
-import static de.servicehealth.epa4all.server.smcb.VsdResponseFile.UNDEFINED_PZ;
+import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.UNDEFINED_PZ;
 
 @ApplicationScoped
 public class EntitlementService {
 
-    private static final Logger log = Logger.getLogger(EntitlementService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EntitlementService.class.getName());
 
     public static final String AUDIT_EVIDENCE_NO_DEFINED = "AuditEvidence is not defined";
 
@@ -47,16 +46,14 @@ public class EntitlementService {
             String msg = String.format("%s for KVNR=%s, skipping the request", AUDIT_EVIDENCE_NO_DEFINED, insurantId);
             throw new AuditEvidenceException(msg);
         }
-        String backend = epaAPI.getBackend();
-        AuthorizationSmcBApi authorizationSmcBApi = epaAPI.getAuthorizationSmcBApi();
-        String jwt = idpClient.createEntitlementPSJWT(backend, smcbHandle, pz, userRuntimeConfig, authorizationSmcBApi);
+        String jwt = idpClient.createEntitlementPSJWT(smcbHandle, pz, userRuntimeConfig);
 
         EntitlementRequestType entitlementRequest = new EntitlementRequestType();
         entitlementRequest.setJwt(jwt);
 
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
         ValidToResponseType response = entitlementsApi.setEntitlementPs(
-            insurantId, userAgent, backend, vauNp, entitlementRequest
+            insurantId, userAgent, epaAPI.getBackend(), vauNp, entitlementRequest
         );
         if (response.getValidTo() != null) {
             insuranceDataService.updateEntitlement(response.getValidTo().toInstant(), telematikId, insurantId);

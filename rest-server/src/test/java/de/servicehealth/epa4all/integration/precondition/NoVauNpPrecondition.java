@@ -3,15 +3,15 @@ package de.servicehealth.epa4all.integration.precondition;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpFile;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class NoVauNpPrecondition implements QuarkusTestResourceLifecycleManager {
 
-    private static final Logger log = Logger.getLogger(NoVauNpPrecondition.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(NoVauNpPrecondition.class.getName());
 
     @Override
     public Map<String, String> start() {
@@ -19,7 +19,7 @@ public class NoVauNpPrecondition implements QuarkusTestResourceLifecycleManager 
         try {
             new VauNpFile(new File(configFolder)).reset();
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Error while start()", e);
+            log.error("Error while NoVauNpPrecondition.start()", e);
         }
         return Map.of();
     }

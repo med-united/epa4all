@@ -3,7 +3,6 @@ package de.servicehealth.epa4all.server.rest.fileserver;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.FileProp;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -14,7 +13,6 @@ import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.MessageBodyReader;
 import jakarta.ws.rs.ext.Providers;
-import jakarta.xml.bind.JAXBElement;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jugs.webdav.jaxrs.xml.elements.ActiveLock;
@@ -30,8 +28,9 @@ import org.jugs.webdav.jaxrs.xml.elements.Prop;
 import org.jugs.webdav.jaxrs.xml.elements.PropFind;
 import org.jugs.webdav.jaxrs.xml.elements.TimeOut;
 import org.jugs.webdav.jaxrs.xml.properties.LockDiscovery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.xml.namespace.QName;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -43,18 +42,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
 
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.jugs.webdav.jaxrs.Headers.DAV;
-import static org.jugs.webdav.jaxrs.xml.elements.PropName.PROPNAME;
 
 public class AbstractResource implements WebDavResource {
 
-    private static final Logger log = Logger.getLogger(AbstractResource.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AbstractResource.class.getName());
 
     @Inject
     Instance<DirectoryResource> directoryResources;
@@ -94,7 +89,7 @@ public class AbstractResource implements WebDavResource {
         builder.header(CONTENT_TYPE, MediaType.TEXT_HTML);
         try {
             if (!resource.exists()) {
-                log.severe(String.format("Resource '%s' does not exist (404).", resource));
+                log.error(String.format("Resource '%s' does not exist (404).", resource));
                 builder = Response.status(404);
                 String html = MessageFormat.format(readResource("/static/404.html"), resource);
                 builder.entity(html);
@@ -107,7 +102,7 @@ public class AbstractResource implements WebDavResource {
                 builder.entity(html);
             }
         } catch (IOException ioe) {
-            log.severe("No resource found: -> " + ioe.getMessage());
+            log.error("No resource found: -> " + ioe.getMessage());
             builder = Response.status(404);
         }
         return logResponse("GET", uriInfo, builder.build());
@@ -174,13 +169,13 @@ public class AbstractResource implements WebDavResource {
         out.flush();
         out.close();
 
-        log.fine(String.format("STORED: %s", resource.getName()));
+        log.debug(String.format("STORED: %s", resource.getName()));
         return logResponse("PUT", uriInfo, Response.created(uriInfo.getRequestUriBuilder().path(url).build()).build());
     }
 
     @Override
     public Response mkcol() {
-        log.fine("Abstract - mkcol(..)");
+        log.debug("Abstract - mkcol(..)");
         return logResponse("MKCOL", Response.status(404).build());
     }
 
@@ -242,13 +237,13 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Response proppatch() {
-        log.fine("Abstract - proppatch(..)");
+        log.debug("Abstract - proppatch(..)");
         return logResponse("PROPPATCH", Response.status(404).build());
     }
 
     @Override
     public Response copy() {
-        log.fine("Abstract - copy(..)");
+        log.debug("Abstract - copy(..)");
         return logResponse("COPY", Response.status(404).build());
     }
 
@@ -260,7 +255,7 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Response delete() {
-        log.fine("Abstract - delete(..)");
+        log.debug("Abstract - delete(..)");
         return logResponse("DELETE", Response.status(404).build());
     }
 
@@ -312,11 +307,11 @@ public class AbstractResource implements WebDavResource {
     }
 
     protected static void logRequest(String method, UriInfo info) {
-        log.fine(String.format("%s %s", method, info.getRequestUri()));
+        log.debug(String.format("%s %s", method, info.getRequestUri()));
     }
 
     protected static void logRequest(String method, String context) {
-        log.fine(String.format("%s %s", method, context));
+        log.debug(String.format("%s %s", method, context));
     }
 
     protected Response logResponse(String method, Response resp) {
@@ -332,9 +327,9 @@ public class AbstractResource implements WebDavResource {
     }
 
     private static void logHeaders(MultivaluedMap<String, ?> headers) {
-        log.fine("Headers:");
+        log.debug("Headers:");
         for (String key : headers.keySet()) {
-            log.fine(String.format("\t%s=%s", key, headers.get(key)));
+            log.debug(String.format("\t%s=%s", key, headers.get(key)));
         }
     }
 }

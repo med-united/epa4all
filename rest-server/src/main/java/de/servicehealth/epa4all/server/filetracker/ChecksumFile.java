@@ -1,6 +1,8 @@
 package de.servicehealth.epa4all.server.filetracker;
 
 import jakarta.xml.bind.DatatypeConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,27 +12,24 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static com.google.common.io.Files.readLines;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class ChecksumFile {
 
-    private static final Logger log = Logger.getLogger(ChecksumFile.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ChecksumFile.class.getName());
 
     public static final String CHECKSUM_FILE_NAME = "sha256checksums";
 
     private final static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private final String insurantId;
     private final File file;
 
-    public ChecksumFile(File insurantFolder, String insurantId) throws IOException {
-        this.insurantId = insurantId;
+    public ChecksumFile(File insurantFolder) throws IOException {
         file = new File(insurantFolder, CHECKSUM_FILE_NAME);
         if (!file.exists()) {
+            log.info(String.format("Creating 'sha256checksums' in the folder '%s'", insurantFolder.getAbsolutePath()));
             file.createNewFile();
         }
     }
@@ -38,26 +37,31 @@ public class ChecksumFile {
     public Set<String> getChecksums() throws Exception {
         lock.readLock().lock();
         try {
-            return new HashSet<>(readLines(file, ISO_8859_1).stream().filter(s -> !s.trim().isEmpty()).toList());
+            return new HashSet<>(readLines(file, ISO_8859_1));
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    public boolean appendChecksumFor(byte[] bytes) {
+    public boolean appendChecksumFor(byte[] bytes, String insurantId) {
         lock.writeLock().lock();
         try {
+            if (bytes == null || bytes.length == 0) {
+                log.warn("[ChecksumFile] attempt to add checksum for empty bytes array");
+                return false;
+            }
             String checksum = calculateChecksum(bytes);
-            if (new HashSet<>(readLines(file, ISO_8859_1)).contains(checksum)) {
+            HashSet<String> checksums = new HashSet<>(readLines(file, ISO_8859_1));
+            if (checksums.contains(checksum)) {
                 return false;
             }
             try (FileOutputStream os = new FileOutputStream(file, true)) {
-                String newLine = checksum + "\n";
+                String newLine = checksums.isEmpty() ? checksum : "\n" + checksum;
                 os.write(newLine.getBytes());
             }
             return true;
         } catch (Exception e) {
-            log.log(Level.SEVERE, "Unable to append 'sha256checksums' file for " + insurantId, e);
+            log.error("Unable to append 'sha256checksums' file for " + insurantId, e);
         } finally {
             lock.writeLock().unlock();
         }

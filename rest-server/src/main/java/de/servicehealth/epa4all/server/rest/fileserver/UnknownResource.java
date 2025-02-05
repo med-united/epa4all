@@ -4,16 +4,17 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.jugs.webdav.jaxrs.methods.MKCOL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Logger;
 
 @Dependent
 public class UnknownResource extends AbstractResource {
 
-    private static final Logger log = Logger.getLogger(UnknownResource.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(UnknownResource.class.getName());
 
     public void init(String davFolder, File resource, String url) {
         super.init(davFolder, resource, url);
@@ -21,7 +22,7 @@ public class UnknownResource extends AbstractResource {
 
     @MKCOL
     public Response mkcol() {
-        log.fine("mkcol(..folder..) - " + url);
+        log.debug("mkcol(..folder..) - " + url);
         return logResponse("MKCOL", doMkcol());
     }
 
@@ -45,7 +46,7 @@ public class UnknownResource extends AbstractResource {
 
     @Override
     public Response options() {
-        log.fine("UnknownResource - options(..)");
+        log.debug("UnknownResource - options(..)");
         Response.ResponseBuilder builder = withDavHeader(Response.ok());// noContent();
         /*
          * builder.header("Allow","");

@@ -43,6 +43,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.ByteArrayInputStream;
@@ -55,7 +57,6 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static de.gematik.ws.conn.certificateservice.v6.CryptType.RSA;
@@ -68,12 +69,13 @@ import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 @ApplicationScoped
 public class KonnektorClient implements IKonnektorClient {
 
-    private static final Logger log = Logger.getLogger(KonnektorClient.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(KonnektorClient.class.getName());
 
     private final ConcurrentHashMap<KonnektorKey, String> smcbMap = new ConcurrentHashMap<>();
 
     @Getter
     private final ConcurrentHashMap<String, String> telematikMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> egkMap = new ConcurrentHashMap<>();
 
     private final Object emptyInput = new Object();
 
@@ -131,34 +133,26 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {
-        try {
-            return smcbMap.computeIfAbsent(new KonnektorKey(userRuntimeConfig), konnektorKey -> {
-                try {
-                    List<Card> cards = getCards(userRuntimeConfig, SMC_B);
-                    if (vsdConfig.isHandlesTestMode()) {
-                        Optional<Card> cardOpt = cards.stream()
-                            .filter(c -> vsdConfig.getTestSmcbCardholderName().equals(c.getCardHolderName()))
-                            .findAny();
-                        return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
-                    } else {
-                        String primaryIccsn = vsdConfig.getPrimaryIccsn();
-                        return cards.stream()
-                            .filter(c -> primaryIccsn.equals(c.getIccsn()))
-                            .findAny()
-                            .map(Card::getCardHandle)
-                            .orElseThrow(() -> new CetpFault(String.format("Could not get SMC-B card for ICCSN: %s", primaryIccsn)));
-                    }
-                } catch (CetpFault e) {
-                    throw new IllegalStateException(e);
+        return computeIfAbsentCetpEx(
+            smcbMap,
+            new KonnektorKey(userRuntimeConfig),
+            userRuntimeConfig,
+            (key, config) -> {
+                List<Card> cards = getCards(config, SMC_B);
+                if (vsdConfig.isHandlesTestMode()) {
+                    Optional<Card> cardOpt = cards.stream()
+                        .filter(c -> vsdConfig.getTestSmcbCardholderName().equals(c.getCardHolderName()))
+                        .findAny();
+                    return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
+                } else {
+                    String primaryIccsn = vsdConfig.getPrimaryIccsn();
+                    return cards.stream()
+                        .filter(c -> primaryIccsn.equals(c.getIccsn()))
+                        .findAny()
+                        .map(Card::getCardHandle)
+                        .orElseThrow(() -> new CetpFault(String.format("Could not get SMC-B card for ICCSN: %s", primaryIccsn)));
                 }
             });
-        } catch (IllegalStateException e) {
-            if (e.getCause() instanceof CetpFault cetpFault) {
-                throw cetpFault;
-            } else {
-                throw new CetpFault(e.getMessage());
-            }
-        }
     }
 
     public String getKvnr(UserRuntimeConfig userRuntimeConfig, String egkHandle) throws CetpFault {
@@ -171,11 +165,20 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public String getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) throws CetpFault {
-        List<Card> cards = getCards(userRuntimeConfig, EGK);
-        Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
-        return vsdConfig.isHandlesTestMode()
-            ? card.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle())
-            : card.map(Card::getCardHandle).orElseThrow(() -> new CetpFault(String.format("Could not get card for insurantId: %s", insurantId)));
+        return computeIfAbsentCetpEx(
+            egkMap,
+            insurantId,
+            userRuntimeConfig,
+            (key, config) -> {
+                List<Card> cards = getCards(config, EGK);
+                Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
+                return vsdConfig.isHandlesTestMode()
+                    ? card.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle())
+                    : card.map(Card::getCardHandle).orElseThrow(() ->
+                    new CetpFault(String.format("Could not get EGK card for insurantId: %s", insurantId))
+                );
+            }
+        );
     }
 
     @Override

@@ -3,7 +3,6 @@ package de.servicehealth.epa4all.server.cdi;
 import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
-import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
@@ -13,17 +12,23 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static de.servicehealth.vau.VauClient.X_WORKPLACE;
 
 @Provider
 public class UserRuntimeConfigProducer implements ContainerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(UserRuntimeConfigProducer.class.getName());
 
     @Inject
     DefaultUserConfig defaultUserConfig;
@@ -41,15 +46,26 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
     @FromHttpPath
     @Produces
     public UserRuntimeConfig userRuntimeConfig() {
-        if (info.getQueryParameters().containsKey(X_KONNEKTOR)) {
-            String konnektor = info.getQueryParameters().get(X_KONNEKTOR).getFirst();
-            Optional<String> configKey = konnektorsConfigs.keySet().stream().filter(s -> s.startsWith(konnektor)).findAny();
-            if (configKey.isPresent()) {
-                IUserConfigurations userConfigurations = konnektorsConfigs.get(configKey.get()).getUserConfigurations();
-                return new RuntimeConfig(konnektorDefaultConfig, userConfigurations);
-            }
+        String konnektor = getQueryParameter(X_KONNEKTOR);
+        String workplaceId = getQueryParameter(X_WORKPLACE);
+        List<KonnektorConfig> foundConfigs = konnektorsConfigs.entrySet().stream()
+            .filter(e -> konnektor == null || e.getKey().startsWith(konnektor))
+            .filter(e -> workplaceId == null || e.getKey().endsWith(workplaceId))
+            .map(Map.Entry::getValue)
+            .toList();
+
+        if (foundConfigs.size() != 1) {
+            String c = foundConfigs.isEmpty() ? "Zero" : "Multiple";
+            String msg = "%s KonnektorConfigs found for konnektor=%s workplace=%s, using default";
+            log.warn(String.format(msg, c, konnektor, workplaceId));
+            return defaultUserConfig;
         }
-        return defaultUserConfig;
+        return new RuntimeConfig(konnektorDefaultConfig, foundConfigs.getFirst().getUserConfigurations());
+    }
+
+    private String getQueryParameter(String parameterName) {
+        MultivaluedMap<String, String> queryParameters = info.getQueryParameters();
+        return queryParameters.containsKey(parameterName) ? queryParameters.get(parameterName).getFirst(): null;
     }
 
     @Override
