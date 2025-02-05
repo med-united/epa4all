@@ -2,10 +2,15 @@ server:
   http_listen_port: 3102
 
 positions:
-  filename: /tmp/positions.yaml
+  filename: /opt/epa4all/promtail/positions.yaml
 
 clients:
-  - url: http://host.docker.internal:3100/loki/api/v1/push
+#  - url: http://host.docker.internal:3100/loki/api/v1/push
+
+  - url: https://<GRAFANA_CLOUD_USER_ID>:<API_KEY>@logs-prod-us-central1.grafana.net/loki/api/v1/push
+    basic_auth:
+      username: "<GRAFANA_CLOUD_USER_ID>"
+      password: "<API_KEY>"
 
 scrape_configs:
   - job_name: epa4all
@@ -14,7 +19,7 @@ scrape_configs:
         - localhost
       labels:
         job: epa4all
-        __path__: /tmp/epa4all.log
+        __path__: /opt/epa4all/promtail/epa4all.log
     pipeline_stages:
       - json:
           expressions:
@@ -23,34 +28,44 @@ scrape_configs:
             message: message
             thread: threadName
             level: level
-#            exception: stackTrace
+            exception: stackTrace
             client: servicehealth_client_id
 #            mdc: mdc
+
 #      - json:
-#          expressions:
-#            vauSession: vauSession
-#            iccsn: iccsn
-#            konnektor: konnektor
-#          source: mdc
+#        source: mdc
+#        expressions:
+#          vauSession: vauSession
+#          iccsn: iccsn
+#          konnektor: konnektor
+#
 #      - template:
 #          source: vauSession
-#          template: '{{ if eq .vauSession nil }}n/a{{ else }}{{ .vauSession }}{{ end }}'
+#          template: '{{ .vauSession | default "" }}'
+#
 #      - template:
 #          source: iccsn
-#          template: '{{ if eq .iccsn nil }}n/a{{ else }}{{ .iccsn }}{{ end }}'
+#          template: '{{ .iccsn | default "" }}'
+#
 #      - template:
 #          source: konnektor
-#          template: '{{ if eq .konnektor nil }}n/a{{ else }}{{ .konnektor }}{{ end }}'
-#      - template:
-#          source: exception
-#          template: '{{ if eq .exception nil }}n/a{{ else }}{{ .exception }}{{ end }}'
+#          template: '{{ .konnektor | default "" }}'
+
+      - template:
+          source: message
+          template: '{{if .message}}{{.message | replace "\\n" "\n" }}{{end}}'
+
+      - template:
+          source: exception
+          template: '{{if .exception}}{{.exception | replace "\\n" "\n" | replace "\\t" "\t" }}{{end}}'
+
       - labels:
           loggerName:
           message:
           thread:
           level:
           client:
-#          exception:
+          exception:
 #          vauSession:
 #          iccsn:
 #          konnektor:
