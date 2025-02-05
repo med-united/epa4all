@@ -25,19 +25,18 @@ sap.ui.define([
 
             oMedicationTable.setVisible(false);
 
-            const fnInitialFiltering = function (oEvent) {
+            const fnInitialFilteringBound = function (oEvent) {
                 const oBindingContext = oMedicationTable.getBindingContext();
                 if (oBindingContext) {
                     const sPatientId = oBindingContext.getPath().split("/")[2];
 
                     if (sPatientId) {
                         this.filterMedicationTableToPatient(sPatientId);
-                        oMedicationTable.setVisible(true);
-                        oMedicationTable.detachModelContextChange(fnInitialFiltering);
+                        oMedicationTable.detachModelContextChange(fnInitialFilteringBound);
                     }
                 }
-            };
-            oMedicationTable.attachModelContextChange(fnInitialFiltering.bind(this));
+            }.bind(this);
+            oMedicationTable.attachModelContextChange(fnInitialFilteringBound);
 
             this._oMedicationSearchProvider = new MedicationSearchProvider();
             // npm install -g local-cors-proxy
@@ -109,17 +108,23 @@ sap.ui.define([
             const sWebDavPath = "/response/"+iPatientModelOffest;
             const kvnr = oWebdavModel.getProperty(sWebDavPath+"/propstat/prop/displayname");
 
+            const oMedicationTable = this.getView().byId("medicationTable");
             if (kvnr) {
-                aFilters.push(new FHIRFilter({
-                    path: "x-insurantid",
-                    operator: "eq",
-                    value1: kvnr,
-                    valueType: "string"
-                }));
+                const aFilters = [
+                    new FHIRFilter({
+                        path: "x-insurantid",
+                        operator: "eq",
+                        value1: kvnr,
+                        valueType: "string"
+                    })
+                ];
+                const oBinding = oMedicationTable.getBinding("items");
+                oBinding.filter(aFilters);
+
+                oMedicationTable.setVisible(true);
+            } else {
+                oMedicationTable.setVisible(false);
             }
-            const oTable = this.getView().byId("medicationTable");
-            const oBinding = oTable.getBinding("items");
-            oBinding.filter(aFilters);
         },
         addMedication: function () {
             let sPatientId = this.byId("medicationTable").getBindingContext().getPath().split("/")[2];
