@@ -1,6 +1,8 @@
 package de.servicehealth.epa4all.common;
 
 import org.apache.commons.lang3.time.StopWatch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,8 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -25,7 +25,7 @@ public class TestUtils {
     public final static String WIREMOCK = "wiremock/";
     public final static String FIXTURES = WIREMOCK + "fixtures";
 
-    private static final Logger log = Logger.getLogger(TestUtils.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(TestUtils.class.getName());
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -42,10 +42,10 @@ public class TestUtils {
                 running = output.contains(containerName);
             }
         } catch (Throwable t) {
-            log.log(Level.SEVERE, "Error while staring 'docker ps' for " + containerName, t);
+            log.error("Error while staring 'docker ps' for " + containerName, t);
         }
         if (!running) {
-            log.warning(containerName + " is not running");
+            log.warn(containerName + " is not running");
         }
         return running;
     }
@@ -66,7 +66,7 @@ public class TestUtils {
                         }
                         return line != null && line.contains("CONNECTED");
                     } catch (Throwable t) {
-                        log.log(Level.SEVERE, "Error while staring 'openssl' for " + backend, t);
+                        log.error("Error while staring 'openssl' for " + backend, t);
                         return false;
                     }
                 })
@@ -80,10 +80,10 @@ public class TestUtils {
             }
 
         } catch (Throwable t) {
-            log.log(Level.SEVERE, "Error while staring 'openssl' for " + backend, t);
+            log.error("Error while staring 'openssl' for " + backend, t);
         }
         if (!reachable) {
-            log.warning(backend + " is not reachable");
+            log.warn(backend + " is not reachable");
         }
         return reachable;
     }
@@ -93,7 +93,7 @@ public class TestUtils {
         try {
             return action.execute();
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("[%s] Error while running '%s' action", subject, actionName), e);
+            log.error(String.format("[%s] Error while running '%s' action", subject, actionName), e);
             throw e;
         } finally {
             watch.stop();
@@ -107,7 +107,7 @@ public class TestUtils {
                 containers.forEach(b -> log.info(String.format("[%s] Running", b)));
                 action.execute();
             } else {
-                log.warning("Skipping test");
+                log.warn("Skipping test");
             }
             return null;
         });
@@ -119,7 +119,7 @@ public class TestUtils {
                 backends.forEach(b -> log.info(String.format("[%s] Connected", b)));
                 action.execute();
             } else {
-                log.warning("Skipping test");
+                log.warn("Skipping test");
             }
             return null;
         });
@@ -140,7 +140,7 @@ public class TestUtils {
                     try {
                         deleteDirectory(f);
                     } catch (IOException e) {
-                        log.log(Level.SEVERE, e.getMessage());
+                        log.error(e.getMessage());
                     }
                 } else {
                     f.delete();

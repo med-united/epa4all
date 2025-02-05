@@ -27,9 +27,9 @@ public class InsuranceDataIT extends AbstractVsdTest {
 
         mockWebdavConfig(TEST_FOLDER);
         mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
-        mockVsdService();
+        mockVsdService(kvnr);
 
-        InsuranceData insuranceData = insuranceDataService.readVsd(telematikId, null, kvnr, smcbHandle, null);
+        InsuranceData insuranceData = insuranceDataService.initData(telematikId, null, kvnr, smcbHandle, null);
         assertEquals(kvnr, insuranceData.getInsurantId());
     }
 

@@ -10,7 +10,7 @@ import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
-import de.servicehealth.epa4all.server.smcb.VsdResponseFile;
+import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static de.servicehealth.epa4all.common.TestUtils.runWithDockerContainers;
+import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -62,7 +63,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
         egkHandle = "EGK-127";
         smcbHandle = "SMC-B-123";
 
-        File localFolder = folderService.getInsurantMedFolder(telematikId, kvnr, "local");
+        File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
         new VsdResponseFile(localFolder).cleanUp();
 
         new EntitlementFile(localFolder, kvnr).reset();
@@ -72,7 +73,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
     public void medicationPdfUploadedForExternalPnw() throws Exception {
         runWithDockerContainers(containers, () -> {
             mockWebdavConfig(TEST_FOLDER);
-            mockVsdService();
+            mockVsdService(kvnr);
             mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
 
             CardlinkClient cardlinkClient = mock(CardlinkClient.class);
@@ -111,7 +112,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
             validTo = insuranceDataService.getEntitlementExpiry(telematikId, kvnr);
             assertNotNull(validTo);
 
-            InsuranceData insuranceData = insuranceDataService.getLocalInsuranceData(telematikId, kvnr);
+            InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
             assertEquals("WDExMDQ4NTI5MTE3MzIxODk5OTdVWDFjxzDPSFvdIrRmmmOWFP/aP5rakVUqQj8=", insuranceData.getPz());
 
             receiveCardInsertedEvent(

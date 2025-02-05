@@ -7,6 +7,8 @@ import org.apache.cxf.interceptor.AttachmentInInterceptor;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,8 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -29,7 +29,7 @@ import static org.apache.cxf.phase.Phase.RECEIVE;
 
 public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message> {
 
-    private static final Logger log = Logger.getLogger(CxfVauReadSoapInterceptor.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CxfVauReadSoapInterceptor.class.getName());
 
     public static final String SOAP_INVAL_AUTH = "InvalAuth";
 
@@ -47,7 +47,7 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
         try {
             if (!message.get(RESPONSE_CODE).equals(200)) {
                 String body = new String(message.getContent(InputStream.class).readAllBytes());
-                throw new Fault(body, log);
+                throw new Fault(new IllegalStateException(body));
             }
             String vauCid = (String) message.getExchange().get(VAU_CID);
             VauClient vauClient = vauFacade.getVauClient(vauCid);
@@ -94,7 +94,7 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
         try {
             IOUtils.copy(is, bout);
         } catch (IOException ex) {
-            log.log(Level.SEVERE, ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
         }
         return bout.toByteArray();
     }

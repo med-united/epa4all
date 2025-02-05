@@ -23,6 +23,8 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
@@ -31,8 +33,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.Base64;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,7 +58,7 @@ import static org.apache.http.client.fluent.Executor.newInstance;
 
 public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
-    private static final Logger log = Logger.getLogger(FHIRRequestVAUInterceptor.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(FHIRRequestVAUInterceptor.class.getName());
 
     static {
         Security.addProvider(new BouncyCastlePQCProvider());
@@ -113,7 +113,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
                 ((HttpRequestWrapper) entityRequest).setURI(URI.create(vauUri));
 
             } catch (Exception e) {
-                log.log(Level.SEVERE, "Error while sending DIRECT Fhir request, encrypted = " + encrypted, e);
+                log.error("Error while sending DIRECT Fhir request, encrypted = " + encrypted, e);
                 if (encrypted) {
                     boolean noUserSession = e.getMessage().contains(NO_USER_SESSION);
                     vauFacade.handleVauSession(vauCid, noUserSession, false);

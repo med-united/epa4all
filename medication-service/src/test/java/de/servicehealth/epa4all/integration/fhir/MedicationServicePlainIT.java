@@ -12,10 +12,11 @@ import org.apache.http.client.fluent.Executor;
 import org.apache.http.impl.client.HttpClients;
 import org.hl7.fhir.r4.model.Medication;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.common.TestUtils.isDockerContainerRunning;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
@@ -28,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestProfile(PlainLocalTestProfile.class)
 public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
 
-    private final static Logger log = Logger.getLogger(MedicationServicePlainIT.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(MedicationServicePlainIT.class.getName());
 
     @Test
     public void medicationSemiCRUDWorks() {

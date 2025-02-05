@@ -7,11 +7,12 @@ import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.getProtocolHeaders;
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.putProtocolHeader;
@@ -26,7 +27,7 @@ import static org.apache.cxf.message.Message.RESPONSE_CODE;
 
 public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
-    private static final Logger log = Logger.getLogger(CxfVauReadInterceptor.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CxfVauReadInterceptor.class.getName());
 
     public static final Set<String> MEDIA_TYPES = Set.of(
         "application/octet-stream", "application/pdf", "image/png", "image/jpeg", "image/gif", "image/bmp"
@@ -73,6 +74,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
                         message.put(CONTENT_TYPE, contentType);
                         if (!MEDIA_TYPES.contains(contentType)) {
                             String content = new String(payload);
+                            content = content.substring(0, Math.min(200, content.length())) + " ********* ";
                             log.info(String.format("[%s] Response PAYLOAD: %s", operation, content));
                         }
                     });

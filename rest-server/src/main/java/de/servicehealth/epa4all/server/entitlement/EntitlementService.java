@@ -10,15 +10,15 @@ import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.ValidToResponseType;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.logging.Logger;
-
-import static de.servicehealth.epa4all.server.smcb.VsdResponseFile.UNDEFINED_PZ;
+import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.UNDEFINED_PZ;
 
 @ApplicationScoped
 public class EntitlementService {
 
-    private static final Logger log = Logger.getLogger(EntitlementService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EntitlementService.class.getName());
 
     public static final String AUDIT_EVIDENCE_NO_DEFINED = "AuditEvidence is not defined";
 

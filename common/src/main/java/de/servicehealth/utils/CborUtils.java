@@ -2,14 +2,14 @@ package de.servicehealth.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Base64;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class CborUtils {
 
-    private static final java.util.logging.Logger log = Logger.getLogger(CborUtils.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CborUtils.class.getName());
 
     public static void printCborMessage(
         boolean m2,
@@ -45,7 +45,7 @@ public class CborUtils {
             }
         } catch (Exception ex) {
             String messageType = m2 ? "M2" : "M4";
-            log.log(Level.SEVERE, String.format("[%s] CBOR message is corrupted: %s", messageType, new String(message)));
+            log.error(String.format("[%s] CBOR message is corrupted: %s", messageType, new String(message)));
         }
     }
 }

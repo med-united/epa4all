@@ -7,13 +7,13 @@ import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.context.ApplicationScoped;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
-
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
 
-    private static final Logger log = Logger.getLogger(EpaFileDownloader.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EpaFileDownloader.class.getName());
 
     @Override
     protected RegistryResponseType handleTransfer(
@@ -42,7 +42,7 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
         String mimeType = documentResponse.getMimeType();
         String fileName = documentResponse.getDocumentUniqueId();
         if (!fileDownload.getFileName().contains(fileName)) {
-            log.warning(String.format("[taskId=%s] file names mismatch: %s %s", taskId, fileName, fileDownload.getFileName()));
+            log.warn(String.format("[taskId=%s] file names mismatch: %s %s", taskId, fileName, fileDownload.getFileName()));
         }
 
         StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(mimeType, documentBytes);
@@ -50,7 +50,7 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
         String insurantId = fileDownload.getKvnr();
         String folderCode = getFolderCode(structureDefinition);
 
-        storeNewFile(fileDownload.getFileName(), folderCode, telematikId, insurantId, documentBytes);
+        folderService.storeNewFile(fileDownload.getFileName(), folderCode, telematikId, insurantId, documentBytes);
         log.info(String.format("[%s/%s] downloaded successfully", folderCode, fileDownload.getFileName()));
     }
 }

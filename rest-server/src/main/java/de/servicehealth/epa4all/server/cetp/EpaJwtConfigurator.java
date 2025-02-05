@@ -3,14 +3,15 @@ package de.servicehealth.epa4all.server.cetp;
 import de.health.service.cetp.cardlink.JwtConfigurator;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class EpaJwtConfigurator extends JwtConfigurator {
 
-    private static final Logger log = Logger.getLogger(EpaJwtConfigurator.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EpaJwtConfigurator.class.getName());
 
     private final IdpClient idpClient;
 
@@ -26,11 +27,11 @@ public class EpaJwtConfigurator extends JwtConfigurator {
     public void beforeRequest(Map<String, List<String>> headers) {
         try {
             // TODO
-            // idpClient.getBearerToken(userRuntimeConfig, "TODO", token -> // TODO
+            // idpClient.getBearerToken(userRuntimeConfig, "", token ->
             //     headers.put("Authorization", List.of("Bearer " + token))
             // );
         } catch (Exception e) {
-            log.severe("Error while getting Bearer token -> " + e.getMessage());
+            log.error("Error while getting Bearer token -> " + e.getMessage());
         }
     }
 }

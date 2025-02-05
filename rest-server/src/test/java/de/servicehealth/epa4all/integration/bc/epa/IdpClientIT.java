@@ -22,9 +22,10 @@ import kong.unirest.core.Unirest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -32,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @TestProfile(ProxyEpaTestProfile.class)
 public class IdpClientIT {
 
-    private static final Logger log = Logger.getLogger(IdpClientIT.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(IdpClientIT.class.getName());
 
     @Inject
     IdpConfig idpConfig;

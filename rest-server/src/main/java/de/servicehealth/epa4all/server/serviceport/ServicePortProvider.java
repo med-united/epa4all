@@ -22,13 +22,14 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.xml.ws.BindingProvider;
-import lombok.Getter;
 import lombok.Setter;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.ext.logging.LoggingFeature;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -44,35 +45,52 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Set;
 
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.utils.SSLUtils.createSSLContext;
 import static de.servicehealth.utils.SSLUtils.initSSLContext;
+import static de.servicehealth.vau.VauClient.CLIENT_ID;
+import static de.servicehealth.vau.VauClient.VAU_NP;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 @ApplicationScoped
 public class ServicePortProvider extends StartableService {
 
-    private static final Logger log = Logger.getLogger(ServicePortProvider.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ServicePortProvider.class.getName());
 
     private SSLContext defaultSSLContext;
 
-    @Getter
     @Setter
-    Map<String, Map<String, String>> userConfigurations2endpointMap = new HashMap<>();
-   
+    Map<String, Map<String, String>> konnektorsEndpoints = new HashMap<>();
+
     LoggingFeature loggingFeature = new LoggingFeature();
 
     // this must be started after MultiEpaService
     public void onStart() throws Exception {
-        Map<String, Map<String, String>> map = new ServicePortFile(configDirectory).get();
-        userConfigurations2endpointMap.putAll(map);
-        
+        konnektorsEndpoints.putAll(new ServicePortFile(configDirectory).get());
+
         loggingFeature.setPrettyLogging(true);
         loggingFeature.setVerbose(true);
         loggingFeature.setLogMultipart(true);
         loggingFeature.setLogBinary(false);
+
+        loggingFeature.setSensitiveElementNames(Set.of(
+            "ReadCardCertificateResponse",
+            "ExternalAuthenticateResponse",
+            "vau-np",
+            "GetCardsResponse"
+        ));
+        loggingFeature.setSensitiveProtocolHeaderNames(Set.of(VAU_NP, X_USER_AGENT, X_INSURANT_ID, CLIENT_ID));
+    }
+
+    void saveEndpointsConfiguration() {
+        try {
+            new ServicePortFile(configDirectory).update(konnektorsEndpoints);
+        } catch (Exception e) {
+            log.error("Error while saving service-ports file", e);
+        }
     }
 
     @Inject
@@ -85,7 +103,7 @@ public class ServicePortProvider extends StartableService {
                 SSLResult sslResult = initSSLContext(certInputStream, certPass);
                 defaultSSLContext = sslResult.getSslContext();
             } catch (Exception e) {
-                log.log(Level.SEVERE, "There was a problem when creating the SSLContext", e);
+                log.error("There was a problem when creating the SSLContext", e);
                 defaultSSLContext = createFakeDefaultSSLContext();
             }
         } else {
@@ -106,7 +124,7 @@ public class ServicePortProvider extends StartableService {
         CertificateService certificateService = new CertificateService(loggingFeature);
         CertificateServicePortType certificateServicePort = certificateService.getCertificateServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("certificateServiceEndpointAddress");
+        String url = konnektorsEndpoints.get(connectorBaseURL).get("certificateServiceEndpointAddress");
         setEndpointAddress((BindingProvider) certificateServicePort, url, sslContext);
 
         return certificateServicePort;
@@ -117,7 +135,7 @@ public class ServicePortProvider extends StartableService {
         CardService cardService = new CardService(loggingFeature);
         CardServicePortType cardServicePort = cardService.getCardServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("cardServiceEndpointAddress");
+        String url = konnektorsEndpoints.get(connectorBaseURL).get("cardServiceEndpointAddress");
         setEndpointAddress((BindingProvider) cardServicePort, url, sslContext);
 
         return cardServicePort;
@@ -128,7 +146,7 @@ public class ServicePortProvider extends StartableService {
         VSDService vsdService = new VSDService(loggingFeature);
         VSDServicePortType cardServicePort = vsdService.getVSDServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("vsdServiceEndpointAddress");
+        String url = konnektorsEndpoints.get(connectorBaseURL).get("vsdServiceEndpointAddress");
         setEndpointAddress((BindingProvider) cardServicePort, url, sslContext);
 
         return cardServicePort;
@@ -139,7 +157,7 @@ public class ServicePortProvider extends StartableService {
         AuthSignatureService authSignatureService = new AuthSignatureService(loggingFeature);
         AuthSignatureServicePortType authSignatureServicePort = authSignatureService.getAuthSignatureServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("authSignatureServiceEndpointAddress");
+        String url = konnektorsEndpoints.get(connectorBaseURL).get("authSignatureServiceEndpointAddress");
         setEndpointAddress((BindingProvider) authSignatureServicePort, url, sslContext);
 
         return authSignatureServicePort;
@@ -150,7 +168,7 @@ public class ServicePortProvider extends StartableService {
         EventService eventService = new EventService(loggingFeature);
         EventServicePortType eventServicePort = eventService.getEventServicePort();
         String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = userConfigurations2endpointMap.get(connectorBaseURL).get("eventServiceEndpointAddress");
+        String url = konnektorsEndpoints.get(connectorBaseURL).get("eventServiceEndpointAddress");
         setEndpointAddress((BindingProvider) eventServicePort, url, sslContext);
 
         return eventServicePort;
@@ -166,7 +184,7 @@ public class ServicePortProvider extends StartableService {
 
     @SuppressWarnings("resource")
     private void lookupWebServiceURLsIfNecessary(SSLContext sslContext, IUserConfigurations userConfigurations) {
-        if (userConfigurations2endpointMap.containsKey(userConfigurations.getConnectorBaseURL())) {
+        if (konnektorsEndpoints.containsKey(userConfigurations.getConnectorBaseURL())) {
             return;
         }
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
@@ -175,7 +193,7 @@ public class ServicePortProvider extends StartableService {
         // disable hostname verification
         clientBuilder = clientBuilder.hostnameVerifier((h, s) -> true);
         if (userConfigurations.getConnectorBaseURL() == null) {
-            log.warning("ConnectorBaseURL is null, won't read connector.sds");
+            log.warn("ConnectorBaseURL is null, won't read connector.sds");
             return;
         }
 
@@ -243,7 +261,7 @@ public class ServicePortProvider extends StartableService {
                     }
                 }
             }
-            userConfigurations2endpointMap.put(userConfigurations.getConnectorBaseURL(), endpointMap);
+            konnektorsEndpoints.put(userConfigurations.getConnectorBaseURL(), endpointMap);
 
         } catch (ProcessingException | SAXException | IllegalArgumentException | IOException |
                  ParserConfigurationException e) {
@@ -276,12 +294,10 @@ public class ServicePortProvider extends StartableService {
             }
 
             location = endpointNode.getAttributes().getNamedItem("Location").getTextContent();
-            if (location.startsWith(userConfig.getConnectorBaseURL())) {
-                return location;
-            } else {
-                log.warning("Invalid service node. Maybe location: " + location + " does not start with: " + userConfig.getConnectorBaseURL());
-                return location;
+            if (!location.startsWith(userConfig.getConnectorBaseURL())) {
+                log.warn("Invalid service node. Maybe location: " + location + " does not start with: " + userConfig.getConnectorBaseURL());
             }
+            return location;
         }
         throw new IllegalArgumentException("Invalid service node. Maybe location: " + location + " does not start with: " + userConfig.getConnectorBaseURL());
     }

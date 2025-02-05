@@ -5,15 +5,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @ApplicationScoped
 public class StartupEventManager {
 
-    private static final Logger log = Logger.getLogger(StartupEventManager.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(StartupEventManager.class.getName());
 
     @Inject
     Instance<StartupEventListener> listeners;
@@ -28,7 +28,7 @@ public class StartupEventManager {
                     String msg = String.format(
                         "Error while starting %s -> %s", listener.getClass().getSimpleName(), e.getMessage()
                     );
-                    log.log(Level.SEVERE, msg, e);
+                    log.error(msg, e);
                     throw new Error(e);
                 }
             });

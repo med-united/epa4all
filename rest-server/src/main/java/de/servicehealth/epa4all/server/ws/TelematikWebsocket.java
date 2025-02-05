@@ -9,11 +9,11 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.vau.VauClient.TELEMATIK_ID;
 
@@ -22,7 +22,7 @@ import static de.servicehealth.vau.VauClient.TELEMATIK_ID;
 @ApplicationScoped
 public class TelematikWebsocket {
 
-    private static final Logger log = Logger.getLogger(TelematikWebsocket.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(TelematikWebsocket.class.getName());
 
     Map<String, Session> sessions = new ConcurrentHashMap<>();
 
@@ -37,7 +37,7 @@ public class TelematikWebsocket {
             session.getAsyncRemote().sendObject(message, result -> {
                 if (result.getException() != null) {
                     String msg = String.format("[%s] Unable to send WS message", telematikId);
-                    log.log(Level.SEVERE, msg, result.getException());
+                    log.error(msg, result.getException());
                 }
             });
         }

@@ -2,9 +2,12 @@ FROM azul/zulu-openjdk-alpine:21-jre-headless-latest
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
-RUN apk add --no-cache curl bash ca-certificates \
+RUN apk add --no-cache curl bash tini ca-certificates libc6-compat tcpdump less iproute2-ss logger sudo nano socat \
     && mkdir /opt/epa4all \
     && mkdir /opt/epa4all/app \
+    && mkdir /opt/epa4all/promtail \
+    && touch /opt/epa4all/promtail/positions.yaml \
+    && chmod 664 /opt/epa4all/promtail/positions.yaml \
     && mkdir /opt/epa4all/lib \
     && mkdir /opt/epa4all/lib/boot \
     && mkdir /opt/epa4all/lib/main \
@@ -21,6 +24,19 @@ RUN apk add --no-cache curl bash ca-certificates \
     && chmod -R "g+rwX" /opt/epa4all \
     && echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/default-jvm/lib/security/java.security
 
+RUN ls -la /usr/local/bin
+
+WORKDIR /usr/local/bin
+
+COPY production_deployment/promtail.yml /etc/promtail/config.yml
+
+RUN curl -O -L "https://github.com/grafana/loki/releases/download/v3.2.0/promtail-linux-amd64.zip" \
+    && unzip "promtail-linux-amd64.zip" \
+    && mv promtail-linux-amd64 promtail \
+    && chmod a+x promtail \
+    && /usr/local/bin/promtail -version
+
+COPY production_deployment/promtail.yml /etc/promtail/config.yml
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
 COPY --chown=1001 tls/epa-certs/*.pem /opt/epa4all/certs
 COPY --chown=1001 linux-service/run.sh /opt/epa4all
@@ -55,6 +71,6 @@ RUN ls -la /usr/bin/java
 
 USER 1001
 
-ENTRYPOINT [ "/bin/bash", "/opt/epa4all/run.sh" ]
+ENTRYPOINT ["/sbin/tini", "--", "/bin/bash", "/opt/epa4all/run.sh"]
 
 

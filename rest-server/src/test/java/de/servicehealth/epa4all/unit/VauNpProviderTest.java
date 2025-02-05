@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static de.health.service.cetp.konnektorconfig.FSConfigService.CONFIG_DELIMETER;
-import static de.servicehealth.epa4all.server.idp.vaunp.VauNpFile.VAU_NP_FILE_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,7 +48,7 @@ public class VauNpProviderTest {
 
     @AfterEach
     public void afterEach() {
-        new File(TEST_FOLDER, VAU_NP_FILE_NAME).delete();
+        //new File(TEST_FOLDER, VAU_NP_FILE_NAME).delete();
     }
 
     @Test
@@ -75,7 +74,7 @@ public class VauNpProviderTest {
         when(getNonce200Response.getNonce()).thenReturn(nonce);
 
         Response response = mock(Response.class);
-        when(response.getLocation()).thenReturn(URI.create("http://uri.com?www=333"));
+        when(response.getLocation()).thenReturn(URI.create("https://uri.com?www=333"));
 
         SendAuthCodeSC200Response authCodeSC200Response = mock(SendAuthCodeSC200Response.class);
         when(authCodeSC200Response.getVauNp()).thenReturn(vauNp);

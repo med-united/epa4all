@@ -47,7 +47,7 @@ public class CardInsertedDockerIT extends AbstractVsdTest {
             String smcbHandle = "SMC-B-123";
 
             mockWebdavConfig(TEST_FOLDER);
-            mockVsdService();
+            mockVsdService(kvnr);
             mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
 
             CardlinkClient cardlinkClient = mock(CardlinkClient.class);

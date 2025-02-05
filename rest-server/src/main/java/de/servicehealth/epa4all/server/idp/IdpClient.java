@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.idp;
 
 import de.gematik.idp.authentication.AuthenticationChallenge;
+import de.gematik.idp.brainPoolExtension.BrainpoolCurves;
 import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.idp.client.data.AuthorizationRequest;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
@@ -23,6 +24,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.jose4j.jwt.JwtClaims;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.security.Security;
@@ -35,8 +38,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.server.idp.action.AuthAction.URN_BSI_TR_03111_ECDSA;
 import static de.servicehealth.epa4all.server.idp.utils.IdpUtils.getSignedJwt;
@@ -44,7 +45,7 @@ import static de.servicehealth.epa4all.server.idp.utils.IdpUtils.getSignedJwt;
 @ApplicationScoped
 public class IdpClient extends StartableService {
 
-    private final static Logger log = Logger.getLogger(IdpClient.class.getName());
+    private final static Logger log = LoggerFactory.getLogger(IdpClient.class.getName());
 
     public static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
@@ -82,6 +83,7 @@ public class IdpClient extends StartableService {
 
     public void onStart() throws Exception {
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
+        BrainpoolCurves.init();
         retrieveDiscoveryDocument();
     }
 
@@ -104,11 +106,11 @@ public class IdpClient extends StartableService {
                 new DiscoveryDocumentFile<>(configDirectory).store(wrapper);
                 worked = true;
             } catch (Exception ex) {
-                log.log(Level.SEVERE, "Could not read discovery document. Trying again in 10 seconds.", ex);
+                log.error("Could not read discovery document. Trying again in 10 seconds.", ex);
                 try {
                     Thread.sleep(10000);
                 } catch (InterruptedException e) {
-                    log.log(Level.SEVERE, "Could not wait.", e);
+                    log.error("Could not wait.", e);
                 }
             }
         }

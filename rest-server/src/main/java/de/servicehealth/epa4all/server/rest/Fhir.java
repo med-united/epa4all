@@ -48,7 +48,7 @@ public class Fhir extends AbstractResource {
         @QueryParam("ui5") String ui5
     ) throws Exception {
         if (xInsurantId == null) {
-            log.warning(String.format("[Bad Request] Path %s xInsurantId == null", fhirPath));
+            log.warn(String.format("[Bad Request] Path %s xInsurantId == null", fhirPath));
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
         String backend = epaMultiService.getEpaAPI(xInsurantId).getBackend();
@@ -74,7 +74,7 @@ public class Fhir extends AbstractResource {
                 }
             }
         } else {
-            log.warning(String.format("[DUPLICATED Request] Path=%s xInsurantId=%s", fhirPath, xInsurantId));
+            log.warn(String.format("[DUPLICATED Request] Path=%s xInsurantId=%s", fhirPath, xInsurantId));
             return Response.status(Response.Status.TOO_MANY_REQUESTS).build();
         }
     }
@@ -93,7 +93,7 @@ public class Fhir extends AbstractResource {
         byte[] body
     ) throws Exception {
         if (xInsurantId == null) {
-            log.warning(String.format("[Bad Request] Path %s xInsurantId == null", fhirPath));
+            log.warn(String.format("[Bad Request] Path %s xInsurantId == null", fhirPath));
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
         String backend = epaMultiService.getEpaAPI(xInsurantId).getBackend();

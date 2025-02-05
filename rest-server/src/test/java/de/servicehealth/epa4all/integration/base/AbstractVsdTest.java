@@ -32,18 +32,15 @@ import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -52,7 +49,7 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("UnusedReturnValue")
 public abstract class AbstractVsdTest extends AbstractWebdavIT {
 
-    private static final Logger log = Logger.getLogger(AbstractVsdTest.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AbstractVsdTest.class.getName());
 
     public static final String INFORMATION_SERVICE = "information-service";
     public static final String VAU_PROXY_SERVER = "vau-proxy-server";
@@ -148,10 +145,10 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
         return konnektorClientMock;
     }
 
-    protected VsdService mockVsdService() throws Exception {
+    protected VsdService mockVsdService(String kvnr) throws Exception {
         VsdService vsdServiceMock = mock(VsdService.class);
-        ReadVSDResponse readVSDResponse = prepareReadVSDResponse();
-        when(vsdServiceMock.readVsd(any(), any(), any())).thenReturn(readVSDResponse);
+        ReadVSDResponse readVSDResponse = prepareReadVSDResponse(); // TODO
+        when(vsdServiceMock.readVsd(any(), any(), any(), any())).thenReturn(kvnr);
         QuarkusMock.installMockForType(vsdServiceMock, VsdService.class);
         return vsdServiceMock;
     }

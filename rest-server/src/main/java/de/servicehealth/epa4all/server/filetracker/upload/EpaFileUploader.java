@@ -8,13 +8,13 @@ import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import jakarta.enterprise.context.ApplicationScoped;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
-
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class EpaFileUploader extends EpaFileTracker<FileUpload> {
 
-    private static final Logger log = Logger.getLogger(EpaFileUploader.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EpaFileUploader.class.getName());
 
     @Override
     protected RegistryResponseType handleTransfer(FileUpload fileUpload, IDocumentManagementPortType documentPortType) throws Exception {
@@ -50,7 +50,7 @@ public class EpaFileUploader extends EpaFileTracker<FileUpload> {
             byte[] documentBytes = fileUpload.getDocumentBytes();
 
             String folderCode = folderName == null ? getFolderCode(structureDefinition) : folderName;
-            storeNewFile(fileName, folderCode, telematikId, insurantId, documentBytes);
+            folderService.storeNewFile(fileName, folderCode, telematikId, insurantId, documentBytes);
             log.info(String.format("[%s/%s] uploaded successfully", folderCode, fileName));
         }
     }
