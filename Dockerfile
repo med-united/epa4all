@@ -28,13 +28,18 @@ RUN ls -la /usr/local/bin
 
 WORKDIR /usr/local/bin
 
-COPY production_deployment/promtail.yml /etc/promtail/config.yml
+COPY production_deployment/promtail.yaml /etc/promtail/config.yaml
 
-RUN curl -O -L "https://github.com/grafana/loki/releases/download/v3.2.0/promtail-linux-amd64.zip" \
-    && unzip "promtail-linux-amd64.zip" \
-    && mv promtail-linux-amd64 promtail \
+RUN case "$(uname -m)" in \
+    x86_64|amd64) ARCH='amd64' ;; \
+    aarch64|arm64) ARCH='arm64' ;; \
+    *) echo "Unsupported architecture"; exit 1 ;; \
+    esac && \
+    curl -O -L "https://github.com/grafana/loki/releases/download/v3.2.0/promtail-linux-${ARCH}.zip" \
+    && unzip "promtail-linux-${ARCH}.zip" \
+    && mv promtail-linux-${ARCH} promtail \
     && chmod a+x promtail \
-    && /usr/local/bin/promtail -version
+    && rm promtail-linux-${ARCH}.zip
 
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
 COPY --chown=1001 tls/epa-certs/*.pem /opt/epa4all/certs
@@ -71,5 +76,4 @@ RUN ls -la /usr/bin/java
 USER 1001
 
 ENTRYPOINT ["/sbin/tini", "--", "/bin/bash", "/opt/epa4all/run.sh"]
-
 
