@@ -36,7 +36,6 @@ RUN curl -O -L "https://github.com/grafana/loki/releases/download/v3.2.0/promtai
     && chmod a+x promtail \
     && /usr/local/bin/promtail -version
 
-COPY production_deployment/promtail.yml /etc/promtail/config.yml
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
 COPY --chown=1001 tls/epa-certs/*.pem /opt/epa4all/certs
 COPY --chown=1001 linux-service/run.sh /opt/epa4all
