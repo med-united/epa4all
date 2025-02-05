@@ -255,6 +255,7 @@ public class ServicePortProvider extends StartableService {
                     }
                     case "SignatureService": {
                         endpointMap.put("signatureServiceEndpointAddress", getEndpoint(node, "7.5", userConfigurations));
+                        break;
                     }
                     case "VSDService": {
                         endpointMap.put("vsdServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
