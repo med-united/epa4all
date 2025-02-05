@@ -13,7 +13,7 @@ echo
 
 CONFIG_FILE="epa4all.properties"
 CONFIG_URL="https://raw.githubusercontent.com/med-united/epa4all/main/production_deployment/epa4all.properties"
-PROMTAIL_DEFAULT_CONFIG="https://raw.githubusercontent.com/med-united/epa4all/refs/heads/main/production_deployment/promtail.yml"
+PROMTAIL_DEFAULT_CONFIG="https://raw.githubusercontent.com/med-united/epa4all/refs/heads/main/production_deployment/promtail.yaml"
 
 echo "EPA4All: STEP 1: Configuring EPA4All"
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -145,7 +145,7 @@ if [ "$show_user_properties" == "y" ]; then
     echo "-------------------------------  user.properties END    --------------------------------------"
 fi
 
-# Write promtail.yml
+# Write promtail.yaml
 curl -o epa4all_config/config/promtail.yaml "$PROMTAIL_DEFAULT_CONFIG" > /dev/null
 
 grafana_username=$(grep '^grafana.username=' epa4all.properties | cut -d'=' -f2)
@@ -156,13 +156,13 @@ sed -i '' \
     -e "s/<API_KEY>/$grafana_password/g" \
     epa4all_config/config/promtail.yaml
 
-read -p "EPA4All: Print promtail.yml? (y/n): " print_promtail_yml
-if [ "$print_promtail_yml" == "y" ]; then
-    echo "EPA4All: promtail.yml:"
-    echo "-------------------------------  promtail.yml START  --------------------------------------"
+read -p "EPA4All: Print promtail.yaml? (y/n): " print_promtail_yaml
+if [ "$print_promtail_yaml" == "y" ]; then
+    echo "EPA4All: promtail.yaml:"
+    echo "-------------------------------  promtail.yaml START  --------------------------------------"
     cat epa4all_config/config/promtail.yaml
     echo
-    echo "-------------------------------  promtail.yml END    --------------------------------------"
+    echo "-------------------------------  promtail.yaml END    --------------------------------------"
 fi
 
 # STEP 4: Check if docker is installed and running
