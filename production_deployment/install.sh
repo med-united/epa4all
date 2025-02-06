@@ -144,28 +144,6 @@ if [ "$show_user_properties" == "y" ]; then
     echo "-------------------------------  user.properties END    --------------------------------------"
 fi
 
-# Write promtail.yaml
-echo "EPA4All: Downloading default promtail.yaml ..."
-curl -o epa4all_config/config/promtail.yaml "$PROMTAIL_DEFAULT_CONFIG" > /dev/null
-echo "EPA4All: promtail.yaml downloaded successfully"
-
-grafana_username=$(grep '^grafana.username=' epa4all.properties | cut -d'=' -f2)
-grafana_password=$(grep '^grafana.password=' epa4all.properties | cut -d'=' -f2-)
-
-sed -i'' \
-    -e "s/<GRAFANA_CLOUD_USER_ID>/$grafana_username/g" \
-    -e "s/<API_KEY>/$grafana_password/g" \
-    epa4all_config/config/promtail.yaml
-
-read -p "EPA4All: Print promtail.yaml? (y/n): " print_promtail_yaml
-if [ "$print_promtail_yaml" == "y" ]; then
-    echo "EPA4All: promtail.yaml:"
-    echo "-------------------------------  promtail.yaml START  --------------------------------------"
-    cat epa4all_config/config/promtail.yaml
-    echo
-    echo "-------------------------------  promtail.yaml END    --------------------------------------"
-fi
-
 # STEP 4: Check if docker is installed and running
 
 echo
@@ -275,6 +253,8 @@ echo "EPA4All: STEP 7: Running EPA4All container"
 
 quarkus_profile=$(grep '^quarkus.profile=' epa4all.properties | cut -d'=' -f2)
 service_health_client_id=$(grep '^service.health.client.id=' epa4all.properties | cut -d'=' -f2)
+grafana_username=$(grep '^grafana.username=' epa4all.properties | cut -d'=' -f2)
+grafana_password=$(grep '^grafana.password=' epa4all.properties | cut -d'=' -f2-)
 echo "EPA4All: Changing permissions for mounted volumes: sudo chown -R 1001 epa4all_config"
 sudo chown -R 1001 epa4all_config
 if docker run \
@@ -290,6 +270,8 @@ if docker run \
     --volume epa4all-webdav:/opt/epa4all/webdav \
     --env QUARKUS_PROFILE=$quarkus_profile \
     --env SERVICEHEALTH_CLIENT_ID=$service_health_client_id \
+    --env GRAFANA_USERNAME=$grafana_username \
+    --env GRAFANA_PASSWORD=$grafana_password \
     servicehealtherxgmbh/epa4all:latest >/dev/null; then
     echo "EPA4All: EPA4All container started"
 else

@@ -7,10 +7,10 @@ positions:
 clients:
 #  - url: http://host.docker.internal:3100/loki/api/v1/push
 
-  - url: https://<GRAFANA_CLOUD_USER_ID>:<API_KEY>@logs-prod-012.grafana.net/api/prom/push
+  - url: https://${GRAFANA_USERNAME}:${GRAFANA_PASSWORD}@logs-prod-012.grafana.net/api/prom/push
     basic_auth:
-      username: "<GRAFANA_CLOUD_USER_ID>"
-      password: "<API_KEY>"
+      username: "${GRAFANA_USERNAME}"
+      password: "${GRAFANA_PASSWORD}"
 
 scrape_configs:
   - job_name: epa4all
@@ -30,19 +30,13 @@ scrape_configs:
             level: level
             exception: stackTrace
             client: servicehealth_client_id
-      - template:
-          source: message
-          template: '{{if .message}}{{regexReplaceAll "\\n" .message "\n"}}{{end}}'
-      - template:
-          source: exception
-          template: '{{if .exception}}{{regexReplaceAll "\\n" .exception "\n"}}{{end}}'
       - labels:
           loggerName:
           message:
           thread:
           level:
-          exception: '{{if .exception}}{{.exception}}{{end}}'
-          client: '{{if .client}}{{.client}}{{end}}'
+          exception:
+          client:
       - timestamp:
           source: time
           format: RFC3339
