@@ -28,15 +28,19 @@ public interface IFolderService {
     }
 
     default File getOrCreateFolder(String path) {
-        File folder = new File(path);
-        if (!folder.exists()) {
-            boolean created = folder.mkdirs();
-            if (!created) {
-                String msg = String.format("Directory [%s] was not created", path);
-                throw new IllegalStateException(msg);
+        if (!path.contains(".DS_Store")) {
+            File folder = new File(path);
+            if (!folder.exists()) {
+                boolean created = folder.mkdirs();
+                if (!created) {
+                    String msg = String.format("Directory [%s] was not created", path);
+                    throw new IllegalStateException(msg);
+                }
             }
+            return folder;
+        } else {
+            return new File("");
         }
-        return folder;
     }
 
     default File[] getTelematikFolders() {
