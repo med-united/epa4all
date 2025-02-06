@@ -36,7 +36,6 @@ RUN case "${TARGETPLATFORM}" in \
     && unzip "promtail-linux-${ARCH}.zip" \
     && mv promtail-linux-${ARCH} /usr/local/bin/promtail \
     && chmod a+x /usr/local/bin/promtail
-    && rm promtail-linux-${ARCH}.zip
 
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
 COPY --chown=1001 tls/epa-certs/*.pem /opt/epa4all/certs
