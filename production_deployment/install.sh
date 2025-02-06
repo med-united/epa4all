@@ -38,7 +38,6 @@ fi
 echo "EPA4All: Current configuration:"
 echo "-----------------------------------  epa4all.properties START  -------------------------------"
 cat "$CONFIG_FILE"
-echo
 echo "-----------------------------------  epa4all.properties END    -------------------------------"
 
 read -p "EPA4All: Do you want to install EPA4All with this configuration? (y/n): " install
@@ -146,12 +145,14 @@ if [ "$show_user_properties" == "y" ]; then
 fi
 
 # Write promtail.yaml
+echo "EPA4All: Downloading default promtail.yaml ..."
 curl -o epa4all_config/config/promtail.yaml "$PROMTAIL_DEFAULT_CONFIG" > /dev/null
+echo "EPA4All: promtail.yaml downloaded successfully"
 
 grafana_username=$(grep '^grafana.username=' epa4all.properties | cut -d'=' -f2)
-grafana_password=$(grep '^grafana.password=' epa4all.properties | cut -d'=' -f2)
+grafana_password=$(grep '^grafana.password=' epa4all.properties | cut -d'=' -f2-)
 
-sed -i '' \
+sed -i'' \
     -e "s/<GRAFANA_CLOUD_USER_ID>/$grafana_username/g" \
     -e "s/<API_KEY>/$grafana_password/g" \
     epa4all_config/config/promtail.yaml
@@ -273,6 +274,7 @@ echo
 echo "EPA4All: STEP 7: Running EPA4All container"
 
 quarkus_profile=$(grep '^quarkus.profile=' epa4all.properties | cut -d'=' -f2)
+service_health_client_id=$(grep '^service.health.client.id=' epa4all.properties | cut -d'=' -f2)
 echo "EPA4All: Changing permissions for mounted volumes: sudo chown -R 1001 epa4all_config"
 sudo chown -R 1001 epa4all_config
 if docker run \
@@ -287,6 +289,7 @@ if docker run \
     --volume "$(pwd)/epa4all_config/config:/opt/epa4all/config" \
     --volume epa4all-webdav:/opt/epa4all/webdav \
     --env QUARKUS_PROFILE=$quarkus_profile \
+    --env SERVICEHEALTH_CLIENT_ID=$service_health_client_id \
     servicehealtherxgmbh/epa4all:latest >/dev/null; then
     echo "EPA4All: EPA4All container started"
 else

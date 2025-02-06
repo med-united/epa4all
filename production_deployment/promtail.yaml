@@ -7,7 +7,7 @@ positions:
 clients:
 #  - url: http://host.docker.internal:3100/loki/api/v1/push
 
-  - url: https://<GRAFANA_CLOUD_USER_ID>:<API_KEY>@logs-prod-us-central1.grafana.net/loki/api/v1/push
+  - url: https://<GRAFANA_CLOUD_USER_ID>:<API_KEY>@logs-prod-012.grafana.net/api/prom/push
     basic_auth:
       username: "<GRAFANA_CLOUD_USER_ID>"
       password: "<API_KEY>"

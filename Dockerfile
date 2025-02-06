@@ -28,17 +28,16 @@ RUN ls -la /usr/local/bin
 
 WORKDIR /usr/local/bin
 
-COPY production_deployment/promtail.yaml /opt/epa4all/config/promtail.yaml
-
-RUN case "$(uname -m)" in \
-    x86_64|amd64) ARCH='amd64' ;; \
-    aarch64|arm64) ARCH='arm64' ;; \
-    *) echo "Unsupported architecture"; exit 1 ;; \
+ARG TARGETPLATFORM
+RUN case "${TARGETPLATFORM}" in \
+    linux/amd64) ARCH='amd64' ;; \
+    linux/arm64) ARCH='arm64' ;; \
+    *) echo "Unsupported platform ${TARGETPLATFORM}"; exit 1 ;; \
     esac && \
     curl -O -L "https://github.com/grafana/loki/releases/download/v3.2.0/promtail-linux-${ARCH}.zip" \
     && unzip "promtail-linux-${ARCH}.zip" \
-    && mv promtail-linux-${ARCH} promtail \
-    && chmod a+x promtail \
+    && mv promtail-linux-${ARCH} /usr/local/bin/promtail \
+    && chmod a+x /usr/local/bin/promtail
     && rm promtail-linux-${ARCH}.zip
 
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
