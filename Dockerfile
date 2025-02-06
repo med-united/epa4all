@@ -28,7 +28,7 @@ RUN ls -la /usr/local/bin
 
 WORKDIR /usr/local/bin
 
-COPY production_deployment/promtail.yaml /etc/promtail/config.yaml
+COPY production_deployment/promtail.yaml /opt/epa4all/config/promtail.yaml
 
 RUN case "$(uname -m)" in \
     x86_64|amd64) ARCH='amd64' ;; \
