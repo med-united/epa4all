@@ -20,18 +20,23 @@ sap.ui.define([
         onInit: function () {
             this.initializeRouter();
 
-            // this is a workaround because the block controller gets initialized after the desired route is matched the first time
-            var fnInitialFiltering = function (oEvent) {
-                var oMedicationTable = oEvent.getSource();
-                var oBindingContext = oMedicationTable.getBindingContext();
+            const oMedicationTable = this.getView().byId("medicationTable");
+            const oWebdavModel = this.getView().getModel();
+
+            oMedicationTable.setVisible(false);
+
+            const fnInitialFilteringBound = function (oEvent) {
+                const oBindingContext = oMedicationTable.getBindingContext();
                 if (oBindingContext) {
-                    // here comes eg. '/Patient/123'
-                    var sPatientId = oBindingContext.getPath().split("/")[2];
-                    this.filterMedicationTableToPatient(sPatientId);
-                    oMedicationTable.detachModelContextChange(fnInitialFiltering);
+                    const sPatientId = oBindingContext.getPath().split("/")[2];
+
+                    if (sPatientId) {
+                        this.filterMedicationTableToPatient(sPatientId);
+                        oMedicationTable.detachModelContextChange(fnInitialFilteringBound);
+                    }
                 }
-            };
-            this.getView().byId("medicationTable").attachModelContextChange(fnInitialFiltering.bind(this));
+            }.bind(this);
+            oMedicationTable.attachModelContextChange(fnInitialFilteringBound);
 
             this._oMedicationSearchProvider = new MedicationSearchProvider();
             // npm install -g local-cors-proxy
@@ -96,18 +101,30 @@ sap.ui.define([
             var iPatientModelOffest = oEvent.getParameter("arguments").patient;
             this.filterMedicationTableToPatient(iPatientModelOffest);
         },
-
         filterMedicationTableToPatient: function (iPatientModelOffest) {
             var aFilters = [];
-			
-			const oWebdavModel = this.getView().getModel();
-			const sWebDavPath = "/response/"+iPatientModelOffest;
-			const sPatientId = oWebdavModel.getProperty(sWebDavPath+"/propstat/prop/displayname");
-			
-            aFilters.push(new FHIRFilter({ path: "subject", operator: FHIRFilterOperator.Equals, value1: sPatientId, valueType: FHIRFilterType.string }));
-            const oTable = this.getView().byId("medicationTable");
-            const oBinding = oTable.getBinding("items");
-            oBinding.filter(aFilters);
+
+            const oWebdavModel = this.getView().getModel();
+            const sWebDavPath = "/response/"+iPatientModelOffest;
+            const kvnr = oWebdavModel.getProperty(sWebDavPath+"/propstat/prop/displayname");
+
+            const oMedicationTable = this.getView().byId("medicationTable");
+            if (kvnr) {
+                const aFilters = [
+                    new FHIRFilter({
+                        path: "x-insurantid",
+                        operator: "eq",
+                        value1: kvnr,
+                        valueType: "string"
+                    })
+                ];
+                const oBinding = oMedicationTable.getBinding("items");
+                oBinding.filter(aFilters);
+
+                oMedicationTable.setVisible(true);
+            } else {
+                oMedicationTable.setVisible(false);
+            }
         },
         addMedication: function () {
             let sPatientId = this.byId("medicationTable").getBindingContext().getPath().split("/")[2];
