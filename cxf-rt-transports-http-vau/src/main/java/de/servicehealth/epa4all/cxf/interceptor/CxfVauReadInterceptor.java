@@ -3,7 +3,9 @@ package de.servicehealth.epa4all.cxf.interceptor;
 import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauResponse;
 import de.servicehealth.vau.VauResponseReader;
+import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
@@ -28,10 +30,6 @@ import static org.apache.cxf.message.Message.RESPONSE_CODE;
 public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger log = LoggerFactory.getLogger(CxfVauReadInterceptor.class.getName());
-
-    public static final Set<String> MEDIA_TYPES = Set.of(
-        "application/octet-stream", "application/pdf", "image/png", "image/jpeg", "image/gif", "image/bmp"
-    );
 
     private final VauFacade vauFacade;
     private final VauResponseReader vauResponseReader;
@@ -64,27 +62,32 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
                 }
                 vauFacade.handleVauSession(vauCid, noUserSession, vauResponse.decrypted());
             }
-            String operation = (String) message.getExchange().get("org.apache.cxf.resource.operation.name");
             byte[] payload = vauResponse.payload();
             if (payload != null) {
                 vauResponse.headers().stream()
                     .filter(p -> p.getKey().equalsIgnoreCase(CONTENT_TYPE))
-                    .findFirst().ifPresent(h -> {
-                        String contentType = h.getValue();
-                        message.put(CONTENT_TYPE, contentType);
-                        if (!MEDIA_TYPES.contains(contentType)) {
-                            String content = new String(payload);
-                            content = content.substring(0, Math.min(200, content.length())) + " ********* ";
-                            log.info(String.format("[%s] Response PAYLOAD: %s", operation, content));
-                        }
-                    });
+                    .findFirst()
+                    .ifPresent(h -> message.put(CONTENT_TYPE, h.getValue()));
 
                 message.setContent(InputStream.class, new ByteArrayInputStream(payload));
+                replaceLoggingFeatureStream(message, payload);
+
                 putProtocolHeader(message, CONTENT_LENGTH, payload.length);
             }
         } catch (Exception e) {
             throw new Fault(e);
         }
+    }
+
+    private void replaceLoggingFeatureStream(Message message, byte[] payload) {
+        CachedOutputStream os = new CachedOutputStream();
+        try {
+            IOUtils.copyAtLeast(new ByteArrayInputStream(payload), os, 300);
+            os.flush();
+            message.setContent(CachedOutputStream.class, os);
+        } catch (Exception e) {
+            log.error("Unable to prepare LoggingFeature CachedOutputStream from origin", e);
+        } 
     }
 
     private void restoreHeaders(VauResponse vauResponse, Message message, Set<String> headersNames) {

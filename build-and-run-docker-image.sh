@@ -14,7 +14,7 @@ docker build --progress=plain --no-cache -t epa4all .
 
 docker run -d --name epa4all \
   --add-host=host.docker.internal:host-gateway \
-  -e SERVICEHEALTH_CLIENT_ID=d0 \
+  -e SERVICEHEALTH_CLIENT_ID=d7 \
   -p 8090:8090 -p 5005:5005 -p 8588:8588 -p 3102:3102 \
   -v "$1":/opt/epa4all/secret \
   -v epa4all-webdav:/opt/epa4all/webdav \

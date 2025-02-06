@@ -4,7 +4,7 @@ import de.servicehealth.epa4all.cxf.interceptor.CxfHeadersInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
-import de.servicehealth.epa4all.cxf.provider.JsonbReaderProvider;
+import de.servicehealth.epa4all.cxf.provider.JsonbPlainReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbWriterProvider;
@@ -58,7 +58,7 @@ public class ClientFactory extends StartableService {
     }
 
     public <T> T createPlainClient(Class<T> clazz, String url) throws Exception {
-        List<Object> providers = List.of(new JsonbReaderProvider(), new JsonbWriterProvider());
+        List<Object> providers = List.of(new JsonbPlainReaderProvider(), new JsonbWriterProvider());
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
             WebClient.getConfig(api),

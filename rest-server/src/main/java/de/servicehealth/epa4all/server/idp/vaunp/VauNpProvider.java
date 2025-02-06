@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 import static de.health.service.cetp.konnektorconfig.FSConfigService.CONFIG_DELIMETER;
 import static de.servicehealth.logging.LogContext.withLogContext;
 import static de.servicehealth.logging.LogContextConstant.KONNEKTOR;
+import static de.servicehealth.logging.LogContextConstant.WORKPLACE;
 
 @SuppressWarnings("CdiInjectionPointsInspection")
 @ApplicationScoped
@@ -209,7 +210,6 @@ public class VauNpProvider extends StartableService {
                                     String nonce = smcBApi.getNonce(clientId, userAgent, backend).getNonce();
                                     try (Response response = smcBApi.sendAuthorizationRequestSCWithResponse(clientId, userAgent, backend)) {
                                         URI location = response.getLocation();
-                                        log.info(String.format("[%s] nonce=%s query=%s", entry.getKey(), nonce, location.getQuery()));
                                         return getIdpAuthCode(entry.getKey(), entry.getValue(), backend, nonce, location);
                                     }
                                 })
@@ -296,18 +296,27 @@ public class VauNpProvider extends StartableService {
         String nonce,
         URI location
     ) {
+        KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
+        String msg = "[GetIdpAuthCode] konnektor=%s workplaceId=%s nonce=%s query=%s";
+        withLogContext(Map.of(
+            KONNEKTOR, info.konnektor,
+            WORKPLACE, info.workplaceId
+        ), () -> log.info(String.format(msg, info.konnektor, info.workplaceId, nonce, location.getQuery())));
+        
         long start = System.currentTimeMillis();
         try {
             RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
             String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-            KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
             VauNpKey key = new VauNpKey(smcbHandle, info.konnektor, info.workplaceId, backend);
+            SendAuthCodeSCtype authCode = idpClient.getAuthCodeSync(nonce, location, runtimeConfig, smcbHandle);
             long delta = System.currentTimeMillis() - start;
-            return new IdpResult(key, idpClient.getAuthCodeSync(nonce, location, runtimeConfig, smcbHandle), null, delta);
+            return new IdpResult(key, authCode, null, delta);
         } catch (Exception e) {
-            withLogContext(Map.of(KONNEKTOR, config.getHost()), () ->
-                log.error("Error while getSendAuthCodeSC", e)
-            );
+            withLogContext(Map.of(
+                KONNEKTOR, info.konnektor,
+                WORKPLACE, info.workplaceId
+            ), () -> log.error("Error while getIdpAuthCode", e));
+            
             long delta = System.currentTimeMillis() - start;
             StringBuilder sb = new StringBuilder(e.getMessage());
             if (e instanceof RuntimeException runtimeEx) {
@@ -330,6 +339,7 @@ public class VauNpProvider extends StartableService {
             this.vauNpKey = vauNpKey;
             this.authCode = authCode;
             this.error = error;
+            this.delta = delta;
         }
 
         boolean isError() {

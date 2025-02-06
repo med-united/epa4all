@@ -95,7 +95,7 @@ public class LogContext implements Closeable {
         }
 
         return switch (ctx) {
-            case VAU_SESSION, PROTOCOL, JSON_MESSAGE_TYPE, KONNEKTOR -> value;
+            case VAU_SESSION, PROTOCOL, JSON_MESSAGE_TYPE, KONNEKTOR, WORKPLACE -> value;
             case ICCSN, KVNR -> anonymizeICCSN(value);
             case REMOTE_ADDR -> anonymizeRemoteAddr(value);
         };

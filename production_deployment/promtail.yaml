@@ -2,7 +2,7 @@ server:
   http_listen_port: 3102
 
 positions:
-  filename: /opt/epa4all/promtail/positions.yaml
+  filename: /tmp/positions.yaml
 
 clients:
 #  - url: http://host.docker.internal:3100/loki/api/v1/push
@@ -30,45 +30,19 @@ scrape_configs:
             level: level
             exception: stackTrace
             client: servicehealth_client_id
-#            mdc: mdc
-
-#      - json:
-#        source: mdc
-#        expressions:
-#          vauSession: vauSession
-#          iccsn: iccsn
-#          konnektor: konnektor
-#
-#      - template:
-#          source: vauSession
-#          template: '{{ .vauSession | default "" }}'
-#
-#      - template:
-#          source: iccsn
-#          template: '{{ .iccsn | default "" }}'
-#
-#      - template:
-#          source: konnektor
-#          template: '{{ .konnektor | default "" }}'
-
       - template:
           source: message
-          template: '{{if .message}}{{.message | replace "\\n" "\n" }}{{end}}'
-
+          template: '{{if .message}}{{regexReplaceAll "\\n" .message "\n"}}{{end}}'
       - template:
           source: exception
-          template: '{{if .exception}}{{.exception | replace "\\n" "\n" | replace "\\t" "\t" }}{{end}}'
-
+          template: '{{if .exception}}{{regexReplaceAll "\\n" .exception "\n"}}{{end}}'
       - labels:
           loggerName:
           message:
           thread:
           level:
-          client:
-          exception:
-#          vauSession:
-#          iccsn:
-#          konnektor:
+          exception: '{{if .exception}}{{.exception}}{{end}}'
+          client: '{{if .client}}{{.client}}{{end}}'
       - timestamp:
           source: time
           format: RFC3339

@@ -76,13 +76,14 @@ public class ServicePortProvider extends StartableService {
         loggingFeature.setLogMultipart(true);
         loggingFeature.setLogBinary(false);
 
-        loggingFeature.setSensitiveElementNames(Set.of(
-            "ReadCardCertificateResponse",
-            "ExternalAuthenticateResponse",
-            "vau-np",
-            "GetCardsResponse"
-        ));
-        loggingFeature.setSensitiveProtocolHeaderNames(Set.of(VAU_NP, X_USER_AGENT, X_INSURANT_ID, CLIENT_ID));
+        // TODO
+        // loggingFeature.setSensitiveElementNames(Set.of(
+        //     "ReadCardCertificateResponse",
+        //     "ExternalAuthenticateResponse",
+        //     "vau-np",
+        //     "GetCardsResponse"
+        // ));
+        // loggingFeature.setSensitiveProtocolHeaderNames(Set.of(VAU_NP, X_USER_AGENT, X_INSURANT_ID, CLIENT_ID));
     }
 
     void saveEndpointsConfiguration() {

@@ -6,8 +6,6 @@ RUN apk add --no-cache curl bash tini ca-certificates libc6-compat tcpdump less 
     && mkdir /opt/epa4all \
     && mkdir /opt/epa4all/app \
     && mkdir /opt/epa4all/promtail \
-    && touch /opt/epa4all/promtail/positions.yaml \
-    && chmod 664 /opt/epa4all/promtail/positions.yaml \
     && mkdir /opt/epa4all/lib \
     && mkdir /opt/epa4all/lib/boot \
     && mkdir /opt/epa4all/lib/main \

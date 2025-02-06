@@ -16,7 +16,8 @@ public enum LogContextConstant {
     PROTOCOL("protocol"),
     JSON_MESSAGE_TYPE("jsonMessageType"),
     REMOTE_ADDR("remoteAddress"),
-    KONNEKTOR("konnektor");
+    KONNEKTOR("konnektor"),
+    WORKPLACE("workPlaceId");
 
     private final String identifier;
 

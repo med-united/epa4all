@@ -7,7 +7,7 @@ import java.lang.reflect.Type;
 
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
-public class JsonbReaderProvider extends AbstractJsonbReader {
+public class JsonbPlainReaderProvider extends AbstractJsonbReader {
 
     @Override
     public boolean isReadable(Class type, Type genericType, Annotation[] annotations, MediaType mediaType) {
