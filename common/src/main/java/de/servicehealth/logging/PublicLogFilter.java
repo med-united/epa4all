@@ -76,8 +76,7 @@ public class PublicLogFilter implements Filter {
             set.addAll(Files.readLines(file, UTF_8).stream()
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toSet()));
-        } catch (Throwable e) {
-            log.error("Error while loading '" + path + "', using default", e);
+        } catch (Throwable ignored) {
             set.addAll(DEFAULT_PERSONAL_DATA_KEYS);
         }
         if (!PERSONAL_DATA_KEYS.equals(set)) {
