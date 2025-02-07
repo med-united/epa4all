@@ -257,6 +257,7 @@ public class IdpClient extends StartableService {
     public String createEntitlementPSJWT(
         String smcbHandle,
         String auditEvidence,
+        String hcv,
         UserRuntimeConfig userRuntimeConfig
     ) {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
@@ -264,6 +265,7 @@ public class IdpClient extends StartableService {
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
         claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
         claims.setClaim("auditEvidence", auditEvidence);
+        claims.setClaim("hcv", hcv);
 
         Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(servicePorts, smcbHandle);
         X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
