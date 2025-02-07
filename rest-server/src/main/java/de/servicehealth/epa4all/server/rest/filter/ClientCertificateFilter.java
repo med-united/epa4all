@@ -1,12 +1,13 @@
 package de.servicehealth.epa4all.server.rest.filter;
 
 import de.servicehealth.epa4all.server.cdi.TelematikIdLiteral;
-import io.quarkus.arc.properties.IfBuildProperty;
+import de.servicehealth.feature.EpaFeatureConfig;
 import io.quarkus.resteasy.runtime.standalone.QuarkusResteasySecurityContext;
 import io.quarkus.security.AuthenticationFailedException;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.spi.CDI;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.ext.Provider;
@@ -24,13 +25,18 @@ import java.util.stream.Stream;
 @SuppressWarnings("rawtypes")
 @Provider
 @ApplicationScoped
-@IfBuildProperty(name = "quarkus.ssl.native", stringValue = "true")
 public class ClientCertificateFilter implements ContainerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(ClientCertificateFilter.class.getName());
 
+    @Inject
+    EpaFeatureConfig featureConfig;
+
     @Override
     public void filter(ContainerRequestContext requestContext) {
+        if (!featureConfig.isMutualTlsEnabled()) {
+            return;
+        }
         if (requestContext instanceof PostMatchContainerRequestContext postContext) {
             AuthenticationFailedException unauthorized = new AuthenticationFailedException("Unauthorized");
             try {

@@ -36,4 +36,7 @@ public class EpaConfig {
 
     @ConfigProperty(name = "epa.user.agent", defaultValue = "GEMIncenereSud1PErUR/1.0.0")
     String epaUserAgent;
+
+    @ConfigProperty(name = "epa.entitlement.mandatory", defaultValue = "false")
+    boolean epaEntitlementMandatory;
 }

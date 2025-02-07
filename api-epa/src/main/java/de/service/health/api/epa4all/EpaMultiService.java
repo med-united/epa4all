@@ -18,7 +18,7 @@ import de.servicehealth.epa4all.medication.fhir.restful.extension.render.StubMed
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderStubClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
-import de.servicehealth.feature.FeatureConfig;
+import de.servicehealth.feature.EpaFeatureConfig;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
@@ -71,7 +71,7 @@ public class EpaMultiService extends StartableService {
 
     @Getter
     private final EpaConfig epaConfig;
-    private final FeatureConfig featureConfig;
+    private final EpaFeatureConfig featureConfig;
     private final ClientFactory clientFactory;
     private final Instance<VauFacade> vauFacadeInstance;
 
@@ -84,7 +84,7 @@ public class EpaMultiService extends StartableService {
     public EpaMultiService(
         VauConfig vauConfig,
         EpaConfig epaConfig,
-        FeatureConfig featureConfig,
+        EpaFeatureConfig featureConfig,
         ClientFactory clientFactory,
         Instance<VauFacade> vauFacadeInstance
     ) {

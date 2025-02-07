@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.rest;
 
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
+import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
@@ -45,6 +46,9 @@ public abstract class AbstractResource {
     IdpConfig idpConfig;
 
     @Inject
+    EpaConfig epaConfig;
+
+    @Inject
     protected EpaMultiService epaMultiService;
 
     @Inject
@@ -84,23 +88,26 @@ public abstract class AbstractResource {
         String insurantId = insuranceData.getInsurantId();
         EpaAPI epaAPI = epaMultiService.getEpaAPI(insurantId);
         String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
-        String backend = epaAPI.getBackend();
-
-        Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
-        boolean entitlementIsSet = validTo != null && validTo.isAfter(Instant.now());
         String konnektorHost = userRuntimeConfig.getKonnektorHost();
         String workplaceId = userRuntimeConfig.getWorkplaceId();
+        String backend = epaAPI.getBackend();
         Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, workplaceId, backend);
-        if (vauNpOpt.isPresent() && !entitlementIsSet) {
-            entitlementIsSet = entitlementService.setEntitlement(
-                userRuntimeConfig,
-                insuranceData,
-                epaAPI,
-                telematikId,
-                vauNpOpt.get(),
-                userAgent,
-                smcbHandle
-            );
+
+        boolean entitlementIsSet = true;
+        if (epaConfig.isEpaEntitlementMandatory()) {
+            Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
+            entitlementIsSet = validTo != null && validTo.isAfter(Instant.now());
+            if (vauNpOpt.isPresent() && !entitlementIsSet) {
+                entitlementIsSet = entitlementService.setEntitlement(
+                    userRuntimeConfig,
+                    insuranceData,
+                    epaAPI,
+                    telematikId,
+                    vauNpOpt.get(),
+                    userAgent,
+                    smcbHandle
+                );
+            }
         }
 
         Map<String, String> xHeaders = prepareXHeaders(insurantId, userAgent, backend, vauNpOpt);
@@ -118,7 +125,6 @@ public abstract class AbstractResource {
         attributes.put(X_USER_AGENT, userAgent);
         attributes.put(X_BACKEND, backend);
         attributes.put(CLIENT_ID, idpConfig.getClientId());
-        
         vauNpOpt.ifPresent(vauNp -> attributes.put(VAU_NP, vauNp));
         return attributes;
     }

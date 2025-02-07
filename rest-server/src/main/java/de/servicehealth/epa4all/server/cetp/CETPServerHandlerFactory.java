@@ -6,20 +6,19 @@ import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.service.health.api.epa4all.EpaMultiService;
-import de.servicehealth.epa4all.server.cetp.cardlink.CardlinkClientFactory;
+import de.servicehealth.epa4all.server.FeatureConfig;
+import de.servicehealth.epa4all.server.cetp.cardlink.CardlinkClientWSFactory;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
-import de.servicehealth.feature.FeatureConfig;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 
-@SuppressWarnings("CdiInjectionPointsInspection")
 @ApplicationScoped
 public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
@@ -30,7 +29,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     private final IKonnektorClient konnektorClient;
     private final EpaFileDownloader epaFileDownloader;
     private final InsuranceDataService insuranceDataService;
-    private final CardlinkClientFactory cardlinkClientFactory;
+    private final CardlinkClientWSFactory cardlinkClientFactory;
     private final Event<WebSocketPayload> webSocketPayloadEvent;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
 
@@ -43,7 +42,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         IKonnektorClient konnektorClient,
         EpaFileDownloader epaFileDownloader,
         InsuranceDataService insuranceDataService,
-        CardlinkClientFactory cardlinkClientFactory,
+        CardlinkClientWSFactory cardlinkClientFactory,
         Event<WebSocketPayload> webSocketPayloadEvent,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
