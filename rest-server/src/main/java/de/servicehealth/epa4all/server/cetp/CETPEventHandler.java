@@ -121,7 +121,9 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                         ));
                         return;
                     } else {
-                        insuranceData = insuranceDataService.initData(telematikId, egkHandle, null, smcbHandle, runtimeConfig);
+                        insuranceData = insuranceDataService.initData(
+                            telematikId, egkHandle, null, smcbHandle, runtimeConfig, true
+                        );
                     }
                 }
                 String insurantId = insuranceData.getInsurantId();
@@ -132,7 +134,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, smcbHandle, konnektorHost, workplaceId);
                 try (Response response = epaCallGuard.callAndRetry(backend, () -> epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders))) {
                     byte[] bytes = response.readEntity(byte[].class);
-                    EpaContext epaContext = new EpaContext(backend, true, insuranceData, Map.of());
+                    EpaContext epaContext = new EpaContext(insurantId, backend, true, insuranceData, Map.of());
                     handleDownloadResponse(bytes, ctId, telematikId, epaContext, insurantId);
                     String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                     Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);

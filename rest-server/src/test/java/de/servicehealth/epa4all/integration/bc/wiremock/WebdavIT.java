@@ -241,7 +241,7 @@ public class WebdavIT extends AbstractWiremockTest {
         String smcbHandle = "SMC-B-10";
 
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
-        InsuranceData insuranceData = insuranceDataService.initData(telematikId, egkHandle, kvnr, smcbHandle, runtimeConfig);
+        InsuranceData insuranceData = insuranceDataService.initData(telematikId, egkHandle, kvnr, smcbHandle, runtimeConfig, true);
         UCPersoenlicheVersichertendatenXML versichertendaten = insuranceData.getPersoenlicheVersichertendaten();
         UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
         assertNotNull(person);

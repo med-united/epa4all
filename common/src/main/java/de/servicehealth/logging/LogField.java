@@ -19,6 +19,9 @@ public enum LogField {
     JSON_MESSAGE_TYPE("jsonMessageType"),
     REMOTE_ADDR("remoteAddress"),
     KONNEKTOR("konnektor"),
+    TELEMATIK_ID("telematikId"),
+    EGK_HANDLE("egkHandle"),
+    SMCB_HANDLE("smcbHandle"),
     WORKPLACE("workPlaceId");
 
     private final String identifier;

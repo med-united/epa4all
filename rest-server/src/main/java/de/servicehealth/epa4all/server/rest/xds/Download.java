@@ -54,7 +54,7 @@ public class Download extends XdsResource {
 
         String taskId = UUID.randomUUID().toString();
         String repositoryUniqueId = repositoryUniqueIdOpt.orElse("undefined");
-        String insurantId = epaContext.getInsuranceData().getInsurantId();
+        String insurantId = epaContext.getInsurantId();
         Map<String, String> xHeaders = epaContext.getXHeaders();
         IDocumentManagementPortType documentManagementPortType = epaMultiService
             .getEpaAPI(insurantId)

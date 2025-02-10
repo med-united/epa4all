@@ -73,7 +73,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
         EpaContext epaContext = fileAction.getEpaContext();
         resultsMap.computeIfAbsent(taskId, (k) -> prepareInProgressResponse(taskId));
         try {
-            String insurantId = epaContext.getInsuranceData().getInsurantId();
+            String insurantId = epaContext.getInsurantId();
             Map<String, String> xHeaders = epaContext.getXHeaders();
             IDocumentManagementPortType documentManagementPortType = epaMultiService
                 .getEpaAPI(insurantId)

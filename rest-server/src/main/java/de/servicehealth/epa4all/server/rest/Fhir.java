@@ -118,7 +118,7 @@ public class Fhir extends AbstractResource {
         }
         log.info(String.format("[%s] FHIR [%s] is forwarding", Thread.currentThread().getName(), fhirPath));
         EpaContext epaContext = prepareEpaContext(xInsurantId);
-        EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsuranceData().getInsurantId());
+        EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsurantId());
         String baseQuery = uriInfo.getRequestUri().getQuery();
         return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, baseQuery, headers, body, epaContext.getXHeaders());
     }
