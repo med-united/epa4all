@@ -98,15 +98,18 @@ public abstract class AbstractResource {
             Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
             entitlementIsSet = validTo != null && validTo.isAfter(Instant.now());
             if (vauNpOpt.isPresent() && !entitlementIsSet) {
-                entitlementIsSet = entitlementService.setEntitlement(
-                    userRuntimeConfig,
-                    insuranceData,
-                    epaAPI,
-                    telematikId,
-                    vauNpOpt.get(),
-                    userAgent,
-                    smcbHandle
-                );
+                try {
+                    entitlementIsSet = entitlementService.setEntitlement(
+                        userRuntimeConfig,
+                        insuranceData,
+                        epaAPI,
+                        telematikId,
+                        vauNpOpt.get(),
+                        userAgent,
+                        smcbHandle
+                    );
+                } catch (Exception ignored) {
+                }
             }
         }
 
