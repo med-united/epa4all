@@ -12,6 +12,6 @@ public class AuthPlainIT extends AbstractAuthIT {
 
     @Override
     protected <T> T buildApi(VauFacade vauFacade, Class<T> clazz, String url) throws Exception {
-        return clientFactory.createPlainClient(clazz, url);
+        return clientFactory.createRestPlainClient(clazz, url);
     }
 }

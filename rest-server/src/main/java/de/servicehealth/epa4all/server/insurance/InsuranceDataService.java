@@ -3,21 +3,33 @@ package de.servicehealth.epa4all.server.insurance;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
+import de.servicehealth.logging.LogField;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Map;
 
 import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
+import static de.servicehealth.logging.LogContext.withMdc;
+import static de.servicehealth.logging.LogField.EGK_HANDLE;
+import static de.servicehealth.logging.LogField.INSURANT;
+import static de.servicehealth.logging.LogField.SMCB_HANDLE;
+import static de.servicehealth.logging.LogField.TELEMATIK_ID;
 
 @ApplicationScoped
 public class InsuranceDataService {
+
+    private static final Logger log = LoggerFactory.getLogger(InsuranceDataService.class.getName());
 
     private final IKonnektorClient konnektorClient;
     private final FolderService folderService;
@@ -53,18 +65,37 @@ public class InsuranceDataService {
         String egkHandle,
         String kvnr,
         String smcbHandle,
-        UserRuntimeConfig runtimeConfig
-    ) throws Exception {
-        if (egkHandle == null) {
-            egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
-        }
-        String insurantId = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig, telematikId);
-        InsuranceData localInsuranceData = getData(telematikId, insurantId);
-        if (localInsuranceData == null) {
-            String msg = String.format("Unable to read VSD: KVNR=%s, EGK=%s, SMCB=%s", insurantId, egkHandle, smcbHandle);
-            throw new CetpFault(msg);
-        }
-        return localInsuranceData;
+        UserRuntimeConfig runtimeConfig,
+        boolean propagateException
+    ) {
+        Map<LogField, String> mdcMap = Map.of(
+            TELEMATIK_ID, telematikId,
+            EGK_HANDLE, egkHandle == null ? "''" : egkHandle,
+            INSURANT, kvnr == null ? "''" : kvnr,
+            SMCB_HANDLE, smcbHandle == null ? "''": smcbHandle
+        );
+        return withMdc(mdcMap, () -> {
+            try {
+                String eHandle = egkHandle;
+                if (eHandle == null) {
+                    eHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
+                }
+                String insurantId = vsdService.readVsd(eHandle, smcbHandle, runtimeConfig, telematikId);
+                InsuranceData localInsuranceData = getData(telematikId, insurantId);
+                if (localInsuranceData == null) {
+                    String msg = String.format("Unable to read VSD: KVNR=%s, EGK=%s, SMCB=%s", insurantId, egkHandle, smcbHandle);
+                    throw new CetpFault(msg);
+                }
+                return localInsuranceData;
+            } catch (Exception e) {
+                log.error("Error while init InsuranceData", e);
+                if (propagateException) {
+                    throw new RuntimeException(e);
+                } else {
+                    return null;
+                }
+            }
+        });
     }
 
     public void cleanUpInsuranceData(String telematikId, String kvnr) {

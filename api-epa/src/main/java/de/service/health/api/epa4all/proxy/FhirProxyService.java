@@ -18,6 +18,7 @@ import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
 import org.apache.cxf.ext.logging.LoggingOutInterceptor;
+import org.apache.cxf.feature.Feature;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
@@ -54,24 +55,34 @@ public class FhirProxyService implements IFhirProxy {
         String backend,
         EpaConfig epaConfig,
         VauConfig vauConfig,
-        VauFacade vauFacade
+        VauFacade vauFacade,
+        Set<String> maskedHeaders,
+        Set<String> maskedAttributes,
+        List<Feature> features
     ) throws Exception {
         String apiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
         String renderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
 
         epaUserAgent = epaConfig.getEpaUserAgent();
 
-        apiClient = setup(apiUrl, vauConfig, vauFacade);
-        renderClient = setup(renderUrl, vauConfig, vauFacade);
+        apiClient = setup(apiUrl, vauConfig, vauFacade, maskedHeaders, maskedAttributes, features);
+        renderClient = setup(renderUrl, vauConfig, vauFacade, maskedHeaders, maskedAttributes, features);
     }
 
-    private WebClient setup(String url, VauConfig vauConfig, VauFacade vauFacade) throws Exception {
+    private WebClient setup(
+        String url,
+        VauConfig vauConfig,
+        VauFacade vauFacade,
+        Set<String> maskedHeaders,
+        Set<String> maskedAttributes,
+        List<Feature> features
+    ) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
-        JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade);
+        JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade, maskedHeaders, maskedAttributes);
         JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
         List<Object> providers = List.of(cborWriterProvider, jsonbVauWriterProvider, jsonbVauReaderProvider);
 
-        WebClient webClient = WebClient.create(url, providers);
+        WebClient webClient = WebClient.create(url, providers, features, null);
         HTTPConduit conduit = (HTTPConduit) webClient.getConfiguration().getConduit();
         HTTPClientPolicy policy = new HTTPClientPolicy();
 

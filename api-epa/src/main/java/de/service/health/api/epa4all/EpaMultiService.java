@@ -3,6 +3,8 @@ package de.service.health.api.epa4all;
 import ca.uhn.fhir.context.FhirContext;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import de.service.health.api.epa4all.annotation.EpaRestFeatures;
+import de.service.health.api.epa4all.annotation.EpaSoapFeatures;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.service.health.api.epa4all.proxy.FhirProxyService;
@@ -29,15 +31,14 @@ import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import jakarta.xml.ws.soap.SOAPBinding;
 import lombok.Getter;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
 import org.apache.cxf.ext.logging.LoggingOutInterceptor;
+import org.apache.cxf.feature.Feature;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.cxf.ws.addressing.WSAddressingFeature;
 import org.apache.http.client.fluent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,13 +47,20 @@ import javax.xml.namespace.QName;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static de.servicehealth.epa4all.cxf.client.ClientFactory.initConduit;
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
+import static de.servicehealth.logging.LogContext.withMdc;
+import static de.servicehealth.logging.LogField.EPA_BACKEND;
+import static de.servicehealth.logging.LogField.INSURANT;
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
+import static jakarta.xml.ws.soap.SOAPBinding.SOAP12HTTP_BINDING;
+import static java.lang.Boolean.TRUE;
+import static org.apache.cxf.message.Message.MTOM_ENABLED;
 
 @ApplicationScoped
 @Startup
@@ -74,6 +82,9 @@ public class EpaMultiService extends StartableService {
     private final EpaFeatureConfig featureConfig;
     private final ClientFactory clientFactory;
     private final Instance<VauFacade> vauFacadeInstance;
+    private final ServicehealthConfig servicehealthConfig;
+    private final List<Feature> epaRestFeatures;
+    private final List<Feature> epaSoapFeatures;
 
     private final Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
         .maximumSize(1000)
@@ -86,13 +97,19 @@ public class EpaMultiService extends StartableService {
         EpaConfig epaConfig,
         EpaFeatureConfig featureConfig,
         ClientFactory clientFactory,
-        Instance<VauFacade> vauFacadeInstance
+        Instance<VauFacade> vauFacadeInstance,
+        ServicehealthConfig servicehealthConfig,
+        @EpaRestFeatures List<Feature> epaRestFeatures,
+        @EpaSoapFeatures List<Feature> epaSoapFeatures
     ) {
         this.vauFacadeInstance = vauFacadeInstance;
+        this.servicehealthConfig = servicehealthConfig;
         this.clientFactory = clientFactory;
         this.featureConfig = featureConfig;
         this.epaConfig = epaConfig;
         this.vauConfig = vauConfig;
+        this.epaRestFeatures = epaRestFeatures;
+        this.epaSoapFeatures = epaSoapFeatures;
     }
 
     @Override
@@ -111,21 +128,31 @@ public class EpaMultiService extends StartableService {
                     String epaUserAgent = epaConfig.getEpaUserAgent();
 
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
-                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = getDocumentManagementInsurantPortType(
-                        documentManagementInsurantUrl, epaUserAgent, vauFacade, vauConfig
+                    IDocumentManagementInsurantPortType documentManagementInsurantPortType = createXDSDocumentPortType(
+                        documentManagementInsurantUrl,
+                        epaUserAgent,
+                        IDocumentManagementInsurantPortType.class,
+                        vauFacade,
+                        vauConfig
                     );
 
-                    AccountInformationApi accountInformationApi = clientFactory.createPlainClient(
+                    AccountInformationApi accountInformationApi = clientFactory.createRestPlainClient(
                         AccountInformationApi.class, getBackendUrl(backend, epaConfig.getInformationServiceUrl())
                     );
+                    String authorizationServiceUrl = epaConfig.getAuthorizationServiceUrl();
                     AuthorizationSmcBApi authorizationSmcBApi = createProxyClient(
-                        AuthorizationSmcBApi.class, backend, epaConfig.getAuthorizationServiceUrl(), vauFacade
+                        AuthorizationSmcBApi.class, backend, authorizationServiceUrl, vauFacade
                     );
+                    String entitlementServiceUrl = epaConfig.getEntitlementServiceUrl();
                     EntitlementsApi entitlementsApi = createProxyClient(
-                        EntitlementsApi.class, backend, epaConfig.getEntitlementServiceUrl(), vauFacade
+                        EntitlementsApi.class, backend, entitlementServiceUrl, vauFacade
                     );
 
-                    IFhirProxy fhirProxy = new FhirProxyService(backend, epaConfig, vauConfig, vauFacade);
+                    Set<String> maskedHeaders = servicehealthConfig.getMaskedHeaders();
+                    Set<String> maskedAttributes = servicehealthConfig.getMaskedAttributes();
+                    IFhirProxy fhirProxy = new FhirProxyService(
+                        backend, epaConfig, vauConfig, vauFacade, maskedHeaders, maskedAttributes, epaRestFeatures
+                    );
 
                     IMedicationClient medicationClient;
                     IRenderClient renderClient;
@@ -171,16 +198,31 @@ public class EpaMultiService extends StartableService {
     private IDocumentManagementPortType buildIDocumentManagementPortType(String backend, VauFacade vauFacade) {
         try {
             String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
-            return getDocumentManagementPortType(
-                documentManagementUrl, epaConfig.getEpaUserAgent(), vauFacade, vauConfig
+            return createXDSDocumentPortType(
+                documentManagementUrl,
+                epaConfig.getEpaUserAgent(),
+                IDocumentManagementPortType.class,
+                vauFacade,
+                vauConfig
             );
         } catch (Exception e) {
             throw new IllegalStateException("Unable to create IDocumentManagementPortType", e);
         }
     }
 
-    private <T> T createProxyClient(Class<T> clazz, String backend, String serviceUrl, VauFacade vauFacade) throws Exception {
-        return clientFactory.createProxyClient(vauFacade, epaConfig.getEpaUserAgent(), clazz, getBackendUrl(backend, serviceUrl));
+    private <T> T createProxyClient(
+        Class<T> clazz,
+        String backend,
+        String serviceUrl,
+        VauFacade vauFacade
+    ) throws Exception {
+        String backendUrl = getBackendUrl(backend, serviceUrl);
+        String epaUserAgent = epaConfig.getEpaUserAgent();
+        Set<String> maskedHeaders = servicehealthConfig.getMaskedHeaders();
+        Set<String> maskedAttributes = servicehealthConfig.getMaskedAttributes();
+        return clientFactory.createRestProxyClient(
+            vauFacade, epaUserAgent, clazz, backendUrl, maskedHeaders, maskedAttributes, epaRestFeatures
+        );
     }
 
     public EpaAPI getEpaAPI(String insurantId) {
@@ -199,35 +241,17 @@ public class EpaMultiService extends StartableService {
         }
     }
 
-    private boolean hasEpaRecord(EpaAPI api, String xInsurantid) {
-        boolean result = false;
-        try {
-            api.getAccountInformationApi().getRecordStatus(xInsurantid, epaConfig.getEpaUserAgent());
-            result = true;
-        } catch (Exception e) {
-            log.info(String.format(
-                "ePA backend [%s] doesn't contain ePA record for %s: %s", api.getBackend(), xInsurantid, e.getMessage())
-            );
-        }
-        return result;
-    }
-
-    private IDocumentManagementPortType getDocumentManagementPortType(
-        String url,
-        String epaUserAgent,
-        VauFacade vauFacade,
-        VauConfig vauConfig
-    ) throws Exception {
-        return createXDSDocumentPortType(url, epaUserAgent, IDocumentManagementPortType.class, vauFacade, vauConfig);
-    }
-
-    private IDocumentManagementInsurantPortType getDocumentManagementInsurantPortType(
-        String url,
-        String epaUserAgent,
-        VauFacade vauFacade,
-        VauConfig vauConfig
-    ) throws Exception {
-        return createXDSDocumentPortType(url, epaUserAgent, IDocumentManagementInsurantPortType.class, vauFacade, vauConfig);
+    private boolean hasEpaRecord(EpaAPI api, String insurantId) {
+        return withMdc(Map.of(INSURANT, insurantId, EPA_BACKEND, api.getBackend()), () -> {
+            boolean result = false;
+            try {
+                api.getAccountInformationApi().getRecordStatus(insurantId, epaConfig.getEpaUserAgent());
+                result = true;
+            } catch (Exception e) {
+                log.info(String.format("ePA record not found: %s", e.getMessage()));
+            }
+            return result;
+        });
     }
 
     private <T> T createXDSDocumentPortType(
@@ -237,30 +261,30 @@ public class EpaMultiService extends StartableService {
         VauFacade vauFacade,
         VauConfig vauConfig
     ) throws Exception {
-        JaxWsProxyFactoryBean jaxWsProxyFactory = new JaxWsProxyFactoryBean();
-        jaxWsProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
-        jaxWsProxyFactory.setServiceClass(XDSDocumentService.class);
-        jaxWsProxyFactory.setServiceName(new QName("urn:ihe:iti:xds-b:2007", "XDSDocumentService"));
+        JaxWsProxyFactoryBean soapProxyFactory = new JaxWsProxyFactoryBean();
+        soapProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
+        soapProxyFactory.setServiceClass(XDSDocumentService.class);
+        soapProxyFactory.setServiceName(new QName("urn:ihe:iti:xds-b:2007", "XDSDocumentService"));
         // https://gemspec.gematik.de/docs/gemSpec/gemSpec_Aktensystem_ePAfueralle/latest/#A_15186
-        jaxWsProxyFactory.getFeatures().add(new WSAddressingFeature());
-        jaxWsProxyFactory.setAddress(address);
-        Map<String, Object> props = new HashMap<String, Object>();
-        // Boolean.TRUE or "true" will work as the property value below
-        props.put("mtom-enabled", Boolean.TRUE);
-        jaxWsProxyFactory.setProperties(props);
-        jaxWsProxyFactory.setBindingId(SOAPBinding.SOAP12HTTP_BINDING);
 
-        jaxWsProxyFactory.getOutInterceptors().addAll(
+        soapProxyFactory.getFeatures().addAll(epaSoapFeatures);
+        soapProxyFactory.setAddress(address);
+        Map<String, Object> props = new HashMap<String, Object>();
+        props.put(MTOM_ENABLED, TRUE);
+        soapProxyFactory.setProperties(props);
+        soapProxyFactory.setBindingId(SOAP12HTTP_BINDING);
+
+        soapProxyFactory.getOutInterceptors().addAll(
             List.of(
                 new LoggingOutInterceptor(),
                 new CxfVauSetupInterceptor(vauFacade, vauConfig, epaUserAgent),
                 new CxfVauWriteSoapInterceptor(vauFacade)
             )
         );
-        jaxWsProxyFactory.getInInterceptors().addAll(
+        soapProxyFactory.getInInterceptors().addAll(
             List.of(new LoggingInInterceptor(), new CxfVauReadSoapInterceptor(vauFacade))
         );
-        T portType = jaxWsProxyFactory.create(clazz);
+        T portType = soapProxyFactory.create(clazz);
         Client client = ClientProxy.getClient(portType);
         initConduit((HTTPConduit) client.getConduit(), vauConfig.getConnectionTimeoutMs());
         return portType;

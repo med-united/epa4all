@@ -46,6 +46,9 @@ public class EntitlementService {
         String userAgent,
         String smcbHandle
     ) throws Exception {
+        if (insuranceData == null) {
+            return false;
+        }
         String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
         if (UNDEFINED_PZ.equalsIgnoreCase(pz)) {

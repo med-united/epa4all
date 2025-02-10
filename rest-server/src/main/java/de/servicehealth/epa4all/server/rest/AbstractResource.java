@@ -83,9 +83,9 @@ public abstract class AbstractResource {
     protected EpaContext buildEpaContext(String kvnr) throws Exception {
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
         if (insuranceData == null) {
-            insuranceData = insuranceDataService.initData(telematikId, null, kvnr, smcbHandle, userRuntimeConfig);
+            insuranceData = insuranceDataService.initData(telematikId, null, kvnr, smcbHandle, userRuntimeConfig, false);
         }
-        String insurantId = insuranceData.getInsurantId();
+        String insurantId = insuranceData == null ? kvnr : insuranceData.getInsurantId();
         EpaAPI epaAPI = epaMultiService.getEpaAPI(insurantId);
         String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
         String konnektorHost = userRuntimeConfig.getKonnektorHost();
@@ -111,7 +111,7 @@ public abstract class AbstractResource {
         }
 
         Map<String, String> xHeaders = prepareXHeaders(insurantId, userAgent, backend, vauNpOpt);
-        return new EpaContext(backend, entitlementIsSet, insuranceData, xHeaders);
+        return new EpaContext(insurantId, backend, entitlementIsSet, insuranceData, xHeaders);
     }
 
     private Map<String, String> prepareXHeaders(

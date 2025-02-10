@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.utils.ServerUtils.isAuthError;
@@ -43,9 +45,13 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
 
     private final VauFacade vauFacade;
     private final JsonbBuilder jsonbBuilder;
+    private final Set<String> maskedHeaders;
+    private final Set<String> maskedAttributes;
 
-    public JsonbVauWriterProvider(VauFacade vauFacade) {
+    public JsonbVauWriterProvider(VauFacade vauFacade, Set<String> maskedHeaders, Set<String> maskedAttributes) {
         jsonbBuilder = new JsonBindingBuilder();
+        this.maskedHeaders = new HashSet<>(maskedHeaders);
+        this.maskedAttributes = new HashSet<>(maskedAttributes);
         this.vauFacade = vauFacade;
     }
 
@@ -94,7 +100,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             String statusLine = getStatusLine(obj, methodWithPath);
             HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);
 
-            log.info("REST Inner Request: " + httpParcel.toString(false, true));
+            log.info("REST Inner Request: " + httpParcel.toString(false, true, maskedHeaders, maskedAttributes));
 
             byte[] vauMessage;
             try {

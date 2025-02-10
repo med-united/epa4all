@@ -2,26 +2,31 @@ package de.servicehealth.logging;
 
 import lombok.Getter;
 
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+
 /**
  * We have quite some attributes to put in a logging context (MDC) and
  * pass the context from thread to thread or even JMS. Hence, we want to make sure
  * here that we have a proper naming of these attributes along the application
  */
 @Getter
-public enum LogContextConstant {
+public enum LogField {
     // Note for changes: Keep them in sync with ere-ps-app for better log-correlations
     VAU_SESSION("vauSession"),
-    KVNR("kvnr"),
+    EPA_BACKEND("ePA backend"),
+    INSURANT(X_INSURANT_ID),
     ICCSN("iccsn"),
-    PROTOCOL("protocol"),
     JSON_MESSAGE_TYPE("jsonMessageType"),
     REMOTE_ADDR("remoteAddress"),
     KONNEKTOR("konnektor"),
+    TELEMATIK_ID("telematikId"),
+    EGK_HANDLE("egkHandle"),
+    SMCB_HANDLE("smcbHandle"),
     WORKPLACE("workPlaceId");
 
     private final String identifier;
 
-    LogContextConstant(String identifier) {
+    LogField(String identifier) {
         this.identifier = identifier;
     }
 }

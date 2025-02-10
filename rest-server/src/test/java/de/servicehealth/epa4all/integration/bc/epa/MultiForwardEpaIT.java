@@ -17,7 +17,8 @@ import java.util.concurrent.Future;
 
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static kong.unirest.core.HttpStatus.TOO_MANY_REQUESTS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @QuarkusTest
 @TestProfile(ProxyEpaTestProfile.class)
@@ -26,17 +27,17 @@ public class MultiForwardEpaIT {
     private static class GetInfo {
         int statusCode;
         String insurantId;
-        String response;
+        String responseBody;
 
-        public GetInfo(int statusCode, String insurantId, String response) {
+        public GetInfo(int statusCode, String insurantId, String responseBody) {
             this.statusCode = statusCode;
             this.insurantId = insurantId;
-            this.response = response;
+            this.responseBody = responseBody;
         }
     }
 
     @Test
-    public void multipleRequestsFetchMedicationsBundles() {
+    public void multipleRequestsFinishedWithOneValuableAndRestDuplicated() {
         Random random = new SecureRandom();
         List<String> patients = List.of("X110485291"/*, "X110486750"*/);
 
@@ -68,11 +69,11 @@ public class MultiForwardEpaIT {
             }
         }).toList();
 
-        for (GetInfo result : results) {
-            String insurantId = result.insurantId;
-            String bundle = result.response;
-            assertNotNull(bundle);
-            System.out.printf("[%s] RESPONSE -> %s%n", insurantId, bundle.substring(0, Math.min(100, bundle.length())));
-        }
+
+        List<GetInfo> bundleResults = results.stream().filter(r -> r.responseBody.contains("Bundle")).toList();
+        List<GetInfo> duplicatedResults = results.stream().filter(r -> r.statusCode == TOO_MANY_REQUESTS).toList();
+
+        assertEquals(1, bundleResults.size());
+        assertEquals(cnt - 1, duplicatedResults.size());
     }
 }

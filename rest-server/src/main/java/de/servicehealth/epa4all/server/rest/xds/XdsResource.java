@@ -50,14 +50,14 @@ public abstract class XdsResource extends AbstractResource {
             Set.of(),
             () -> prepareEpaContext(kvnr),
             () -> false,
-            EpaContext::isEntitlementValid
+            EpaContext::isEntitlementValid // TODO setEntitlement can be disabled
         );
     }
 
     protected AdhocQueryResponse getAdhocQueryResponse(String kvnr, EpaContext epaContext) throws Exception {
         Map<String, String> xHeaders = epaContext.getXHeaders();
         IDocumentManagementPortType documentManagementPortType = epaMultiService
-            .getEpaAPI(epaContext.getInsuranceData().getInsurantId())
+            .getEpaAPI(epaContext.getInsurantId())
             .getDocumentManagementPortType(UUID.randomUUID().toString(), xHeaders);
         AdhocQueryRequest request = xdsDocumentService.get().prepareAdhocQueryRequest(kvnr);
         return epaCallGuard.callAndRetry(

@@ -12,6 +12,7 @@ import java.util.Map;
 @ToString
 public class EpaContext {
 
+    private String insurantId;
     private String backend;
     private boolean entitlementValid;
     private InsuranceData insuranceData;

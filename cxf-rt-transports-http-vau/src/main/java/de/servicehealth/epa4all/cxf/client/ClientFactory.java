@@ -19,6 +19,7 @@ import org.apache.cxf.BusFactory;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.ext.logging.LoggingInInterceptor;
 import org.apache.cxf.ext.logging.LoggingOutInterceptor;
+import org.apache.cxf.feature.Feature;
 import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
@@ -30,6 +31,7 @@ import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import java.util.List;
+import java.util.Set;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
@@ -57,7 +59,7 @@ public class ClientFactory extends StartableService {
         extension.registerConduitInitiator(TRANSPORT_IDENTIFIER, customTransport);
     }
 
-    public <T> T createPlainClient(Class<T> clazz, String url) throws Exception {
+    public <T> T createRestPlainClient(Class<T> clazz, String url) throws Exception {
         List<Object> providers = List.of(new JsonbPlainReaderProvider(), new JsonbWriterProvider());
         T api = JAXRSClientFactory.create(url, clazz, providers);
         initClient(
@@ -69,12 +71,20 @@ public class ClientFactory extends StartableService {
         return api;
     }
 
-    public <T> T createProxyClient(VauFacade vauFacade, String epaUserAgent, Class<T> clazz, String url) throws Exception {
+    public <T> T createRestProxyClient(
+        VauFacade vauFacade,
+        String epaUserAgent,
+        Class<T> clazz,
+        String url,
+        Set<String> maskedHeaders,
+        Set<String> maskedAttributes,
+        List<Feature> features
+    ) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
-        JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade);
+        JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade, maskedHeaders, maskedAttributes);
         JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
         List<Object> providers = List.of(cborWriterProvider, jsonbVauWriterProvider, jsonbVauReaderProvider);
-        T api = JAXRSClientFactory.create(url, clazz, providers);
+        T api = JAXRSClientFactory.create(url, clazz, providers, features, null);
         initClient(
             WebClient.getConfig(api),
             vauConfig.getConnectionTimeoutMs(),
