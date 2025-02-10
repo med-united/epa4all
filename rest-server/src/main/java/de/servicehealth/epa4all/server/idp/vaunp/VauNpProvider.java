@@ -298,18 +298,17 @@ public class VauNpProvider extends StartableService {
     ) {
         KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
         return withMdc(Map.of(KONNEKTOR, info.konnektor, WORKPLACE, info.workplaceId), () -> {
-            log.info(String.format("Get authCode for query=%s", location.getQuery()));
             long start = System.currentTimeMillis();
             try {
                 RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
                 String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
                 VauNpKey key = new VauNpKey(smcbHandle, info.konnektor, info.workplaceId, backend);
                 SendAuthCodeSCtype authCode = idpClient.getAuthCodeSync(nonce, location, runtimeConfig, smcbHandle);
+                log.info("Successfully got authorization code from IDP");
                 long delta = System.currentTimeMillis() - start;
                 return new IdpResult(key, authCode, null, delta);
             } catch (Exception e) {
-                log.error("Error while getIdpAuthCode", e);
-
+                log.error("Error while getting authorization code from IDP", e);
                 long delta = System.currentTimeMillis() - start;
                 StringBuilder sb = new StringBuilder(e.getMessage());
                 if (e instanceof RuntimeException runtimeEx) {
