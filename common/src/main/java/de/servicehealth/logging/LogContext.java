@@ -1,74 +1,55 @@
 package de.servicehealth.logging;
 
-import com.google.common.annotations.VisibleForTesting;
-import jakarta.validation.constraints.NotNull;
+import com.google.common.collect.Streams;
+import de.servicehealth.utils.Action;
+import de.servicehealth.utils.ActionEx;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.io.Closeable;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.stream.Stream;
 
 @SuppressWarnings("resource")
 public class LogContext implements Closeable {
 
-    private final Map<String, String> setWithPriorValues = new HashMap<>();
+    private static final Logger log = LoggerFactory.getLogger(LogContext.class.getName());
 
-    private LogContext(Map<LogContextConstant, String> map) {
-        for (Map.Entry<LogContextConstant, String> entry : map.entrySet()) {
-            putMDC(entry.getKey(), entry.getValue());
-        }
+    private static final Config CONFIG = ConfigProvider.getConfig();
+
+    public static final String MASK_SENSITIVE = "servicehealth.client.mask-sensitive";
+    public static final String MASKED_HEADERS = "servicehealth.client.masked-headers";
+    public static final String MASKED_ATTRIBUTES = "servicehealth.client.masked-attributes";
+    
+    private static final boolean maskSensitive = CONFIG.getOptionalValue(MASK_SENSITIVE, Boolean.class).orElse(true);
+
+    private static String[] getPropertyValuesArray(String property) {
+        return CONFIG.getOptionalValue(property, String.class).orElse("").split(",");
     }
 
-    public static <T extends Exception> void withLogContext(
-        Map<LogContextConstant, String> ctx,
-        ThrowingRunnable<T> method
-    ) throws T {
+    private static final Set<String> maskedItems = new HashSet<>(
+        Streams.concat(
+            Stream.of(getPropertyValuesArray(MASKED_HEADERS)).map(String::valueOf),
+            Stream.of(getPropertyValuesArray(MASKED_ATTRIBUTES)).map(String::valueOf)
+        ).filter(s -> !s.isEmpty()).toList()
+    );
+
+    public static <T> T withMdc(Map<LogField, String> ctx, Action<T> action) {
         try (LogContext context = new LogContext(ctx)) {
-            method.run();
+            return action.execute();
+        } 
+    }
+
+    public static <T> T withMdcEx(Map<LogField, String> ctx, ActionEx<T> action) throws Exception {
+        try (LogContext context = new LogContext(ctx)) {
+            return action.execute();
         }
-    }
-
-    public static Map<LogContextConstant, String> getMDCopyWithKnownConstantsOnly() {
-        Map<String, String> mdcCopy = MDC.getCopyOfContextMap();
-        if (mdcCopy == null) {
-            return Map.of();
-        }
-
-        Map<String, LogContextConstant> reverseMap = Arrays.stream(LogContextConstant.values())
-            .collect(Collectors.toMap(LogContextConstant::getIdentifier, con -> con));
-        return mdcCopy.entrySet().stream()
-            .filter(entry -> reverseMap.containsKey(entry.getKey()))
-            .collect(Collectors.toMap(entry -> reverseMap.get(entry.getKey()), Map.Entry::getValue));
-    }
-
-    public LogContext with(LogContextConstant ctx, String value) {
-        return putMDC(ctx, value);
-    }
-
-    /**
-     * Allow to set MDC directly without our enum for custom fields
-     */
-    public LogContext with(String key, String value) {
-        return putMDC(key, value);
-    }
-
-    private LogContext putMDC(LogContextConstant ctx, String value) {
-        putMDC(ctx.getIdentifier(), value);
-        return this;
-    }
-
-    private LogContext putMDC(String key, String value) {
-        if (!setWithPriorValues.containsKey(key)) {
-            setWithPriorValues.put(key, MDC.get(key));
-        }
-        MDC.put(key, value);
-        return this;
     }
 
     @Override
@@ -82,104 +63,43 @@ public class LogContext implements Closeable {
         }
     }
 
+    private final Map<String, String> setWithPriorValues = new HashMap<>();
+
+    private LogContext(Map<LogField, String> map) {
+        for (Map.Entry<LogField, String> entry : map.entrySet()) {
+            putMDC(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public LogContext with(LogField ctx, String value) {
+        return putMDC(ctx, value);
+    }
+
     /**
-     * For our well-known-context variables in LogContextConstants, we support production anonymization.
-     * Gematik wants to make sure that under no circumstances person-related-data is logged whereas in development
-     * and integration testing, having as much data as possible makes debugging much easier. Hence, we support logging
-     * of a lot of data but exclude it in production from the logs.
+     * Allow to set MDC directly without our enum for custom fields
      */
-    @VisibleForTesting
-    String anonymize(LogContextConstant ctx, String value) {
+    public LogContext with(String key, String value) {
+        return putMDC(key, value);
+    }
+
+    String mask(String attribute, String value) {
         if (value == null) {
             return null;
         }
-
-        return switch (ctx) {
-            case VAU_SESSION, PROTOCOL, JSON_MESSAGE_TYPE, KONNEKTOR, WORKPLACE -> value;
-            case ICCSN, KVNR -> anonymizeICCSN(value);
-            case REMOTE_ADDR -> anonymizeRemoteAddr(value);
-        };
+        return maskSensitive && maskedItems.contains(attribute) ? "XXX" : value;
     }
 
-    @VisibleForTesting
-    String anonymizeICCSN(@NotNull String value) {
-        // ICCSN is 20 digits
-        // gemSpec_Karten_Fach_TIP_G2_1 hints that ICCSN is administrated by GS1 Germany GmbH in germany
-        // GS1 published a document about ICCSN here: https://www.gs1-germany.de/fileadmin/gs1/basis_informationen/einheitliche_nummerierung_fuer_identifikationskarten_im_.pdf
-        // Digit  1- 2: "Major Industry Identifier", for TI/healthcare: 80
-        // Digit  3- 5: Country Code, for germany 276
-        // Digit  6-10: "Kartenausgeberschlüssel", for eGK usually "Krankenkasse", non-personal related.
-        // Digit 11-20: serial-number. unique per person => personal-related data
-        if (value.length() == 20) {
-            return value.substring(0, 10) + "*".repeat(10);
-        }
-        return "<REDACTED>";
+    private LogContext putMDC(LogField ctx, String value) {
+        String identifier = ctx.getIdentifier();
+        putMDC(identifier, mask(identifier, value));
+        return this;
     }
 
-    @VisibleForTesting
-    String anonymizeRemoteAddr(@NotNull String value) {
-        // The EuGH (Europäsche Gerichtshof) ruled that IP-addresses (static and dynamic) can be
-        // considered personal-related data. Hence, we need to anonymize it, at least as long as it is not originating
-        // from our internal networks (non-public ip address ranges)
-        if (isPrivateIP(value)) {
-            return value;
+    private LogContext putMDC(String key, String value) {
+        if (!setWithPriorValues.containsKey(key)) {
+            setWithPriorValues.put(key, MDC.get(key));
         }
-
-        // Replace all digits (and IPv6 hex numbers) by X, keeping somewhat the form of e.g. XXX.XX.X.XXX,
-        // Just in case we accidentally happen to not have an IP address in here, we also replace other chars like Q
-        // by an X to be sure that everything is anonymized.
-        return value.replaceAll("[0-9a-zA-Z]", "X");
-    }
-
-    public boolean isPrivateIP(String ipAddress) {
-        try {
-            InetAddress addr = InetAddress.getByName(ipAddress);
-
-            // Check if it's loopback address
-            if (addr.isLoopbackAddress()) {
-                return true;
-            }
-
-            // Check if it's a site-local address
-            if (addr.isSiteLocalAddress()) {
-                return true;
-            }
-
-            // Additional checks for IPv4
-            if (addr instanceof Inet4Address) {
-                return isPrivateIPv4(addr.getAddress());
-            }
-
-            // Additional checks for IPv6
-            if (addr instanceof Inet6Address) {
-                return isPrivateIPv6(addr.getAddress());
-            }
-
-        } catch (UnknownHostException e) {
-            return false;
-        }
-
-        return false;
-    }
-
-    private boolean isPrivateIPv4(byte[] rawBytes) {
-        // 10.0.0.0/8
-        if (rawBytes[0] == 10) {
-            return true;
-        }
-        // 172.16.0.0/12
-        if (rawBytes[0] == (byte) 172 && (rawBytes[1] & 0xF0) == 16) {
-            return true;
-        }
-        // 192.168.0.0/16
-        if (rawBytes[0] == (byte) 192 && rawBytes[1] == (byte) 168) {
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isPrivateIPv6(byte[] rawBytes) {
-        // fc00::/7 Unique local address
-        return (rawBytes[0] & 0xfe) == 0xfc;
+        MDC.put(key, value);
+        return this;
     }
 }

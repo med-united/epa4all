@@ -3,14 +3,21 @@ package de.servicehealth.http;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.cxf.ext.logging.MaskSensitiveHelper;
+import org.apache.cxf.message.MessageImpl;
 
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.utils.ServerUtils.decompress;
+import static de.servicehealth.utils.ServerUtils.findHeaderValue;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toMap;
+import static org.apache.cxf.message.Message.CONTENT_TYPE;
 
 @Getter
 public class HttpParcel {
@@ -18,20 +25,37 @@ public class HttpParcel {
     private static final int GAP = 4;
 
     private final String statusLine;
+    private final String contentType;
     private final List<Pair<String, String>> headers;
     private final byte[] payload;
+    private final MaskSensitiveHelper maskSensitiveHelper;
 
     public HttpParcel(String statusLine, List<Pair<String, String>> headers, byte[] payload) {
         this.statusLine = statusLine;
         this.headers = headers;
         this.payload = payload;
+
+        contentType = findHeaderValue(headers, CONTENT_TYPE).orElse("");
+        maskSensitiveHelper = new MaskSensitiveHelper();
     }
 
     public byte[] toBytes() {
-        return ArrayUtils.addAll(getStatusLineWithHeaders().getBytes(UTF_8), payload);
+        return ArrayUtils.addAll(getStatusLineWithHeaders(Set.of()).getBytes(UTF_8), payload);
     }
 
-    public String toString(boolean base64, boolean showPayload) {
+    public String toString(
+        boolean base64,
+        boolean showPayload
+    ) {
+        return toString(base64, showPayload, Set.of(), Set.of());
+    }
+    
+    public String toString(
+        boolean base64,
+        boolean showPayload,
+        Set<String> maskedHeaders,
+        Set<String> maskedAttributes
+    ) {
         String payloadString = "";
         if (showPayload && payload != null && payload.length > 0) {
             byte[] bytes = payload;
@@ -39,14 +63,23 @@ public class HttpParcel {
                 bytes = Base64.getEncoder().encode(bytes);
             }
             payloadString = new String(bytes);
+            MessageImpl fakeMessage = new MessageImpl();
+            fakeMessage.put(CONTENT_TYPE, contentType);
+            maskSensitiveHelper.setSensitiveElementNames(maskedAttributes);
+            payloadString = maskSensitiveHelper.maskSensitiveElements(fakeMessage, payloadString);
         }
-        return getStatusLineWithHeaders() + payloadString;
+        return getStatusLineWithHeaders(maskedHeaders) + payloadString;
     }
 
-    private String getStatusLineWithHeaders() {
-        String headersString = headers.stream()
+    private String getStatusLineWithHeaders(Set<String> maskedHeaders) {
+        Map<String, String> map = headers.stream()
             .filter(h -> h.getValue() != null && !h.getValue().trim().isEmpty() && !h.getValue().equals("null"))
-            .map(h -> String.format("%s: %s", h.getKey(), h.getValue()))
+            .map(h -> Pair.of(h.getKey(), h.getValue()))
+            .collect(toMap(Pair::getKey, Pair::getValue));
+
+        maskSensitiveHelper.maskHeaders(map, maskedHeaders);
+        String headersString = map.entrySet().stream()
+            .map(e -> String.format("%s: %s", e.getKey(), e.getValue()))
             .collect(Collectors.joining("\n"));
 
         return statusLine + "\n" + headersString + "\r\n\r\n";

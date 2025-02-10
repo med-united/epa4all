@@ -2,6 +2,8 @@ package de.servicehealth.logging;
 
 import com.google.common.io.Files;
 import io.quarkus.logging.LoggingFilter;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,45 +25,54 @@ public class PublicLogFilter implements Filter {
 
     private static final Logger log = LoggerFactory.getLogger(PublicLogFilter.class.getName());
 
-    private static final String PERSONAL_DATA_FILE = "personal-data.dict";
+    private static final Config CONFIG = ConfigProvider.getConfig();
+
+    private static final String SHARE_PERSONAL_DATA = "servicehealth.client.share-personal-data";
+    private static final boolean sharePersonalData = CONFIG.getOptionalValue(SHARE_PERSONAL_DATA, Boolean.class).orElse(false);
+
+    private static final String PERSONAL_DATA_PATH = "servicehealth.client.personal-data.file.path";
     private static final ScheduledExecutorService SCHEDULED_EXECUTOR = Executors.newScheduledThreadPool(1);
 
     private static volatile Set<String> PERSONAL_DATA_KEYS = new HashSet<>();
 
     private static final Set<String> DEFAULT_PERSONAL_DATA_KEYS = new HashSet<>(Arrays.asList(
-        "MandantId",
-        "ClientSystemId",
-        "WorkplaceId",
-        "UserId",
-        "GetCards",
-        "GetSubscription",
-        "GetSubscriptionResponse",
-        "SubscriptionID",
-        "GetCardsResponse",
-        "Iccsn",
-        "CardHolderName",
-        "CertificateExpirationDate",
-        "CardHandle",
-        "InsertTime",
-        "Kyber768_ct",
-        "AEAD_ct",
-        "ECDH_ct",
-        "AEAD_ct_key_confirmation",
-        "nonce",
-        "Location",
-        "ReadCardCertificate",
-        "ReadCardCertificateResponse",
-        "ExternalAuthenticate",
-        "ExternalAuthenticateResponse",
-        "authorizationCode",
-        "vau-np",
-        "ReadVSD",
-        "VAU-NP",
-        "kvnr",
-        "Medikationsliste",
-        "x-insurantid",
-        "fhir/Medication",
-        "eml/xhtml"
+        """
+            VAU-NP
+            x-insurantid
+            x-useragent
+            x-workplace
+            ClientID
+            nonce
+            vau-np
+            authorizationCode
+            clientAttest
+            Base64Data
+            Base64Signature
+            MandantId
+            ClientSystemId
+            UserId
+            Iccsn
+            PersoenlicheVersichertendaten
+            AllgemeineVersicherungsdaten
+            GeschuetzteVersichertendaten
+            Pruefungsnachweis
+            GetCardsResponse
+            CardHolderName
+            CertificateExpirationDate
+            CardHandle
+            InsertTime
+            Kyber768_ct
+            AEAD_ct
+            ECDH_ct
+            AEAD_ct_key_confirmation
+            Location
+            ReadCardCertificate
+            ReadCardCertificateResponse
+            ExternalAuthenticate
+            ExternalAuthenticateResponse
+            ReadVSD
+            Medikationsliste
+            """.split("\n")
     ));
 
     static {
@@ -70,9 +81,9 @@ public class PublicLogFilter implements Filter {
 
     private static void reload() {
         Set<String> set = new HashSet<>();
-        File file = new File("secret/" + PERSONAL_DATA_FILE);
-        String path = file.getAbsolutePath();
+        String path = CONFIG.getOptionalValue(PERSONAL_DATA_PATH, String.class).orElse("secret/personal-data.dict");
         try {
+            File file = new File(path);
             set.addAll(Files.readLines(file, UTF_8).stream()
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toSet()));
@@ -80,13 +91,15 @@ public class PublicLogFilter implements Filter {
             set.addAll(DEFAULT_PERSONAL_DATA_KEYS);
         }
         if (!PERSONAL_DATA_KEYS.equals(set)) {
-            log.info("Reloading personal data from '{}' after change", path);
+            String flag = sharePersonalData ? "ALLOWED" : "FORBIDDEN";
+            log.info("Reloading personal data from '{}' after change, '{}' is {}", path, SHARE_PERSONAL_DATA, flag);
             PERSONAL_DATA_KEYS = set;
         }
     }
 
     @Override
     public boolean isLoggable(LogRecord record) {
-        return PERSONAL_DATA_KEYS.parallelStream().noneMatch(record.getMessage()::contains);
+        boolean nonPersonalData = PERSONAL_DATA_KEYS.parallelStream().noneMatch(record.getMessage()::contains);
+        return sharePersonalData || nonPersonalData;
     }
 }

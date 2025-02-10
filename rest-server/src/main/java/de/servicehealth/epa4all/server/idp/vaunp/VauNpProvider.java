@@ -43,9 +43,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.konnektorconfig.FSConfigService.CONFIG_DELIMETER;
-import static de.servicehealth.logging.LogContext.withLogContext;
-import static de.servicehealth.logging.LogContextConstant.KONNEKTOR;
-import static de.servicehealth.logging.LogContextConstant.WORKPLACE;
+import static de.servicehealth.logging.LogContext.withMdc;
+import static de.servicehealth.logging.LogField.KONNEKTOR;
+import static de.servicehealth.logging.LogField.WORKPLACE;
 
 @SuppressWarnings("CdiInjectionPointsInspection")
 @ApplicationScoped
@@ -297,36 +297,30 @@ public class VauNpProvider extends StartableService {
         URI location
     ) {
         KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
-        String msg = "[GetIdpAuthCode] konnektor=%s workplaceId=%s nonce=%s query=%s";
-        withLogContext(Map.of(
-            KONNEKTOR, info.konnektor,
-            WORKPLACE, info.workplaceId
-        ), () -> log.info(String.format(msg, info.konnektor, info.workplaceId, nonce, location.getQuery())));
-        
-        long start = System.currentTimeMillis();
-        try {
-            RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
-            String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-            VauNpKey key = new VauNpKey(smcbHandle, info.konnektor, info.workplaceId, backend);
-            SendAuthCodeSCtype authCode = idpClient.getAuthCodeSync(nonce, location, runtimeConfig, smcbHandle);
-            long delta = System.currentTimeMillis() - start;
-            return new IdpResult(key, authCode, null, delta);
-        } catch (Exception e) {
-            withLogContext(Map.of(
-                KONNEKTOR, info.konnektor,
-                WORKPLACE, info.workplaceId
-            ), () -> log.error("Error while getIdpAuthCode", e));
-            
-            long delta = System.currentTimeMillis() - start;
-            StringBuilder sb = new StringBuilder(e.getMessage());
-            if (e instanceof RuntimeException runtimeEx) {
-                Throwable cause = runtimeEx.getCause();
-                if (cause != null) {
-                    sb.append(": ").append(cause.getMessage());
+        return withMdc(Map.of(KONNEKTOR, info.konnektor, WORKPLACE, info.workplaceId), () -> {
+            log.info(String.format("Get authCode for query=%s", location.getQuery()));
+            long start = System.currentTimeMillis();
+            try {
+                RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, config.getUserConfigurations());
+                String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
+                VauNpKey key = new VauNpKey(smcbHandle, info.konnektor, info.workplaceId, backend);
+                SendAuthCodeSCtype authCode = idpClient.getAuthCodeSync(nonce, location, runtimeConfig, smcbHandle);
+                long delta = System.currentTimeMillis() - start;
+                return new IdpResult(key, authCode, null, delta);
+            } catch (Exception e) {
+                log.error("Error while getIdpAuthCode", e);
+
+                long delta = System.currentTimeMillis() - start;
+                StringBuilder sb = new StringBuilder(e.getMessage());
+                if (e instanceof RuntimeException runtimeEx) {
+                    Throwable cause = runtimeEx.getCause();
+                    if (cause != null) {
+                        sb.append(": ").append(cause.getMessage());
+                    }
                 }
+                return new IdpResult(null, null, sb.toString(), delta);
             }
-            return new IdpResult(null, null, sb.toString(), delta);
-        }
+        });
     }
 
     private static class IdpResult {
