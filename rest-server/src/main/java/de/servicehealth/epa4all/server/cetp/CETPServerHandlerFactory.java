@@ -13,6 +13,7 @@ import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.vsd.VsdService;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -22,6 +23,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
+    private final VsdService vsdService;
     private final EpaCallGuard epaCallGuard;
     private final FeatureConfig featureConfig;
     private final VauNpProvider vauNpProvider;
@@ -35,6 +37,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
 
     @Inject
     public CETPServerHandlerFactory(
+        VsdService vsdService,
         EpaCallGuard epaCallGuard,
         FeatureConfig featureConfig,
         VauNpProvider vauNpProvider,
@@ -46,6 +49,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         Event<WebSocketPayload> webSocketPayloadEvent,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
+        this.vsdService = vsdService;
         this.epaCallGuard = epaCallGuard;
         this.featureConfig = featureConfig;
         this.vauNpProvider = vauNpProvider;
@@ -63,8 +67,8 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, konnektorConfig.getUserConfigurations());
         CardlinkClient cardlinkClient = cardlinkClientFactory.build(konnektorConfig);
         CETPEventHandler cetpEventHandler = new CETPEventHandler(
-            webSocketPayloadEvent, insuranceDataService, epaFileDownloader, konnektorClient,
-            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard
+            webSocketPayloadEvent, insuranceDataService, epaFileDownloader, konnektorClient, epaMultiService,
+            cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard, vsdService
         );
         return new ChannelInboundHandler[] { cetpEventHandler };
     }

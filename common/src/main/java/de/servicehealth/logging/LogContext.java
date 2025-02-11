@@ -3,6 +3,7 @@ package de.servicehealth.logging;
 import com.google.common.collect.Streams;
 import de.servicehealth.utils.Action;
 import de.servicehealth.utils.ActionEx;
+import de.servicehealth.utils.ActionWr;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -41,29 +42,39 @@ public class LogContext implements Closeable {
     );
 
     public static <T> T withMdc(Map<LogField, String> ctx, Action<T> action) {
-        try (LogContext context = new LogContext(ctx)) {
+        try (LogContext ignored = new LogContext(ctx)) {
             return action.execute();
         } 
     }
 
     public static <T> T withMdcEx(Map<LogField, String> ctx, ActionEx<T> action) throws Exception {
-        try (LogContext context = new LogContext(ctx)) {
+        try (LogContext ignored = new LogContext(ctx)) {
             return action.execute();
         }
     }
 
-    @Override
-    public void close() {
-        for (Map.Entry<String, String> entry : setWithPriorValues.entrySet()) {
-            if (entry.getValue() != null) {
-                MDC.put(entry.getKey(), entry.getValue());
-            } else {
-                MDC.remove(entry.getKey());
-            }
+    public static void withMdcWr(Map<LogField, String> ctx, ActionWr action) {
+        try (LogContext ignored = new LogContext(ctx)) {
+            action.execute();
         }
     }
 
-    private final Map<String, String> setWithPriorValues = new HashMap<>();
+    private final Map<String, String> map = new HashMap<>();
+
+    private LogContext putMDC(String key, String value) {
+        if (!map.containsKey(key)) {
+            map.put(key, MDC.get(key));
+        }
+        MDC.put(key, value);
+        return this;
+    }
+
+    @Override
+    public void close() {
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            MDC.remove(entry.getKey());
+        }
+    }
 
     private LogContext(Map<LogField, String> map) {
         for (Map.Entry<LogField, String> entry : map.entrySet()) {
@@ -82,24 +93,16 @@ public class LogContext implements Closeable {
         return putMDC(key, value);
     }
 
-    String mask(String attribute, String value) {
-        if (value == null) {
-            return null;
-        }
-        return maskSensitive && maskedItems.contains(attribute) ? "XXX" : value;
-    }
-
     private LogContext putMDC(LogField ctx, String value) {
         String identifier = ctx.getIdentifier();
         putMDC(identifier, mask(identifier, value));
         return this;
     }
 
-    private LogContext putMDC(String key, String value) {
-        if (!setWithPriorValues.containsKey(key)) {
-            setWithPriorValues.put(key, MDC.get(key));
+    String mask(String attribute, String value) {
+        if (value == null) {
+            return null;
         }
-        MDC.put(key, value);
-        return this;
+        return maskSensitive && maskedItems.contains(attribute) ? "XXX" : value;
     }
 }

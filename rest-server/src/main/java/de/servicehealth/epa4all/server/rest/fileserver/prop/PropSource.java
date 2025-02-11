@@ -8,23 +8,23 @@ import java.util.Set;
 
 public class PropSource {
     File file;
-    UCPersoenlicheVersichertendatenXML.Versicherter.Person person;
     Set<String> smcbFolders;
+    UCPersoenlicheVersichertendatenXML.Versicherter.Person person;
     int checksumsCount;
     Date expiry;
     String smcb;
 
     public PropSource(
         File file,
-        UCPersoenlicheVersichertendatenXML.Versicherter.Person person,
         Set<String> smcbFolders,
+        UCPersoenlicheVersichertendatenXML.Versicherter.Person person,
         int checksumsCount,
         Date expiry,
         String smcb
     ) {
         this.file = file;
-        this.person = person;
         this.smcbFolders = smcbFolders;
+        this.person = person;
         this.checksumsCount = checksumsCount;
         this.expiry = expiry;
         this.smcb = smcb;

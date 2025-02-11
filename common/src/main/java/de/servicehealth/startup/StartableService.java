@@ -13,7 +13,7 @@ public abstract class StartableService implements StartupEventListener {
     public static final int CxfClientFactoryPriority = 1000;
     public static final int MultiEpaPriority = 2000;
     public static final int VauNpProviderPriority = 3000;
-    
+
     private final Logger log = LoggerFactory.getLogger(getClass().getSimpleName());
 
     @ConfigProperty(name = "startup-events.disabled", defaultValue = "false")
@@ -43,7 +43,9 @@ public abstract class StartableService implements StartupEventListener {
                 log.info(String.format("[%s] STARTED in %d ms", className, delta));
             }
         } else {
-            throw new IllegalStateException("Konnektor config directory is not correct. Should exist as directory here: "+(configDirectory != null ? configDirectory.getAbsolutePath() : "null"));
+            String configPath = configDirectory != null ? configDirectory.getAbsolutePath() : "null";
+            String msg = "Konnektor config directory is not correct. Should exist as directory here: " + configPath;
+            throw new IllegalStateException(msg);
         }
     }
 

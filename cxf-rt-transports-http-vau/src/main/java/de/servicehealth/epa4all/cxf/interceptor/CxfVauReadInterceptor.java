@@ -49,6 +49,10 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
             String vauCid = (String) message.getExchange().get(VAU_CID);
             byte[] vauPayload = inputStream.readAllBytes();
+
+            // TODO - ErrorType
+            // String err = "{\"errorCode\":\"notEntitled\",\"errorDetail\":\"XPGC WHCJ HRMZ UYJQ\"}";
+
             VauResponse vauResponse = vauResponseReader.read(
                 vauCid, responseCode, getProtocolHeaders(message), vauPayload
             );

@@ -15,13 +15,13 @@ import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
+import de.servicehealth.epa4all.server.vsd.VsdService;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.util.Base64;
 import java.util.HashMap;
@@ -30,6 +30,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
+import static de.servicehealth.logging.LogContext.withMdcWr;
+import static de.servicehealth.logging.LogField.CT_ID;
+import static de.servicehealth.logging.LogField.ICCSN;
+import static de.servicehealth.logging.LogField.REQUEST_CORRELATION_ID;
+import static de.servicehealth.logging.LogField.SLOT;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
@@ -48,6 +53,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private final VauNpProvider vauNpProvider;
     private final FeatureConfig featureConfig;
     private final EpaCallGuard epaCallGuard;
+    private final VsdService vsdService;
 
     public CETPEventHandler(
         Event<WebSocketPayload> webSocketPayloadEvent,
@@ -59,7 +65,8 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         VauNpProvider vauNpProvider,
         RuntimeConfig runtimeConfig,
         FeatureConfig featureConfig,
-        EpaCallGuard epaCallGuard
+        EpaCallGuard epaCallGuard,
+        VsdService vsdService
     ) {
         super(cardlinkClient);
 
@@ -72,6 +79,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         this.vauNpProvider = vauNpProvider;
         this.featureConfig = featureConfig;
         this.epaCallGuard = epaCallGuard;
+        this.vsdService = vsdService;
     }
 
     @Override
@@ -89,71 +97,75 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
     @Override
     protected void processEvent(IUserConfigurations configurations, Map<String, String> paramsMap) {
-        // Keep MDC names in sync with virtual-nfc-cardlink
         String correlationId = UUID.randomUUID().toString();
-        MDC.put("requestCorrelationId", correlationId);
-        MDC.put("iccsn", paramsMap.getOrDefault("ICCSN", "NoICCSNProvided"));
-        MDC.put("ctid", paramsMap.getOrDefault("CtID", "NoCtIDProvided"));
-        MDC.put("slot", paramsMap.getOrDefault("SlotID", "NoSlotIDProvided"));
 
-        log.info("%s event received with the following payload: %s".formatted(getTopicName(), paramsMap));
+        withMdcWr(Map.of(
+            REQUEST_CORRELATION_ID, correlationId,
+            ICCSN, paramsMap.getOrDefault("ICCSN", "NoICCSNProvided"),
+            CT_ID, paramsMap.getOrDefault("CtID", "NoCtIDProvided"),
+            SLOT, paramsMap.getOrDefault("SlotID", "NoSlotIDProvided")
+        ), () -> {
+            log.info("%s event received".formatted(getTopicName()));
 
-        boolean isEGK = "EGK".equalsIgnoreCase(paramsMap.get("CardType"));
-        boolean hasCardHandle = paramsMap.containsKey("CardHandle");
-        boolean hasSlotID = paramsMap.containsKey("SlotID");
-        boolean hasCtID = paramsMap.containsKey("CtID");
-        if (isEGK && hasCardHandle && hasSlotID && hasCtID) {
-            logCardInsertedEvent(paramsMap, correlationId);
+            boolean isEGK = "EGK".equalsIgnoreCase(paramsMap.get("CardType"));
+            boolean hasCardHandle = paramsMap.containsKey("CardHandle");
+            boolean hasSlotID = paramsMap.containsKey("SlotID");
+            boolean hasCtID = paramsMap.containsKey("CtID");
+            if (isEGK && hasCardHandle && hasSlotID && hasCtID) {
+                logCardInsertedEvent(paramsMap, correlationId);
 
-            String iccsn = paramsMap.get("ICCSN");
-            String ctId = paramsMap.get("CtID");
-            Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
-            try {
-                String egkHandle = paramsMap.get("CardHandle");
-                String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-                String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
+                String iccsn = paramsMap.get("ICCSN");
+                String ctId = paramsMap.get("CtID");
+                Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
 
-                InsuranceData insuranceData = insuranceDataService.getData(telematikId, egkHandle, runtimeConfig);
-                if (insuranceData == null) {
-                    if (featureConfig.isExternalPnwEnabled()) {
-                        log.warn(String.format(
-                            "PNW is not found for EGK=%s, ReadVSD is disabled, use external PNW call", egkHandle
-                        ));
-                        return;
-                    } else {
-                        insuranceData = insuranceDataService.initData(
-                            telematikId, egkHandle, null, smcbHandle, runtimeConfig, true
-                        );
+                try {
+                    String egkHandle = paramsMap.get("CardHandle");
+                    String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
+                    String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
+                    InsuranceData insuranceData = insuranceDataService.getData(telematikId, egkHandle, runtimeConfig);
+                    if (insuranceData == null) {
+                        if (featureConfig.isExternalPnwEnabled()) {
+                            log.warn(String.format(
+                                "PNW is not found for EGK=%s, ReadVSD is disabled, use external PNW call", egkHandle
+                            ));
+                            return;
+                        } else {
+                            String insurantId = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig, telematikId);
+                            insuranceData = insuranceDataService.getData(telematikId, insurantId);
+                        }
                     }
+                    if (insuranceData == null) {
+                        throw new IllegalStateException("Unable to read InsuranceData after VSD call");
+                    }
+                    String insurantId = insuranceData.getInsurantId();
+                    EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
+                    String backend = epaApi.getBackend();
+                    String konnektorHost = configurations.getKonnektorHost();
+                    String workplaceId = configurations.getWorkplaceId();
+                    Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, smcbHandle, konnektorHost, workplaceId);
+                    try (Response response = epaCallGuard.callAndRetry(backend, () -> epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders))) {
+                        byte[] bytes = response.readEntity(byte[].class);
+                        EpaContext epaContext = new EpaContext(insurantId, backend, true, insuranceData, Map.of());
+                        handleDownloadResponse(bytes, ctId, telematikId, epaContext, insurantId);
+                        String encodedPdf = Base64.getEncoder().encodeToString(bytes);
+                        Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
+                        cardlinkClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
+                    }
+                } catch (Exception e) {
+                    log.warn(String.format("[%s] Could not get medication PDF", correlationId), e);
+                    String error = printException(e);
+                    cardlinkClient.sendJson(
+                        correlationId,
+                        iccsn,
+                        "receiveTasklistError",
+                        Map.of("slotId", slotId, "cardSessionId", "null", "status", 500, "tistatus", "500", "errormessage", error)
+                    );
                 }
-                String insurantId = insuranceData.getInsurantId();
-                EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
-                String backend = epaApi.getBackend();
-                String konnektorHost = configurations.getKonnektorHost();
-                String workplaceId = configurations.getWorkplaceId();
-                Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, smcbHandle, konnektorHost, workplaceId);
-                try (Response response = epaCallGuard.callAndRetry(backend, () -> epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders))) {
-                    byte[] bytes = response.readEntity(byte[].class);
-                    EpaContext epaContext = new EpaContext(insurantId, backend, true, insuranceData, Map.of());
-                    handleDownloadResponse(bytes, ctId, telematikId, epaContext, insurantId);
-                    String encodedPdf = Base64.getEncoder().encodeToString(bytes);
-                    Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
-                    cardlinkClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
-                }
-            } catch (Exception e) {
-                log.warn(String.format("[%s] Could not get medication PDF", correlationId), e);
-                String error = printException(e);
-                cardlinkClient.sendJson(
-                    correlationId,
-                    iccsn,
-                    "receiveTasklistError",
-                    Map.of("slotId", slotId, "cardSessionId", "null", "status", 500, "tistatus", "500", "errormessage", error)
-                );
+            } else {
+                String msgFormat = "Ignored \"CARD/INSERTED\" values=%s";
+                log.info(String.format(msgFormat, paramsMap));
             }
-        } else {
-            String msgFormat = "Ignored \"CARD/INSERTED\" values=%s";
-            log.info(String.format(msgFormat, paramsMap));
-        }
+        });
     }
 
     private Map<String, String> prepareXHeaders(

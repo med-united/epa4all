@@ -184,22 +184,27 @@ public abstract class AbstractProp implements WebDavProp {
         UCPersoenlicheVersichertendatenXML.Versicherter.Person person = null;
         String telematikId = pathParts.size() > 1 ? pathParts.get(1).trim() : null;
         String insurantId = pathParts.size() > 2 ? pathParts.get(2).trim() : null;
-        InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
-        if (insuranceData != null && insuranceData.getPersoenlicheVersichertendaten() != null) {
-            UCPersoenlicheVersichertendatenXML.Versicherter versicherter = insuranceData.getPersoenlicheVersichertendaten().getVersicherter();
-            person = versicherter.getPerson();
+        Set<String> smcbFolders = webdavConfig.getSmcbFolders();
+        if (telematikId != null && insurantId != null) {
+            InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
+            if (insuranceData != null && insuranceData.getPersoenlicheVersichertendaten() != null) {
+                UCPersoenlicheVersichertendatenXML.Versicherter versicherter = insuranceData.getPersoenlicheVersichertendaten().getVersicherter();
+                person = versicherter.getPerson();
+            }
+            Date expiry = null;
+            try {
+                expiry = Date.from(insuranceDataService.getEntitlementExpiry(telematikId, insurantId));
+            } catch (Exception ignored) {
+            }
+            int checksumsCount = folderService.getChecksums(telematikId, insurantId).size();
+            String smcb = konnektorClient.getTelematikMap().entrySet().stream()
+                .filter(e -> e.getValue().equals(telematikId))
+                .findFirst()
+                .map(Map.Entry::getKey).orElse(null);
+            return new PropSource(resource, smcbFolders, person, checksumsCount, expiry, smcb);
+        } else {
+            return new PropSource(resource, smcbFolders, null, 0, null, null);
         }
-        Date expiry = null;
-        try {
-            expiry = Date.from(insuranceDataService.getEntitlementExpiry(telematikId, insurantId));
-        } catch (Exception ignored) {
-        }
-        int checksumsCount = folderService.getChecksums(telematikId, insurantId).size();
-        String smcb = konnektorClient.getTelematikMap().entrySet().stream()
-            .filter(e -> e.getValue().equals(telematikId))
-            .findFirst()
-            .map(Map.Entry::getKey).orElse(null);
-        return new PropSource(resource, person, webdavConfig.getSmcbFolders(), checksumsCount, expiry, smcb);
     }
 
     private Object[] getMissedProperties(PropFind propFind, Prop prop) {

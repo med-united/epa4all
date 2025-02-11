@@ -20,6 +20,9 @@ public class IdpConfig {
     @ConfigProperty(name = "idp.auth.request.redirect.url")
     String authRequestRedirectUrl;
 
+    @ConfigProperty(name = "idp.hcv.enabled", defaultValue = "false")
+    boolean hcvEnabled;
+
     public String getDiscoveryDocumentUrl() {
         return serviceUrl + "/.well-known/openid-configuration";
     }

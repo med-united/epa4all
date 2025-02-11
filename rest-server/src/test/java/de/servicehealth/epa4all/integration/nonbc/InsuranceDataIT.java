@@ -29,7 +29,8 @@ public class InsuranceDataIT extends AbstractVsdTest {
         mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
         mockVsdService(kvnr);
 
-        InsuranceData insuranceData = insuranceDataService.initData(telematikId, null, kvnr, smcbHandle, null, true);
+        String insurantId = vsdService.readVsd(telematikId, egkHandle, null, smcbHandle);
+        InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
         assertEquals(kvnr, insuranceData.getInsurantId());
     }
 

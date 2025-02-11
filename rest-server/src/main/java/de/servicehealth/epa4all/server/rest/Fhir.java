@@ -18,10 +18,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
+import static de.servicehealth.logging.LogContext.withMdc;
+import static de.servicehealth.logging.LogContext.withMdcEx;
+import static de.servicehealth.logging.LogField.INSURANT;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 
@@ -113,13 +117,12 @@ public class Fhir extends AbstractResource {
         byte[] body
     ) throws Exception {
         // Use fhir compatible variables
-        if (subject != null) {
-            xInsurantId = subject;
-        }
-        log.info(String.format("[%s] FHIR [%s] is forwarding", Thread.currentThread().getName(), fhirPath));
-        EpaContext epaContext = prepareEpaContext(xInsurantId);
-        EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsurantId());
-        String baseQuery = uriInfo.getRequestUri().getQuery();
-        return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, baseQuery, headers, body, epaContext.getXHeaders());
+        String insurantId = subject != null ? subject : xInsurantId;
+        EpaContext epaContext = prepareEpaContext(insurantId);
+        return withMdcEx(epaContext.getMdcMap(), () -> {
+            EpaAPI epaAPI = epaMultiService.getEpaAPI(epaContext.getInsurantId());
+            String baseQuery = uriInfo.getRequestUri().getQuery();
+            return epaAPI.getFhirProxy().forward(isGet, ui5, fhirPath, baseQuery, headers, body, epaContext.getXHeaders());
+        });
     }
 }

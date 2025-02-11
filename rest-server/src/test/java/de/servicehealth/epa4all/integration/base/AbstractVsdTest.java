@@ -66,7 +66,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
 
     @Inject
     protected EventMapper eventMapper;
-    
+
     @Inject
     protected EpaCallGuard epaCallGuard;
 
@@ -177,8 +177,8 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
-            webSocketPayloadEvent, insuranceDataService, epaFileDownloader, konnektorClient,
-            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard
+            webSocketPayloadEvent, insuranceDataService, epaFileDownloader, konnektorClient, epaMultiService,
+            cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard, vsdService
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 

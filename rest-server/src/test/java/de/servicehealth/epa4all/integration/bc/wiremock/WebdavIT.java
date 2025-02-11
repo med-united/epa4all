@@ -11,6 +11,7 @@ import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
+import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -51,6 +52,9 @@ public class WebdavIT extends AbstractWiremockTest {
     WebdavConfig webdavConfig;
 
     @Inject
+    VsdService vsdService;
+
+    @Inject
     InsuranceDataService insuranceDataService;
 
     @Inject
@@ -80,7 +84,7 @@ public class WebdavIT extends AbstractWiremockTest {
         inTempFolder(tempDir -> {
             String telematikId = "1-SMC-B-Testkarte--883110000162363";
             String kvnr = "X110400886";
-            UCPersoenlicheVersichertendatenXML.Versicherter.Person person = preparePerson(telematikId, kvnr);
+            UCPersoenlicheVersichertendatenXML.Versicherter.Person person = preparePerson(telematikId);
 
             String firstname = person.getVorname();
             String lastname = person.getNachname();
@@ -230,10 +234,7 @@ public class WebdavIT extends AbstractWiremockTest {
             .statusCode(200);
     }
 
-    private UCPersoenlicheVersichertendatenXML.Versicherter.Person preparePerson(
-        String telematikId,
-        String kvnr
-    ) throws Exception {
+    private UCPersoenlicheVersichertendatenXML.Versicherter.Person preparePerson(String telematikId) throws Exception {
         prepareVsdStubs();
         prepareKonnektorStubs();
 
@@ -241,7 +242,8 @@ public class WebdavIT extends AbstractWiremockTest {
         String smcbHandle = "SMC-B-10";
 
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
-        InsuranceData insuranceData = insuranceDataService.initData(telematikId, egkHandle, kvnr, smcbHandle, runtimeConfig, true);
+        String insurantId = vsdService.readVsd(telematikId, egkHandle, runtimeConfig, smcbHandle);
+        InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
         UCPersoenlicheVersichertendatenXML versichertendaten = insuranceData.getPersoenlicheVersichertendaten();
         UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
         assertNotNull(person);

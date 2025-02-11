@@ -158,12 +158,6 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
         return (String) headers.getFirst(headerName);
     }
 
-    private void printHeaders(Response response) {
-        MultivaluedMap<String, Object> headers = response.getHeaders();
-        log.info("Response.Headers:");
-        headers.keySet().forEach(key -> log.info(key + " -> " + headers.getFirst(key)));
-    }
-
     private MetadataMap<String, String> prepareVauOutboundHeaders(String uri, int length) {
         MetadataMap<String, String> headers = new MetadataMap<>();
         headers.add(CONNECTION, "Keep-Alive");

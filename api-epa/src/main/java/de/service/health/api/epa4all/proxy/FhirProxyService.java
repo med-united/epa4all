@@ -124,8 +124,8 @@ public class FhirProxyService implements IFhirProxy {
         }
 
         String query = excludeQueryParams(baseQuery, Set.of(X_SUBJECT, X_INSURANT_ID, X_KONNEKTOR, X_WORKPLACE));
-
-        log.info("Forwarding : " + fhirPath + "?" + query);
+        String q = query == null || query.isEmpty() ? "" : "?" + query;
+        log.info(String.format("Forwarding %s%s", fhirPath, q));
 
         List<Pair<String, String>> acceptHeaders;
         if (isPdf) {

@@ -18,7 +18,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
@@ -42,11 +44,15 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
     private static final Logger log = LoggerFactory.getLogger(CxfVauWriteSoapInterceptor.class.getName());
 
     private final VauFacade vauFacade;
+    private final Set<String> maskedHeaders;
+    private final Set<String> maskedAttributes;
 
-    public CxfVauWriteSoapInterceptor(VauFacade vauFacade) {
+    public CxfVauWriteSoapInterceptor(VauFacade vauFacade, Set<String> maskedHeaders, Set<String> maskedAttributes) {
         super(PRE_STREAM);
         addBefore(LoggingOutInterceptor.class.getName());
         this.vauFacade = vauFacade;
+        this.maskedHeaders = new HashSet<>(maskedHeaders);
+        this.maskedAttributes = new HashSet<>(maskedAttributes);
     }
 
     private byte[] getPayload(OutputStream os, CachedStream cs, Message message) throws Exception {
@@ -109,8 +115,9 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));
             String statusLine = methodWithPath + " HTTP/1.1";
             HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);
-            String threadName = Thread.currentThread().getName();
-            log.info(String.format("[%s] SOAP Inner Request: %s", threadName, httpParcel.toString(false, false)));
+
+            String requestAsString = httpParcel.toString(false, false, maskedHeaders, maskedAttributes);
+            log.info(String.format("SOAP Inner Request: %s", requestAsString));
 
             httpHeaders.remove(TASK_ID);
             httpParcel.getHeaders().stream().filter(p -> p.getKey().equals(TASK_ID)).findFirst().ifPresent(p ->

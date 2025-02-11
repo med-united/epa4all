@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit;
 import static de.servicehealth.epa4all.cxf.client.ClientFactory.initConduit;
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.logging.LogContext.withMdc;
-import static de.servicehealth.logging.LogField.EPA_BACKEND;
+import static de.servicehealth.logging.LogField.BACKEND;
 import static de.servicehealth.logging.LogField.INSURANT;
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
@@ -132,8 +132,7 @@ public class EpaMultiService extends StartableService {
                         documentManagementInsurantUrl,
                         epaUserAgent,
                         IDocumentManagementInsurantPortType.class,
-                        vauFacade,
-                        vauConfig
+                        vauFacade
                     );
 
                     AccountInformationApi accountInformationApi = clientFactory.createRestPlainClient(
@@ -202,8 +201,7 @@ public class EpaMultiService extends StartableService {
                 documentManagementUrl,
                 epaConfig.getEpaUserAgent(),
                 IDocumentManagementPortType.class,
-                vauFacade,
-                vauConfig
+                vauFacade
             );
         } catch (Exception e) {
             throw new IllegalStateException("Unable to create IDocumentManagementPortType", e);
@@ -242,7 +240,7 @@ public class EpaMultiService extends StartableService {
     }
 
     private boolean hasEpaRecord(EpaAPI api, String insurantId) {
-        return withMdc(Map.of(INSURANT, insurantId, EPA_BACKEND, api.getBackend()), () -> {
+        return withMdc(Map.of(INSURANT, insurantId, BACKEND, api.getBackend()), () -> {
             boolean result = false;
             try {
                 api.getAccountInformationApi().getRecordStatus(insurantId, epaConfig.getEpaUserAgent());
@@ -258,8 +256,7 @@ public class EpaMultiService extends StartableService {
         String address,
         String epaUserAgent,
         Class<T> clazz,
-        VauFacade vauFacade,
-        VauConfig vauConfig
+        VauFacade vauFacade
     ) throws Exception {
         JaxWsProxyFactoryBean soapProxyFactory = new JaxWsProxyFactoryBean();
         soapProxyFactory.setTransportId(TRANSPORT_IDENTIFIER);
@@ -274,11 +271,14 @@ public class EpaMultiService extends StartableService {
         soapProxyFactory.setProperties(props);
         soapProxyFactory.setBindingId(SOAP12HTTP_BINDING);
 
+        Set<String> maskedHeaders = servicehealthConfig.getMaskedHeaders();
+        Set<String> maskedAttributes = servicehealthConfig.getMaskedAttributes();
+
         soapProxyFactory.getOutInterceptors().addAll(
             List.of(
                 new LoggingOutInterceptor(),
                 new CxfVauSetupInterceptor(vauFacade, vauConfig, epaUserAgent),
-                new CxfVauWriteSoapInterceptor(vauFacade)
+                new CxfVauWriteSoapInterceptor(vauFacade, maskedHeaders, maskedAttributes)
             )
         );
         soapProxyFactory.getInInterceptors().addAll(

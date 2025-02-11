@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.filetracker.upload;
 
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.servicehealth.epa4all.server.filetracker.EpaFileTracker;
+import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
@@ -61,22 +62,27 @@ public class EpaFileUploader extends EpaFileTracker<FileUpload> {
         StructureDefinition structureDefinition
     ) {
         String kvnr = fileUpload.getKvnr();
-        UCPersoenlicheVersichertendatenXML versichertendaten = epaContext.getInsuranceData().getPersoenlicheVersichertendaten();
-        if (versichertendaten != null) {
-            UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
-            return xdsDocumentService.get().prepareDocumentSetRequest(
-                structureDefinition.getElements().getFirst().getMetadata(),
-                fileUpload.getDocumentBytes(),
-                fileUpload.getTelematikId(),
-                kvnr,
-                fileUpload.getFileName(),
-                fileUpload.getContentType(),
-                fileUpload.getLanguageCode(),
-                person.getVorname(),
-                person.getNachname(),
-                person.getTitel()
-            );
+        UCPersoenlicheVersichertendatenXML.Versicherter.Person person = getPerson(epaContext, kvnr);
+        return xdsDocumentService.get().prepareDocumentSetRequest(
+            structureDefinition.getElements().getFirst().getMetadata(),
+            fileUpload.getDocumentBytes(),
+            fileUpload.getTelematikId(),
+            kvnr,
+            fileUpload.getFileName(),
+            fileUpload.getContentType(),
+            fileUpload.getLanguageCode(),
+            person.getVorname(),
+            person.getNachname(),
+            person.getTitel()
+        );
+    }
+
+    private static UCPersoenlicheVersichertendatenXML.Versicherter.Person getPerson(EpaContext epaContext, String kvnr) {
+        InsuranceData insuranceData = epaContext.getInsuranceData();
+        if (insuranceData == null || insuranceData.getPersoenlicheVersichertendaten() == null) {
+            String msg = "[%s] versichertendaten is empty, please insert the card of the\npatient into a eHealth Card Terminal to generate this data.";
+            throw new IllegalStateException(String.format(msg, kvnr));
         }
-        throw new IllegalStateException(String.format("[%s] versichertendaten is empty, please insert the card of the\npatient into a eHealth Card Terminal to generate this data.", kvnr));
+        return insuranceData.getPersoenlicheVersichertendaten().getVersicherter().getPerson();
     }
 }
