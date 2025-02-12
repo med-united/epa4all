@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.rest.serviceport;
 
+import de.gematik.ws.conn.eventservice.v7.GetCardTerminalsResponse;
 import de.gematik.ws.conn.eventservice.v7.GetCardsResponse;
 import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
@@ -31,5 +32,14 @@ public class EventService extends AbstractResource {
     ) throws Exception {
         CardType ct = cardType == null ? null : CardType.valueOf(cardType);
         return konnektorClient.getCardsResponse(userRuntimeConfig, ct);
+    }
+
+    @GET
+    @Produces(APPLICATION_XML)
+    @Path("cardterminals")
+    public GetCardTerminalsResponse cardterminals(
+            @QueryParam(X_KONNEKTOR) String konnektor
+    ) throws Exception {
+        return konnektorClient.getCardTerminalsResponse(userRuntimeConfig);
     }
 }

@@ -8,18 +8,7 @@ import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortTyp
 import de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum;
 import de.gematik.ws.conn.connectorcommon.v5.Status;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
-import de.gematik.ws.conn.eventservice.v7.GetCards;
-import de.gematik.ws.conn.eventservice.v7.GetCardsResponse;
-import de.gematik.ws.conn.eventservice.v7.GetSubscription;
-import de.gematik.ws.conn.eventservice.v7.GetSubscriptionResponse;
-import de.gematik.ws.conn.eventservice.v7.RenewSubscriptions;
-import de.gematik.ws.conn.eventservice.v7.RenewSubscriptionsResponse;
-import de.gematik.ws.conn.eventservice.v7.Subscribe;
-import de.gematik.ws.conn.eventservice.v7.SubscribeResponse;
-import de.gematik.ws.conn.eventservice.v7.SubscriptionRenewal;
-import de.gematik.ws.conn.eventservice.v7.SubscriptionType;
-import de.gematik.ws.conn.eventservice.v7.Unsubscribe;
-import de.gematik.ws.conn.eventservice.v7.UnsubscribeResponse;
+import de.gematik.ws.conn.eventservice.v7.*;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.FaultMessage;
 import de.health.service.cetp.IKonnektorClient;
@@ -28,10 +17,12 @@ import de.health.service.cetp.domain.SubscriptionResult;
 import de.health.service.cetp.domain.eventservice.Subscription;
 import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
+import de.health.service.cetp.domain.eventservice.cardTerminal.CardTerminal;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardTypeMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardsResponseMapper;
+import de.servicehealth.epa4all.server.cetp.mapper.cardTerminal.CardTerminalsResponseMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.status.StatusMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionResultMapper;
@@ -84,6 +75,7 @@ public class KonnektorClient implements IKonnektorClient {
     private final SubscriptionResultMapper subscriptionResultMapper;
     private final SubscriptionMapper subscriptionMapper;
     private final CardsResponseMapper cardsResponseMapper;
+    private final CardTerminalsResponseMapper cardTerminalsResponseMapper;
     private final CardTypeMapper cardTypeMapper;
     private final StatusMapper statusMapper;
     private final VsdConfig vsdConfig;
@@ -93,6 +85,7 @@ public class KonnektorClient implements IKonnektorClient {
         SubscriptionResultMapper subscriptionResultMapper,
         SubscriptionMapper subscriptionMapper,
         CardsResponseMapper cardsResponseMapper,
+        CardTerminalsResponseMapper cardTerminalsResponseMapper,
         CardTypeMapper cardTypeMapper,
         StatusMapper statusMapper,
         VsdConfig vsdConfig
@@ -101,6 +94,7 @@ public class KonnektorClient implements IKonnektorClient {
         this.subscriptionResultMapper = subscriptionResultMapper;
         this.subscriptionMapper = subscriptionMapper;
         this.cardsResponseMapper = cardsResponseMapper;
+        this.cardTerminalsResponseMapper = cardTerminalsResponseMapper;
         this.cardTypeMapper = cardTypeMapper;
         this.statusMapper = statusMapper;
         this.vsdConfig = vsdConfig;
@@ -263,6 +257,24 @@ public class KonnektorClient implements IKonnektorClient {
         getCards.setCardType(cardType == null ? null : cardTypeMapper.toSoap(cardType));
         try {
             return eventService.getCards(getCards);
+        } catch (Exception e) {
+            throw new CetpFault(e.getMessage());
+        }
+    }
+
+    @Override
+    public List<CardTerminal> getCardTerminals(UserRuntimeConfig runtimeConfig) throws CetpFault {
+        GetCardTerminalsResponse cardTerminalsResponse = getCardTerminalsResponse(runtimeConfig);
+        return cardTerminalsResponseMapper.toDomain(cardTerminalsResponse).getCardTerminals();
+    }
+
+    public GetCardTerminalsResponse getCardTerminalsResponse(UserRuntimeConfig runtimeConfig) throws CetpFault {
+        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        EventServicePortType eventService = servicePorts.getEventService();
+        GetCardTerminals getCardTerminals = new GetCardTerminals();
+        getCardTerminals.setContext(servicePorts.getContextType());
+        try {
+            return eventService.getCardTerminals(getCardTerminals);
         } catch (Exception e) {
             throw new CetpFault(e.getMessage());
         }
