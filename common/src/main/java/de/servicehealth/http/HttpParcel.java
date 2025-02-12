@@ -80,9 +80,9 @@ public class HttpParcel {
         maskSensitiveHelper.maskHeaders(map, maskedHeaders);
         String headersString = map.entrySet().stream()
             .map(e -> String.format("%s: %s", e.getKey(), e.getValue()))
-            .collect(Collectors.joining("\n"));
+            .collect(Collectors.joining("\r\n"));
 
-        return statusLine + "\n" + headersString + "\r\n\r\n";
+        return statusLine + "\r\n" + headersString + "\r\n\r\n";
     }
 
     public boolean isResponse() {
@@ -128,7 +128,7 @@ public class HttpParcel {
         System.arraycopy(bytes, 0, headerBytes, 0, headersBoundary);
 
         List<String> headerLines = getHeaderLines(headerBytes);
-        String statusLine = headerLines.get(0).split("\n")[0].trim();
+        String statusLine = headerLines.get(0);
         List<Pair<String, String>> headers = getHeaders(headerLines);
         byte[] payload = extractPayload(bytes, headersBoundary);
 
@@ -140,7 +140,12 @@ public class HttpParcel {
     }
 
     private static List<String> getHeaderLines(byte[] headerBytes) {
-        return Arrays.asList(new String(headerBytes, UTF_8).split("\n"));
+        String source = new String(headerBytes, UTF_8);
+        String[] strings = source.contains("\r\n")
+            ? source.split("\r\n")
+            : source.split("\n");
+        
+        return Arrays.asList(strings);
     }
 
     // Using of Map can drop origin duplicates headers

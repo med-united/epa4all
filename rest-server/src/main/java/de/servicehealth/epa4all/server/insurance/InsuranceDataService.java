@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.server.insurance;
 
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
@@ -13,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.Instant;
 
 import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
@@ -38,13 +36,49 @@ public class InsuranceDataService {
         this.vsdService = vsdService;
     }
 
+    public InsuranceData loadInsuranceDataEx(
+        UserRuntimeConfig runtimeConfig,
+        String egkHandle,
+        String smcbHandle,
+        String telematikId
+    ) throws Exception {
+        String kvnr = getKvnr(egkHandle, runtimeConfig);
+        String insurantId = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig, telematikId, kvnr);
+        return getData(telematikId, insurantId);
+    }
+
+    public InsuranceData loadInsuranceData(
+        UserRuntimeConfig runtimeConfig,
+        String smcbHandle,
+        String telematikId,
+        String kvnr
+    ) {
+        try {
+            String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
+            String insurantId = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig, telematikId, kvnr);
+            return getData(telematikId, insurantId);
+        } catch (Exception e) {
+            log.error("Error while get InsuranceData", e);
+            return null;
+        }
+    }
+
+    public String getKvnr(String egkHandle, UserRuntimeConfig runtimeConfig) {
+        try {
+            return konnektorClient.getKvnr(runtimeConfig, egkHandle);
+        } catch (Exception e) {
+            log.error("Error while konnektorClient.getKvnr", e);
+            return null;
+        }
+    }
+
     public InsuranceData getData(
         String telematikId,
         String egkHandle,
         UserRuntimeConfig runtimeConfig
-    ) throws CetpFault {
-        String kvnr = konnektorClient.getKvnr(runtimeConfig, egkHandle);
-        return getData(telematikId, kvnr);
+    ) {
+        String kvnr = getKvnr(egkHandle, runtimeConfig);
+        return kvnr == null ? null : getData(telematikId, kvnr);
     }
 
     public InsuranceData getData(String telematikId, String kvnr) {
@@ -53,17 +87,27 @@ public class InsuranceDataService {
     }
 
     public void cleanUpInsuranceData(String telematikId, String kvnr) {
+        log.info("Deleting local insurance data, kvnr={}", kvnr);
         File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
         new VsdResponseFile(localFolder).cleanUp();
     }
 
-    public Instant getEntitlementExpiry(String telematikId, String kvnr) throws IOException {
-        File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-        return new EntitlementFile(localFolder, kvnr).getEntitlement();
+    public Instant getEntitlementExpiry(String telematikId, String kvnr) {
+        try {
+            File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
+            return new EntitlementFile(localFolder, kvnr).getEntitlement();
+        } catch (Exception e) {
+            log.error("Error while getEntitlementExpiry", e);
+            return null;
+        }
     }
 
-    public void updateEntitlement(Instant validTo, String telematikId, String kvnr) throws IOException {
-        File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-        new EntitlementFile(localFolder, kvnr).updateEntitlement(validTo);
+    public void updateEntitlement(Instant validTo, String telematikId, String kvnr) {
+        try {
+            File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
+            new EntitlementFile(localFolder, kvnr).updateEntitlement(validTo);
+        } catch (Exception e) {
+            log.error("Error while updateEntitlement", e);
+        }
     }
 }

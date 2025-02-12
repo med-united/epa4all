@@ -96,6 +96,8 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
 
             httpHeaders.remove(X_INSURANT_ID);
             httpHeaders.remove(VAU_NP);
+            httpHeaders.remove("Connection");
+            httpHeaders.remove("Upgrade");
 
             String statusLine = getStatusLine(obj, methodWithPath);
             HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);

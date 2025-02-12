@@ -14,7 +14,6 @@ import jakarta.ws.rs.Produces;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
-import static de.servicehealth.vau.VauClient.VAU_NP;
 
 public interface EntitlementsApi extends de.servicehealth.api.EntitlementsApi {
 
@@ -33,7 +32,10 @@ public interface EntitlementsApi extends de.servicehealth.api.EntitlementsApi {
         @HeaderParam(X_INSURANT_ID)  String xInsurantid,
         @HeaderParam(X_USER_AGENT)  String xUseragent,
         @HeaderParam(X_BACKEND)  String xBackend,
-        @HeaderParam(VAU_NP)  String vauNp,
+        // @HeaderParam(VAU_NP)  String vauNp,
+        @HeaderParam("User-Agent")  String userAgent,
+        @HeaderParam("Connection")  String connection,
+        @HeaderParam("Upgrade")  String upgrade,
         EntitlementRequestType entitlementRequestType
     );
 }

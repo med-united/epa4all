@@ -5,9 +5,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
-import static de.servicehealth.utils.ServerUtils.findHeaderValue;
+import static de.servicehealth.utils.ServerUtils.findHeader;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -32,11 +33,10 @@ public interface VauHeaders {
 
     default List<Pair<String, String>> prepareInnerHeaders(Map<String, Object> httpHeaders, String backend) {
         List<Pair<String, String>> headers = extractHeaders(httpHeaders, Set.of(CONTENT_TYPE, ACCEPT, VAU_NON_PU_TRACING));
-        findHeaderValue(headers, CONNECTION).ifPresent(s -> {
-            if (!s.contains("Keep-Alive")) {
-                headers.add(Pair.of(CONNECTION, "Keep-Alive"));
-            }
-        });
+        Optional<Pair<String, String>> headerOpt = findHeader(headers, CONNECTION);
+        if (headerOpt.isEmpty()) {
+            headers.add(Pair.of(CONNECTION, "Keep-Alive"));
+        }
         headers.add(Pair.of(HOST, backend));
         return headers;
     }

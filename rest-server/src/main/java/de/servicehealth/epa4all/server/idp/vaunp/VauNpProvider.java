@@ -112,10 +112,10 @@ public class VauNpProvider extends StartableService {
             statuses = cachedNps.keySet().stream()
                 .map(s -> String.format(STATUS_TEMPLATE, s.getEpaBackend(), 0, "Restored from cache"))
                 .collect(Collectors.toSet());
+            log.info(String.format("VAU sessions status:\n%s", String.join("\n", statuses)));
         } else {
-            statuses = reload(Set.of());
+            reload(Set.of());
         }
-        log.info(String.format("VAU sessions status:\n%s", String.join("\n", statuses)));
     }
 
     private boolean sameConfigs(Map<VauNpKey, String> cachedVauNps) {
@@ -253,6 +253,7 @@ public class VauNpProvider extends StartableService {
             });
         Set<String> statuses = collectResults(vauNpInfos);
         statuses.addAll(reloading);
+        log.info(String.format("VAU sessions status:\n%s", String.join("\n", statuses)));
         return statuses;
     }
 
@@ -260,6 +261,7 @@ public class VauNpProvider extends StartableService {
         return vauNpInfos.stream()
             .filter(info -> info.key.getKonnektor().equals(vauNpKey.getKonnektor()))
             .filter(info -> info.key.getSmcbHandle().equals(vauNpKey.getSmcbHandle()))
+            .filter(info -> info.key.getEpaBackend().equals(vauNpKey.getEpaBackend()))
             .filter(info -> info.vauNp != null)
             .findFirst().orElse(null);
     }
@@ -376,5 +378,25 @@ public class VauNpProvider extends StartableService {
         @NotNull String epaBackend
     ) {
         return Optional.ofNullable(vauNpMap.get(new VauNpKey(smcbHandle, konnektorHost, workplaceId, epaBackend)));
+    }
+
+    public String forceVauNp(
+        @NotNull String smcbHandle,
+        @NotNull String konnektorHost,
+        @NotNull String workplaceId,
+        @NotNull String epaBackend
+    ) {
+        Optional<String> vauNpOpt = getVauNp(smcbHandle, konnektorHost, workplaceId, epaBackend);
+        if (vauNpOpt.isEmpty()) {
+            try {
+                reload(Set.of(epaBackend));
+            } catch (Exception ignored) {
+            }
+            vauNpOpt = getVauNp(smcbHandle, konnektorHost, workplaceId, epaBackend);
+        }
+        if (vauNpOpt.isEmpty()) {
+            throw new IllegalStateException("Could not obtain Vau session");
+        }
+        return vauNpOpt.get();
     }
 }

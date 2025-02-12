@@ -1,9 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.health.service.cetp.IKonnektorClient;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
@@ -14,17 +12,14 @@ import de.servicehealth.epa4all.server.idp.IdpConfig;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.vsd.VsdService;
 import de.servicehealth.logging.LogField;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.ResponseProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import static de.servicehealth.logging.LogContext.withMdcEx;
 import static de.servicehealth.logging.LogField.INSURANT;
@@ -50,16 +45,7 @@ public abstract class AbstractResource {
     VauNpProvider vauNpProvider;
 
     @Inject
-    VsdService vsdService;
-
-    @Inject
-    IKonnektorClient konnektorClient;
-
-    @Inject
     IdpConfig idpConfig;
-
-    @Inject
-    EpaConfig epaConfig;
 
     @Inject
     protected EpaMultiService epaMultiService;
@@ -93,21 +79,6 @@ public abstract class AbstractResource {
         return epaContext;
     }
 
-    private InsuranceData getInsuranceData(String kvnr) {
-        InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
-        if (insuranceData == null) {
-            try {
-                String egkHandle = konnektorClient.getEgkHandle(userRuntimeConfig, kvnr);
-                String insurantId = vsdService.readVsd(egkHandle, smcbHandle, userRuntimeConfig, telematikId);
-                insuranceData = insuranceDataService.getData(telematikId, insurantId);
-            } catch (Exception e) {
-                log.error("Error while get InsuranceData", e);
-                return null;
-            }
-        }
-        return insuranceData;
-    }
-
     protected EpaContext buildEpaContext(String kvnr) throws Exception {
         Map<LogField, String> mdcMap = Map.of(
             TELEMATIKID, telematikId,
@@ -115,40 +86,22 @@ public abstract class AbstractResource {
             SMCB_HANDLE, smcbHandle
         );
         return withMdcEx(mdcMap, () -> {
-            InsuranceData insuranceData = getInsuranceData(kvnr);
+            InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
+            if (insuranceData == null) {
+                insuranceData = insuranceDataService.loadInsuranceData(userRuntimeConfig, smcbHandle, telematikId, kvnr);
+            }
             String insurantId = insuranceData == null ? kvnr : insuranceData.getInsurantId();
-            EpaAPI epaAPI = epaMultiService.getEpaAPI(insurantId);
+            EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
             String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
             String konnektorHost = userRuntimeConfig.getKonnektorHost();
             String workplaceId = userRuntimeConfig.getWorkplaceId();
-            String backend = epaAPI.getBackend();
-            Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, workplaceId, backend);
-
-            // if (epaConfig.isEpaEntitlementMandatory()) {
-
-            Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
-            log.info("Current entitlement-expiry = {}", validTo);
-            boolean entitlementIsSet = validTo != null && validTo.isAfter(Instant.now());
-            if (vauNpOpt.isPresent() && !entitlementIsSet) {
-                try {
-                    entitlementIsSet = entitlementService.setEntitlement(
-                        userRuntimeConfig,
-                        insuranceData,
-                        epaAPI,
-                        telematikId,
-                        vauNpOpt.get(),
-                        userAgent,
-                        smcbHandle
-                    );
-                } catch (Exception e) {
-                    log.error("Error while call setEntitlement", e);
-                }
-            } else {
-                log.warn("setEntitlement was not called");
-            }
-            // }
-
-            Map<String, String> xHeaders = prepareXHeaders(insurantId, userAgent, backend, vauNpOpt);
+            String backend = epaApi.getBackend();
+            String vauNp = vauNpProvider.forceVauNp(smcbHandle, konnektorHost, workplaceId, backend);
+            boolean entitlementIsSet = entitlementService.getEntitlement(
+                userRuntimeConfig, epaApi, insuranceData, userAgent, null,
+                smcbHandle, telematikId, insurantId, vauNp
+            );
+            Map<String, String> xHeaders = prepareXHeaders(insurantId, userAgent, backend, vauNp);
             return new EpaContext(insurantId, backend, entitlementIsSet, insuranceData, xHeaders);
         });
     }
@@ -157,14 +110,14 @@ public abstract class AbstractResource {
         String insurantId,
         String userAgent,
         String backend,
-        Optional<String> vauNpOpt
+        String vauNp
     ) {
         Map<String, String> attributes = new HashMap<>();
         attributes.put(X_INSURANT_ID, insurantId);
         attributes.put(X_USER_AGENT, userAgent);
         attributes.put(X_BACKEND, backend);
         attributes.put(CLIENT_ID, idpConfig.getClientId());
-        vauNpOpt.ifPresent(vauNp -> attributes.put(VAU_NP, vauNp));
+        attributes.put(VAU_NP, vauNp);
         return attributes;
     }
 }

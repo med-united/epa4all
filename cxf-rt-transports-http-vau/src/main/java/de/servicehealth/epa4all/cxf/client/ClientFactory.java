@@ -35,7 +35,6 @@ import java.util.Set;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
-import static org.apache.cxf.transports.http.configuration.ConnectionType.KEEP_ALIVE;
 
 @ApplicationScoped
 public class ClientFactory extends StartableService {
@@ -111,7 +110,7 @@ public class ClientFactory extends StartableService {
         clientPolicy.setVersion("1.1");
         clientPolicy.setAutoRedirect(false);
         clientPolicy.setAllowChunking(false);
-        clientPolicy.setConnection(KEEP_ALIVE);
+        /*clientPolicy.setConnection(KEEP_ALIVE);*/
         clientPolicy.setConnectionTimeout(connectionTimeoutMs);
 
         TLSClientParameters tlsParams = new TLSClientParameters();

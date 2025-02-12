@@ -2,10 +2,8 @@ package de.servicehealth.epa4all.server.vsd;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
-import de.servicehealth.epa4all.server.entitlement.AuditEvidenceException;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
-import jakarta.xml.bind.DatatypeConverter;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import org.slf4j.Logger;
@@ -19,7 +17,6 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static de.servicehealth.epa4all.server.entitlement.EntitlementService.AUDIT_EVIDENCE_NO_DEFINED;
 import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
 import static de.servicehealth.utils.ServerUtils.unzipAndSaveDataToFile;
 
@@ -127,10 +124,21 @@ public class VsdResponseFile {
         }
     }
 
-    public static String extractInsurantId(ReadVSDResponse readVSDResponse, boolean forcePz) throws Exception {
-        byte[] persoenlicheVersichertendaten = readVSDResponse.getPersoenlicheVersichertendaten();
-        UCPersoenlicheVersichertendatenXML patient = createUCEntity(persoenlicheVersichertendaten);
-        return extractInsurantId(patient, readVSDResponse.getPruefungsnachweis(), forcePz);
+    public static String extractInsurantId(ReadVSDResponse readVSDResponse, String fallbackKvnr) {
+        try {
+            byte[] persoenlicheVersichertendaten = readVSDResponse.getPersoenlicheVersichertendaten();
+            UCPersoenlicheVersichertendatenXML patient = createUCEntity(persoenlicheVersichertendaten);
+            String versichertenID = patient.getVersicherter().getVersichertenID();
+            if (versichertenID == null || versichertenID.trim().isEmpty()) {
+                log.warn("patient.getVersicherter().getVersichertenID() == {}", versichertenID);
+                return fallbackKvnr;
+            } else {
+                return versichertenID;
+            }
+        } catch (Exception e) {
+            log.error("Error while createUCEntity(persoenlicheVersichertendaten)", e);
+            return fallbackKvnr;
+        }
     }
 
     private static class PruefungsnachweisNodes {
@@ -148,24 +156,6 @@ public class VsdResponseFile {
         Node eNode = doc.getElementsByTagName("E").item(0);
         Node pzNode = doc.getElementsByTagName("PZ").item(0);
         return new PruefungsnachweisNodes(eNode, pzNode);
-    }
-
-    private static String extractInsurantId(
-        UCPersoenlicheVersichertendatenXML patient,
-        byte[] pruefungsnachweis,
-        boolean forcePz
-    ) throws Exception {
-        PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis);
-        if (forcePz && nodes.pzNode == null) {
-            throw new AuditEvidenceException("[Pruefungsnachweis] " + AUDIT_EVIDENCE_NO_DEFINED);
-        }
-        if (nodes.eNode.getTextContent().equals("3") && nodes.pzNode == null) {
-            return patient.getVersicherter().getVersichertenID();
-        } else {
-            byte[] base64Binary = DatatypeConverter.parseBase64Binary(nodes.pzNode.getTextContent());
-            String base64PN = new String(base64Binary);
-            return base64PN.substring(0, 10);
-        }
     }
 
     public void store(ReadVSDResponse readVSDResponse) throws Exception {

@@ -2,10 +2,12 @@ package de.servicehealth.epa4all.server.entitlement;
 
 import de.gematik.ws.fa.vsdm.vsd.v5.UCAllgemeineVersicherungsdatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
+import de.health.service.cetp.IKonnektorClient;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.epa4all.server.idp.IdpClient;
+import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.model.EntitlementRequestType;
@@ -16,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
+import java.time.Instant;
 import java.util.HexFormat;
 
 import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.UNDEFINED_PZ;
@@ -29,12 +32,79 @@ public class EntitlementService {
     public static final String AUDIT_EVIDENCE_NO_DEFINED = "AuditEvidence is not defined";
 
     IdpClient idpClient;
+    VauNpProvider vauNpProvider;
+    IKonnektorClient konnektorClient;
     InsuranceDataService insuranceDataService;
 
     @Inject
-    public EntitlementService(IdpClient idpClient, InsuranceDataService insuranceDataService) {
+    public EntitlementService(
+        IdpClient idpClient,
+        VauNpProvider vauNpProvider,
+        IKonnektorClient konnektorClient,
+        InsuranceDataService insuranceDataService
+    ) {
         this.idpClient = idpClient;
+        this.vauNpProvider = vauNpProvider;
+        this.konnektorClient = konnektorClient;
         this.insuranceDataService = insuranceDataService;
+    }
+
+    public boolean getEntitlement(
+        UserRuntimeConfig runtimeConfig,
+        EpaAPI epaApi,
+        InsuranceData insuranceData,
+        String userAgent,
+        String egkHandle,
+        String smcbHandle,
+        String telematikId,
+        String insurantId,
+        String vauNp
+    ) throws Exception {
+        try {
+            return resolveEntitlement(
+                runtimeConfig, epaApi, insuranceData, userAgent, smcbHandle, telematikId, insurantId, vauNp
+            );
+        } catch (AuditEvidenceException e) {
+            log.error("AuditEvidenceException while resolveEntitlement", e);
+            insuranceDataService.cleanUpInsuranceData(telematikId, insurantId);
+            if (egkHandle == null) {
+                egkHandle = konnektorClient.getEgkHandle(runtimeConfig, insurantId);
+            }
+            insuranceDataService.loadInsuranceDataEx(runtimeConfig, egkHandle, smcbHandle, telematikId);
+            return resolveEntitlement(
+                runtimeConfig, epaApi, insuranceData, userAgent, smcbHandle, telematikId, insurantId, vauNp
+            );
+        } catch (Exception e) {
+            log.error("Error while resolveEntitlement", e);
+            return false;
+        }
+    }
+
+    public boolean resolveEntitlement(
+        UserRuntimeConfig userRuntimeConfig,
+        EpaAPI epaApi,
+        InsuranceData insuranceData,
+        String userAgent,
+        String smcbHandle,
+        String telematikId,
+        String insurantId,
+        String vauNp
+    ) throws AuditEvidenceException {
+        Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
+        log.info("Current entitlement-expiry = {}", validTo);
+        if (validTo == null || validTo.isBefore(Instant.now())) {
+            return setEntitlement(
+                userRuntimeConfig,
+                insuranceData,
+                epaApi,
+                telematikId,
+                vauNp,
+                userAgent,
+                smcbHandle
+            );
+        } else {
+            return true;
+        }
     }
 
     public boolean setEntitlement(
@@ -45,7 +115,7 @@ public class EntitlementService {
         String vauNp,
         String userAgent,
         String smcbHandle
-    ) throws Exception {
+    ) throws AuditEvidenceException {
         if (insuranceData == null) {
             log.info("Call setEntitlement is skipped, insuranceData == NULL");
             return false;
@@ -66,7 +136,8 @@ public class EntitlementService {
 
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
         ValidToResponseType response = entitlementsApi.setEntitlementPs(
-            insurantId, userAgent, epaAPI.getBackend(), vauNp, entitlementRequest
+            insurantId, userAgent, epaAPI.getBackend(), /*vauNp, */
+            "Apache-CXF/4.0.5", "Upgrade, HTTP2-Settings", "h2c", entitlementRequest
         );
         if (response.getValidTo() != null) {
             log.info("Updating local entitlement expiry with {}", response.getValidTo());

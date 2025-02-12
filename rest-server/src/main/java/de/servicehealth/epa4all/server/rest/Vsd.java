@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
+import de.servicehealth.epa4all.server.rest.exception.EpaClientError;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -26,6 +27,7 @@ public class Vsd extends AbstractResource {
     @Inject
     VsdService vsdService;
 
+    @Deprecated
     @POST
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.WILDCARD)
@@ -36,11 +38,15 @@ public class Vsd extends AbstractResource {
     ) throws Exception {
         byte[] pruefungsnachweis = Base64.getDecoder().decode(base64EncodedBody);
         ReadVSDResponse readVSDResponse = buildSyntheticVSDResponse(null, pruefungsnachweis);
-        String insurantId = extractInsurantId(readVSDResponse, true);
-        vsdService.saveVsdFile(telematikId, insurantId, readVSDResponse);
-        // call to getLocalInsuranceData *AFTER* we set it by synthetic ReadVSDResponse
-        prepareEpaContext(insurantId);
-
-        return Response.status(Response.Status.CREATED).build();
+        String insurantId = extractInsurantId(readVSDResponse, null);
+        if (insurantId == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(new EpaClientError("Unable to get insurantId"))
+                .build();
+        } else {
+            vsdService.saveVsdFile(telematikId, insurantId, readVSDResponse);
+            prepareEpaContext(insurantId);
+            return Response.status(Response.Status.CREATED).build();
+        }
     }
 }

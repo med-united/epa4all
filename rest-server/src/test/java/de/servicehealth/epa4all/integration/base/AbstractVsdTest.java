@@ -148,7 +148,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
     protected VsdService mockVsdService(String kvnr) throws Exception {
         VsdService vsdServiceMock = mock(VsdService.class);
         ReadVSDResponse readVSDResponse = prepareReadVSDResponse(); // TODO
-        when(vsdServiceMock.readVsd(any(), any(), any(), any())).thenReturn(kvnr);
+        when(vsdServiceMock.readVsd(any(), any(), any(), any(), any())).thenReturn(kvnr);
         QuarkusMock.installMockForType(vsdServiceMock, VsdService.class);
         return vsdServiceMock;
     }
@@ -177,8 +177,8 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
-            webSocketPayloadEvent, insuranceDataService, epaFileDownloader, konnektorClient, epaMultiService,
-            cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard, vsdService
+            webSocketPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader, konnektorClient,
+            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 

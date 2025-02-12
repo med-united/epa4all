@@ -4,6 +4,7 @@ import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSD;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.conn.vsds.vsdservice.v5.VSDStatusType;
+import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
@@ -64,7 +65,8 @@ public class VsdService {
         String egkHandle,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig,
-        String telematikId
+        String telematikId,
+        String fallbackKvnr
     ) throws Exception {
         IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         ContextType context = servicePorts.getContextType();
@@ -73,7 +75,10 @@ public class VsdService {
         }
         ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle, smcbHandle);
         ReadVSDResponse readVSDResponse = servicePorts.getVSDServicePortType().readVSD(readVSD);
-        String insurantId = extractInsurantId(readVSDResponse, false);
+        String insurantId = extractInsurantId(readVSDResponse, fallbackKvnr);
+        if (insurantId == null) {
+            throw new CetpFault("Unable to get insurantId");
+        }
         saveVsdFile(telematikId, insurantId, readVSDResponse);
         return insurantId;
     }

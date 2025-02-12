@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.cxf.transport;
 
 import de.servicehealth.epa4all.cxf.model.EmptyRequest;
 import de.servicehealth.vau.VauConfig;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.cxf.Bus;
 import org.apache.cxf.binding.soap.Soap12;
 import org.apache.cxf.message.Message;
@@ -19,9 +20,11 @@ import java.net.http.HttpClient;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.google.common.net.HttpHeaders.CONNECTION;
 import static com.google.common.net.HttpHeaders.KEEP_ALIVE;
+import static de.servicehealth.utils.ServerUtils.findHeader;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
@@ -96,7 +99,10 @@ public class HTTPClientVauConduit extends HttpClientHTTPConduit {
 
         Object map = message.computeIfAbsent(PROTOCOL_HEADERS, k -> new HashMap<>());
         if (map instanceof Map headers) {
-            headers.put(CONNECTION, List.of(KEEP_ALIVE));
+            Optional<Pair<String, String>> connectionOpt = findHeader(headers, CONNECTION);
+            if (connectionOpt.isEmpty() || !connectionOpt.get().getValue().contains("Upgrade")) {
+                headers.put(CONNECTION, List.of(KEEP_ALIVE));
+            }
             headers.put(CONTENT_TYPE, List.of(APPLICATION_OCTET_STREAM));
             headers.put(ACCEPT, List.of(APPLICATION_OCTET_STREAM));
             if (vauConfig.isTracingEnabled()) {

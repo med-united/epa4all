@@ -191,11 +191,7 @@ public abstract class AbstractProp implements WebDavProp {
                 UCPersoenlicheVersichertendatenXML.Versicherter versicherter = insuranceData.getPersoenlicheVersichertendaten().getVersicherter();
                 person = versicherter.getPerson();
             }
-            Date expiry = null;
-            try {
-                expiry = Date.from(insuranceDataService.getEntitlementExpiry(telematikId, insurantId));
-            } catch (Exception ignored) {
-            }
+            Date expiry = Date.from(insuranceDataService.getEntitlementExpiry(telematikId, insurantId));
             int checksumsCount = folderService.getChecksums(telematikId, insurantId).size();
             String smcb = konnektorClient.getTelematikMap().entrySet().stream()
                 .filter(e -> e.getValue().equals(telematikId))

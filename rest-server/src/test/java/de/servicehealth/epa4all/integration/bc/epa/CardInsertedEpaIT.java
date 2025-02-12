@@ -7,6 +7,7 @@ import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.integration.precondition.NoVauNpPrecondition;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import io.quarkus.test.common.QuarkusTestResource;
@@ -28,7 +29,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.io.File;
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -108,8 +111,10 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
 
                 vauNpProvider.invalidate();
 
-                Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, workplaceId, epaBackend);
-                assertFalse(vauNpOpt.isPresent());
+                epaBackends.forEach(backend -> {
+                    Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, workplaceId, epaBackend);
+                    assertFalse(vauNpOpt.isPresent());
+                });
 
                 // epa-deployment doesn't work for some reason:
                 // {"MessageType":"Error","ErrorMessage":"Transcript Error: 500 : [no body]","ErrorCode":5}
@@ -121,6 +126,9 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
                     egkHandle,
                     ctId
                 );
+
+                Instant entitlement = new EntitlementFile(new File(configFolder), kvnr).getEntitlement();
+                assertNotNull(entitlement);
 
                 ArgumentCaptor<String> messageTypeCaptor = ArgumentCaptor.forClass(String.class);
                 ArgumentCaptor<Map<String, Object>> mapCaptor = ArgumentCaptor.forClass(Map.class);
