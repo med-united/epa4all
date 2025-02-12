@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +54,8 @@ import static de.servicehealth.logging.LogField.WORKPLACE;
 public class VauNpProvider extends StartableService {
 
     private static final Logger log = LoggerFactory.getLogger(VauNpProvider.class.getName());
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX");
 
     private static final String STATUS_TEMPLATE = "[%s] Took %d ms - %s";
 
@@ -275,7 +279,8 @@ public class VauNpProvider extends StartableService {
             String vauNp = sc200Response.getVauNp();
             long delta = System.currentTimeMillis() - start;
 
-            String okStatus = String.format(STATUS_TEMPLATE, backend, delta + idpResult.delta, "OK");
+            String since = ZonedDateTime.now().format(FORMATTER);
+            String okStatus = String.format(STATUS_TEMPLATE, backend, delta + idpResult.delta, "OK since " + since);
             vauFacade.setVauNpSessionStatus(okStatus);
             return new VauNpInfo(vauNpKey, vauNp, okStatus);
         } catch (Throwable t) {

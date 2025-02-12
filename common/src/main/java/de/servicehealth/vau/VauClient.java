@@ -51,7 +51,6 @@ public class VauClient {
     private VauInfo vauInfo;
 
     private final AtomicLong acquiredAt;
-    private final AtomicBoolean broken;
     private final int readTimeoutMs;
     private final Semaphore semaphore;
 
@@ -63,14 +62,12 @@ public class VauClient {
         vauStateMachine = new VauClientStateMachine(pu);
 
         semaphore = new Semaphore(PERMITS);
-        broken = new AtomicBoolean(false);
         acquiredAt = new AtomicLong(0L);
     }
 
     public boolean acquire() {
         boolean acquired = semaphore.tryAcquire();
         if (acquired) {
-            broken.set(false);
             acquiredAt.set(System.currentTimeMillis());
             String threadName = Thread.currentThread().getName();
             log.debug(String.format("[VauClient %d] ACQUIRED by %s acquiredAt=%d", hashCode(), threadName, acquiredAt.get()));
@@ -89,10 +86,6 @@ public class VauClient {
         boolean hangs = availablePermits == 0 && 0 < acquiredAt.get() && acquiredAt.get() < System.currentTimeMillis() - readTimeoutMs;
         long hangsTime = System.currentTimeMillis() - acquiredAt.get();
         return hangs ? hangsTime : null;
-    }
-
-    public boolean broken() {
-        return broken.get();
     }
 
     public void release() {
@@ -147,7 +140,6 @@ public class VauClient {
                 );
 
                 String vauCid = vauInfo == null ? "not-defined-yet" : vauInfo.getVauCid();
-                broken.set(true);
                 setVauInfo(null);
                 return vauCid;
             } finally {

@@ -28,11 +28,16 @@ scrape_configs:
             message: message
             level: level
             client: servicehealth_client_id
+            mdc:
+      - template:
+          source: mdc
+          template: '{{ $obj := mustFromJson .mdc }}{{ range $key, $value := $obj }}{{ $key }}={{ $value }} {{ end }}'
       - labels:
           loggerName:
           message:
           level:
           client:
+          mdc:
       - timestamp:
           source: time
           format: RFC3339

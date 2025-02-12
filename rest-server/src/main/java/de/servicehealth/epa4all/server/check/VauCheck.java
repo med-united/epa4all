@@ -28,12 +28,9 @@ public class VauCheck implements Check {
 
     @Override
     public Status getStatus(IRuntimeConfig runtimeConfig) {
-        boolean hasBrokens = registry.getInstances(VauFacade.class)
-            .stream()
-            .flatMap(f -> f.getVauClients().stream())
-            .anyMatch(VauClient::broken);
-        
-        return hasBrokens ? Status.Down503 : Status.Up200;
+        boolean okSessions = registry.getInstances(VauFacade.class).stream()
+            .allMatch(f -> f.getVauNpStatus().contains("OK since"));
+        return okSessions ? Status.Up200 : Status.Down503;
     }
 
     @Override
@@ -43,9 +40,8 @@ public class VauCheck implements Check {
             String status = f.getVauNpStatus();
             int total = f.getVauClients().size();
             int busy = (int) f.getVauClients().stream().filter(VauClient::busy).count();
-            int broken = (int) f.getVauClients().stream().filter(VauClient::broken).count();
-            int idle = total - busy - broken;
-            return Pair.of(backend, String.format("total=%d busy=%d broken=%d idle=%d vau-np-status: %s", total, busy, broken, idle, status));
+            int idle = total - busy;
+            return Pair.of(backend, String.format("total=%d busy=%d idle=%d vau-session: %s", total, busy, idle, status));
         }).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 }

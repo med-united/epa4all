@@ -62,7 +62,7 @@ public class VauFacade {
     private String backend;
 
     @Getter
-    private String vauNpStatus;
+    private String vauNpStatus = "not initialized";
 
     @Getter
     private final boolean tracingEnabled;
