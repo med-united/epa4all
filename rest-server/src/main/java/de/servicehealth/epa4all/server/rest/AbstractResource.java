@@ -124,25 +124,30 @@ public abstract class AbstractResource {
             String backend = epaAPI.getBackend();
             Optional<String> vauNpOpt = vauNpProvider.getVauNp(smcbHandle, konnektorHost, workplaceId, backend);
 
-            boolean entitlementIsSet = true;
-            if (epaConfig.isEpaEntitlementMandatory()) {
-                Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
-                entitlementIsSet = validTo != null && validTo.isAfter(Instant.now());
-                if (vauNpOpt.isPresent() && !entitlementIsSet) {
-                    try {
-                        entitlementIsSet = entitlementService.setEntitlement(
-                            userRuntimeConfig,
-                            insuranceData,
-                            epaAPI,
-                            telematikId,
-                            vauNpOpt.get(),
-                            userAgent,
-                            smcbHandle
-                        );
-                    } catch (Exception ignored) {
-                    }
+            // if (epaConfig.isEpaEntitlementMandatory()) {
+
+            Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
+            log.info("Current entitlement-expiry = {}", validTo);
+            boolean entitlementIsSet = validTo != null && validTo.isAfter(Instant.now());
+            if (vauNpOpt.isPresent() && !entitlementIsSet) {
+                try {
+                    entitlementIsSet = entitlementService.setEntitlement(
+                        userRuntimeConfig,
+                        insuranceData,
+                        epaAPI,
+                        telematikId,
+                        vauNpOpt.get(),
+                        userAgent,
+                        smcbHandle
+                    );
+                } catch (Exception e) {
+                    log.error("Error while call setEntitlement", e);
                 }
+            } else {
+                log.warn("setEntitlement was not called");
             }
+            // }
+
             Map<String, String> xHeaders = prepareXHeaders(insurantId, userAgent, backend, vauNpOpt);
             return new EpaContext(insurantId, backend, entitlementIsSet, insuranceData, xHeaders);
         });

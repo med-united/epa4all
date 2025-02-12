@@ -47,12 +47,15 @@ public class EntitlementService {
         String smcbHandle
     ) throws Exception {
         if (insuranceData == null) {
+            log.info("Call setEntitlement is skipped, insuranceData == NULL");
             return false;
         }
+        log.info("Call setEntitlement, insuranceData = {}", insuranceData);
         String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
         if (UNDEFINED_PZ.equalsIgnoreCase(pz)) {
             String msg = String.format("%s for KVNR=%s, skipping the request", AUDIT_EVIDENCE_NO_DEFINED, insurantId);
+            log.error(msg);
             throw new AuditEvidenceException(msg);
         }
         String hcv = extractHCV(insuranceData);
@@ -66,9 +69,11 @@ public class EntitlementService {
             insurantId, userAgent, epaAPI.getBackend(), vauNp, entitlementRequest
         );
         if (response.getValidTo() != null) {
+            log.info("Updating local entitlement expiry with {}", response.getValidTo());
             insuranceDataService.updateEntitlement(response.getValidTo().toInstant(), telematikId, insurantId);
             return true;
         } else {
+            log.info("Local entitlement expiry update failed, response.getValidTo() == NULL");
             return false;
         }
     }

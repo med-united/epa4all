@@ -9,7 +9,7 @@ import lombok.ToString;
 
 @Data
 @AllArgsConstructor
-@ToString(of = {"telematikId", "insurantId"})
+@ToString(of = {"telematikId", "insurantId", "pz"})
 public class InsuranceData {
 
     private String pz;
