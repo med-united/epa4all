@@ -3,7 +3,8 @@ package de.servicehealth.logging;
 import com.google.common.collect.Streams;
 import de.servicehealth.utils.Action;
 import de.servicehealth.utils.ActionEx;
-import de.servicehealth.utils.ActionWr;
+import de.servicehealth.utils.ActionNr;
+import de.servicehealth.utils.ActionWrNr;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
@@ -53,7 +54,13 @@ public class LogContext implements Closeable {
         }
     }
 
-    public static void withMdcWr(Map<LogField, String> ctx, ActionWr action) {
+    public static void withMdcNr(Map<LogField, String> ctx, ActionNr action) {
+        try (LogContext ignored = new LogContext(ctx)) {
+            action.execute();
+        }
+    }
+
+    public static void withMdcExNr(Map<LogField, String> ctx, ActionWrNr action) throws Exception {
         try (LogContext ignored = new LogContext(ctx)) {
             action.execute();
         }

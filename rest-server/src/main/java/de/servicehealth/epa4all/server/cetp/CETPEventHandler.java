@@ -30,17 +30,20 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
-import static de.servicehealth.logging.LogContext.withMdcWr;
+import static de.servicehealth.logging.LogContext.withMdcExNr;
+import static de.servicehealth.logging.LogContext.withMdcNr;
 import static de.servicehealth.logging.LogField.CT_ID;
-import static de.servicehealth.logging.LogField.ICCSN;
-import static de.servicehealth.logging.LogField.REQUEST_CORRELATION_ID;
+import static de.servicehealth.logging.LogField.EGK_HANDLE;
+import static de.servicehealth.logging.LogField.KONNEKTOR;
 import static de.servicehealth.logging.LogField.SLOT;
+import static de.servicehealth.logging.LogField.SMCB_HANDLE;
+import static de.servicehealth.logging.LogField.TELEMATIKID;
+import static de.servicehealth.logging.LogField.WORKPLACE;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class CETPEventHandler extends AbstractCETPEventHandler {
 
     private static final Logger log = LoggerFactory.getLogger(CETPEventHandler.class.getName());
@@ -100,29 +103,40 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     protected void processEvent(IUserConfigurations configurations, Map<String, String> paramsMap) {
         String correlationId = UUID.randomUUID().toString();
 
-        withMdcWr(Map.of(
-            REQUEST_CORRELATION_ID, correlationId,
-            ICCSN, paramsMap.getOrDefault("ICCSN", "NoICCSNProvided"),
-            CT_ID, paramsMap.getOrDefault("CtID", "NoCtIDProvided"),
-            SLOT, paramsMap.getOrDefault("SlotID", "NoSlotIDProvided")
-        ), () -> {
-            log.info("%s event received".formatted(getTopicName()));
+        log.info("%s event received, slot=%s, ctId=%s, iccsn=%s, correlationId=%s".formatted(
+            getTopicName(),
+            paramsMap.getOrDefault("SlotID", "NoSlotIDProvided"),
+            paramsMap.getOrDefault("CtID", "NoCtIDProvided"),
+            paramsMap.getOrDefault("ICCSN", "NoICCSNProvided"),
+            correlationId
+        ));
 
-            boolean isEGK = "EGK".equalsIgnoreCase(paramsMap.get("CardType"));
-            boolean hasCardHandle = paramsMap.containsKey("CardHandle");
-            boolean hasSlotID = paramsMap.containsKey("SlotID");
-            boolean hasCtID = paramsMap.containsKey("CtID");
-            if (isEGK && hasCardHandle && hasSlotID && hasCtID) {
-                logCardInsertedEvent(paramsMap, correlationId);
+        boolean hasEGK = "EGK".equalsIgnoreCase(paramsMap.get("CardType"));
+        boolean hasCardHandle = paramsMap.containsKey("CardHandle");
+        boolean hasSlotID = paramsMap.containsKey("SlotID");
+        boolean hasCtID = paramsMap.containsKey("CtID");
+        if (hasEGK && hasCardHandle && hasSlotID && hasCtID) {
+            logCardInsertedEvent(paramsMap, correlationId);
 
-                String iccsn = paramsMap.get("ICCSN");
-                String ctId = paramsMap.get("CtID");
-                Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
-
-                try {
-                    String egkHandle = paramsMap.get("CardHandle");
-                    String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-                    String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
+            String iccsn = paramsMap.get("ICCSN");
+            String ctId = paramsMap.get("CtID");
+            Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
+            String egkHandle = paramsMap.get("CardHandle");
+            String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
+            String konnektorHost = configurations.getKonnektorHost();
+            String workplaceId = configurations.getWorkplaceId();
+            try {
+                String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
+                String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
+                withMdcExNr(Map.of(
+                    CT_ID, ctId,
+                    SLOT, String.valueOf(slotId),
+                    EGK_HANDLE, egkHandle,
+                    SMCB_HANDLE, smcbHandle,
+                    TELEMATIKID, telematikId,
+                    KONNEKTOR, konnektorHost,
+                    WORKPLACE, workplaceId
+                ), () -> {
                     InsuranceData insuranceData = insuranceDataService.getData(telematikId, egkHandle, runtimeConfig);
                     if (insuranceData == null) {
                         if (featureConfig.isExternalPnwEnabled()) {
@@ -139,10 +153,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     }
                     String insurantId = insuranceData.getInsurantId();
                     EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
-                    String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
                     String backend = epaApi.getBackend();
-                    String konnektorHost = configurations.getKonnektorHost();
-                    String workplaceId = configurations.getWorkplaceId();
 
                     String vauNp = vauNpProvider.forceVauNp(smcbHandle, konnektorHost, workplaceId, backend);
                     entitlementService.getEntitlement(
@@ -158,7 +169,15 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                         Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
                         cardlinkClient.sendJson(correlationId, iccsn, "eRezeptBundlesFromAVS", payload);
                     }
-                } catch (Exception e) {
+                });
+            } catch (Exception e) {
+                withMdcNr(Map.of(
+                    CT_ID, ctId,
+                    SLOT, String.valueOf(slotId),
+                    EGK_HANDLE, egkHandle,
+                    KONNEKTOR, konnektorHost,
+                    WORKPLACE, workplaceId
+                ), () -> {
                     log.warn(String.format("[%s] Could not get medication PDF", correlationId), e);
                     String error = printException(e);
                     cardlinkClient.sendJson(
@@ -167,12 +186,12 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                         "receiveTasklistError",
                         Map.of("slotId", slotId, "cardSessionId", "null", "status", 500, "tistatus", "500", "errormessage", error)
                     );
-                }
-            } else {
-                String msgFormat = "Ignored \"CARD/INSERTED\" values=%s";
-                log.info(String.format(msgFormat, paramsMap));
+                });
             }
-        });
+        } else {
+            String msgFormat = "Ignored \"CARD/INSERTED\" values=%s";
+            log.info(String.format(msgFormat, paramsMap));
+        }
     }
 
     private Map<String, String> prepareXHeaders(

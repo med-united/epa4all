@@ -1,7 +1,7 @@
 package de.servicehealth.utils;
 
 @FunctionalInterface
-public interface ActionWr {
+public interface ActionNr {
 
     void execute();
 }

@@ -8,7 +8,20 @@ import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortTyp
 import de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum;
 import de.gematik.ws.conn.connectorcommon.v5.Status;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
-import de.gematik.ws.conn.eventservice.v7.*;
+import de.gematik.ws.conn.eventservice.v7.GetCardTerminals;
+import de.gematik.ws.conn.eventservice.v7.GetCardTerminalsResponse;
+import de.gematik.ws.conn.eventservice.v7.GetCards;
+import de.gematik.ws.conn.eventservice.v7.GetCardsResponse;
+import de.gematik.ws.conn.eventservice.v7.GetSubscription;
+import de.gematik.ws.conn.eventservice.v7.GetSubscriptionResponse;
+import de.gematik.ws.conn.eventservice.v7.RenewSubscriptions;
+import de.gematik.ws.conn.eventservice.v7.RenewSubscriptionsResponse;
+import de.gematik.ws.conn.eventservice.v7.Subscribe;
+import de.gematik.ws.conn.eventservice.v7.SubscribeResponse;
+import de.gematik.ws.conn.eventservice.v7.SubscriptionRenewal;
+import de.gematik.ws.conn.eventservice.v7.SubscriptionType;
+import de.gematik.ws.conn.eventservice.v7.Unsubscribe;
+import de.gematik.ws.conn.eventservice.v7.UnsubscribeResponse;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.FaultMessage;
 import de.health.service.cetp.IKonnektorClient;
@@ -34,8 +47,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.ByteArrayInputStream;
@@ -60,12 +71,11 @@ import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 @ApplicationScoped
 public class KonnektorClient implements IKonnektorClient {
 
-    private static final Logger log = LoggerFactory.getLogger(KonnektorClient.class.getName());
-
-    private final ConcurrentHashMap<KonnektorKey, String> smcbMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<KonnektorKey, String> runtimeConfigSmcbMap = new ConcurrentHashMap<>();
 
     @Getter
-    private final ConcurrentHashMap<String, String> telematikMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> smcbTelematikMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, X509Certificate> smcbCertificateMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> egkMap = new ConcurrentHashMap<>();
 
     private final Object emptyInput = new Object();
@@ -120,15 +130,15 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public String getTelematikId(UserRuntimeConfig userRuntimeConfig, String smcbHandle) {
-        return telematikMap.computeIfAbsent(smcbHandle, handle -> {
-            Pair<X509Certificate, Boolean> x509Certificate = getSmcbX509Certificate(smcbHandle, userRuntimeConfig);
-            return extractTelematikIdFromCertificate(x509Certificate.getKey());
+        return smcbTelematikMap.computeIfAbsent(smcbHandle, handle -> {
+            X509Certificate x509Certificate = getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
+            return extractTelematikIdFromCertificate(x509Certificate);
         });
     }
 
     public String getSmcbHandle(UserRuntimeConfig userRuntimeConfig) throws CetpFault {
         return computeIfAbsentCetpEx(
-            smcbMap,
+            runtimeConfigSmcbMap,
             new KonnektorKey(userRuntimeConfig),
             userRuntimeConfig,
             (key, config) -> {
@@ -281,18 +291,14 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     @Override
-    public Pair<X509Certificate, Boolean> getSmcbX509Certificate(
-        String smcbHandle,
-        UserRuntimeConfig userRuntimeConfig
-    ) {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
-        return getSmcbX509Certificate(servicePorts, smcbHandle);
+    public X509Certificate getSmcbX509Certificate(UserRuntimeConfig userRuntimeConfig, String smcbHandle) {
+        return smcbCertificateMap.computeIfAbsent(smcbHandle, (handle) -> {
+            IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+            return getSmcbX509Certificate(servicePorts, smcbHandle).getKey();
+        });
     }
 
-    public Pair<X509Certificate, Boolean> getSmcbX509Certificate(
-        IKonnektorServicePortsAPI servicePorts,
-        String smcbHandle
-    ) {
+    public Pair<X509Certificate, Boolean> getSmcbX509Certificate(IKonnektorServicePortsAPI servicePorts, String smcbHandle) {
         Pair<ReadCardCertificateResponse, Boolean> certResponsePair = getReadCardCertificateResponse(servicePorts, smcbHandle);
         if (certResponsePair == null) {
             throw new RuntimeException("Could not read card certificate");

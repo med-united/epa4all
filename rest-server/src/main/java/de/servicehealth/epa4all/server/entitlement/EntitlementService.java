@@ -120,7 +120,7 @@ public class EntitlementService {
             log.info("Call setEntitlement is skipped, insuranceData == NULL");
             return false;
         }
-        log.info("Call setEntitlement, insuranceData = {}", insuranceData);
+        log.info("Call setEntitlement");
         String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
         if (UNDEFINED_PZ.equalsIgnoreCase(pz)) {

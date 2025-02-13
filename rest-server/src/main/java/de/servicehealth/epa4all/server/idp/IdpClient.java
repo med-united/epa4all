@@ -268,12 +268,8 @@ public class IdpClient extends StartableService {
         if (idpConfig.hcvEnabled) {
             claims.setClaim("hcv", hcv);
         }
-
-        Pair<X509Certificate, Boolean> smcbAuthCertPair = konnektorClient.getSmcbX509Certificate(servicePorts, smcbHandle);
-        X509Certificate smcbAuthCert = smcbAuthCertPair.getKey();
-
-        IdpFunc idpFunc = IdpFunc.init(servicePorts);
-        return getSignedJwt(smcbAuthCert, claims, signatureType, smcbHandle, true, idpFunc);
+        X509Certificate smcbAuthCert = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
+        return getSignedJwt(smcbAuthCert, claims, signatureType, smcbHandle, true, IdpFunc.init(servicePorts));
     }
 
     public void getBearerToken(

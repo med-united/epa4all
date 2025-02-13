@@ -259,6 +259,7 @@ public class VauNpProvider extends StartableService {
 
     private VauNpInfo getVauInfoForSameKonnektor(List<VauNpInfo> vauNpInfos, VauNpKey vauNpKey) {
         return vauNpInfos.stream()
+            .filter(info -> info.key != null)
             .filter(info -> info.key.getKonnektor().equals(vauNpKey.getKonnektor()))
             .filter(info -> info.key.getSmcbHandle().equals(vauNpKey.getSmcbHandle()))
             .filter(info -> info.key.getEpaBackend().equals(vauNpKey.getEpaBackend()))

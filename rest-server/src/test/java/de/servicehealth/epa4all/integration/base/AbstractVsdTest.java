@@ -9,6 +9,7 @@ import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.config.api.IUserConfigurations;
+import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.FeatureConfig;
@@ -29,7 +30,6 @@ import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusMock;
 import jakarta.inject.Inject;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
@@ -138,8 +138,8 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
         when(konnektorClientMock.getKvnr(any(), any())).thenReturn(kvnr);
         when(konnektorClientMock.getSmcbHandle(any())).thenReturn(smcbHandle);
         when(konnektorClientMock
-            .getSmcbX509Certificate(any(), eq(smcbHandle)))
-            .thenReturn(Pair.of(mock(X509Certificate.class), false));
+            .getSmcbX509Certificate(any(UserRuntimeConfig.class), eq(smcbHandle)))
+            .thenReturn(mock(X509Certificate.class));
 
         QuarkusMock.installMockForType(konnektorClientMock, IKonnektorClient.class);
         return konnektorClientMock;
