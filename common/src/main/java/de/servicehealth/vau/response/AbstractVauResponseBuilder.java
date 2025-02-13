@@ -2,14 +2,13 @@ package de.servicehealth.vau.response;
 
 import de.servicehealth.vau.VauResponse;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractVauResponseBuilder implements VauResponseBuilder {
 
-    private final Logger log = LoggerFactory.getLogger(getClass().getName());
+    protected static final Set<String> CONTENT_TYPES = Set.of("text", "json");
     
     private VauResponseBuilder next;
 

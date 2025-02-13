@@ -20,6 +20,7 @@ import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.Response;
+import kong.unirest.core.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -163,6 +164,21 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, vauNp);
                     try (Response response = epaCallGuard.callAndRetry(backend, () -> epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders))) {
                         byte[] bytes = response.readEntity(byte[].class);
+                        if (bytes.length < 300) {
+                            String payload = new String(bytes);
+                            JSONObject jsonObject = null;
+                            try {
+                                jsonObject = new JSONObject(payload);
+                            } catch (Exception ignored) {
+                            }
+                            if (jsonObject != null) {
+                                Object errorCodeNode = jsonObject.get("errorCode");
+                                if (errorCodeNode != null) {
+                                    log.warn("Internal framework error: JsonbReader failed");
+                                    throw new IllegalArgumentException("Error while downloading medication PDF: " + payload);
+                                }
+                            }
+                        }
                         EpaContext epaContext = new EpaContext(insurantId, backend, true, insuranceData, Map.of());
                         handleDownloadResponse(bytes, ctId, telematikId, epaContext, insurantId);
                         String encodedPdf = Base64.getEncoder().encodeToString(bytes);

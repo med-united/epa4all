@@ -22,6 +22,7 @@ import static de.servicehealth.epa4all.common.TestUtils.FIXTURES;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_C2S_INFO;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
+import static de.servicehealth.vau.VauClient.VAU_ERROR;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
@@ -82,20 +83,40 @@ public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
                 case "/epa/authz/v1/getNonce" -> prepareVauResponse(vauServer, getFixture("GetNonce.json"));
                 case "/epa/authz/v1/send_authorization_request_sc" -> prepareVauResponse(
                     vauServer,
+                    200,
                     null,
-                    "https://idp-ref.zentral.idp.splitdns.ti-dienste.de/auth?response_type=code&scope=openid+ePA-bmt-rt&nonce=GsUcyAvdAhvlorTpFyBzurZiYSaJjCdCnhB9Rgd7L4RxafFyxMDlYwHuhdR5JqE7&client_id=GEMBITMAePAe2zrxzLOR&redirect_uri=https%3A%2F%2Fe4a-rt.deine-epa.de%2F&code_challenge=CCshxJ-_K29-X3VjUfOfw2N670igmawapHepPmEfXTM&code_challenge_method=S256&state=v8XOGFO35IDqvGwS5ciaA5TVjioklDDqFrC9JUYvGejRw5i4z1dU1GRwd77rqP8y"
+                    "https://idp-ref.zentral.idp.splitdns.ti-dienste.de/auth?response_type=code&scope=openid+ePA-bmt-rt&nonce=GsUcyAvdAhvlorTpFyBzurZiYSaJjCdCnhB9Rgd7L4RxafFyxMDlYwHuhdR5JqE7&client_id=GEMBITMAePAe2zrxzLOR&redirect_uri=https%3A%2F%2Fe4a-rt.deine-epa.de%2F&code_challenge=CCshxJ-_K29-X3VjUfOfw2N670igmawapHepPmEfXTM&code_challenge_method=S256&state=v8XOGFO35IDqvGwS5ciaA5TVjioklDDqFrC9JUYvGejRw5i4z1dU1GRwd77rqP8y",
+                    null
                 );
                 case "/epa/authz/v1/send_authcode_sc" -> prepareVauResponse(vauServer, getFixture("SendAuthCodeSC.json"));
+
+                // TODO register fixtures
+                case "/epa/basic/api/v1/ps/entitlements" -> prepareVauResponse(vauServer, "{\"validTo\":\"2027-02-15T22:59:59Z\"}");
+                case "/epa/medication/render/v1/eml/pdf" -> prepareVauErrorResponse(vauServer, "{\"errorCode\":\"internalError\",\"errorDetail\":\"Requestor not authorized\"}");
                 default -> throw new IllegalArgumentException("Unknown path: " + path);
             };
         }
     }
 
-    private ResponseDefinition prepareVauResponse(VauServerStateMachine vauServer, String payload) {
-        return prepareVauResponse(vauServer, payload, null);
+    private ResponseDefinition prepareVauEmptyResponse(VauServerStateMachine vauServer, int status) {
+        return prepareVauResponse(vauServer, status, null, null, null);
     }
 
-    private ResponseDefinition prepareVauResponse(VauServerStateMachine vauServer, String payload, String location) {
+    private ResponseDefinition prepareVauResponse(VauServerStateMachine vauServer, String payload) {
+        return prepareVauResponse(vauServer, 200, payload, null, null);
+    }
+
+    private ResponseDefinition prepareVauErrorResponse(VauServerStateMachine vauServer, String error) {
+        return prepareVauResponse(vauServer, 200, error, null, error);
+    }
+
+    private ResponseDefinition prepareVauResponse(
+        VauServerStateMachine vauServer,
+        int status,
+        String payload,
+        String location,
+        String errorHeader
+    ) {
         List<Pair<String, String>> headers = new ArrayList<>();
         byte[] bytes = null;
         if (payload != null && !payload.isEmpty()) {
@@ -110,11 +131,14 @@ public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
         byte[] innerResponse = httpParcel.toBytes();
         byte[] vauMessage = vauServer.encryptVauMessage(innerResponse);
 
-        return new ResponseDefinitionBuilder()
+        ResponseDefinitionBuilder builder = new ResponseDefinitionBuilder()
             .withHeader(CONTENT_TYPE, "application/cbor")
-            .withHeader(CONTENT_LENGTH, String.valueOf(vauMessage.length))
-            .withStatus(200)
-            .withBody(vauMessage).build();
+            .withHeader(CONTENT_LENGTH, String.valueOf(vauMessage.length));
+        if (errorHeader != null) {
+            builder.withHeader(VAU_ERROR, errorHeader);
+        }
+        builder.withStatus(status).withBody(vauMessage);
+        return builder.build();
     }
 
     private String getFixture(String fileName) {

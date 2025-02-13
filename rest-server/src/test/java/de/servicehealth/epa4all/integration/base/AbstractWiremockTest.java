@@ -7,12 +7,31 @@ import de.gematik.vau.lib.VauServerStateMachine;
 import de.gematik.vau.lib.data.EccKyberKeyPair;
 import de.gematik.vau.lib.data.SignedPublicVauKeys;
 import de.gematik.vau.lib.data.VauPublicKeys;
+import de.gematik.ws.conn.eventservice.v7.Event;
+import de.health.service.cetp.IKonnektorClient;
+import de.health.service.cetp.KonnektorsConfigs;
+import de.health.service.cetp.cardlink.CardlinkClient;
+import de.health.service.cetp.config.KonnektorConfig;
+import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage1Transformer;
 import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage3Transformer;
+import de.servicehealth.epa4all.server.FeatureConfig;
+import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
+import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
+import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.entitlement.EntitlementService;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
+import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
+import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
+import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
+import de.servicehealth.epa4all.server.ws.WebSocketPayload;
+import io.netty.channel.embedded.EmbeddedChannel;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -25,8 +44,10 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
+import java.util.Map;
 import java.util.UUID;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -59,7 +80,45 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     ClientFactory clientFactory;
 
     @Inject
+    protected EventMapper eventMapper;
+
+    @Inject
+    protected EpaCallGuard epaCallGuard;
+
+    @Inject
+    protected VauNpProvider vauNpProvider;
+
+    @Inject
+    protected FeatureConfig featureConfig;
+
+    @Inject
     ServicePortProvider servicePortProvider;
+
+    @Inject
+    protected IKonnektorClient konnektorClient;
+
+    @Inject
+    protected DefaultUserConfig defaultUserConfig;
+
+    @Inject
+    protected EpaFileDownloader epaFileDownloader;
+
+    @Inject
+    protected EntitlementService entitlementService;
+
+    @Inject
+    @KonnektorsConfigs
+    protected Map<String, KonnektorConfig> konnektorConfigs;
+
+    @Inject
+    protected jakarta.enterprise.event.Event<WebSocketPayload> webSocketPayloadEvent;
+
+    @Inject
+    protected InsuranceDataService insuranceDataService;
+
+    @Inject
+    protected KonnektorDefaultConfig konnektorDefaultConfig;
+
 
     protected File configFolder = getResourcePath("wiremock").toFile();
     
@@ -138,18 +197,21 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         });
     }
 
-    protected void prepareVsdStubs() throws Exception {
-        String soapReadVSDResponseEnvelop = getFixture("ReadVSDResponseSample.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/VSDService"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapReadVSDResponseEnvelop)).build());
+    protected void prepareInformationStubs(int status) {
+        wiremock.addStubMapping(get(urlEqualTo("/information/api/v1/ehr"))
+            .willReturn(WireMock.aResponse().withStatus(status)).build());
     }
 
     protected void prepareKonnektorStubs() throws Exception {
         servicePortProvider.onStart();
         
-        String soapGetCardsEnvelop = getFixture("GetCards.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetCardsEnvelop)).build());
+        String soapGetSmcbCardsEnvelop = getFixture("GetSmcbCards.xml");
+        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("SMC-B"))
+            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetSmcbCardsEnvelop)).build());
+
+        String soapGetEgkCardsEnvelop = getFixture("GetEgkCards.xml");
+        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("EGK"))
+            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetEgkCardsEnvelop)).build());
 
         String soapSmcbCertificateEnvelop = getFixture("SmcbCertificate.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService"))
@@ -158,6 +220,10 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         String soapExternalAuthenticateEnvelop = getFixture("ExternalAuthenticateResponse.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/AuthSignatureService"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapExternalAuthenticateEnvelop)).build());
+
+        String soapReadVSDResponseEnvelop = getFixture("ReadVSDResponseSample.xml");
+        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/VSDService"))
+            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapReadVSDResponseEnvelop)).build());
     }
 
     protected void prepareIdpStubs() throws Exception {
@@ -203,5 +269,57 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         );
 
         return new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
+    }
+
+    protected void receiveCardInsertedEvent(
+        KonnektorConfig konnektorConfig,
+        EpaFileDownloader epaFileDownloader,
+        VauNpProvider vauNpProvider,
+        CardlinkClient cardlinkClient,
+        String egkHandle,
+        String ctIdValue
+    ) {
+        RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
+
+        CETPEventHandler cetpServerHandler = new CETPEventHandler(
+            webSocketPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader, konnektorClient,
+            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard
+        );
+        EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
+
+        String slotIdValue = "3";
+
+        channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue, egkHandle));
+        channel.pipeline().fireChannelReadComplete();
+    }
+
+    protected DecodeResult decode(
+        KonnektorConfig konnektorConfig,
+        String slotIdValue,
+        String ctIdValue,
+        String egkHandle
+    ) {
+        Event event = new Event();
+        event.setTopic("CARD/INSERTED");
+        Event.Message message = new Event.Message();
+        Event.Message.Parameter parameter = new Event.Message.Parameter();
+        parameter.setKey("CardHandle");
+        parameter.setValue(egkHandle);
+        Event.Message.Parameter parameterSlotId = new Event.Message.Parameter();
+        parameterSlotId.setKey("SlotID");
+        parameterSlotId.setValue(slotIdValue);
+        Event.Message.Parameter parameterCtId = new Event.Message.Parameter();
+        parameterCtId.setKey("CtID");
+        parameterCtId.setValue(ctIdValue);
+        Event.Message.Parameter parameterCardType = new Event.Message.Parameter();
+        parameterCardType.setKey("CardType");
+        parameterCardType.setValue("EGK");
+
+        message.getParameter().add(parameter);
+        message.getParameter().add(parameterSlotId);
+        message.getParameter().add(parameterCtId);
+        message.getParameter().add(parameterCardType);
+        event.setMessage(message);
+        return new DecodeResult(eventMapper.toDomain(event), konnektorConfig.getUserConfigurations());
     }
 }

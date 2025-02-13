@@ -17,7 +17,10 @@ public class VauHeaderInnerResponseBuilder extends AbstractVauResponseBuilder {
     public VauResponse build(String vauCid, int responseCode, List<Pair<String, String>> headers, byte[] bytes) {
         HttpParcel httpResponse = HttpParcel.from(bytes);
         List<Pair<String, String>> innerHeaders = httpResponse.getHeaders();
-        String error = findHeaderValue(innerHeaders, VAU_ERROR).orElse(null);
+        String error = findHeaderValue(headers, VAU_ERROR).orElse(null);
+        if (error == null) {
+            error = findHeaderValue(innerHeaders, VAU_ERROR).orElse(null);
+        }
         if (error != null) {
             return new VauResponse(httpResponse.getStatus(), error, error.getBytes(UTF_8), innerHeaders, true);
         } else {

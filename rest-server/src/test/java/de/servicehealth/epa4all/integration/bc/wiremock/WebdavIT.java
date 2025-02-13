@@ -235,7 +235,6 @@ public class WebdavIT extends AbstractWiremockTest {
     }
 
     private UCPersoenlicheVersichertendatenXML.Versicherter.Person preparePerson(String telematikId) throws Exception {
-        prepareVsdStubs();
         prepareKonnektorStubs();
 
         String egkHandle = "EGK-41";
