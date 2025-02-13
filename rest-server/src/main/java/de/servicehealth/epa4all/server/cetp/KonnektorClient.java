@@ -76,7 +76,7 @@ public class KonnektorClient implements IKonnektorClient {
     @Getter
     private final ConcurrentHashMap<String, String> smcbTelematikMap = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, X509Certificate> smcbCertificateMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, String> egkMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> insurantEgkMap = new ConcurrentHashMap<>();
 
     private final Object emptyInput = new Object();
 
@@ -170,7 +170,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     public String getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) throws CetpFault {
         return computeIfAbsentCetpEx(
-            egkMap,
+            insurantEgkMap,
             insurantId,
             userRuntimeConfig,
             (key, config) -> {
