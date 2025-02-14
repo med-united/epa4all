@@ -10,6 +10,8 @@ import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryErrorList;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
 import org.ehcache.impl.internal.concurrent.ConcurrentHashMap;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static de.service.health.api.epa4all.EpaMultiService.EPA_RECORD_IS_NOT_FOUND;
@@ -63,6 +65,18 @@ public class EpaCallGuard {
                 String header = response.getHeaderString(VAU_NO_SESSION);
                 return header == null;
             }
+        );
+    }
+
+    public <T> T callAndRetry(KonnektorAction<T> action) throws Exception {
+        return Retrier.callAndRetryEx(
+            List.of(1000),
+            3500,
+            true,
+            Set.of(),
+            action::execute,
+            () -> null,
+            Objects::nonNull
         );
     }
 }

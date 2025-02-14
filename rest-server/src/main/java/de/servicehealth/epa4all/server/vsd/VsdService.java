@@ -6,6 +6,7 @@ import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.conn.vsds.vsdservice.v5.VSDStatusType;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
@@ -31,14 +32,17 @@ public class VsdService {
 
     private final MultiKonnektorService multiKonnektorService;
     private final FolderService folderService;
+    private final EpaCallGuard epaCallGuard;
 
     @Inject
     public VsdService(
         MultiKonnektorService multiKonnektorService,
-        FolderService folderService
+        FolderService folderService,
+        EpaCallGuard epaCallGuard
     ) {
         this.multiKonnektorService = multiKonnektorService;
         this.folderService = folderService;
+        this.epaCallGuard = epaCallGuard;
     }
 
     public static ReadVSDResponse buildSyntheticVSDResponse(String xml, byte[] bytes) throws Exception {
@@ -74,7 +78,9 @@ public class VsdService {
             context.setUserId(UUID.randomUUID().toString());
         }
         ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle, smcbHandle);
-        ReadVSDResponse readVSDResponse = servicePorts.getVSDServicePortType().readVSD(readVSD);
+        ReadVSDResponse readVSDResponse = epaCallGuard.callAndRetry(() ->
+            servicePorts.getVSDServicePortType().readVSD(readVSD)
+        );
         String insurantId = extractInsurantId(readVSDResponse, fallbackKvnr);
         if (insurantId == null) {
             throw new CetpFault("Unable to get insurantId");

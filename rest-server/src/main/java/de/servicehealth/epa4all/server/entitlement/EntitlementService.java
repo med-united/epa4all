@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 import java.time.Instant;
-import java.util.HexFormat;
+import java.util.Base64;
 
 import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.UNDEFINED_PZ;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
@@ -175,6 +175,6 @@ public class EntitlementService {
         byte[] first5 = new byte[5];
         System.arraycopy(sha256, 0, first5, 0, 5);
         first5[0] = (byte) (first5[0] & 127);
-        return HexFormat.of().formatHex(first5);
+        return Base64.getUrlEncoder().encodeToString(first5);
     }
 }
