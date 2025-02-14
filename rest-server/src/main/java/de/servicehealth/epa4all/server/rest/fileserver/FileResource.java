@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
 import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy;
 import jakarta.enterprise.context.Dependent;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -26,6 +27,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+import static de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy.Earliest;
 import static de.servicehealth.epa4all.server.rest.fileserver.prop.MimeHelper.resolveMimeType;
 
 @Dependent
@@ -111,7 +113,7 @@ public class FileResource extends AbstractResource {
     @Override
     public Response propfind(
         final UriInfo uriInfo,
-        final String depth,
+        final String depthValue,
         final Long contentLength,
         final Providers providers,
         final HttpHeaders httpHeaders,
@@ -121,7 +123,10 @@ public class FileResource extends AbstractResource {
         PropFind propFind = getPropFind(contentLength, providers, httpHeaders, entityStream);
         URI requestUri = uriInfo.getRequestUri();
         UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
-        MultiStatus multiStatus = fileProp.propfind(resource, propFind, requestUri, uriBuilder, resolveDepth(depth));
+        int initialDepth = resolveDepth(depthValue);
+        MultiStatus multiStatus = fileProp.propfind(
+            uriBuilder, propFind, requestUri, resource, initialDepth, initialDepth, Earliest
+        );
         return logResponse("PROPFIND", uriInfo, Response.ok(multiStatus).build());
     }
 

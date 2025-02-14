@@ -15,9 +15,10 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("UnusedReturnValue")
 public class AbstractWebdavIT {
 
-    protected WebdavConfig mockWebdavConfig(File tempDir) {
+    protected static WebdavConfig mockWebdavConfig(File tempDir) {
         WebdavConfig webdavConfig = mock(WebdavConfig.class);
         when(webdavConfig.getRootFolder()).thenReturn(tempDir.getAbsolutePath());
+        when(webdavConfig.getDefaultLimit()).thenReturn(20);
         when(webdavConfig.getAvailableProps(eq(true))).thenReturn(Map.of(
             "Mandatory", Arrays.asList("creationdate,getlastmodified,displayname,resourcetype".split(",")),
             "Root", Arrays.asList("".split("root")),

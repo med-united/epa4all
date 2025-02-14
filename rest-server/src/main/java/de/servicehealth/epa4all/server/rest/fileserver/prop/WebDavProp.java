@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.rest.fileserver.prop;
 
+import de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import org.jugs.webdav.jaxrs.xml.elements.MultiStatus;
@@ -17,11 +18,13 @@ public interface WebDavProp {
     SimpleDateFormat DATE_YYYY_MM_DD = new SimpleDateFormat("yyyy-MM-dd");
 
     MultiStatus propfind(
-        File resource,
+        UriBuilder uriBuilder,
         PropFind propFind,
         URI requestUri,
-        UriBuilder uriBuilder,
-        int depth
+        File resource,
+        int initialDepth,
+        int currentDepth,
+        SortBy sortBy
     ) throws Exception;
 
     default Response.StatusType okStatus() {

@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
 import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.FileProp;
 import jakarta.enterprise.inject.Instance;
@@ -43,6 +44,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 
+import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_TOTAL_COUNT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.jugs.webdav.jaxrs.Headers.DAV;
@@ -182,7 +184,7 @@ public class AbstractResource implements WebDavResource {
     @Override
     public Response propfind(
         UriInfo uriInfo,
-        String depth,
+        String depthValue,
         Long contentLength,
         Providers providers,
         HttpHeaders httpHeaders,
@@ -220,7 +222,7 @@ public class AbstractResource implements WebDavResource {
 
     protected Response getDirectoryPropfindResponse(
         final UriInfo uriInfo,
-        final String depth,
+        final String depthValue,
         final Long contentLength,
         final Providers providers,
         final HttpHeaders httpHeaders,
@@ -229,10 +231,32 @@ public class AbstractResource implements WebDavResource {
         PropFind propFind = getPropFind(contentLength, providers, httpHeaders, entityStream);
         URI requestUri = uriInfo.getRequestUri();
         UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
-        MultiStatus multiStatus = directoryProp.propfind(resource, propFind, requestUri, uriBuilder, resolveDepth(depth));
-        return multiStatus.getResponses().isEmpty()
-            ? logResponse("PROPFIND", uriInfo, Response.noContent().build())
-            : logResponse("PROPFIND", uriInfo, Response.ok(multiStatus).build());
+        int initialDepth = resolveDepth(depthValue);
+        Paginator paginator = new Paginator(webdavConfig, httpHeaders.getRequestHeaders());
+        MultiStatus multiStatus = directoryProp.propfind(
+            uriBuilder, propFind, requestUri, resource, initialDepth, initialDepth, paginator.getSortBy()
+        );
+        paginator.setTotalCount(multiStatus.getResponses().size());
+        multiStatus = applyPagination(multiStatus, paginator);
+
+        Response response;
+        if (multiStatus.getResponses().isEmpty()) {
+            response = Response.noContent().build();
+        } else {
+            response = Response.ok(multiStatus)
+                .header(X_TOTAL_COUNT, paginator.getTotalCount())
+                .build();
+        }
+        return logResponse("PROPFIND", uriInfo, response);
+    }
+
+    private MultiStatus applyPagination(MultiStatus multiStatus, Paginator pg) {
+        return new MultiStatus(multiStatus.getResponses().stream().sorted((r1, r2) ->
+            switch (pg.getSortBy()) {
+                case Latest -> -1 * Long.valueOf(r1.getResponseDescription().getContent()).compareTo(Long.valueOf(r2.getResponseDescription().getContent()));
+                case Earliest -> Long.valueOf(r1.getResponseDescription().getContent()).compareTo(Long.valueOf(r2.getResponseDescription().getContent()));
+            }
+        ).skip(pg.getOffset()).limit(pg.getLimit()).toArray(org.jugs.webdav.jaxrs.xml.elements.Response[]::new));
     }
 
     @Override

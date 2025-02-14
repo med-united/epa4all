@@ -6,6 +6,7 @@ import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.BirthDay;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.Entries;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.EntryUUID;
@@ -23,6 +24,7 @@ import org.jugs.webdav.jaxrs.xml.elements.Prop;
 import org.jugs.webdav.jaxrs.xml.elements.PropFind;
 import org.jugs.webdav.jaxrs.xml.elements.PropStat;
 import org.jugs.webdav.jaxrs.xml.elements.Response;
+import org.jugs.webdav.jaxrs.xml.elements.ResponseDescription;
 import org.jugs.webdav.jaxrs.xml.elements.Status;
 import org.jugs.webdav.jaxrs.xml.properties.CreationDate;
 import org.jugs.webdav.jaxrs.xml.properties.DisplayName;
@@ -37,6 +39,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -114,7 +117,8 @@ public abstract class AbstractProp implements WebDavProp {
         File resource,
         URI requestUri,
         PropFind propFind,
-        boolean directory
+        boolean directory,
+        SortBy sortBy
     ) {
         if (resource == null || (directory && !resource.isDirectory())) {
             return new MultiStatus();
@@ -130,10 +134,25 @@ public abstract class AbstractProp implements WebDavProp {
             ? getPropStatNamesInfo(resource, requestUri)
             : getPropStatInfo(levelPropFind, resource, requestUri);
 
+        long lastModified;
+        if (resource.isFile()) {
+            lastModified = resource.lastModified();
+        } else {
+            List<File> sortedLeafFiles = folderService.getLeafFiles(resource).stream().sorted((f1, f2) ->
+                switch (sortBy) {
+                    case Latest -> -1 * Long.compare(f1.lastModified(), f2.lastModified());
+                    case Earliest -> Long.compare(f1.lastModified(), f2.lastModified());
+                }
+            ).toList();
+            lastModified = sortedLeafFiles.isEmpty()
+                ? resource.lastModified()
+                : sortedLeafFiles.getFirst().lastModified();
+        }
+
         return new MultiStatus(new Response(
             new HRef(requestUri),
             null,
-            null,
+            new ResponseDescription(String.valueOf(lastModified)),
             null,
             propStatInfo.okStat,
             propStatInfo.notFoundStat

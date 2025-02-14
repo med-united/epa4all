@@ -36,13 +36,13 @@ public class FileServerResource extends AbstractResource {
     @Override
     public Response propfind(
         final UriInfo uriInfo,
-        final String depth,
+        final String depthValue,
         final Long contentLength,
         final Providers providers,
         final HttpHeaders httpHeaders,
         final InputStream entityStream
     ) throws Exception {
         logRequest("PROPFIND", uriInfo);
-        return getDirectoryPropfindResponse(uriInfo, depth, contentLength, providers, httpHeaders, entityStream);
+        return getDirectoryPropfindResponse(uriInfo, depthValue, contentLength, providers, httpHeaders, entityStream);
     }
 }
