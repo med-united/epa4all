@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.filetracker;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -45,6 +46,19 @@ public interface IFolderService {
 
     default File[] getTelematikFolders() {
         return getNestedFolders(getRootFolder());
+    }
+
+    default List<File> getLeafFiles(File parent) {
+        File[] nestedFolders = getNestedFolders(parent);
+        if (nestedFolders.length == 0) {
+            return Arrays.asList(getNestedFiles(parent));
+        } else {
+            List<File> files = new ArrayList<>();
+            for (File folder: nestedFolders) {
+                files.addAll(getLeafFiles(folder));
+            }
+            return files;
+        }
     }
 
     default File[] getNestedFiles(File parent) {

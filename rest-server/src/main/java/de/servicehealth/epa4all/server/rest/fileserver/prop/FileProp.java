@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.rest.fileserver.prop;
 
+import de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.type.FileType;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.UriBuilder;
@@ -19,13 +20,15 @@ public class FileProp extends AbstractProp {
 
     @Override
     public MultiStatus propfind(
-        File resource,
+        UriBuilder uriBuilder,
         PropFind propFind,
         URI requestUri,
-        UriBuilder uriBuilder,
-        int depth
+        File resource,
+        int initialDepth,
+        int currentDepth,
+        SortBy sortBy
     ) throws Exception {
-        return buildDavResponseStatus(resource, requestUri, propFind, false);
+        return buildDavResponseStatus(resource, requestUri, propFind, false, sortBy);
     }
 
     @Override

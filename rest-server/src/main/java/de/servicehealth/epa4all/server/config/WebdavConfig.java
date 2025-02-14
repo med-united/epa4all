@@ -21,6 +21,9 @@ public class WebdavConfig {
     @Setter
     String rootFolder;
 
+    @ConfigProperty(name = "webdav.paging.default.limit", defaultValue = "20")
+    int defaultLimit;
+
     @ConfigProperty(name = "webdav.prop.directory")
     Map<String, String> directoryPropsMap;
 

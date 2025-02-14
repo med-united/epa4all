@@ -66,7 +66,7 @@ public class DirectoryResource extends AbstractResource {
     @Override
     public Response propfind(
         final UriInfo uriInfo,
-        final String depth,
+        final String depthValue,
         final Long contentLength,
         final Providers providers,
         final HttpHeaders httpHeaders,
@@ -74,7 +74,7 @@ public class DirectoryResource extends AbstractResource {
     ) throws Exception {
         logRequest("PROPFIND", uriInfo);
         if (resource.exists()) {
-            return getDirectoryPropfindResponse(uriInfo, depth, contentLength, providers, httpHeaders, entityStream);
+            return getDirectoryPropfindResponse(uriInfo, depthValue, contentLength, providers, httpHeaders, entityStream);
         } else {
             return logResponse("PROPFIND", uriInfo, Response.status(404).build());
         }
