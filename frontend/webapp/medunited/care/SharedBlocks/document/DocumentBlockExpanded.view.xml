@@ -1,5 +1,5 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns="sap.m" xmlns:dnd="sap.ui.core.dnd" controllerName="medunited.care.SharedBlocks.document.DocumentBlockController">
-    <Table id="documentTable" items="{
+    <Table id="documentTableExpanded" items="{
             path: 'multistatus/response'
         }" autoPopinMode="true">
         <columns>

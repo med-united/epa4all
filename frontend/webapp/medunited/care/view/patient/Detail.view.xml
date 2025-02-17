@@ -51,7 +51,7 @@
                         <uxap:subSections>
                             <uxap:ObjectPageSubSection id="documentSubSection" title="{i18n>titleSectionDocument}">
                                 <uxap:blocks>
-                                    <document:DocumentBlock id="documentBlock" />
+                                    <document:DocumentBlock id="documentBlock" mode="Collapsed" showSubSectionMore="true"/>
                                 </uxap:blocks>
                             </uxap:ObjectPageSubSection>
                         </uxap:subSections>
