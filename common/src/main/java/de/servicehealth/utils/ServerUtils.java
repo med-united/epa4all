@@ -1,5 +1,9 @@
 package de.servicehealth.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.ByteArrayInputStream;
@@ -7,9 +11,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +26,11 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static de.servicehealth.vau.VauFacade.AUTH_ERRORS;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ServerUtils {
+
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private ServerUtils() {
     }
@@ -116,5 +127,62 @@ public class ServerUtils {
                 return Pair.of(h.getKey(), value);
             })
             .findFirst();
+    }
+
+    public static JsonNode extractJsonNode(Object entity) {
+        try {
+            return switch (entity) {
+                case InputStream is -> OBJECT_MAPPER.readTree(new String(is.readAllBytes(), UTF_8));
+                case String payload -> OBJECT_MAPPER.readTree(payload);
+                case Collection<?> collection -> createArrayNode(collection);
+                case ObjectNode objectNode -> objectNode;
+                case ArrayNode arrayNode -> arrayNode;
+                case null, default -> {
+                    Map<String, String> map = Map.of("entity", entity == null ? "NULL" : "Type: " + entity.getClass().getName());
+                    yield createObjectNode(map);
+                }
+            };
+        } catch (Exception e) {
+            ObjectNode node = OBJECT_MAPPER.createObjectNode();
+            node.put("error", e.getMessage());
+            return node;
+        }
+    }
+
+    public static ArrayNode createArrayNode(Collection<?> items) {
+        ArrayNode arrayNode = OBJECT_MAPPER.createArrayNode();
+        items.forEach(obj -> {
+            if (obj instanceof JsonNode jsonNode) {
+                arrayNode.add(jsonNode);
+            } else {
+                arrayNode.add(extractJsonNode(obj));
+            }
+        });
+        return arrayNode;
+    }
+
+    public static String pretty(Collection<JsonNode> nodes) {
+        return createArrayNode(nodes).toPrettyString();
+    }
+
+    public static JsonNode createObjectNode(Map<String, ?> attributes) {
+        ObjectNode node = OBJECT_MAPPER.createObjectNode();
+        attributes.forEach((key, value) -> {
+            switch (value) {
+                case JsonNode jsonNode -> node.set(key, jsonNode);
+                case Short shortValue -> node.put(key, shortValue);
+                case Integer intValue -> node.put(key, intValue);
+                case Long longValue -> node.put(key, longValue);
+                case Float floatValue -> node.put(key, floatValue);
+                case Double doubleValue -> node.put(key, doubleValue);
+                case BigInteger biValue -> node.put(key, biValue);
+                case BigDecimal bdValue -> node.put(key, bdValue);
+                case String strValue -> node.put(key, strValue);
+                case Boolean boolValue -> node.put(key, boolValue);
+                case byte[] bytes -> node.put(key, bytes);
+                case null, default -> node.put(key, String.valueOf(value));
+            }
+        });
+        return node;
     }
 }

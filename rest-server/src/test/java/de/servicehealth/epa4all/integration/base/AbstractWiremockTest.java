@@ -27,7 +27,6 @@ import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
-import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
@@ -84,9 +83,6 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     @Inject
     protected EpaCallGuard epaCallGuard;
-
-    @Inject
-    protected VauNpProvider vauNpProvider;
 
     @Inject
     protected FeatureConfig featureConfig;
@@ -165,7 +161,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     protected void prepareVauStubs() {
         epaMultiService.onStart();
         epaMultiService.getEpaBackendMap().forEach((backend, epaApi) -> {
-            epaApi.getVauFacade().getVauClients().forEach(vc -> {
+            epaApi.getVauFacade().getEmptyClients().forEach(vc -> {
                 try {
                     // /234234234/VAU
                     // /987987987/VAU
@@ -274,7 +270,6 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     protected void receiveCardInsertedEvent(
         KonnektorConfig konnektorConfig,
         EpaFileDownloader epaFileDownloader,
-        VauNpProvider vauNpProvider,
         CardlinkClient cardlinkClient,
         String egkHandle,
         String ctIdValue
@@ -283,7 +278,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
             webSocketPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader, konnektorClient,
-            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard
+            epaMultiService, cardlinkClient, runtimeConfig, featureConfig, epaCallGuard
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 

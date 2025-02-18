@@ -10,6 +10,7 @@ import java.util.Set;
 
 import static de.servicehealth.utils.ServerUtils.findHeader;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
+import static de.servicehealth.vau.VauClient.VAU_NP;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.HOST;

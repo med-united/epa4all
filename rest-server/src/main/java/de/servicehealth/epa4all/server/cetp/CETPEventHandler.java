@@ -12,7 +12,6 @@ import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.filetracker.download.FileDownload;
-import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
@@ -40,7 +39,6 @@ import static de.servicehealth.logging.LogField.SLOT;
 import static de.servicehealth.logging.LogField.SMCB_HANDLE;
 import static de.servicehealth.logging.LogField.TELEMATIKID;
 import static de.servicehealth.logging.LogField.WORKPLACE;
-import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
@@ -56,7 +54,6 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     private final IKonnektorClient konnektorClient;
     private final EpaMultiService epaMultiService;
     private final RuntimeConfig runtimeConfig;
-    private final VauNpProvider vauNpProvider;
     private final FeatureConfig featureConfig;
     private final EpaCallGuard epaCallGuard;
 
@@ -68,7 +65,6 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         IKonnektorClient konnektorClient,
         EpaMultiService epaMultiService,
         CardlinkClient cardlinkClient,
-        VauNpProvider vauNpProvider,
         RuntimeConfig runtimeConfig,
         FeatureConfig featureConfig,
         EpaCallGuard epaCallGuard
@@ -82,7 +78,6 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         this.konnektorClient = konnektorClient;
         this.epaMultiService = epaMultiService;
         this.runtimeConfig = runtimeConfig;
-        this.vauNpProvider = vauNpProvider;
         this.featureConfig = featureConfig;
         this.epaCallGuard = epaCallGuard;
     }
@@ -153,16 +148,17 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                         throw new IllegalStateException("Unable to read InsuranceData after VSD call");
                     }
                     String insurantId = insuranceData.getInsurantId();
-                    EpaAPI epaApi = epaMultiService.getEpaAPI(insurantId);
+                    EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
                     String backend = epaApi.getBackend();
 
-                    String vauNp = vauNpProvider.forceVauNp(smcbHandle, konnektorHost, workplaceId, backend);
                     entitlementService.getEntitlement(
                         runtimeConfig, epaApi, insuranceData, userAgent, egkHandle,
-                        smcbHandle, telematikId, insurantId, vauNp
+                        smcbHandle, telematikId, insurantId
                     );
-                    Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, vauNp);
-                    try (Response response = epaCallGuard.callAndRetry(backend, () -> epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders))) {
+                    Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId);
+                    try (Response response = epaCallGuard.callAndRetry(backend, () ->
+                        epaApi.getFhirProxy().forwardGet("fhir/pdf", konnektorHost, workplaceId, xHeaders)
+                    )) {
                         byte[] bytes = response.readEntity(byte[].class);
                         if (bytes.length < 300) {
                             String payload = new String(bytes);
@@ -210,18 +206,13 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         }
     }
 
-    private Map<String, String> prepareXHeaders(
-        EpaAPI epaApi,
-        String insurantId,
-        String vauNp
-    ) {
+    private Map<String, String> prepareXHeaders(EpaAPI epaApi, String insurantId) {
         String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
         String epaBackend = epaApi.getBackend();
         return new HashMap<>(Map.of(
             X_INSURANT_ID, insurantId,
             X_BACKEND, epaBackend,
-            X_USER_AGENT, userAgent,
-            VAU_NP, vauNp
+            X_USER_AGENT, userAgent
         ));
     }
 

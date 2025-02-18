@@ -53,7 +53,6 @@ public class CardInsertedDockerIT extends AbstractVsdTest {
             CardlinkClient cardlinkClient = mock(CardlinkClient.class);
             receiveCardInsertedEvent(
                 mockKonnektorConfig(),
-                mockVauNpProvider(),
                 cardlinkClient,
                 egkHandle,
                 "ctId-222"

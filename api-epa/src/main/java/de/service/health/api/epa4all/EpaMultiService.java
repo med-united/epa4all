@@ -7,7 +7,9 @@ import de.service.health.api.epa4all.annotation.EpaRestFeatures;
 import de.service.health.api.epa4all.annotation.EpaSoapFeatures;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
+import de.service.health.api.epa4all.proxy.AdminProxyService;
 import de.service.health.api.epa4all.proxy.FhirProxyService;
+import de.service.health.api.epa4all.proxy.IAdminProxy;
 import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
@@ -62,6 +64,7 @@ import static jakarta.xml.ws.soap.SOAPBinding.SOAP12HTTP_BINDING;
 import static java.lang.Boolean.TRUE;
 import static org.apache.cxf.message.Message.MTOM_ENABLED;
 
+@SuppressWarnings("CdiInjectionPointsInspection")
 @ApplicationScoped
 @Startup
 public class EpaMultiService extends StartableService {
@@ -95,8 +98,8 @@ public class EpaMultiService extends StartableService {
     public EpaMultiService(
         VauConfig vauConfig,
         EpaConfig epaConfig,
-        EpaFeatureConfig featureConfig,
         ClientFactory clientFactory,
+        EpaFeatureConfig featureConfig,
         Instance<VauFacade> vauFacadeInstance,
         ServicehealthConfig servicehealthConfig,
         @EpaRestFeatures List<Feature> epaRestFeatures,
@@ -125,12 +128,9 @@ public class EpaMultiService extends StartableService {
                     VauFacade vauFacade = vauFacadeInstance.get();
                     vauFacade.setBackend(backend);
 
-                    String epaUserAgent = epaConfig.getEpaUserAgent();
-
                     String documentManagementInsurantUrl = getBackendUrl(backend, epaConfig.getDocumentManagementInsurantServiceUrl());
                     IDocumentManagementInsurantPortType documentManagementInsurantPortType = createXDSDocumentPortType(
                         documentManagementInsurantUrl,
-                        epaUserAgent,
                         IDocumentManagementInsurantPortType.class,
                         vauFacade
                     );
@@ -152,12 +152,16 @@ public class EpaMultiService extends StartableService {
                     IFhirProxy fhirProxy = new FhirProxyService(
                         backend, epaConfig, vauConfig, vauFacade, maskedHeaders, maskedAttributes, epaRestFeatures
                     );
+                    IAdminProxy adminProxy = new AdminProxyService(
+                        backend, epaConfig, vauConfig, vauFacade, maskedHeaders, maskedAttributes
+                    );
 
                     IMedicationClient medicationClient;
                     IRenderClient renderClient;
                     if (featureConfig.isNativeFhirEnabled()) {
                         FhirContext fhirContext = FhirContext.forR4();
-
+                        String epaUserAgent = epaConfig.getEpaUserAgent();
+                        
                         VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(fhirContext);
                         String medicationApiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
                         apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationApiUrl));
@@ -185,6 +189,7 @@ public class EpaMultiService extends StartableService {
                         accountInformationApi,
                         authorizationSmcBApi,
                         entitlementsApi,
+                        adminProxy,
                         fhirProxy
                     );
                 } catch (Exception e) {
@@ -199,7 +204,6 @@ public class EpaMultiService extends StartableService {
             String documentManagementUrl = getBackendUrl(backend, epaConfig.getDocumentManagementServiceUrl());
             return createXDSDocumentPortType(
                 documentManagementUrl,
-                epaConfig.getEpaUserAgent(),
                 IDocumentManagementPortType.class,
                 vauFacade
             );
@@ -215,15 +219,18 @@ public class EpaMultiService extends StartableService {
         VauFacade vauFacade
     ) throws Exception {
         String backendUrl = getBackendUrl(backend, serviceUrl);
-        String epaUserAgent = epaConfig.getEpaUserAgent();
         Set<String> maskedHeaders = servicehealthConfig.getMaskedHeaders();
         Set<String> maskedAttributes = servicehealthConfig.getMaskedAttributes();
         return clientFactory.createRestProxyClient(
-            vauFacade, epaUserAgent, clazz, backendUrl, maskedHeaders, maskedAttributes, epaRestFeatures
+            vauFacade, clazz, backendUrl, maskedHeaders, maskedAttributes, epaRestFeatures
         );
     }
 
-    public EpaAPI getEpaAPI(String insurantId) {
+    public EpaAPI getEpaAPI(String backend) {
+        return backend == null ? null : epaBackendMap.get(backend);
+    }
+
+    public EpaAPI findEpaAPI(String insurantId) {
         EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(insurantId);
         if (epaAPI != null) {
             return epaAPI;
@@ -254,7 +261,6 @@ public class EpaMultiService extends StartableService {
 
     private <T> T createXDSDocumentPortType(
         String address,
-        String epaUserAgent,
         Class<T> clazz,
         VauFacade vauFacade
     ) throws Exception {
@@ -277,7 +283,7 @@ public class EpaMultiService extends StartableService {
         soapProxyFactory.getOutInterceptors().addAll(
             List.of(
                 new LoggingOutInterceptor(),
-                new CxfVauSetupInterceptor(vauFacade, vauConfig, epaUserAgent),
+                new CxfVauSetupInterceptor(vauFacade),
                 new CxfVauWriteSoapInterceptor(vauFacade, maskedHeaders, maskedAttributes)
             )
         );

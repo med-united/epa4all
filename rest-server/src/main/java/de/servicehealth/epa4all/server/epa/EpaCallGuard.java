@@ -53,7 +53,7 @@ public class EpaCallGuard {
         );
     }
 
-    public Response callAndRetry(String backend, FhirResponseAction action) throws Exception {
+    public Response callAndRetry(String backend, ResponseAction action) throws Exception {
         return Retrier.callAndRetryEx(
             vauConfig.getVauCallRetries(),
             vauConfig.getVauCallRetryPeriodMs(),
@@ -70,8 +70,8 @@ public class EpaCallGuard {
 
     public <T> T callAndRetry(KonnektorAction<T> action) throws Exception {
         return Retrier.callAndRetryEx(
-            List.of(1000),
-            3500,
+            List.of(500),
+            1500,
             true,
             Set.of(),
             action::execute,

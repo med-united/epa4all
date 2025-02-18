@@ -19,11 +19,11 @@ public class TelematikByIccsnIT {
     public void telematikIdReturnedByIccsn() {
         given()
             .queryParams(Map.of(X_KONNEKTOR, "localhost"))
-            .queryParams(Map.of("iccsn", "80276883110000141773"))
+            .queryParams(Map.of("iccsn", "80276883110000141773")) // SMC-B
             .when()
             .get("/telematik/id")
             .then()
-            .body(containsString("1-SMC-B-Testkarte-883110000141773"))
+            .body(containsString("3-SMC-B-Testkarte--883110000147807"))
             .statusCode(200);
     }
 }

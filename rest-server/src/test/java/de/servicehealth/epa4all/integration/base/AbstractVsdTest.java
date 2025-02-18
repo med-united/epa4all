@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.security.cert.X509Certificate;
 import java.util.Map;
-import java.util.Optional;
 
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static org.mockito.ArgumentMatchers.any;
@@ -153,13 +152,6 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
         return vsdServiceMock;
     }
 
-    protected VauNpProvider mockVauNpProvider() {
-        VauNpProvider vauNpProviderMock = mock(VauNpProvider.class);
-        when(vauNpProviderMock.getVauNp(any(), any(), any(), any())).thenReturn(Optional.of("f5931e8c19c21bca44fa"));
-        QuarkusMock.installMockForType(vauNpProviderMock, VauNpProvider.class);
-        return vauNpProviderMock;
-    }
-
     protected KonnektorConfig mockKonnektorConfig() {
         KonnektorConfig konnektorConfig = mock(KonnektorConfig.class);
         IUserConfigurations configurations = mock(IUserConfigurations.class);
@@ -169,7 +161,6 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
 
     protected void receiveCardInsertedEvent(
         KonnektorConfig konnektorConfig,
-        VauNpProvider vauNpProvider,
         CardlinkClient cardlinkClient,
         String egkHandle,
         String ctIdValue
@@ -178,7 +169,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
 
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
             webSocketPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader, konnektorClient,
-            epaMultiService, cardlinkClient, vauNpProvider, runtimeConfig, featureConfig, epaCallGuard
+            epaMultiService, cardlinkClient, runtimeConfig, featureConfig, epaCallGuard
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 

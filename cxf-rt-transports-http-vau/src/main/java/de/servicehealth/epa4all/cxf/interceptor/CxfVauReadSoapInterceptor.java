@@ -50,7 +50,7 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
                 throw new Fault(new IllegalStateException(body));
             }
             String vauCid = (String) message.getExchange().get(VAU_CID);
-            VauClient vauClient = vauFacade.getVauClient(vauCid);
+            VauClient vauClient = vauFacade.find(vauCid);
             byte[] encryptedVauData = readContentFromMessage(message);
             byte[] decryptedBytes = vauClient.decryptVauMessage(encryptedVauData);
             String fullRequest = new String(decryptedBytes);

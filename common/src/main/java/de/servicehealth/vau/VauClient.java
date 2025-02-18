@@ -7,14 +7,15 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class VauClient {
     
     private static final Logger log = LoggerFactory.getLogger(VauClient.class.getName());
 
+    public static final String VAU_CLIENT_UUID = "VAU_CLIENT_UUID";
     public static final String VAU_CID = "VAU-CID";
 
     public static final String VAU_DEBUG_SK1_C2S = "vau-debug-s_k1_c2s";
@@ -36,31 +37,43 @@ public class VauClient {
     public static final String KVNR = "kvnr";
     public static final String TELEMATIK_ID = "telematikId";
     public static final String TASK_ID = "taskId";
+    public static final String VAU_CLIENT = "vauClient";
 
     public static final String CLIENT_ID = "ClientID";
 
     private static final int PERMITS = 1;
 
-    private final VauClientStateMachine vauStateMachine;
+    private VauClientStateMachine vauStateMachine;
 
     @Getter
     private final boolean mock;
 
     @Getter
     @Setter
-    private VauInfo vauInfo;
+    private volatile VauInfo vauInfo;
 
+    @Getter
+    @Setter
+    private String vauNp;
+
+    @Getter
+    private final String uuid;
+
+    @Getter
+    private final String konnektorWorkplace;
     private final AtomicLong acquiredAt;
     private final int readTimeoutMs;
     private final Semaphore semaphore;
+    private final boolean pu;
 
-
-    public VauClient(boolean pu, boolean mock, int readTimeoutMs) {
+    public VauClient(boolean pu, boolean mock, int readTimeoutMs, String konnektorWorkplace) {
+        this.konnektorWorkplace = konnektorWorkplace;
         this.readTimeoutMs = readTimeoutMs;
         this.mock = mock;
+        this.pu = pu;
 
+        uuid = UUID.randomUUID().toString();
         vauStateMachine = new VauClientStateMachine(pu);
-
         semaphore = new Semaphore(PERMITS);
         acquiredAt = new AtomicLong(0L);
     }
@@ -69,8 +82,8 @@ public class VauClient {
         boolean acquired = semaphore.tryAcquire();
         if (acquired) {
             acquiredAt.set(System.currentTimeMillis());
-            String threadName = Thread.currentThread().getName();
-            log.debug(String.format("[VauClient %d] ACQUIRED by %s acquiredAt=%d", hashCode(), threadName, acquiredAt.get()));
+            String msg = "[VauClient %s] ACQUIRED acquiredAt=%d, permits=%d";
+            log.debug(String.format(msg, uuid, acquiredAt.get(), semaphore.availablePermits()));
         }
         return acquired;
     }
@@ -120,27 +133,23 @@ public class VauClient {
         try {
             return vauStateMachine.decryptVauMessage(bytes);
         } finally {
-            String threadName = Thread.currentThread().getName();
-            log.debug(String.format("[VauClient %d] RELEASE by %s acquiredAt=%d", hashCode(), threadName, acquiredAt.get()));
+            String msg = "[VauClient %s] RELEASE acquiredAt=%d permits=%d";
+            log.debug(String.format(msg, uuid, acquiredAt.get(), semaphore.availablePermits()));
             release();
         }
     }
 
-    String forceRelease(Long hangsTime) {
+    public String forceRelease(Long hangsTime) {
         long acquiredAt = this.acquiredAt.get();
         long delta = System.currentTimeMillis() - acquiredAt;
         if (hangsTime == null || hangsTime <= delta) {
             try {
-                String threadName = Thread.currentThread().getName();
-                log.debug(
-                    String.format(
-                        "[VauClient %d] FORCE RELEASE by %s hangsTime=%d delta=%d acquiredAt=%d",
-                        hashCode(), threadName, hangsTime, delta, acquiredAt
-                    )
-                );
+                String msg = "[VauClient %s] FORCE RELEASE hangsTime=%d delta=%d acquiredAt=%d";
+                log.debug(String.format(msg, uuid, hangsTime, delta, acquiredAt));
 
                 String vauCid = vauInfo == null ? "not-defined-yet" : vauInfo.getVauCid();
                 setVauInfo(null);
+                vauStateMachine = new VauClientStateMachine(pu);
                 return vauCid;
             } finally {
                 release();

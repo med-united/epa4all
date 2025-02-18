@@ -2,6 +2,7 @@ package de.service.health.api.epa4all;
 
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
+import de.service.health.api.epa4all.proxy.IAdminProxy;
 import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
@@ -27,6 +28,8 @@ public interface EpaAPI {
     AuthorizationSmcBApi getAuthorizationSmcBApi();
 
     EntitlementsApi getEntitlementsApi();
+
+    IAdminProxy getAdminProxy();
 
     IFhirProxy getFhirProxy();
 

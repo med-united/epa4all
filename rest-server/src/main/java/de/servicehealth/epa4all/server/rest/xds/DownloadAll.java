@@ -26,7 +26,7 @@ public class DownloadAll extends XdsResource {
         @QueryParam(X_KONNEKTOR) String konnektor,
         @QueryParam(KVNR) String kvnr
     ) throws Exception {
-        EpaContext epaContext = getEpaContext(kvnr);
+        EpaContext epaContext = prepareEpaContext(kvnr);
         AdhocQueryResponse adhocQueryResponse = getAdhocQueryResponse(kvnr, epaContext);
         List<JAXBElement<? extends IdentifiableType>> jaxbElements = adhocQueryResponse.getRegistryObjectList().getIdentifiable();
         List<String> tasksIds = bulkTransfer.downloadInsurantFiles(

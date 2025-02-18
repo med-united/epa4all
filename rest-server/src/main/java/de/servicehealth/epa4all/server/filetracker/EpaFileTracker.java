@@ -76,7 +76,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
             String insurantId = epaContext.getInsurantId();
             Map<String, String> xHeaders = epaContext.getXHeaders();
             IDocumentManagementPortType documentManagementPortType = epaMultiService
-                .getEpaAPI(insurantId)
+                .findEpaAPI(insurantId)
                 .getDocumentManagementPortType(taskId, xHeaders);
             RegistryResponseType responseType = epaCallGuard.callAndRetry(
                 epaContext.getBackend(),

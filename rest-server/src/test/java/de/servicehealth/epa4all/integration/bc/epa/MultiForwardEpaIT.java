@@ -39,7 +39,7 @@ public class MultiForwardEpaIT {
     @Test
     public void multipleRequestsFinishedWithOneValuableAndRestDuplicated() {
         Random random = new SecureRandom();
-        List<String> patients = List.of("X110485291"/*, "X110486750"*/);
+        List<String> patients = List.of("X110683202"/*, "X110486750"*/);
 
         int cnt = 10;
         List<Future<GetInfo>> futures = new ArrayList<>();

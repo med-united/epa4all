@@ -116,7 +116,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
                 log.error("Error while sending DIRECT Fhir request, encrypted = " + encrypted, e);
                 if (encrypted) {
                     boolean noUserSession = e.getMessage().contains(NO_USER_SESSION);
-                    vauFacade.handleVauSession(vauCid, noUserSession, false);
+                    vauFacade.handleVauSessionError(vauCid, noUserSession, false);
                 }
                 throw new RuntimeException(e);
             }
@@ -175,7 +175,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
     }
 
     private VauClient initVauClient() throws Exception {
-        VauClient vauClient = vauFacade.acquireVauClient();
+        VauClient vauClient = vauFacade.acquire(null, null);
         if (vauClient.getVauInfo() != null) {
             return vauClient;
         }

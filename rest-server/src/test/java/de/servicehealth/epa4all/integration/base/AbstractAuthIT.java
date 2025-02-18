@@ -7,6 +7,7 @@ import de.servicehealth.epa4all.common.TestUtils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.server.idp.IdpConfig;
 import de.servicehealth.model.GetNonce200Response;
+import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
@@ -51,12 +52,14 @@ public abstract class AbstractAuthIT {
             String backendUrl = getBackendUrl(backend, authorizationServiceUrl);
             AuthorizationSmcBApi api = buildApi(vauFacade, AuthorizationSmcBApi.class, backendUrl);
 
+            VauClient vauClient = vauFacade.getEmptyClients().getFirst();
+
             String clientId = idpConfig.getClientId();
             String epaUserAgent = epaConfig.getEpaUserAgent();
             for (int i = 0; i < 10; i++) {
                 GetNonce200Response nonce = api.getNonce(epaUserAgent);
                 assertNotNull(nonce);
-                try (Response response = api.sendAuthorizationRequestSCWithResponse(clientId, epaUserAgent, "test:8080")) {
+                try (Response response = api.sendAuthorizationRequestSCWithResponse(clientId, epaUserAgent, "test:8080", vauClient.getUuid())) {
                     String query = response.getLocation().getQuery();
                     assertTrue(query.contains("redirect_uri"));
                 }

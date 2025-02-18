@@ -1,6 +1,5 @@
 package de.servicehealth.epa4all.server.rest.xds;
 
-import de.health.service.cetp.retry.Retrier;
 import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
@@ -8,7 +7,6 @@ import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
 import de.servicehealth.epa4all.server.rest.AbstractResource;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;
-import de.servicehealth.vau.VauConfig;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.inject.Instance;
@@ -17,7 +15,6 @@ import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 public abstract class XdsResource extends AbstractResource {
@@ -39,25 +36,11 @@ public abstract class XdsResource extends AbstractResource {
     @Inject
     EpaCallGuard epaCallGuard;
 
-    @Inject
-    VauConfig vauConfig;
-
-    protected EpaContext getEpaContext(String kvnr) throws Exception {
-        return Retrier.callAndRetryEx(
-            vauConfig.getVauCallRetries(),
-            vauConfig.getVauCallRetryPeriodMs(),
-            true,
-            Set.of(),
-            () -> prepareEpaContext(kvnr),
-            () -> false,
-            EpaContext::isEntitlementValid // TODO setEntitlement can be disabled
-        );
-    }
 
     protected AdhocQueryResponse getAdhocQueryResponse(String kvnr, EpaContext epaContext) throws Exception {
         Map<String, String> xHeaders = epaContext.getXHeaders();
         IDocumentManagementPortType documentManagementPortType = epaMultiService
-            .getEpaAPI(epaContext.getInsurantId())
+            .findEpaAPI(epaContext.getInsurantId())
             .getDocumentManagementPortType(UUID.randomUUID().toString(), xHeaders);
         AdhocQueryRequest request = xdsDocumentService.get().prepareAdhocQueryRequest(kvnr);
         return epaCallGuard.callAndRetry(

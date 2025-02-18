@@ -46,7 +46,6 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
         receiveCardInsertedEvent(
             konnektorConfig,
             epaFileDownloader,
-            vauNpProvider,
             cardlinkClient,
             egkHandle,
             ctId

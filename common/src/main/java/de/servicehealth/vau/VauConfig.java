@@ -25,13 +25,12 @@ public class VauConfig {
     @ConfigProperty(name = "epa.vau.read.timeout.ms", defaultValue = "20000")
     int vauReadTimeoutMs;
 
-    @ConfigProperty(name = "epa.vau.call.retries.ms", defaultValue = "3000,1000")
+    @ConfigProperty(name = "epa.vau.call.retries.ms", defaultValue = "500")
     List<Integer> vauCallRetries;
+
+    @ConfigProperty(name = "epa.vau.call.retry.period.ms", defaultValue = "2000")
+    int vauCallRetryPeriodMs;
 
     @ConfigProperty(name = "epa.vau.connection.timeout.ms", defaultValue = "5000")
     int connectionTimeoutMs;
-
-    public int getVauCallRetryPeriodMs() {
-        return vauReadTimeoutMs - 2000;
-    }
 }

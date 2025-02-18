@@ -54,11 +54,13 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
             .map(Map.Entry::getValue)
             .toList();
 
-        if (foundConfigs.size() != 1) {
-            String c = foundConfigs.isEmpty() ? "Zero" : "Multiple";
-            String msg = "%s KonnektorConfigs found for konnektor=%s workplace=%s, using default";
-            log.warn(String.format(msg, c, konnektor, workplaceId));
+        if (foundConfigs.isEmpty()) {
+            String msg = "Zero KonnektorConfigs found for konnektor=%s workplace=%s, using default";
+            log.warn(String.format(msg, konnektor, workplaceId));
             return defaultUserConfig;
+        } else if (foundConfigs.size() > 1) {
+            String msg = "Multiple KonnektorConfigs found for konnektor=%s workplace=%s, using first one";
+            log.warn(String.format(msg, konnektor, workplaceId));
         }
         return new RuntimeConfig(konnektorDefaultConfig, foundConfigs.getFirst().getUserConfigurations());
     }
