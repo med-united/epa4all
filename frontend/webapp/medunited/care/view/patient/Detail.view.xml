@@ -1,19 +1,35 @@
 <mvc:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:uxap="sap.uxap" xmlns:layout="sap.ui.layout" xmlns:medunited="medunited.base.control" xmlns:name="medunited.care.SharedBlocks.name" xmlns:address="medunited.care.SharedBlocks.address" xmlns:biological="medunited.care.SharedBlocks.biological" xmlns:generalPractitioner="medunited.care.SharedBlocks.generalPractitioner" xmlns:defaultOrganization="medunited.care.SharedBlocks.defaultOrganization" xmlns:insurance="medunited.care.SharedBlocks.insurance" xmlns:document="medunited.care.SharedBlocks.document" xmlns:medication="medunited.care.SharedBlocks.medication" controllerName="medunited.care.controller.patient.Detail" xmlns:html="http://www.w3.org/1999/xhtml">
     <Page showHeader="false">
+        <Bar id="actionToolbar" design="Header" class="stickyToolbar">
+            <contentMiddle>
+                <OverflowToolbar width="100%">
+                    <ToolbarSpacer />
+                    <!--  <uxap:ObjectPageHeaderActionButton text="{i18n>btnEdit}" hideText="false" hideIcon="true" type="Emphasized" visible="{= !${appState>/editMode}}" press="onEdit" /> -->
+                    <Button text="{i18n>btnUploadDocuments}" type="Emphasized" press="onUploadDocuments" />
+                    <Button text="{i18n>btnDownloadDocuments}" type="Emphasized" press="onDownloadDocuments" />
+                    <!--  <uxap:ObjectPageHeaderActionButton text="{i18n>btnCreateMedicationplan}" hideText="false" hideIcon="true" press="onCreateMedicationPlan" /> -->
+                    <Button text="{i18n>btnSeeMedicationplan}" type="Emphasized" press="onSeeMedicationPlan" />
+
+                    <Button icon="sap-icon://full-screen" type="Transparent" press="handleFullScreen" tooltip="Enter Full Screen Mode" visible="{= ${Layout>/actionButtonsInfo/midColumn/fullScreen} !== null }" />
+                    <Button icon="sap-icon://exit-full-screen" type="Transparent" press="handleExitFullScreen" tooltip="Exit Full Screen Mode" visible="{= ${Layout>/actionButtonsInfo/midColumn/exitFullScreen} !== null }" />
+                    <Button icon="sap-icon://decline" type="Transparent" press="handleClose" tooltip="Close column" visible="{= ${Layout>/actionButtonsInfo/midColumn/closeColumn} !== null }" />
+                </OverflowToolbar>
+            </contentMiddle>
+        </Bar>
         <content>
             <uxap:ObjectPageLayout id="objectPageLayout" showTitleInHeaderContent="true">
                 <uxap:headerTitle>
-                    <uxap:ObjectPageHeader objectImageURI="{path: 'photo/0', formatter: '.formatter.formatPatientPhoto'}" objectImageShape="Circle" objectImageAlt="Profile picture of patient" objectTitle="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Nachname'}, {path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Vorname'}" objectSubtitle="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum', formatter: '.formatter.formatBirthDateAndAge'}" isObjectIconAlwaysVisible="false" isObjectTitleAlwaysVisible="false" isObjectSubtitleAlwaysVisible="false">
-                        <uxap:actions>
-                            <uxap:ObjectPageHeaderActionButton text="{i18n>btnEdit}" hideText="false" hideIcon="true" type="Emphasized" visible="{= !${appState>/editMode}}" press="onEdit" />
-                            <uxap:ObjectPageHeaderActionButton text="{i18n>btnUploadDocuments}" hideText="false" hideIcon="true" press="onUploadDocuments" />
-                            <uxap:ObjectPageHeaderActionButton text="{i18n>btnDownloadDocuments}" hideText="false" hideIcon="true" press="onDownloadDocuments" />
-                            <!--  <uxap:ObjectPageHeaderActionButton text="{i18n>btnCreateMedicationplan}" hideText="false" hideIcon="true" press="onCreateMedicationPlan" /> -->
-                            <uxap:ObjectPageHeaderActionButton text="{i18n>btnSeeMedicationplan}" hideText="false" hideIcon="true" press="onSeeMedicationPlan" />
-                            <uxap:ObjectPageHeaderActionButton type="Transparent" icon="sap-icon://full-screen" press="handleFullScreen" tooltip="Enter Full Screen Mode" visible="{= ${Layout>/actionButtonsInfo/midColumn/fullScreen} !== null }" />
-                            <uxap:ObjectPageHeaderActionButton type="Transparent" icon="sap-icon://exit-full-screen" press="handleExitFullScreen" tooltip="Exit Full Screen Mode" visible="{= ${Layout>/actionButtonsInfo/midColumn/exitFullScreen} !== null }" />
-                            <uxap:ObjectPageHeaderActionButton type="Transparent" icon="sap-icon://decline" press="handleClose" tooltip="Close column" visible="{= ${Layout>/actionButtonsInfo/midColumn/closeColumn} !== null }" />
-                        </uxap:actions>
+                    <uxap:ObjectPageHeader
+                        objectImageURI="{path: 'photo/0', formatter: '.formatter.formatPatientPhoto'}"
+                        objectImageShape="Circle"
+                        objectImageAlt="Profile picture of patient"
+                        objectTitle="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Nachname'},
+                             {path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Vorname'}"
+                        objectSubtitle="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum',
+                                formatter: '.formatter.formatBirthDateAndAge'}"
+                        isObjectIconAlwaysVisible="false"
+                        isObjectTitleAlwaysVisible="false"
+                        isObjectSubtitleAlwaysVisible="false">
                     </uxap:ObjectPageHeader>
                 </uxap:headerTitle>
                 <!-- <uxap:headerContent>

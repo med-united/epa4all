@@ -74,3 +74,15 @@
     width: auto;
     height: auto;
 }
+
+.stickyToolbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background-color: white;
+    display: flex;
+    justify-content: space-between;
+    overflow: visible;
+    box-shadow: none;
+    border-bottom: none;
+}
