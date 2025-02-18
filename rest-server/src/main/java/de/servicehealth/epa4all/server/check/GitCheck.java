@@ -31,8 +31,8 @@ public class GitCheck implements Check {
     }
 
     void onStart(@Observes StartupEvent ev) {
-        log.info("{}: {}", BUILD_TIME, properties.getProperty(BUILD_TIME));
-        log.info("{}: {}", GIT_COMMIT_ID, properties.getProperty(GIT_COMMIT_ID));
+        log.info("{}: {}", BUILD_TIME, properties.getProperty("git.build.time"));
+        log.info("{}: {}", GIT_COMMIT_ID, properties.getProperty("git.commit.id.full"));
     }
 
     @Override
@@ -48,8 +48,8 @@ public class GitCheck implements Check {
     @Override
     public Map<String, Object> getData(IRuntimeConfig runtimeConfig) {
         return Map.of(
-            BUILD_TIME, properties.getProperty(BUILD_TIME),
-            GIT_COMMIT_ID, properties.getProperty(GIT_COMMIT_ID)
+            BUILD_TIME, properties.getProperty("git.build.time"),
+            GIT_COMMIT_ID, properties.getProperty("git.commit.id.full")
         );
     }
 }
