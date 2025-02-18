@@ -72,7 +72,6 @@ public class ClientFactory extends StartableService {
 
     public <T> T createRestProxyClient(
         VauFacade vauFacade,
-        String epaUserAgent,
         Class<T> clazz,
         String url,
         Set<String> maskedHeaders,
@@ -87,7 +86,7 @@ public class ClientFactory extends StartableService {
         initClient(
             WebClient.getConfig(api),
             vauConfig.getConnectionTimeoutMs(),
-            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade, vauConfig, epaUserAgent)),
+            List.of(new LoggingOutInterceptor(), new CxfVauSetupInterceptor(vauFacade)),
             List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
         );
         return api;

@@ -15,7 +15,7 @@ public class EntitlementServiceProxyIT extends AbstractEntitlementServiceIT {
     @Override
     protected <T> T buildApi(VauFacade vauFacade, Class<T> clazz, String url) throws Exception {
         return clientFactory.createRestProxyClient(
-            vauFacade, epaUserAgent, clazz, url, Set.of(), Set.of(), List.of()
+            vauFacade, clazz, url, Set.of(), Set.of(), List.of()
         );
     }
 }

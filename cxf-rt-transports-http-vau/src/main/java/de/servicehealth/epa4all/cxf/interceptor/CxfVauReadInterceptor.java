@@ -58,12 +58,12 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             restoreHeaders(vauResponse, message, Set.of(LOCATION, CONTENT_TYPE, CONTENT_LENGTH));
             String error = vauResponse.error();
             if (error != null) {
-                putProtocolHeader(message, VAU_ERROR, error);
                 boolean noUserSession = isAuthError(error);
+                putProtocolHeader(message, VAU_ERROR, error);
                 if (noUserSession) {
                     putProtocolHeader(message, VAU_NO_SESSION, "true");
                 }
-                vauFacade.handleVauSession(vauCid, noUserSession, vauResponse.decrypted());
+                vauFacade.handleVauSessionError(vauCid, noUserSession, vauResponse.decrypted());
             }
             byte[] payload = vauResponse.payload();
             if (payload != null) {

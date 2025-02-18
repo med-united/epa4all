@@ -7,7 +7,7 @@ import org.mapstruct.ReportingPolicy;
 
 @MapperConfig(
     componentModel = "jakarta",
-    uses = {MapperUtils.class},
+    uses = {Utils.class},
     nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS,
     unmappedTargetPolicy = ReportingPolicy.ERROR,
     collectionMappingStrategy = CollectionMappingStrategy.TARGET_IMMUTABLE

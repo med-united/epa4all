@@ -9,6 +9,8 @@ import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.IdpConfig;
 import de.servicehealth.model.SendAuthCodeSCtype;
+import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauFacade;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
@@ -67,17 +69,21 @@ public class IdpClientIT {
 
     @Test
     public void testGetVauNp() throws Exception {
-        EpaAPI epaAPI = epaMultiService.getEpaAPI("X110485291");
+        EpaAPI epaAPI = epaMultiService.findEpaAPI("X110485291");
         String backend = epaAPI.getBackend();
+
+        VauFacade vauFacade = epaAPI.getVauFacade();
+        VauClient vauClient = vauFacade.getSessionClients().getFirst();
 
         String clientId = idpConfig.getClientId();
         String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
 
         // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
         AuthorizationSmcBApi authorizationSmcBApi = epaAPI.getAuthorizationSmcBApi();
-        String nonce = authorizationSmcBApi.getNonce(clientId, userAgent, backend).getNonce();
+        String vauClientUuid = vauClient.getUuid();
+        String nonce = authorizationSmcBApi.getNonce(clientId, userAgent, backend, vauClientUuid).getNonce();
         URI location;
-        try (Response response = authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(clientId, userAgent, backend)) {
+        try (Response response = authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(clientId, userAgent, backend, vauClientUuid)) {
             location = response.getLocation();
         }
 
@@ -86,7 +92,7 @@ public class IdpClientIT {
             log.info("SendAuthCodeSCtype: " + authCode);
             assertNotNull(authCode);
 
-            String vauNp = authorizationSmcBApi.sendAuthCodeSC(clientId, userAgent, backend, authCode).getVauNp();
+            String vauNp = authorizationSmcBApi.sendAuthCodeSC(clientId, userAgent, backend, vauClientUuid, authCode).getVauNp();
             log.info("NP: " + vauNp);
             assertNotNull(vauNp);
         });
@@ -95,7 +101,7 @@ public class IdpClientIT {
     @Test
     @Disabled
     public void testGetBearerToken() throws Exception {
-        EpaAPI epaAPI = epaMultiService.getEpaAPI("X110485291");
+        EpaAPI epaAPI = epaMultiService.findEpaAPI("X110485291");
         idpClient.getBearerToken(defaultUserConfig, (String token) -> {
             log.info("Bearer " + token);
             assertNotNull(token);

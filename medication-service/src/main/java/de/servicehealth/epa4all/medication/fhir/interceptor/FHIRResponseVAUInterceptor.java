@@ -55,7 +55,7 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
             String msg = "Error while receiving DIRECT Fhir response, decrypted = " + vauResponse.decrypted() + " : " + error;
             log.error(msg);
             boolean noUserSession = isAuthError(error);
-            vauFacade.handleVauSession(vauCid, noUserSession, vauResponse.decrypted());
+            vauFacade.handleVauSessionError(vauCid, noUserSession, vauResponse.decrypted());
         }
 
         Header[] headers = vauResponse.headers()

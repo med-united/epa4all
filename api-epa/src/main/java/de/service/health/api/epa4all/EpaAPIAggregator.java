@@ -2,6 +2,7 @@ package de.service.health.api.epa4all;
 
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
+import de.service.health.api.epa4all.proxy.IAdminProxy;
 import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
@@ -27,6 +28,7 @@ public class EpaAPIAggregator implements EpaAPI {
     private final AccountInformationApi accountInformationApi;
     private final AuthorizationSmcBApi authorizationSmcBApi;
     private final EntitlementsApi entitlementsApi;
+    private final IAdminProxy adminProxy;
     private final IFhirProxy fhirProxy;
 
     public EpaAPIAggregator(
@@ -39,6 +41,7 @@ public class EpaAPIAggregator implements EpaAPI {
         AccountInformationApi accountInformationApi,
         AuthorizationSmcBApi authorizationSmcBApi,
         EntitlementsApi entitlementsApi,
+        IAdminProxy adminProxy,
         IFhirProxy fhirProxy
     ) {
         this.backend = backend;
@@ -50,6 +53,7 @@ public class EpaAPIAggregator implements EpaAPI {
         this.accountInformationApi = accountInformationApi;
         this.authorizationSmcBApi = authorizationSmcBApi;
         this.entitlementsApi = entitlementsApi;
+        this.adminProxy = adminProxy;
         this.fhirProxy = fhirProxy;
     }
 
@@ -94,6 +98,11 @@ public class EpaAPIAggregator implements EpaAPI {
     @Override
     public EntitlementsApi getEntitlementsApi() {
         return entitlementsApi;
+    }
+
+    @Override
+    public IAdminProxy getAdminProxy() {
+        return adminProxy;
     }
 
     @Override

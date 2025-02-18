@@ -18,8 +18,8 @@ public class GitCheck implements Check {
 
     private static final Logger log = LoggerFactory.getLogger(GitCheck.class.getName());
 
-    private static final String GIT_COMMIT_ID_FULL = "git.commit.id.full";
-    private static final String GIT_BUILD_TIME = "git.build.time";
+    private static final String GIT_COMMIT_ID = "git-commit";
+    private static final String BUILD_TIME = "build-time";
 
     private static final Properties properties = new Properties();
     static {
@@ -31,8 +31,8 @@ public class GitCheck implements Check {
     }
 
     void onStart(@Observes StartupEvent ev) {
-        log.info("{}: {}", GIT_BUILD_TIME, properties.getProperty(GIT_BUILD_TIME));
-        log.info("{}: {}", GIT_COMMIT_ID_FULL, properties.getProperty(GIT_COMMIT_ID_FULL));
+        log.info("{}: {}", BUILD_TIME, properties.getProperty(BUILD_TIME));
+        log.info("{}: {}", GIT_COMMIT_ID, properties.getProperty(GIT_COMMIT_ID));
     }
 
     @Override
@@ -46,10 +46,10 @@ public class GitCheck implements Check {
     }
 
     @Override
-    public Map<String, String> getData(IRuntimeConfig runtimeConfig) {
+    public Map<String, Object> getData(IRuntimeConfig runtimeConfig) {
         return Map.of(
-            GIT_BUILD_TIME, properties.getProperty(GIT_BUILD_TIME),
-            GIT_COMMIT_ID_FULL, properties.getProperty(GIT_COMMIT_ID_FULL)
+            BUILD_TIME, properties.getProperty(BUILD_TIME),
+            GIT_COMMIT_ID, properties.getProperty(GIT_COMMIT_ID)
         );
     }
 }

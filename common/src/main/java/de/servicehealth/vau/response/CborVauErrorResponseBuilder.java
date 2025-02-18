@@ -55,7 +55,7 @@ public class CborVauErrorResponseBuilder extends AbstractVauResponseBuilder {
         if (error != null) {
             return new VauResponse(responseCode, error, error.getBytes(UTF_8), headers, false);
         } else {
-            VauClient vauClient = vauFacade.getVauClient(vauCid);
+            VauClient vauClient = vauFacade.find(vauCid);
             if (vauClient == null) {
                 error = "Vau request read timed out";
                 return new VauResponse(responseCode, error, error.getBytes(UTF_8), headers, false);

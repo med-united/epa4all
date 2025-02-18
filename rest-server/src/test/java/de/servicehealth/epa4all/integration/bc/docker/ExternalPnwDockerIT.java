@@ -78,10 +78,8 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
 
             CardlinkClient cardlinkClient = mock(CardlinkClient.class);
             KonnektorConfig konnektorConfig = mockKonnektorConfig();
-            VauNpProvider vauNpProvider = mockVauNpProvider();
             receiveCardInsertedEvent(
                 konnektorConfig,
-                vauNpProvider,
                 cardlinkClient,
                 egkHandle,
                 "ctId-244"
@@ -96,7 +94,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
             doAnswer((Answer<Void>) invocation -> {
                 insuranceDataService.updateEntitlement(Instant.now(), telematikId, kvnr);
                 return null;
-            }).when(entitlementServiceMock).setEntitlement(any(), any(), any(), any(), any(), any(), any());
+            }).when(entitlementServiceMock).setEntitlement(any(), any(), any(), any(), any(), any());
             QuarkusMock.installMockForType(entitlementServiceMock, EntitlementService.class);
 
             String pnw = "H4sIAAAAAAAA/w2MSwqDMBQAryIewGf8gJSYTRMhC5P4qUI3RYj9aCNWRcXT180shmGwEtaVpo+K5QWXIraR4zqube3mO8yx/V6W8QKwzc6rNc3y6R3dwrOBddYGxmGD9extgsuCeK4XIOQhhEIfRRhOhRnxMDCC1Z3UlO0pzQJR8jAtmZ8efJe0D2Wpq5om3X5QVSSr5lNujJF1oqBR4dT01e2XdVGM4ZycEOQPGFkaTrMAAAA=";
@@ -117,7 +115,6 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
 
             receiveCardInsertedEvent(
                 konnektorConfig,
-                vauNpProvider,
                 cardlinkClient,
                 egkHandle,
                 "ctId-244"

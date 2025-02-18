@@ -10,6 +10,7 @@ import java.util.Set;
 
 import static de.servicehealth.utils.ServerUtils.findHeader;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
+import static de.servicehealth.vau.VauClient.VAU_NP;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.HOST;
@@ -31,13 +32,20 @@ public interface VauHeaders {
             .toList());
     }
 
-    default List<Pair<String, String>> prepareInnerHeaders(Map<String, Object> httpHeaders, String backend) {
+    default List<Pair<String, String>> prepareInnerHeaders(
+        Map<String, Object> httpHeaders,
+        String backend,
+        String vauNp
+    ) {
         List<Pair<String, String>> headers = extractHeaders(httpHeaders, Set.of(CONTENT_TYPE, ACCEPT, VAU_NON_PU_TRACING));
         Optional<Pair<String, String>> headerOpt = findHeader(headers, CONNECTION);
         if (headerOpt.isEmpty()) {
             headers.add(Pair.of(CONNECTION, "Keep-Alive"));
         }
         headers.add(Pair.of(HOST, backend));
+        if (vauNp != null) {
+            headers.add(Pair.of(VAU_NP, vauNp));
+        }
         return headers;
     }
 }

@@ -17,6 +17,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
 
 import static de.servicehealth.vau.VauClient.CLIENT_ID;
+import static de.servicehealth.vau.VauClient.VAU_CLIENT_UUID;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
@@ -53,7 +54,8 @@ public interface AuthorizationSmcBApi extends de.servicehealth.api.Authorization
     Response sendAuthorizationRequestSCWithResponse(
         @HeaderParam(CLIENT_ID) String clientId,
         @HeaderParam(X_USER_AGENT) String xUseragent,
-        @HeaderParam(X_BACKEND) String xBackend
+        @HeaderParam(X_BACKEND) String xBackend,
+        @HeaderParam(VAU_CLIENT_UUID) String vauClientUuid
     );
 
     @GET
@@ -67,7 +69,8 @@ public interface AuthorizationSmcBApi extends de.servicehealth.api.Authorization
     GetNonce200Response getNonce(
         @HeaderParam(CLIENT_ID) String clientId,
         @HeaderParam(X_USER_AGENT) String xUseragent,
-        @HeaderParam(X_BACKEND) String xBackend
+        @HeaderParam(X_BACKEND) String xBackend,
+        @HeaderParam(VAU_CLIENT_UUID) String vauClientUuid
     );
 
     @POST
@@ -85,6 +88,7 @@ public interface AuthorizationSmcBApi extends de.servicehealth.api.Authorization
         @HeaderParam(CLIENT_ID) String clientId,
         @HeaderParam(X_USER_AGENT) String xUseragent,
         @HeaderParam(X_BACKEND) String xBackend,
+        @HeaderParam(VAU_CLIENT_UUID) String vauClientUuid,
         SendAuthCodeSCtype sendAuthCodeSCtype
     );
 }

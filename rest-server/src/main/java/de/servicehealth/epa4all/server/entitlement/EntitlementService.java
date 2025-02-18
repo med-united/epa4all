@@ -57,12 +57,11 @@ public class EntitlementService {
         String egkHandle,
         String smcbHandle,
         String telematikId,
-        String insurantId,
-        String vauNp
+        String insurantId
     ) throws Exception {
         try {
             return resolveEntitlement(
-                runtimeConfig, epaApi, insuranceData, userAgent, smcbHandle, telematikId, insurantId, vauNp
+                runtimeConfig, epaApi, insuranceData, userAgent, smcbHandle, telematikId, insurantId
             );
         } catch (AuditEvidenceException e) {
             log.error("AuditEvidenceException while resolveEntitlement", e);
@@ -72,7 +71,7 @@ public class EntitlementService {
             }
             insuranceDataService.loadInsuranceDataEx(runtimeConfig, egkHandle, smcbHandle, telematikId);
             return resolveEntitlement(
-                runtimeConfig, epaApi, insuranceData, userAgent, smcbHandle, telematikId, insurantId, vauNp
+                runtimeConfig, epaApi, insuranceData, userAgent, smcbHandle, telematikId, insurantId
             );
         } catch (Exception e) {
             log.error("Error while resolveEntitlement", e);
@@ -87,8 +86,7 @@ public class EntitlementService {
         String userAgent,
         String smcbHandle,
         String telematikId,
-        String insurantId,
-        String vauNp
+        String insurantId
     ) throws AuditEvidenceException {
         Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
         log.info("Current entitlement-expiry = {}", validTo);
@@ -98,7 +96,6 @@ public class EntitlementService {
                 insuranceData,
                 epaApi,
                 telematikId,
-                vauNp,
                 userAgent,
                 smcbHandle
             );
@@ -112,7 +109,6 @@ public class EntitlementService {
         InsuranceData insuranceData,
         EpaAPI epaAPI,
         String telematikId,
-        String vauNp,
         String userAgent,
         String smcbHandle
     ) throws AuditEvidenceException {

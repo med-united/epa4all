@@ -4,7 +4,6 @@ import de.health.service.check.Check;
 import de.health.service.check.Status;
 import de.health.service.config.api.IRuntimeConfig;
 import de.servicehealth.registry.BeanRegistry;
-import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -12,6 +11,9 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static de.health.service.check.Status.Down503;
+import static de.health.service.check.Status.Up200;
 
 @ApplicationScoped
 public class VauCheck implements Check {
@@ -28,20 +30,16 @@ public class VauCheck implements Check {
 
     @Override
     public Status getStatus(IRuntimeConfig runtimeConfig) {
-        boolean okSessions = registry.getInstances(VauFacade.class).stream()
-            .allMatch(f -> f.getVauNpStatus().contains("OK since"));
-        return okSessions ? Status.Up200 : Status.Down503;
+        boolean failedSessions = registry.getInstances(VauFacade.class).stream()
+            .anyMatch(f -> f.getStatus().toString().contains("ERROR"));
+        return failedSessions ? Down503 : Up200;
     }
 
     @Override
-    public Map<String, String> getData(IRuntimeConfig runtimeConfig) {
+    public Map<String, Object> getData(IRuntimeConfig runtimeConfig) {
         return registry.getInstances(VauFacade.class).stream().map(f -> {
             String backend = f.getBackend();
-            String status = f.getVauNpStatus();
-            int total = f.getVauClients().size();
-            int busy = (int) f.getVauClients().stream().filter(VauClient::busy).count();
-            int idle = total - busy;
-            return Pair.of(backend, String.format("total=%d busy=%d idle=%d vau-session: %s", total, busy, idle, status));
+            return Pair.of(backend, f.getStatus());
         }).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 }

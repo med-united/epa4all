@@ -2,7 +2,7 @@ package de.servicehealth.epa4all.cxf.provider;
 
 import de.servicehealth.epa4all.cxf.VauHeaders;
 import de.servicehealth.epa4all.cxf.model.EpaRequest;
-import de.servicehealth.epa4all.cxf.model.FhirRequest;
+import de.servicehealth.epa4all.cxf.model.ForwardRequest;
 import de.servicehealth.http.HttpParcel;
 import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
@@ -29,9 +29,12 @@ import java.util.Set;
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.utils.ServerUtils.isAuthError;
 import static de.servicehealth.vau.VauClient.VAU_CID;
+import static de.servicehealth.vau.VauClient.VAU_CLIENT_UUID;
 import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static de.servicehealth.vau.VauClient.X_WORKPLACE;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -83,14 +86,22 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
         OutputStream entityStream
     ) throws IOException, WebApplicationException {
         boolean encrypted = false;
+        String vauClientUuid = evictHeader(httpHeaders, VAU_CLIENT_UUID);
         String vauCid = evictHeader(httpHeaders, VAU_CID);
+        evictHeader(httpHeaders, X_KONNEKTOR);
+        evictHeader(httpHeaders, X_WORKPLACE);
         try {
             String methodWithPath = evictHeader(httpHeaders, VAU_METHOD_PATH);
             String backend = evictHeader(httpHeaders, X_BACKEND);
+            VauClient vauClient = vauClientUuid == null
+                ? vauFacade.find(vauCid)
+                : vauFacade.get(vauClientUuid);
+
+            String vauNp = vauClient.getVauNp();
 
             byte[] payload = getPayload(obj, type);
 
-            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend);
+            List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend, vauNp);
             innerHeaders.addAll(prepareAcceptHeaders(obj));
             innerHeaders.addAll(prepareContentHeaders(obj, payload));
 
@@ -102,11 +113,12 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             String statusLine = getStatusLine(obj, methodWithPath);
             HttpParcel httpParcel = new HttpParcel(statusLine, innerHeaders, payload);
 
-            log.info("REST Inner Request: " + httpParcel.toString(false, true, maskedHeaders, maskedAttributes));
+            if (!httpParcel.getStatusLine().contains("VAU-Status")) {
+                log.info("REST Inner Request: " + httpParcel.toString(false, true, maskedHeaders, maskedAttributes));
+            }
 
             byte[] vauMessage;
             try {
-                VauClient vauClient = vauFacade.getVauClient(vauCid);
                 vauMessage = vauClient.encryptVauMessage(httpParcel.toBytes());
             } finally {
                 encrypted = true;
@@ -118,31 +130,31 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             log.error("Error while sending Vau REST message", e);
             if (encrypted) {
                 boolean noUserSession = isAuthError(e.getMessage());
-                vauFacade.handleVauSession(vauCid, noUserSession, false);
+                vauFacade.handleVauSessionError(vauCid, noUserSession, false);
             }
             throw new IOException(e);
         }
     }
 
     private String getStatusLine(Object obj, String methodWithPath) {
-        if (methodWithPath != null && obj instanceof FhirRequest fhirRequest) {
+        if (methodWithPath != null && obj instanceof ForwardRequest forwardRequest) {
             String method = methodWithPath.trim().split(" ")[0];
-            methodWithPath = methodWithPath.replace(method, fhirRequest.getMethod());
+            methodWithPath = methodWithPath.replace(method, forwardRequest.getMethod());
         }
         return methodWithPath + " HTTP/1.1";
     }
 
     private List<Pair<String, String>> prepareAcceptHeaders(Object obj) {
-        if (obj instanceof FhirRequest fhirRequest) {
-            return fhirRequest.getAcceptHeaders();
+        if (obj instanceof ForwardRequest forwardRequest) {
+            return forwardRequest.getAcceptHeaders();
         } else {
             return List.of(Pair.of(ACCEPT, "application/json"));
         }
     }
 
     private List<Pair<String, String>> prepareContentHeaders(Object obj, byte[] payload) {
-        if (obj instanceof FhirRequest fhirRequest) {
-            return fhirRequest.getContentHeaders();
+        if (obj instanceof ForwardRequest forwardRequest) {
+            return forwardRequest.getContentHeaders();
         }
         if (payload == null || payload.length == 0) {
             return List.of();

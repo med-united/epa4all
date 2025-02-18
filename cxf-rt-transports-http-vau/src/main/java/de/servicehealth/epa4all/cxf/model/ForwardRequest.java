@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class FhirRequest implements EpaRequest {
+public class ForwardRequest implements EpaRequest {
 
     private final boolean isGet;
     private final List<Pair<String, String>> acceptHeaders;

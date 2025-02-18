@@ -19,6 +19,9 @@ public class EpaConfig {
     @ConfigProperty(name = "information-service.url")
     String informationServiceUrl;
 
+    @ConfigProperty(name = "admin-service.url")
+    String adminServiceUrl;
+
     @ConfigProperty(name = "entitlement-service.url")
     String entitlementServiceUrl;
 

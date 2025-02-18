@@ -36,7 +36,7 @@ public class Download extends XdsResource {
         @QueryParam(X_KONNEKTOR) String konnektor,
         @QueryParam(KVNR) String kvnr
     ) throws Exception {
-        EpaContext epaContext = getEpaContext(kvnr);
+        EpaContext epaContext = prepareEpaContext(kvnr);
         AdhocQueryResponse adhocQueryResponse = getAdhocQueryResponse(kvnr, epaContext);
         
         Optional<String> repositoryUniqueIdOpt = adhocQueryResponse.getRegistryObjectList().getIdentifiable()
@@ -57,7 +57,7 @@ public class Download extends XdsResource {
         String insurantId = epaContext.getInsurantId();
         Map<String, String> xHeaders = epaContext.getXHeaders();
         IDocumentManagementPortType documentManagementPortType = epaMultiService
-            .getEpaAPI(insurantId)
+            .findEpaAPI(insurantId)
             .getDocumentManagementPortType(taskId, xHeaders);
 
         RetrieveDocumentSetRequestType requestType = xdsDocumentService.get().prepareRetrieveDocumentSetRequestType(

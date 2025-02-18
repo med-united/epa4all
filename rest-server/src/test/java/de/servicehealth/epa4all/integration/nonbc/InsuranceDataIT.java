@@ -21,7 +21,7 @@ public class InsuranceDataIT extends AbstractVsdTest {
     @Test
     public void fireReadVsdResponseCreatesLocalInsuranceFiles() throws Exception {
         String telematikId = "telematikId";
-        String kvnr = "X110485291";
+        String kvnr = "X110683202";
         String egkHandle = "EGK-123";
         String smcbHandle = "SMC-B-123";
 
