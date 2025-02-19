@@ -43,9 +43,9 @@ import static jakarta.ws.rs.core.HttpHeaders.HOST;
 import static org.apache.cxf.helpers.HttpHeaderHelper.CONNECTION;
 
 @Dependent
-public class VauHandShake {
+public class VauHandshake {
 
-    private static final Logger log = LoggerFactory.getLogger(VauHandShake.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(VauHandshake.class.getName());
 
     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
 
@@ -53,7 +53,7 @@ public class VauHandShake {
     private final String epaUserAgent;
 
     @Inject
-    public VauHandShake(VauConfig vauConfig, EpaConfig epaConfig) {
+    public VauHandshake(VauConfig vauConfig, EpaConfig epaConfig) {
         connectionTimeoutMs = vauConfig.getConnectionTimeoutMs();
         epaUserAgent = epaConfig.getEpaUserAgent();
     }
@@ -62,15 +62,25 @@ public class VauHandShake {
         try {
             TimeUnit.SECONDS.sleep(1);
             String mock = vauClient.isMock() ? "/" + Math.abs(vauClient.hashCode()) : "";
-            Pair<byte[], String> m2Pair = receiveM2(vauClient, uri, mock);
-            receiveM4(vauClient, uri, mock, m2Pair);
+            M2Result m2Result = receiveM2(vauClient, uri, mock);
+            receiveM4(vauClient, uri, mock, m2Result);
         } catch (Exception e) {
             log.error("Error while VAU handshake", e);
             throw new Fault(e);
         }
     }
 
-    private Pair<byte[], String> receiveM2(VauClient vauClient, String uri, String mock) throws Exception {
+    private static class M2Result {
+        byte[] message2;
+        String vauCid;
+
+        public M2Result(byte[] message2, String vauCid) {
+            this.message2 = message2;
+            this.vauCid = vauCid;
+        }
+    }
+
+    private M2Result receiveM2(VauClient vauClient, String uri, String mock) throws Exception {
         byte[] message1 = vauClient.generateMessage1();
         WebClient wc = prepareWebClient(
             uri,
@@ -86,19 +96,17 @@ public class VauHandShake {
         String contentLength = getHeaderValue(response, CONTENT_LENGTH);
         printCborMessage(true, message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
         
-        return Pair.of(message2, vauCid);
+        return new M2Result(message2, vauCid);
     }
 
-    private void receiveM4(VauClient vauClient, String uri, String mock, Pair<byte[], String> m2Pair) throws Exception {
-        byte[] message2 = m2Pair.getKey();
-        String vauCid = m2Pair.getValue();
-        
-        byte[] message3 = vauClient.receiveMessage2(message2);
+    private void receiveM4(VauClient vauClient, String uri, String mock, M2Result m2Result) throws Exception {
+        byte[] message3 = vauClient.receiveMessage2(m2Result.message2);
 
         KdfKey2 clientKey2 = vauClient.getClientKey2();
         String c2sAppData = Base64.getEncoder().encodeToString(clientKey2.getClientToServerAppData());
         String s2cAppData = Base64.getEncoder().encodeToString(clientKey2.getServerToClientAppData());
 
+        String vauCid = m2Result.vauCid;
         WebClient wc = prepareWebClient(
             uri,
             uri + mock + vauCid,

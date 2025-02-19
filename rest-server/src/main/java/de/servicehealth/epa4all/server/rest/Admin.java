@@ -46,7 +46,7 @@ public class Admin extends AbstractResource {
         String query = uriInfo.getRequestUri().getQuery();
         Integer hash = Objects.hash(adminPath, query, backend);
         return deduplicatedCall(adminPath, query, hash, () -> {
-            List<JsonNode> payloads = vauNpProvider.refreshActiveVauSessions(backend);
+            List<JsonNode> payloads = vauSessionsJob.refreshActiveVauSessions(backend);
             return Response.status(OK).entity(payloads).build();
         });
     }

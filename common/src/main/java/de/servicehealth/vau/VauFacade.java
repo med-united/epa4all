@@ -45,7 +45,7 @@ public class VauFacade {
     );
 
     @Inject
-    Event<FixDummySessions> fixDummySessionsEvent;
+    Event<ReloadEmptySessions> reloadEmptySessionsEvent;
 
     public static void terminateExecutor(ExecutorService executorService, String executorName, int awaitMillis) {
         if (executorService != null) {
@@ -193,7 +193,7 @@ public class VauFacade {
                 log.warn(String.format("Error force release CID=%s", vauCid));
                 vauClient.forceRelease(null);
             }
-            fixDummySessionsEvent.fireAsync(new FixDummySessions(backend));
+            reloadEmptySessionsEvent.fireAsync(new ReloadEmptySessions(backend));
         }
     }
 

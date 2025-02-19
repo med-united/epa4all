@@ -1,12 +1,10 @@
 package de.servicehealth.logging;
 
-import de.servicehealth.vau.VauClient;
 import lombok.Getter;
 
 import java.util.Arrays;
 
 import static de.servicehealth.vau.VauClient.TELEMATIK_ID;
-import static de.servicehealth.vau.VauClient.VAU_NP;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 
@@ -17,7 +15,6 @@ import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
  */
 @Getter
 public enum LogField {
-    VAUNP(VAU_NP),
     BACKEND(X_BACKEND),
     INSURANT(X_INSURANT_ID),
     ICCSN("iccsn"),

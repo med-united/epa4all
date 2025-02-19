@@ -18,7 +18,7 @@ import java.util.Base64;
 import java.util.function.UnaryOperator;
 
 import static de.gematik.idp.brainPoolExtension.BrainpoolAlgorithmSuiteIdentifiers.BRAINPOOL256_USING_SHA256;
-import static de.servicehealth.epa4all.server.idp.action.AuthAction.URN_BSI_TR_03111_ECDSA;
+import static de.health.service.cetp.CertificateInfo.URN_BSI_TR_03111_ECDSA;
 import static org.jose4j.jws.AlgorithmIdentifiers.RSA_PSS_USING_SHA256;
 import static org.jose4j.jws.EcdsaUsingShaAlgorithm.convertDerToConcatenated;
 

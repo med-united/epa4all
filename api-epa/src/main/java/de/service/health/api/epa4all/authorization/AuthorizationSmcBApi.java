@@ -51,7 +51,7 @@ public interface AuthorizationSmcBApi extends de.servicehealth.api.Authorization
         @ApiResponse(code = 400, message = "Bad Request", response = ErrorType.class),
         @ApiResponse(code = 403, message = "Forbidden.", response = ErrorType.class),
         @ApiResponse(code = 500, message = "Internal Server Error", response = ErrorType.class)})
-    Response sendAuthorizationRequestSCWithResponse(
+    Response sendAuthRequest(
         @HeaderParam(CLIENT_ID) String clientId,
         @HeaderParam(X_USER_AGENT) String xUseragent,
         @HeaderParam(X_BACKEND) String xBackend,

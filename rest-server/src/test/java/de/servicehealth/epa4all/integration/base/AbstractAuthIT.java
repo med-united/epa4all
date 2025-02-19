@@ -59,7 +59,7 @@ public abstract class AbstractAuthIT {
             for (int i = 0; i < 10; i++) {
                 GetNonce200Response nonce = api.getNonce(epaUserAgent);
                 assertNotNull(nonce);
-                try (Response response = api.sendAuthorizationRequestSCWithResponse(clientId, epaUserAgent, "test:8080", vauClient.getUuid())) {
+                try (Response response = api.sendAuthRequest(clientId, epaUserAgent, "test:8080", vauClient.getUuid())) {
                     String query = response.getLocation().getQuery();
                     assertTrue(query.contains("redirect_uri"));
                 }

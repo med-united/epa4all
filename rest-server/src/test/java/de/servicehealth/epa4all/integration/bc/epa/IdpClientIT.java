@@ -83,12 +83,12 @@ public class IdpClientIT {
         String vauClientUuid = vauClient.getUuid();
         String nonce = authorizationSmcBApi.getNonce(clientId, userAgent, backend, vauClientUuid).getNonce();
         URI location;
-        try (Response response = authorizationSmcBApi.sendAuthorizationRequestSCWithResponse(clientId, userAgent, backend, vauClientUuid)) {
+        try (Response response = authorizationSmcBApi.sendAuthRequest(clientId, userAgent, backend, vauClientUuid)) {
             location = response.getLocation();
         }
 
         String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
-        idpClient.getAuthCode(nonce, location, defaultUserConfig, smcbHandle, (SendAuthCodeSCtype authCode) -> {
+        idpClient.getAuthCode(nonce, location, smcbHandle, defaultUserConfig, (SendAuthCodeSCtype authCode) -> {
             log.info("SendAuthCodeSCtype: " + authCode);
             assertNotNull(authCode);
 

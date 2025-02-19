@@ -149,6 +149,7 @@ public class VauClient {
 
                 String vauCid = vauInfo == null ? "not-defined-yet" : vauInfo.getVauCid();
                 setVauInfo(null);
+                setVauNp(null);
                 vauStateMachine = new VauClientStateMachine(pu);
                 return vauCid;
             } finally {

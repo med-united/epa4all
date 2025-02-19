@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class FixDummySessions {
+public class ReloadEmptySessions {
 
     private String backend;
 }

@@ -11,7 +11,7 @@ import de.servicehealth.epa4all.server.entitlement.AuditEvidenceException;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.epa.ResponseAction;
 import de.servicehealth.epa4all.server.idp.IdpConfig;
-import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
+import de.servicehealth.epa4all.server.idp.vaunp.VauSessionsJob;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.logging.LogField;
@@ -51,7 +51,7 @@ public abstract class AbstractResource {
     EntitlementService entitlementService;
 
     @Inject
-    VauNpProvider vauNpProvider;
+    VauSessionsJob vauSessionsJob;
 
     @Inject
     IdpConfig idpConfig;

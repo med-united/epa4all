@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.integration.base;
 
 import de.gematik.ws.conn.eventservice.v7.Event;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
+import de.health.service.cetp.CertificateInfo;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.cardlink.CardlinkClient;
@@ -36,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
@@ -138,7 +138,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
         when(konnektorClientMock.getSmcbHandle(any())).thenReturn(smcbHandle);
         when(konnektorClientMock
             .getSmcbX509Certificate(any(UserRuntimeConfig.class), eq(smcbHandle)))
-            .thenReturn(mock(X509Certificate.class));
+            .thenReturn(mock(CertificateInfo.class));
 
         QuarkusMock.installMockForType(konnektorClientMock, IKonnektorClient.class);
         return konnektorClientMock;
