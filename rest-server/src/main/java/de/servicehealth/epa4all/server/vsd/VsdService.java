@@ -8,7 +8,7 @@ import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
-import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
+import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -72,7 +72,7 @@ public class VsdService {
         String telematikId,
         String fallbackKvnr
     ) throws Exception {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         ContextType context = servicePorts.getContextType();
         if (context.getUserId() == null || context.getUserId().isEmpty()) {
             context.setUserId(UUID.randomUUID().toString());

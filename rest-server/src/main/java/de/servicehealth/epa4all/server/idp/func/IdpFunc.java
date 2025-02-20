@@ -4,7 +4,7 @@ import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.FaultMessage;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.signatureservice.v7.ExternalAuthenticate;
 import de.gematik.ws.conn.signatureservice.v7.ExternalAuthenticateResponse;
-import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
+import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import lombok.Getter;
 
 import java.util.function.Function;
@@ -24,7 +24,7 @@ public class IdpFunc {
         this.extAuthFunc = extAuthFunc;
     }
 
-    public static IdpFunc init(IKonnektorServicePortsAPI servicePorts) {
+    public static IdpFunc init(IKonnektorAPI servicePorts) {
         return new IdpFunc(
             servicePorts::getContextType,
             externalAuthenticate -> {

@@ -189,9 +189,9 @@
                     <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
                     <includeOnlyProperties>
                         <includeOnlyProperty>^git.build.time$</includeOnlyProperty>
-                        <includeOnlyProperty>^git.commit.id.full$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.commit.id$</includeOnlyProperty>
                     </includeOnlyProperties>
-                    <commitIdGenerationMode>full</commitIdGenerationMode>
+                    <commitIdGenerationMode>flat</commitIdGenerationMode>
                 </configuration>
             </plugin>
 

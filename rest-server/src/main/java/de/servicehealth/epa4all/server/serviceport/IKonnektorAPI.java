@@ -7,7 +7,7 @@ import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
 
-public interface IKonnektorServicePortsAPI {
+public interface IKonnektorAPI {
 
     ContextType getContextType();
 
@@ -16,6 +16,8 @@ public interface IKonnektorServicePortsAPI {
     EventServicePortType getEventService();
 
     VSDServicePortType getVSDServicePortType();
+
+    EventServicePortType getEventServiceSilent();
 
     CertificateServicePortType getCertificateService();
 

@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MultiKonnektorService {
 
     @Getter
-    private final ConcurrentHashMap<KonnektorKey, IKonnektorServicePortsAPI> portMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<KonnektorKey, IKonnektorAPI> portMap = new ConcurrentHashMap<>();
 
     private final ServicePortProvider servicePortProvider;
 
@@ -26,20 +26,22 @@ public class MultiKonnektorService {
         this.servicePortProvider = servicePortProvider;
     }
 
-    public IKonnektorServicePortsAPI getServicePorts(UserRuntimeConfig userRuntimeConfig) {
+    public IKonnektorAPI getServicePorts(UserRuntimeConfig userRuntimeConfig) {
         return portMap.computeIfAbsent(new KonnektorKey(userRuntimeConfig), kk -> {
             CardServicePortType cardServicePortType = servicePortProvider.getCardServicePortType(userRuntimeConfig);
             EventServicePortType eventServicePort = servicePortProvider.getEventServicePort(userRuntimeConfig);
+            EventServicePortType eventServicePortSilent = servicePortProvider.getEventServicePortSilent(userRuntimeConfig);
             VSDServicePortType vsdServicePortType = servicePortProvider.getVSDServicePortType(userRuntimeConfig);
             CertificateServicePortType certificateService = servicePortProvider.getCertificateServicePort(userRuntimeConfig);
             AuthSignatureServicePortType authSignatureService = servicePortProvider.getAuthSignatureServicePortType(userRuntimeConfig);
 
             servicePortProvider.saveEndpointsConfiguration();
 
-            return new KonnektorServicePortAggregator(
+            return new KonnektorServicePorts(
                 buildContextType(userRuntimeConfig),
                 cardServicePortType,
                 eventServicePort,
+                eventServicePortSilent,
                 vsdServicePortType,
                 certificateService,
                 authSignatureService

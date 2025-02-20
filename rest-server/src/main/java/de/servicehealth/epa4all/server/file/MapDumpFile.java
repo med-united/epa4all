@@ -10,11 +10,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.util.stream.Collectors.toMap;
 
 public abstract class MapDumpFile<K, V> {
 
@@ -64,7 +67,24 @@ public abstract class MapDumpFile<K, V> {
         writeLock(new HashMap<>(), this::store);
     }
 
-    public void update(Map<K, V> map) {
+    public Map<K, V> overwrite(Predicate<? super Map.Entry<K, V>> predicate) {
+        Map<K, V> current = get();
+        Map<K, V> filtered = current.entrySet().stream()
+            .filter(predicate)
+            .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (current.size() > filtered.size()) {
+            writeLock(filtered, this::store);
+        }
+        return filtered;
+    }
+
+    public void overwrite(Map<K, V> map) {
+        writeLock(map, this::store);
+    }
+
+    public void append(K key, V value) {
+        Map<K, V> map = get();
+        map.put(key, value);
         writeLock(map, this::store);
     }
 
@@ -76,13 +96,15 @@ public abstract class MapDumpFile<K, V> {
         return Files.readLines(file, ISO_8859_1)
             .stream()
             .map(this::deserialize)
+            .filter(Objects::nonNull)
             .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
     protected void store(Map<K, V> vauNpMap) {
         try {
-            String content = vauNpMap.entrySet()
-                .stream().map(this::serialize)
+            String content = vauNpMap.entrySet().stream()
+                .map(this::serialize)
+                .filter(Objects::nonNull)
                 .collect(Collectors.joining("\n"));
             try (FileOutputStream os = new FileOutputStream(file)) {
                 os.write(content.getBytes());

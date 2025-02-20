@@ -14,7 +14,7 @@ import de.servicehealth.epa4all.server.idp.action.AuthAction;
 import de.servicehealth.epa4all.server.idp.action.LoginAction;
 import de.servicehealth.epa4all.server.idp.action.VauNpAction;
 import de.servicehealth.epa4all.server.idp.func.IdpFunc;
-import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
+import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.model.SendAuthCodeSCtype;
 import de.servicehealth.startup.StartableService;
@@ -119,7 +119,7 @@ public class IdpClient extends StartableService {
         UserRuntimeConfig runtimeConfig,
         Consumer<SendAuthCodeSCtype> authCodeConsumer
     ) {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         IdpFunc idpFunc = IdpFunc.init(servicePorts);
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
@@ -250,7 +250,7 @@ public class IdpClient extends StartableService {
         String hcv,
         UserRuntimeConfig userRuntimeConfig
     ) {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
         claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
@@ -273,7 +273,7 @@ public class IdpClient extends StartableService {
         UserRuntimeConfig userRuntimeConfig,
         Consumer<String> bearerConsumer
     ) throws Exception {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         IdpFunc idpFunc = IdpFunc.init(servicePorts);
         LoginAction authAction = new LoginAction(
             idpConfig.getClientId(),

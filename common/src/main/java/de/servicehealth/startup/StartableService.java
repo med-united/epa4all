@@ -12,7 +12,9 @@ public abstract class StartableService implements StartupEventListener {
 
     public static final int CxfClientFactoryPriority = 1000;
     public static final int MultiEpaPriority = 2000;
-    public static final int VauNpProviderPriority = 3000;
+    public static final int KonnektorClientPriority = 3000;
+    public static final int VauSessionsJobPriority = 4000;
+    public static final int VauNpProviderPriority = 5000;
 
     private final Logger log = LoggerFactory.getLogger(getClass().getSimpleName());
 

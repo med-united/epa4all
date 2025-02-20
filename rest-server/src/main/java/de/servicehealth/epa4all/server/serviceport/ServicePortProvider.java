@@ -73,7 +73,7 @@ public class ServicePortProvider extends StartableService {
 
     void saveEndpointsConfiguration() {
         try {
-            new ServicePortFile(configDirectory).update(konnektorsEndpoints);
+            new ServicePortFile(configDirectory).overwrite(konnektorsEndpoints);
         } catch (Exception e) {
             log.error("Error while saving service-ports file", e);
         }
@@ -151,6 +151,17 @@ public class ServicePortProvider extends StartableService {
         setEndpointAddress((BindingProvider) authSignatureServicePort, url, sslContext);
 
         return authSignatureServicePort;
+    }
+
+    public EventServicePortType getEventServicePortSilent(UserRuntimeConfig userRuntimeConfig) {
+        SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
+        EventService eventService = new EventService();
+        EventServicePortType eventServicePort = eventService.getEventServicePort();
+        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
+        String url = konnektorsEndpoints.get(connectorBaseURL).get("eventServiceEndpointAddress");
+        setEndpointAddress((BindingProvider) eventServicePort, url, sslContext);
+
+        return eventServicePort;
     }
 
     public EventServicePortType getEventServicePort(UserRuntimeConfig userRuntimeConfig) {
