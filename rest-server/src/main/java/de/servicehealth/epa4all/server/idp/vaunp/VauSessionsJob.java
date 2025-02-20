@@ -68,6 +68,11 @@ public class VauSessionsJob extends StartableService {
     }
 
     @Override
+    public int getPriority() {
+        return VauSessionsJobPriority;
+    }
+
+    @Override
     public void onStart() throws Exception {
         telematikIds = getTelematikIds();
     }
@@ -82,6 +87,20 @@ public class VauSessionsJob extends StartableService {
                 return null;
             }
         }).filter(Objects::nonNull).toList();
+    }
+
+    @Scheduled(
+        every = "${epa.vau.sessions.repair.interval.sec:60s}",
+        delay = 60,
+        delayUnit = SECONDS,
+        concurrentExecution = SKIP
+    )
+    void repairEmptyVauSessionsJob() {
+        try {
+            vauNpProvider.reload(Set.of());
+        } catch (Throwable e) {
+            log.error("Error while initializeSessions", e);
+        }
     }
 
     @Scheduled(
@@ -132,24 +151,6 @@ public class VauSessionsJob extends StartableService {
             }).toList();
 
         return getPayloads(responses);
-    }
-
-    @Scheduled(
-        every = "${epa.vau.sessions.repair.interval.sec:60s}",
-        delay = 60,
-        delayUnit = SECONDS,
-        concurrentExecution = SKIP
-    )
-    void repairEmptyVauSessionsJob() {
-        try {
-            initializeEmptySessions();
-        } catch (Throwable e) {
-            log.error("Error while initializeSessions", e);
-        }
-    }
-
-    private void initializeEmptySessions() throws Exception {
-        vauNpProvider.reload(Set.of());
     }
 
     private static List<String> getFailedVauClientUuids(List<JsonNode> nodes, List<String> telematikIds) {

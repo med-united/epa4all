@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static de.health.service.cetp.konnektorconfig.FSConfigService.CONFIG_DELIMETER;
 import static de.servicehealth.logging.LogContext.withMdcNr;
 import static de.servicehealth.logging.LogField.BACKEND;
+import static de.servicehealth.logging.LogField.CLIENT_UUID;
 import static de.servicehealth.logging.LogField.KONNEKTOR;
 import static de.servicehealth.logging.LogField.SMCB_HANDLE;
 import static de.servicehealth.logging.LogField.WORKPLACE;
@@ -225,16 +226,17 @@ public class VauNpProvider extends StartableService {
     ) {
         try {
             KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
+            String uuid = vauClient.getUuid();
             Map<LogField, String> mdcMap = Map.of(
                 BACKEND, backend,
                 SMCB_HANDLE, smcbHandle,
                 KONNEKTOR, info.konnektor,
-                WORKPLACE, info.workplaceId
+                WORKPLACE, info.workplaceId,
+                CLIENT_UUID, uuid
             );
             withMdcNr(mdcMap, () -> {
                 vauHandshake.get().apply(uri, vauClient);
                 // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
-                String uuid = vauClient.getUuid();
                 String nonce = smcBApi.getNonce(clientId, userAgent, backend, uuid).getNonce();
                 try (Response response = smcBApi.sendAuthRequest(clientId, userAgent, backend, uuid)) {
                     URI location = response.getLocation();

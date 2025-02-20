@@ -27,6 +27,7 @@ public enum LogField {
     REQUEST_CORRELATION_ID("requestCorrelationId"),
     CT_ID("ctid"),
     SLOT("slot"),
+    CLIENT_UUID("clientUuid"),
     WORKPLACE("workPlaceId");
 
     private final String identifier;

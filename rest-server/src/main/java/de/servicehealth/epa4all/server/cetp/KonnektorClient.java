@@ -34,20 +34,24 @@ import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.cetp.domain.eventservice.cardTerminal.CardTerminal;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.cetp.cache.SmcbCertificateFile;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardTypeMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardsResponseMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.cardTerminal.CardTerminalsResponseMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.status.StatusMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionResultMapper;
-import de.servicehealth.epa4all.server.serviceport.IKonnektorServicePortsAPI;
+import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.KonnektorKey;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.epa4all.server.vsd.VsdConfig;
+import de.servicehealth.startup.StartableService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.ByteArrayInputStream;
@@ -57,9 +61,12 @@ import java.math.BigInteger;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static de.gematik.ws.conn.certificateservice.v6.CryptType.RSA;
@@ -70,7 +77,9 @@ import static de.servicehealth.epa4all.server.idp.IdpClient.BOUNCY_CASTLE_PROVID
 import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 
 @ApplicationScoped
-public class KonnektorClient implements IKonnektorClient {
+public class KonnektorClient extends StartableService implements IKonnektorClient {
+
+    private static final Logger log = LoggerFactory.getLogger(KonnektorClient.class.getName());
 
     private final ConcurrentHashMap<KonnektorKey, String> runtimeConfigSmcbMap = new ConcurrentHashMap<>();
 
@@ -112,9 +121,21 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     @Override
+    public int getPriority() {
+        return KonnektorClientPriority;
+    }
+
+    @Override
+    protected void onStart() throws Exception {
+        SmcbCertificateFile certificateFile = new SmcbCertificateFile(configDirectory);
+        Predicate<Map.Entry<String, CertificateInfo>> notAfter = e -> new Date().before(e.getValue().getCertificate().getNotAfter());
+        smcbCertificateMap.putAll(certificateFile.overwrite(notAfter));
+    }
+
+    @Override
     public List<Subscription> getSubscriptions(UserRuntimeConfig runtimeConfig) throws CetpFault {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
-        EventServicePortType eventService = servicePorts.getEventService();
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        EventServicePortType eventService = servicePorts.getEventServiceSilent();
         GetSubscription getSubscriptionRequest = new GetSubscription();
         getSubscriptionRequest.setContext(servicePorts.getContextType());
         getSubscriptionRequest.setMandantWide(false);
@@ -177,19 +198,22 @@ public class KonnektorClient implements IKonnektorClient {
             (key, config) -> {
                 List<Card> cards = getCards(config, EGK);
                 Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
-                return vsdConfig.isHandlesTestMode()
-                    ? card.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle())
-                    : card.map(Card::getCardHandle).orElseThrow(() ->
-                    new CetpFault(String.format("Could not get EGK card for insurantId: %s", insurantId))
-                );
+                Optional<String> egkHandleOpt = card.map(Card::getCardHandle);
+                if (vsdConfig.isHandlesTestMode()) {
+                    return egkHandleOpt.orElse(cards.getFirst().getCardHandle());
+                } else {
+                    return egkHandleOpt.orElseThrow(() ->
+                        new CetpFault(String.format("Could not get EGK card for insurantId: %s", insurantId))
+                    );
+                }
             }
         );
     }
 
     @Override
     public SubscriptionResult renewSubscription(UserRuntimeConfig runtimeConfig, String subscriptionId) throws CetpFault {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
-        EventServicePortType eventService = servicePorts.getEventService();
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        EventServicePortType eventService = servicePorts.getEventServiceSilent();
 
         Holder<Status> statusHolder = new Holder<>();
 
@@ -207,8 +231,8 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public SubscriptionResult subscribe(UserRuntimeConfig runtimeConfig, String cetpHost) throws CetpFault {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
-        EventServicePortType eventService = servicePorts.getEventService();
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        EventServicePortType eventService = servicePorts.getEventServiceSilent();
 
         Subscribe subscribe = new Subscribe();
         subscribe.setContext(servicePorts.getContextType());
@@ -230,8 +254,8 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public CetpStatus unsubscribe(UserRuntimeConfig runtimeConfig, String subscriptionId, String cetpHost, boolean forceCetp) throws CetpFault {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
-        EventServicePortType eventService = servicePorts.getEventService();
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        EventServicePortType eventService = servicePorts.getEventServiceSilent();
         try {
             Unsubscribe unsubscribe = new Unsubscribe();
             unsubscribe.setContext(servicePorts.getContextType());
@@ -261,7 +285,7 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public GetCardsResponse getCardsResponse(UserRuntimeConfig runtimeConfig, CardType cardType) throws CetpFault {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         EventServicePortType eventService = servicePorts.getEventService();
         GetCards getCards = new GetCards();
         getCards.setContext(servicePorts.getContextType());
@@ -280,7 +304,7 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public GetCardTerminalsResponse getCardTerminalsResponse(UserRuntimeConfig runtimeConfig) throws CetpFault {
-        IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
         EventServicePortType eventService = servicePorts.getEventService();
         GetCardTerminals getCardTerminals = new GetCardTerminals();
         getCardTerminals.setContext(servicePorts.getContextType());
@@ -294,12 +318,21 @@ public class KonnektorClient implements IKonnektorClient {
     @Override
     public CertificateInfo getSmcbX509Certificate(UserRuntimeConfig runtimeConfig, String smcbHandle) {
         return smcbCertificateMap.computeIfAbsent(smcbHandle, (handle) -> {
-            IKonnektorServicePortsAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
-            return getSmcbX509Certificate(servicePorts, smcbHandle);
+            IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+            CertificateInfo certificateInfo = getSmcbX509Certificate(servicePorts, smcbHandle);
+            try {
+                SmcbCertificateFile certificateFile = new SmcbCertificateFile(configDirectory);
+                Map<String, CertificateInfo> map = certificateFile.get();
+                map.put(smcbHandle, certificateInfo);
+                certificateFile.overwrite(map);
+            } catch (Exception e) {
+                log.error("Error while updating certificates cache", e);
+            }
+            return certificateInfo;
         });
     }
 
-    private CertificateInfo getSmcbX509Certificate(IKonnektorServicePortsAPI servicePorts, String smcbHandle) {
+    private CertificateInfo getSmcbX509Certificate(IKonnektorAPI servicePorts, String smcbHandle) {
         Pair<ReadCardCertificateResponse, Boolean> pair = getReadCardCertificateResponse(servicePorts, smcbHandle);
         if (pair == null) {
             throw new RuntimeException("Could not read card certificate");
@@ -319,7 +352,7 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     private Pair<ReadCardCertificateResponse, Boolean> getReadCardCertificateResponse(
-        IKonnektorServicePortsAPI servicePorts,
+        IKonnektorAPI servicePorts,
         String smcbHandle
     ) {
         // A_20666-02 - Auslesen des Authentisierungszertifikates
@@ -363,7 +396,7 @@ public class KonnektorClient implements IKonnektorClient {
         return null;
     }
 
-    private void verifyPin(IKonnektorServicePortsAPI servicePorts, String smcbHandle) throws de.gematik.ws.conn.cardservice.wsdl.v8_1.FaultMessage {
+    private void verifyPin(IKonnektorAPI servicePorts, String smcbHandle) throws de.gematik.ws.conn.cardservice.wsdl.v8_1.FaultMessage {
         VerifyPin verifyPin = new VerifyPin();
         verifyPin.setContext(servicePorts.getContextType());
         verifyPin.setCardHandle(smcbHandle);

@@ -7,19 +7,21 @@ import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
 
-public class KonnektorServicePortAggregator implements IKonnektorServicePortsAPI {
+public class KonnektorServicePorts implements IKonnektorAPI {
 
     private final ContextType contextType;
     private final CardServicePortType cardService;
+    private final EventServicePortType eventServiceSilent;
     private final EventServicePortType eventService;
     private final VSDServicePortType vsdServicePortType;
     private final CertificateServicePortType certificateService;
     private final AuthSignatureServicePortType authSignatureService;
 
-    public KonnektorServicePortAggregator(
+    public KonnektorServicePorts(
         ContextType contextType,
         CardServicePortType cardService,
         EventServicePortType eventService,
+        EventServicePortType eventServiceSilent,
         VSDServicePortType vsdServicePortType,
         CertificateServicePortType certificateService,
         AuthSignatureServicePortType authSignatureService
@@ -27,6 +29,7 @@ public class KonnektorServicePortAggregator implements IKonnektorServicePortsAPI
         this.contextType = contextType;
         this.cardService = cardService;
         this.eventService = eventService;
+        this.eventServiceSilent = eventServiceSilent;
         this.vsdServicePortType = vsdServicePortType;
         this.certificateService = certificateService;
         this.authSignatureService = authSignatureService;
@@ -40,6 +43,11 @@ public class KonnektorServicePortAggregator implements IKonnektorServicePortsAPI
     @Override
     public CardServicePortType getCardService() {
         return cardService;
+    }
+
+    @Override
+    public EventServicePortType getEventServiceSilent() {
+        return eventServiceSilent;
     }
 
     @Override
