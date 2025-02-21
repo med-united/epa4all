@@ -17,6 +17,7 @@ import java.util.Base64;
 
 import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.extractInsurantId;
 import static de.servicehealth.epa4all.server.vsd.VsdService.buildSyntheticVSDResponse;
+import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 
 @SuppressWarnings("unused")
@@ -34,14 +35,15 @@ public class Vsd extends AbstractResource {
     @Path("pnw")
     public Response proxy(
         @QueryParam(X_KONNEKTOR) String konnektor,
+        @QueryParam(X_INSURANT_ID) String xInsurantId,
         byte[] base64EncodedBody
     ) throws Exception {
         byte[] pruefungsnachweis = Base64.getDecoder().decode(base64EncodedBody);
         ReadVSDResponse readVSDResponse = buildSyntheticVSDResponse(null, pruefungsnachweis);
-        String insurantId = extractInsurantId(readVSDResponse, null);
+        String insurantId = extractInsurantId(readVSDResponse, xInsurantId);
         if (insurantId == null) {
             return Response.status(Response.Status.BAD_REQUEST)
-                .entity(new EpaClientError("Unable to get insurantId"))
+                .entity(new EpaClientError("Unable to resolve 'x-insurantid'"))
                 .build();
         } else {
             vsdService.saveVsdFile(telematikId, insurantId, readVSDResponse);

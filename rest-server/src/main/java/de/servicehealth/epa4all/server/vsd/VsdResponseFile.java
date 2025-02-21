@@ -100,7 +100,7 @@ public class VsdResponseFile {
                 byte[] geschuetzteVersichertendaten = Files.readAllBytes(geschuetzteVersichertendatenFile.toPath());
                 byte[] pruefungsnachweis = Files.readAllBytes(pruefungsnachweisFile.toPath());
 
-                if (persoenlicheVersichertendaten.length == 0 && pruefungsnachweis.length == 0) {
+                if (pruefungsnachweis.length == 0) {
                     return null;
                 }
 
@@ -130,7 +130,6 @@ public class VsdResponseFile {
             UCPersoenlicheVersichertendatenXML patient = createUCEntity(persoenlicheVersichertendaten);
             String versichertenID = patient.getVersicherter().getVersichertenID();
             if (versichertenID == null || versichertenID.trim().isEmpty()) {
-                log.warn("patient.getVersicherter().getVersichertenID() == {}", versichertenID);
                 return fallbackKvnr;
             } else {
                 return versichertenID;
