@@ -22,10 +22,8 @@ sap.ui.define([
 
             var sTelematikId = localStorage.getItem("telematikId");
             var oWebdavModel = new WebdavModel("http://localhost:8090/webdav/"+sTelematikId);
-            oTable.bindItems({
-                path: "webdavModel>/response",
-                template: oTable.getItems()[0].clone()
-            });
+            this.getView().setModel(oWebdavModel);
+
             var oTable = this.byId("patientTable");
             var oBinding = oTable.getBinding("items");
 
@@ -52,7 +50,6 @@ sap.ui.define([
                         var aContexts = oBinding.getContexts();
                         console.log("items:", aContexts.map(ctx => ctx.getObject()));
                     } else {
-                        console.warn("table binding not found");
                         oTable.bindItems({
                             path: "/response",
                             template: oTable.getItems()[0].clone()
@@ -60,6 +57,8 @@ sap.ui.define([
                     }
                 })
                 .catch(error => console.error("Error loading data:", error));
+
+
         },
         getEntityName: function () {
             return "Patient";
