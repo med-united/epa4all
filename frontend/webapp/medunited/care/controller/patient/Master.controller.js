@@ -15,48 +15,12 @@ sap.ui.define([
         onInit: function() {
             AbstractMasterController.prototype.onInit.apply(this, arguments);
 
-            this.getView().setModel(new JSONModel({
-                hasNext: false,
-                hasPrevious: false
-            }), "pageModel");
-
-            var sTelematikId = localStorage.getItem("telematikId");
-            var oWebdavModel = new WebdavModel("http://localhost:8090/webdav/"+sTelematikId);
-            this.getView().setModel(oWebdavModel);
-
             var oTable = this.byId("patientTable");
             var oBinding = oTable.getBinding("items");
 
             console.log("Patient table binding:", oBinding);
 
-            if (!oBinding) {
-                console.error("no binding");
-                oTable.bindItems({
-                    path: "/response",
-                    template: oTable.getItems()[0].clone()
-                });
-            }
 
-            oWebdavModel.readWebdavFolder("", 0, 8)
-                .then(result => {
-                    console.log("Data loaded in WebdavModel:", result);
-                    oWebdavModel.updateBindings();
-
-                    var oTable = this.byId("patientTable");
-                    var oBinding = oTable.getBinding("items");
-
-                    if (oBinding) {
-                        oBinding.refresh(true);
-                        var aContexts = oBinding.getContexts();
-                        console.log("items:", aContexts.map(ctx => ctx.getObject()));
-                    } else {
-                        oTable.bindItems({
-                            path: "/response",
-                            template: oTable.getItems()[0].clone()
-                        });
-                    }
-                })
-                .catch(error => console.error("Error loading data:", error));
 
 
         },
@@ -386,45 +350,6 @@ sap.ui.define([
                 }
                 oModel.create("MedicationStatement", oMedicationStatement, "patientDetails");
 
-            }
-        },
-
-        onDataRequested: function() {
-            sap.ui.core.BusyIndicator.show(0);
-        },
-        onDataReceived: function(oEvent) {
-            sap.ui.core.BusyIndicator.hide();
-
-            const oBinding = oEvent.getSource();
-            this.updatePaginationModel(oBinding);
-        },
-        onNextPage: function() {
-            const oTable = this.byId("patientTable");
-            const oBinding = oTable.getBinding("items");
-            if (oBinding && oBinding.nextPage) {
-                oBinding.nextPage();
-                this.updatePaginationModel(oBinding);
-            }
-        },
-        onPreviousPage: function() {
-            const oTable = this.byId("patientTable");
-            const oBinding = oTable.getBinding("items");
-            if (oBinding && oBinding.previousPage) {
-                oBinding.previousPage();
-                this.updatePaginationModel(oBinding);
-            }
-        },
-        updatePaginationModel: function(oBinding) {
-            const oPageModel = this.getView().getModel("pageModel");
-            if (oPageModel) {
-                console.log("Updating pagination: hasNext =", oBinding.bHasMoreData, "hasPrevious =", oBinding.iStartIndex > 0);
-
-                oPageModel.setProperty("/hasNext", oBinding.bHasMoreData);
-                oPageModel.setProperty("/hasPrevious", oBinding.iStartIndex > 0);
-
-                oPageModel.updateBindings(true);
-            } else {
-                console.warn("pageModel not found");
             }
         }
     });

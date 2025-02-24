@@ -14,11 +14,13 @@ sap.ui.define([
 			sServiceUrl = sServiceUrl.slice(-1) === "/" ?  sServiceUrl.slice(0, -1) : sServiceUrl;
 			this.oServiceUrl = new URI(sServiceUrl);
 			this.sServiceUrl = this.oServiceUrl.query("").toString();
+			this.aCallAfterUpdate = [];
 			// Set default namespace
 			// Relative bindings: {D:propstat/D:prop/D:displayname} cause an issue with the XML parser
 			// Absolute ones work {/D:response}
 			this.setNameSpace("DAV:");
-			this.setNameSpace("http://ws.gematik.de/fa/vsdm/vsd/v5.2", "vsdm")
+			this.setNameSpace("http://ws.gematik.de/fa/vsdm/vsd/v5.2", "vsdm");
+			
 
 			sap.ui.getCore().getEventBus().subscribe("WebdavModel", "TelematikIdUpdated", this._onTelematikIdUpdated, this);
         },
@@ -82,7 +84,6 @@ sap.ui.define([
             }
         },
         readWebdavFolder: function(sPath = "", iStartIndex, iPageSize, aSorters, aFilters) {
-            var me = this;
 
             var sUrl = this.sServiceUrl;
             if (sPath && sPath !== "/" && sPath !== "") {
@@ -103,9 +104,9 @@ sap.ui.define([
                     if (!response.ok) {
                         throw new Error("response was not ok: " + response.statusText);
                     }
+					this.fireRequestCompleted({});
                     return response.text().then(xml => {
-                        me.setXML(xml);
-                        me.updateBindings();
+                        this.setXML(xml);
                         return {
                             xml: xml,
                             headers: {
@@ -117,6 +118,7 @@ sap.ui.define([
                     console.error("PROPFIND Request Error:", error);
                 });
         },
+		
         bindList: function(sPath, oContext, aSorters, aFilters, mParameters) {
             console.log("bindList called with path:", sPath);
 
@@ -127,6 +129,53 @@ sap.ui.define([
             return binding;
         }
     });
+	
+	/**
+	 * Register function calls that should be called after an update (e.g. calling <code>dataReceived</code> event of a binding)
+	 * @param {function} oFunction The callback function
+	 * @private
+	 */
+	WebdavModel.prototype.callAfterUpdate = function(oFunction) {
+		this.aCallAfterUpdate.push(oFunction);
+	};
+	
+	/**
+	 * Process handlers registered for execution after update.
+	 *
+	 * @private
+	 */
+	WebdavModel.prototype._processAfterUpdate = function() {
+		var aCallAfterUpdate = this.aCallAfterUpdate;
+		this.aCallAfterUpdate = [];
+		for (var i = 0; i < aCallAfterUpdate.length; i++) {
+			aCallAfterUpdate[i]();
+		}
+	};
+	
+	/**
+	 * Calls {@link sap.ui.model.Binding#checkUpdate} on all active bindings of this model like
+	 * {@link sap.ui.model.Model#checkUpdate}. Additionally, multiple asynchronous calls to this
+	 * function lead to a single synchronous call where <code>mChangedEntities</code> is the union
+	 * of all <code>mChangedEntities</Code> from the asynchronous calls.
+	 *
+	 * @param {boolean} [bForceUpdate]
+	 *   The parameter <code>bForceUpdate</code> for the <code>checkUpdate</code> call on the
+	 *   bindings
+	 * @param {boolean} bAsync
+	 *   Whether this function is called in a new task via <code>setTimeout</code>
+	 * @param {map} mChangedEntities
+	 *   Map of changed entities
+	 * @param {boolean} bMetaModelOnly
+	 *   Whether to only update metamodel bindings
+	 * @private
+	 */
+	WebdavModel.prototype.checkUpdate = function(bForceUpdate) {
+		var aBindings = this.getBindings();
+		aBindings.forEach(function(oBinding) {
+			oBinding.checkUpdate(bForceUpdate);
+		}.bind(this));
+		this._processAfterUpdate();
+	};
 
     return WebdavModel;
 });
