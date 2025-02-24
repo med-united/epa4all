@@ -46,9 +46,11 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
         Conduit conduit = message.getExchange().getConduit(message);
         if (conduit instanceof HttpClientHTTPConduit) {
             MetadataMap<String, String> headers = (MetadataMap<String, String>) message.get(PROTOCOL_HEADERS);
-            String vauClientUuid = headers.getFirst(VAU_CLIENT_UUID); // not used for SOAP
-            String konnektor = headers.getFirst(X_KONNEKTOR);
-            String workplace = headers.getFirst(X_WORKPLACE);
+
+            // not used for SOAP
+            String vauClientUuid = headers == null ? null : headers.getFirst(VAU_CLIENT_UUID);
+            String konnektor = headers == null ? (String) message.get(X_KONNEKTOR) : headers.getFirst(X_KONNEKTOR);
+            String workplace = headers == null ? (String) message.get(X_WORKPLACE) : headers.getFirst(X_WORKPLACE);
             VauClient vauClient;
             try {
                 vauClient = vauClientUuid == null
@@ -57,7 +59,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                 VauInfo vauInfo = vauClient.getVauInfo();
                 if (vauInfo == null) {
-                    throw new IllegalStateException("Dummy vauClient is acquired, uuid = " + vauClientUuid);
+                    throw new IllegalStateException("Empty VAU client is acquired, uuid = " + vauClientUuid);
                 }
                 message.put(VAU_CID, vauInfo.getVauCid());
                 message.put(VAU_NON_PU_TRACING, vauInfo.getVauNonPUTracing());

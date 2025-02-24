@@ -126,6 +126,7 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             String requestAsString = httpParcel.toString(false, false, maskedHeaders, maskedAttributes);
             log.info(String.format("SOAP Inner Request: %s", requestAsString));
 
+            // TASK_ID was used before just for logging purposes
             httpHeaders.remove(TASK_ID);
             httpParcel.getHeaders().stream().filter(p -> p.getKey().equals(TASK_ID)).findFirst().ifPresent(p ->
                 httpParcel.getHeaders().remove(p)
