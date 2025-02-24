@@ -25,7 +25,7 @@ sap.ui.define([
 			this.fixPagingAndAggregateSameQueriesOfFhirModel();
 			UIComponent.prototype.init.apply(this, arguments);
 
-			this.getModel().setSizeLimit(25);
+			this.getModel().setSizeLimit(20);
 
 
 			let oRouter = this.getRouter();

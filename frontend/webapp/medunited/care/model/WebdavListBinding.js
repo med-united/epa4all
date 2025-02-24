@@ -14,7 +14,7 @@ sap.ui.define([
             this.aFilters = aFilters;
             this.mParameters = mParameters || {};
             this.iStartIndex = 0;
-            this.iPageSize = mParameters?.pageSize || 8;
+            this.iPageSize = mParameters?.pageSize || oModel.iSizeLimit;
             this.totalCount = 0;
             this.bHasMoreData = true;
 			this.bPendingRequest = false;
@@ -31,7 +31,7 @@ sap.ui.define([
 		   this.bNeedsUpdate = true;
            this.oModel.readWebdavFolder("", this.iStartIndex, this.iPageSize, this.aSorters, this.aFilters)
                .then(({ xml, headers }) => {
-                   this.oModel.setXML(xml);
+                   // this.oModel.setXML(xml);
                    console.log("heree");
                    console.log(xml);
                    this.totalCount = parseInt(headers.total, 10) || 0;
@@ -49,7 +49,12 @@ sap.ui.define([
 				   // amount of data that was loaded with this request
 				   this.iLength += iCurrentPageLength;
 				   this.oModel.callAfterUpdate(() =>  {
-		   				this.fireDataReceived({data: xml});
+		   				this.fireDataReceived({
+							data: {
+								__count:this.iLength,
+								results:xml
+							}
+						});
 		   			});
 					this.checkUpdate();
                })
@@ -64,6 +69,11 @@ sap.ui.define([
 	
 	WebdavListBinding.prototype.getContexts = function(iStartIndex, iLength, iMaximumPrefetchSize,
 				bKeepCurrent) {
+		
+		this.iLastLength = iLength;
+		this.iLastStartIndex = iStartIndex;
+		this.iLastThreshold = iMaximumPrefetchSize;
+					
 		let oSkipAndTop = this._getSkipAndTop(iStartIndex, iLength, iMaximumPrefetchSize);
 
 		let aContexts = this._getContexts(iStartIndex, iLength);
@@ -81,8 +91,8 @@ sap.ui.define([
 	
 	WebdavListBinding.prototype._getSkipAndTop = function(iStartIndex, iLength, iMaximumPrefetchSize) {
 		return {
-			skip : 0,
-			top: 20
+			skip : iStartIndex,
+			top: !iLength ? this.pageSize :iLength
 		};
 	};
 	

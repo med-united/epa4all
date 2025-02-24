@@ -15,6 +15,7 @@ sap.ui.define([
 			this.oServiceUrl = new URI(sServiceUrl);
 			this.sServiceUrl = this.oServiceUrl.query("").toString();
 			this.aCallAfterUpdate = [];
+			this.oDomParser = new DOMParser();
 			// Set default namespace
 			// Relative bindings: {D:propstat/D:prop/D:displayname} cause an issue with the XML parser
 			// Absolute ones work {/D:response}
@@ -74,7 +75,8 @@ sap.ui.define([
             if (oData && oData.telematikId) {
                 console.log("Updating WebdavModel with new telematikId:", oData.telematikId);
                 this.sServiceUrl = `/webdav/${oData.telematikId}`;
-                this.readWebdavFolder("", 0, 8)
+				this.oData = undefined;
+                this.readWebdavFolder("")
                     .then(function(oResult) {
                         console.log("readWebdavFolder:", oResult);
                     })
@@ -89,6 +91,14 @@ sap.ui.define([
             if (sPath && sPath !== "/" && sPath !== "") {
                 sUrl += sPath.startsWith("/") ? sPath : "/" + sPath;
             }
+			
+			if(!iStartIndex) {
+				iStartIndex = 0;
+			}
+			
+			if(!iPageSize) {
+				iPageSize = this.iSizeLimit;
+			}
 
             console.log("Url:", sUrl);
 
@@ -106,7 +116,11 @@ sap.ui.define([
                     }
 					this.fireRequestCompleted({});
                     return response.text().then(xml => {
-                        this.setXML(xml);
+						if(!this.oData) {
+							this.setXML(xml);
+						} else {							
+							this.addFoldersToWebDavModel(sPath, xml);
+						}
                         return {
                             xml: xml,
                             headers: {
@@ -118,6 +132,17 @@ sap.ui.define([
                     console.error("PROPFIND Request Error:", error);
                 });
         },
+		
+		addFoldersToWebDavModel: function(sPath, xml) {
+			let oResponseDocument = this.oDomParser.parseFromString(xml, "application/xml");
+			let oResponseNodes = oResponseDocument.querySelectorAll("response");
+			let oOriginalDocumentNode = this.oData.documentElement;
+			for(let oldNode of oResponseNodes) {
+				const newNode = this.oData.importNode(oldNode, true);
+				oOriginalDocumentNode.appendChild(newNode);
+			}
+			
+		},
 		
         bindList: function(sPath, oContext, aSorters, aFilters, mParameters) {
             console.log("bindList called with path:", sPath);
