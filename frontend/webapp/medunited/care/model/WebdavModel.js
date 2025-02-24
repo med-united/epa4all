@@ -1,6 +1,7 @@
 sap.ui.define([
-	"sap/ui/model/xml/XMLModel"
-], function(XMLModel) {
+   "sap/ui/model/xml/XMLModel",
+   "medunited/care/model/WebdavListBinding"
+], function(XMLModel, WebdavListBinding) {
 
 	"use strict";
 
@@ -18,7 +19,6 @@ sap.ui.define([
 			// Absolute ones work {/D:response}
 			this.setNameSpace("DAV:");
 			this.setNameSpace("http://ws.gematik.de/fa/vsdm/vsd/v5.2", "vsdm")
-			this._setupData();
 
 			sap.ui.getCore().getEventBus().subscribe("WebdavModel", "TelematikIdUpdated", this._onTelematikIdUpdated, this);
         },
@@ -72,8 +72,61 @@ sap.ui.define([
             if (oData && oData.telematikId) {
                 console.log("Updating WebdavModel with new telematikId:", oData.telematikId);
                 this.sServiceUrl = `/webdav/${oData.telematikId}`;
-                this._setupData(this.sServiceUrl);
+                this.readWebdavFolder("", 0, 8)
+                    .then(function(oResult) {
+                        console.log("readWebdavFolder:", oResult);
+                    })
+                    .catch(function(oError) {
+                        console.error("Error loading folder:", oError);
+                    });
             }
+        },
+        readWebdavFolder: function(sPath = "", iStartIndex, iPageSize, aSorters, aFilters) {
+            var me = this;
+
+            var sUrl = this.sServiceUrl;
+            if (sPath && sPath !== "/" && sPath !== "") {
+                sUrl += sPath.startsWith("/") ? sPath : "/" + sPath;
+            }
+
+            console.log("Url:", sUrl);
+
+            var headers = {
+                "Depth": "1",
+                "X-Offset": String(iStartIndex),
+                "X-Limit": String(iPageSize),
+                "X-Sort-By": "Earliest"
+            };
+
+            return fetch(sUrl, { method: "PROPFIND", headers: headers })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("response was not ok: " + response.statusText);
+                    }
+                    return response.text().then(xml => {
+                        me.setXML(xml);
+                        me.updateBindings();
+                        return {
+                            xml: xml,
+                            headers: {
+                                total: parseInt(response.headers.get("X-Total-Count"), 10) || 0
+                            }
+                        };
+                    });
+                }).catch(error => {
+                    console.error("PROPFIND Request Error:", error);
+                });
+        },
+        bindList: function(sPath, oContext, aSorters, aFilters, mParameters) {
+            console.log("bindList called with path:", sPath);
+
+            const binding = new WebdavListBinding(this, sPath, oContext, aSorters, aFilters, mParameters);
+
+            console.log("WebdavListBinding:", binding);
+
+            return binding;
         }
     });
+
+    return WebdavModel;
 });
