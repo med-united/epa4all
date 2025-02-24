@@ -121,6 +121,7 @@ sap.ui.define([
 						} else {							
 							this.addFoldersToWebDavModel(sPath, xml);
 						}
+
                         return {
                             xml: xml,
                             headers: {

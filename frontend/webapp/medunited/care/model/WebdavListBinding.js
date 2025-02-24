@@ -1,12 +1,12 @@
 sap.ui.define([
-    "sap/ui/model/xml/XMLListBinding",
+    "sap/ui/model/ListBinding",
 	"sap/ui/model/ChangeReason"
-], function(XMLListBinding, ChangeReason) {
+], function(ListBinding, ChangeReason) {
     "use strict";
 
-    var WebdavListBinding = XMLListBinding.extend("medunited.care.model.WebdavListBinding", {
+    var WebdavListBinding = ListBinding.extend("medunited.care.model.WebdavListBinding", {
         constructor: function(oModel, sPath, oContext, aSorters, aFilters, mParameters) {
-            XMLListBinding.apply(this, arguments);
+            ListBinding.apply(this, arguments);
             this.oModel = oModel;
             this.sPath = sPath;
             this.oContext = oContext;
@@ -15,21 +15,22 @@ sap.ui.define([
             this.mParameters = mParameters || {};
             this.iStartIndex = 0;
             this.iPageSize = mParameters?.pageSize || oModel.iSizeLimit;
-            this.totalCount = 0;
+            this.totalCount = undefined;
             this.bHasMoreData = true;
 			this.bPendingRequest = false;
 			this.iLength = 0;
 			this.bNeedsUpdate = false;
+			this.bLengthFinal = false;
 
             console.log("Initializing WebdavListBinding with path:", sPath);
 
         },
 	
-       loadData: function() {
+       loadData: function(skip, top) {
 		   this.bPendingRequest = true;
 		   this.fireDataRequested();
 		   this.bNeedsUpdate = true;
-           this.oModel.readWebdavFolder("", this.iStartIndex, this.iPageSize, this.aSorters, this.aFilters)
+           this.oModel.readWebdavFolder("", skip ? skip : this.iStartIndex, top ? top : this.iPageSize, this.aSorters, this.aFilters)
                .then(({ xml, headers }) => {
                    // this.oModel.setXML(xml);
                    console.log("heree");
@@ -37,14 +38,17 @@ sap.ui.define([
                    this.totalCount = parseInt(headers.total, 10) || 0;
 
                    console.log("X-Total-Count from response:", this.totalCount);
-                   console.log("Current Start Index:", this.iStartIndex, "Page Size:", this.iPageSize);
+                   console.log("Current Start Index:", skip, "Page Size:", top ? top : this.iPageSize);
 
-                   this.bHasMoreData = (this.iStartIndex + this.iPageSize) < this.totalCount;
+                   this.bHasMoreData = (skip + (top ? top : this.iPageSize)) < this.totalCount;
                    console.log("Pagination Status -> Has More Data:", this.bHasMoreData, "Has Previous:", this.iStartIndex > 0);
 				   this.bPendingRequest = false;
 
 				   
-				   let iCurrentPageLength = xml.match(/<D:response>/g).length;
+				   let iCurrentPageLength = !xml ? 0 : xml.match(/<D:response>/g).length;
+				   if(iCurrentPageLength != 0) {					
+				   	  this.bNeedsUpdate = true;
+				   }
 				   
 				   // amount of data that was loaded with this request
 				   this.iLength += iCurrentPageLength;
@@ -67,11 +71,29 @@ sap.ui.define([
 
     });
 	
+	WebdavListBinding.prototype.getLength = function() {
+		// If length is not final and larger than zero, add some additional length to enable
+		// scrolling/paging for controls that only do this if more items are available
+		if (this.bLengthFinal || this.iLength == 0) {
+			return this.iLength;
+		} else {
+			var iAdditionalLength = this.iLastThreshold || this.iLastLength || 10;
+			return this.iLength + iAdditionalLength;
+		}
+	};
+	
 	WebdavListBinding.prototype.getContexts = function(iStartIndex, iLength, iMaximumPrefetchSize,
 				bKeepCurrent) {
 		
 		this.iLastLength = iLength;
-		this.iLastStartIndex = iStartIndex;
+		if(iStartIndex) {			
+			this.iLastStartIndex = iStartIndex;
+		} else if(this.iLastStartIndex === undefined) {
+			this.iLastStartIndex = 0;
+		} else {
+			this.iLastStartIndex += this.iPageSize;
+		}
+		iStartIndex = this.iLastStartIndex;
 		this.iLastThreshold = iMaximumPrefetchSize;
 					
 		let oSkipAndTop = this._getSkipAndTop(iStartIndex, iLength, iMaximumPrefetchSize);
@@ -81,12 +103,44 @@ sap.ui.define([
 				
 		
 		// If rows are missing send a request
-		if (!this.bPendingRequest && oSkipAndTop) {
+		if (!this.bPendingRequest && oSkipAndTop && (this.totalCount === undefined || this.totalCount < (oSkipAndTop.skip + oSkipAndTop.top))) {
 			this.loadData(oSkipAndTop.skip, oSkipAndTop.top);
 			aContexts.dataRequested = true;
 		}
 
-		return XMLListBinding.prototype.getContexts.apply(this, arguments);
+		return this._getContexts(iStartIndex, iLength);
+	};
+	
+	/**
+	 * Return contexts for the list
+	 *
+	 * @param {int} [iStartIndex=0] the start index of the requested contexts
+	 * @param {int} [iLength] the requested amount of contexts
+	 *
+	 * @return {Array} the contexts array
+	 * @private
+	 */
+	WebdavListBinding.prototype._getContexts = function(iStartIndex, iLength) {
+		var aContexts = [],
+			oContext;
+
+		if (!iStartIndex) {
+			iStartIndex = 0;
+		}
+		if (!iLength) {
+			iLength = this.oModel.iSizeLimit;
+			if (this.bLengthFinal && this.iLength < iLength) {
+				iLength = this.iLength;
+			}
+		}
+
+		//	Loop through known data and check whether we already have all rows loaded
+		for (var i = iStartIndex; i < iStartIndex + iLength; i++) {
+			oContext = this.oModel.getContext('/response/' + i);
+			aContexts.push(oContext);
+		}
+
+		return aContexts;
 	};
 	
 	WebdavListBinding.prototype._getSkipAndTop = function(iStartIndex, iLength, iMaximumPrefetchSize) {
@@ -114,7 +168,10 @@ sap.ui.define([
 	 * @private
 	 */
 	WebdavListBinding.prototype.checkUpdate = function (bForceUpdate) {
-		this._fireChange({reason: ChangeReason.Change});
+		if(bForceUpdate || this.bNeedsUpdate) {
+			this.bNeedsUpdate = false;
+			this._fireChange({reason: ChangeReason.Change});
+		}
 	};
 
     return WebdavListBinding;
