@@ -83,7 +83,7 @@ sap.ui.define([
 				window.location.reload();
 			}
         },
-        readWebdavFolder: function(sPath = "", iStartIndex, iPageSize, aSorters, aFilters) {
+        readWebdavFolder: function(sPath = "", sModelPath = "", iStartIndex, iPageSize, aSorters, aFilters) {
 
             var sUrl = this.sServiceUrl;
             if (sPath && sPath !== "/" && sPath !== "") {
@@ -118,7 +118,7 @@ sap.ui.define([
 						if(!this.oData && xml) {
 							this.setXML(xml);
 						} else if(xml) {							
-							this.addFoldersToWebDavModel(sPath, xml);
+							this.addFoldersToWebDavModel(sModelPath, xml);
 						}
 						this.checkUpdate();
                         return {
@@ -141,10 +141,10 @@ sap.ui.define([
 			}
 		},
 		
-		addFoldersToWebDavModel: function(sPath, xml) {
+		addFoldersToWebDavModel: function(sModelPath, xml) {
 			let oResponseDocument = this.oDomParser.parseFromString(xml, "application/xml");
 			let oResponseNodes = oResponseDocument.querySelectorAll("response");
-			let oOriginalDocumentNode = this.oData.documentElement;
+			let oOriginalDocumentNode = sModelPath ? this.oData.querySelector(sModelPath) : this.oData.documentElement;
 			for(let oldNode of oResponseNodes) {
 				const newNode = this.oData.importNode(oldNode, true);
 				oOriginalDocumentNode.appendChild(newNode);

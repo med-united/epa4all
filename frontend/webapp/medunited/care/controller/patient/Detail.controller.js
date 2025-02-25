@@ -24,17 +24,20 @@ sap.ui.define([
 			AbstractDetailController.prototype._onMatched.apply(this, arguments);
 			
 			const oWebdavModel = this.getView().getModel();
-			const iPatientModelOffest = oEvent.getParameter("arguments").patient;
+			const iPatientModelOffest = parseInt(oEvent.getParameter("arguments").patient);
 			const sDocument = oEvent.getParameter("arguments").document;
-			const sWebDavPath = "/response/"+iPatientModelOffest;
-			const sPatientId = oWebdavModel.getProperty(sWebDavPath+"/propstat/prop/displayname");
-
-			this.getView().bindElement(sWebDavPath);
+			const sModelPath = "/response/"+iPatientModelOffest;
+			const sXPath = "/D:multistatus/D:response["+(iPatientModelOffest+1)+"]";
+			const sPatientId = oWebdavModel.getProperty(sModelPath+"/propstat/prop/displayname");
+			this.sWebDavPath = "/"+sPatientId;
+			this.sXPath = sXPath;
+			this.sModelPath = sModelPath+"/multistatus";
 			
-			oWebdavModel.loadFolderForContext("/response/"+iPatientModelOffest, "/"+sPatientId);
-			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/PersoenlicheVersichertendaten.xml");
-			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/AllgemeineVersicherungsdaten.xml");
-			oWebdavModel.loadFileForContext(sWebDavPath, "/"+sPatientId+"/local/GeschuetzteVersichertendaten.xml");
+			this.getView().bindElement(sModelPath);
+			oWebdavModel.loadFolderForContext(sModelPath, this.sWebDavPath);
+			oWebdavModel.loadFileForContext(sModelPath, this.sWebDavPath+"/local/PersoenlicheVersichertendaten.xml");
+			oWebdavModel.loadFileForContext(sModelPath, this.sWebDavPath+"/local/AllgemeineVersicherungsdaten.xml");
+			oWebdavModel.loadFileForContext(sModelPath, this.sWebDavPath+"/local/GeschuetzteVersichertendaten.xml");
 			if(sDocument) {
 				const me = this;
 				const sDecodedDocument = decodeURIComponent(sDocument);
@@ -113,6 +116,16 @@ sap.ui.define([
 					return bValueDecimal - aValueDecimal;
 				});
 			return this.getMedicationPlanXml(oPatient, aMedicationStatementForPatient, optionSelected);
+		},
+		onDocumentViewInit: function(oEvent) {
+			const oView = oEvent.getParameter("view");
+			if(oView.getViewName() == "medunited.care.SharedBlocks.document.DocumentBlockExpanded") {
+				const oBinding = oView.byId("documentTableExpanded").getBinding("items");
+				oBinding.sWebDavPath = this.sWebDavPath;
+				oBinding.sModelPath = this.sModelPath;
+				oBinding.sXPath = this.sXPath;
+				oBinding.checkUpdate(true);
+			}
 		},
 		getMedicationPlanXml: function (oPatient, aMedicationStatementForPatient, optionSelected) {
 			//https://update.kbv.de/ita-update/Verordnungen/Arzneimittel/BMP/EXT_ITA_VGEX_BMP_Anlage3_mitAend.pdf

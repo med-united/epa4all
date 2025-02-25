@@ -9,6 +9,9 @@ sap.ui.define([
             ListBinding.apply(this, arguments);
             this.oModel = oModel;
             this.sPath = sPath;
+			this.sWebDavPath = "";
+			this.sModelPath = "";
+			this.sXPath = "";
             this.oContext = oContext;
             this.aSorters = aSorters;
             this.aFilters = aFilters;
@@ -42,7 +45,7 @@ sap.ui.define([
 		   		}
 		   	});
 		   });
-           this.oModel.readWebdavFolder("", skip ? skip : this.iStartIndex, top ? top : this.iPageSize, this.aSorters, this.aFilters)
+           this.oModel.readWebdavFolder(this.sWebDavPath, this.sModelPath, skip ? skip : this.iStartIndex, top ? top : this.iPageSize, this.aSorters, this.aFilters)
                .then((oResponse) => {
 				   // if we do not have a response just return
 				   if(!oResponse) {
@@ -101,7 +104,7 @@ sap.ui.define([
 		this.iLastThreshold = iMaximumPrefetchSize;
 	
 		// If rows are missing send a request
-		if (!this.bPendingRequest && this.iLoadedUntilIndex < iLength) {
+		if (!this.bPendingRequest && (this.iLoadedUntilIndex < iLength || iLength === undefined)) {
 			this.loadData(this.iLoadedUntilIndex, this.iPageSize);
 			this.iLoadedUntilIndex = this.iLoadedUntilIndex + this.iPageSize;
 		}
@@ -134,7 +137,14 @@ sap.ui.define([
 		// if we don't know the total count
 		// set the length to the amount of responses in the model
 		if(this.totalCount === undefined && this.oModel.oData) {
-			iLength = this.oModel.oData.querySelectorAll("response").length;
+			const sPath = "count("+this.sXPath+"/D:multistatus/D:response)";
+			console.log(sPath);
+			iLength = this.oModel.oData.evaluate(sPath, this.oModel.oData,
+			 (ns) => ns == "D" ? "DAV:" : "",
+			 XPathResult.ANY_TYPE,
+			 null).numberValue;
+			 console.log(iLength);
+			 console.log(this.oModel.oData)
 		}
 		if(this.totalCount === undefined && this.oModel.oData === undefined) {
 			// there is no count and the model is not initialized
@@ -144,7 +154,8 @@ sap.ui.define([
 		//	Loop through known data and check whether we already have all rows loaded
 		for (var i = iStartIndex; i < iLength; i++) {
 			// do not return more context than we have loaded from the server
-			oContext = this.oModel.getContext('/response/' + i);
+			console.log(this.sModelPath+'/response/' + i);
+			oContext = this.oModel.getContext(this.sModelPath+'/response/' + i);
 			aContexts.push(oContext);
 		}
 

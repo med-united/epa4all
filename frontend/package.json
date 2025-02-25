@@ -12,6 +12,6 @@
         "@ui5/cli": "^2.14.14"
     },
     "dependencies": {
-        "openui5-fhir": "^2.3.3"
+        "openui5-fhir": "^2.4.0"
     }
 }
