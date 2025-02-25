@@ -16,8 +16,6 @@
 				<f:actions>
 					<!--  <Button text="{i18n>createPatientFromBMP}" press="onPressCreatePatientFromBMP" /> -->
 					<Button type="Emphasized" text="{i18n>CreatePatient}" press="onAdd" />
-					<Button text="Previous" press="onPreviousPage" enabled="{pageModel>/hasPrevious}" visible="true"/>
-					<Button text="Next" press="onNextPage" enabled="{pageModel>/hasNext}" visible="true"/>
 				</f:actions>
 			</f:DynamicPageTitle>
 		</f:title>
