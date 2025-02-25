@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.bc.wiremock;
+package de.servicehealth.epa4all.integration.bc.wiremock.setup;
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.extension.ResponseDefinitionTransformerV2;

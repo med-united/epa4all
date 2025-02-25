@@ -11,6 +11,8 @@ import io.restassured.config.HttpClientConfig;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
@@ -20,9 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestProfile(WireMockProfile.class)
 public class RequestVauNpIT extends AbstractWiremockTest {
 
-    @Inject
-    BeanRegistry registry;
-
     @Test
     void vauNpProvisioningReloaded() throws Exception {
         RestAssured.config = RestAssured.config()
@@ -30,7 +29,7 @@ public class RequestVauNpIT extends AbstractWiremockTest {
                 .setParam("http.socket.timeout", 600000));
 
         prepareIdpStubs();
-        prepareVauStubs();
+        prepareVauStubs(List.of());
         prepareKonnektorStubs();
 
         given()
@@ -40,9 +39,7 @@ public class RequestVauNpIT extends AbstractWiremockTest {
             .then()
             .statusCode(200);
 
-        assertTrue(registry.getInstances(VauFacade.class).stream()
-            .allMatch(f -> f.getStatus().toString().contains("OK"))
-        );
+        Collection<VauFacade> vauFacades = registry.getInstances(VauFacade.class);
+        assertTrue(vauFacades.stream().allMatch(f -> f.getStatus().toString().contains("OK")));
     }
 }
-

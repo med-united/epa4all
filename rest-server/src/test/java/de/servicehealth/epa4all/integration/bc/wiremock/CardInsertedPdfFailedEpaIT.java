@@ -5,13 +5,16 @@ import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
+import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -22,25 +25,25 @@ import static org.mockito.Mockito.verify;
 @TestProfile(WireMockProfile.class)
 public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
 
-    private final String kvnr = "X110587452";
-
-    @ConfigProperty(name = "ere.per.konnektor.config.folder")
-    String configFolder;
-
     @Test
-    public void epaPdfWasNotSentToCardlink() throws Exception {
+    public void medicationPdfWasNotSentToCardlinkBecauseOfNotAuthorizedError() throws Exception {
         String ctId = "cardTerminal-124";
-
 
         CardlinkClient cardlinkClient = mock(CardlinkClient.class);
         EpaFileDownloader epaFileDownloader = mock(EpaFileDownloader.class);
         KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
 
         prepareIdpStubs();
-        prepareVauStubs();
+        String pdfError = "{\"errorCode\":\"internalError\",\"errorDetail\":\"Requestor not authorized\"}";
+        prepareVauStubs(List.of(
+            Pair.of("/epa/medication/render/v1/eml/pdf", new CallInfo().withErrorHeader(pdfError))
+        ));
         prepareKonnektorStubs();
         prepareInformationStubs(204);
 
+        vauNpProvider.onStart();
+
+        String kvnr = "X110587452";
         String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
 
         receiveCardInsertedEvent(
@@ -59,4 +62,3 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
         QuarkusMock.installMockForType(konnektorClient, IKonnektorClient.class);
     }
 }
-

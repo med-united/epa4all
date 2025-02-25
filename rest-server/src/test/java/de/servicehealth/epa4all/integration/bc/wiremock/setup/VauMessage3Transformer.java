@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.bc.wiremock;
+package de.servicehealth.epa4all.integration.bc.wiremock.setup;
 
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import static de.servicehealth.epa4all.common.TestUtils.FIXTURES;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
@@ -32,12 +33,25 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
 
     private static final ConcurrentHashMap<String, VauServerStateMachine> vau2ServersMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Function<VauServerStateMachine, ResponseDefinition>> responseMap = new ConcurrentHashMap<>();
 
     private final String name;
     private VauResponseReader vauResponseReader;
 
     public VauMessage3Transformer(String name) {
         this.name = name;
+
+        registerResponseFunc("/epa/authz/v1/getNonce", new CallInfo().withPayload(getFixture("GetNonce.json")));
+        registerResponseFunc(
+            "/epa/authz/v1/send_authorization_request_sc",
+            new CallInfo()
+                .withStatus(200)
+                .withInnerHeaders(List.of(Pair.of(
+                    LOCATION, "https://idp-ref.zentral.idp.splitdns.ti-dienste.de/auth?response_type=code&scope=openid+ePA-bmt-rt&nonce=GsUcyAvdAhvlorTpFyBzurZiYSaJjCdCnhB9Rgd7L4RxafFyxMDlYwHuhdR5JqE7&client_id=GEMBITMAePAe2zrxzLOR&redirect_uri=https%3A%2F%2Fe4a-rt.deine-epa.de%2F&code_challenge=CCshxJ-_K29-X3VjUfOfw2N670igmawapHepPmEfXTM&code_challenge_method=S256&state=v8XOGFO35IDqvGwS5ciaA5TVjioklDDqFrC9JUYvGejRw5i4z1dU1GRwd77rqP8y"
+                )))
+        );
+        registerResponseFunc("/epa/authz/v1/send_authcode_sc", new CallInfo().withPayload(getFixture("SendAuthCodeSC.json")));
+        registerResponseFunc("/epa/basic/api/v1/ps/entitlements", new CallInfo().withPayload("{\"validTo\":\"2027-02-15T22:59:59Z\"}"));
     }
 
     @Override
@@ -56,6 +70,10 @@ public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
 
     public void registerVauChannel(String path, VauServerStateMachine vauServer) {
         vau2ServersMap.put(path, vauServer);
+    }
+
+    public void registerResponseFunc(String path, CallInfo callInfo) {
+        responseMap.put(path, vauServer -> prepareVauResponse(vauServer, callInfo));
     }
 
     @Override
@@ -79,42 +97,55 @@ public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
         } catch (Exception e) {
             HttpParcel httpRequest = HttpParcel.from(vauServer.decryptVauMessage(message3));
             String path = httpRequest.getPath();
-            return switch (path) {
-                case "/epa/authz/v1/getNonce" -> prepareVauResponse(vauServer, getFixture("GetNonce.json"));
-                case "/epa/authz/v1/send_authorization_request_sc" -> prepareVauResponse(
-                    vauServer,
-                    200,
-                    null,
-                    "https://idp-ref.zentral.idp.splitdns.ti-dienste.de/auth?response_type=code&scope=openid+ePA-bmt-rt&nonce=GsUcyAvdAhvlorTpFyBzurZiYSaJjCdCnhB9Rgd7L4RxafFyxMDlYwHuhdR5JqE7&client_id=GEMBITMAePAe2zrxzLOR&redirect_uri=https%3A%2F%2Fe4a-rt.deine-epa.de%2F&code_challenge=CCshxJ-_K29-X3VjUfOfw2N670igmawapHepPmEfXTM&code_challenge_method=S256&state=v8XOGFO35IDqvGwS5ciaA5TVjioklDDqFrC9JUYvGejRw5i4z1dU1GRwd77rqP8y",
-                    null
-                );
-                case "/epa/authz/v1/send_authcode_sc" -> prepareVauResponse(vauServer, getFixture("SendAuthCodeSC.json"));
 
-                // TODO register fixtures
-                case "/epa/basic/api/v1/ps/entitlements" -> prepareVauResponse(vauServer, "{\"validTo\":\"2027-02-15T22:59:59Z\"}");
-                case "/epa/medication/render/v1/eml/pdf" -> prepareVauErrorResponse(vauServer, "{\"errorCode\":\"internalError\",\"errorDetail\":\"Requestor not authorized\"}");
-                default -> throw new IllegalArgumentException("Unknown path: " + path);
-            };
+            return responseMap.get(path).apply(vauServer);
+
+            // return switch (path) {
+            //     case "/epa/authz/v1/getNonce" -> prepareVauResponse(vauServer, getFixture("GetNonce.json"));
+            //     case "/epa/authz/v1/send_authorization_request_sc" -> prepareVauResponse(
+            //         vauServer,
+            //         200,
+            //         null,
+            //         "https://idp-ref.zentral.idp.splitdns.ti-dienste.de/auth?response_type=code&scope=openid+ePA-bmt-rt&nonce=GsUcyAvdAhvlorTpFyBzurZiYSaJjCdCnhB9Rgd7L4RxafFyxMDlYwHuhdR5JqE7&client_id=GEMBITMAePAe2zrxzLOR&redirect_uri=https%3A%2F%2Fe4a-rt.deine-epa.de%2F&code_challenge=CCshxJ-_K29-X3VjUfOfw2N670igmawapHepPmEfXTM&code_challenge_method=S256&state=v8XOGFO35IDqvGwS5ciaA5TVjioklDDqFrC9JUYvGejRw5i4z1dU1GRwd77rqP8y",
+            //         null
+            //     );
+            //     case "/epa/authz/v1/send_authcode_sc" -> prepareVauResponse(vauServer, getFixture("SendAuthCodeSC.json"));
+            //
+            //     // TODO register fixtures
+            //     case "/epa/basic/api/v1/ps/entitlements" -> prepareVauResponse(vauServer, "{\"validTo\":\"2027-02-15T22:59:59Z\"}");
+            //     case "/epa/medication/render/v1/eml/pdf" -> prepareVauErrorResponse(vauServer, "{\"errorCode\":\"internalError\",\"errorDetail\":\"Requestor not authorized\"}");
+            //     default -> throw new IllegalArgumentException("Unknown path: " + path);
+            // };
         }
     }
 
-    private ResponseDefinition prepareVauEmptyResponse(VauServerStateMachine vauServer, int status) {
-        return prepareVauResponse(vauServer, status, null, null, null);
-    }
+    // private ResponseDefinition prepareVauEmptyResponse(VauServerStateMachine vauServer, int status) {
+    //     return prepareVauResponse(vauServer, status, null, null, null);
+    // }
+    //
+    // private ResponseDefinition prepareVauResponse(VauServerStateMachine vauServer, String payload) {
+    //     return prepareVauResponse(vauServer, 200, payload, null, null);
+    // }
+    //
+    // private ResponseDefinition prepareVauErrorResponse(VauServerStateMachine vauServer, String error) {
+    //     return prepareVauResponse(vauServer, 200, error, null, error);
+    // }
 
-    private ResponseDefinition prepareVauResponse(VauServerStateMachine vauServer, String payload) {
-        return prepareVauResponse(vauServer, 200, payload, null, null);
-    }
-
-    private ResponseDefinition prepareVauErrorResponse(VauServerStateMachine vauServer, String error) {
-        return prepareVauResponse(vauServer, 200, error, null, error);
+    private ResponseDefinition prepareVauResponse(VauServerStateMachine vauServer, CallInfo callInfo) {
+        return prepareVauResponse(
+            vauServer,
+            callInfo.status,
+            callInfo.payload,
+            callInfo.innerHeaders,
+            callInfo.errorHeader
+        );
     }
 
     private ResponseDefinition prepareVauResponse(
         VauServerStateMachine vauServer,
         int status,
         String payload,
-        String location,
+        List<Pair<String, String>> innerHeaders,
         String errorHeader
     ) {
         List<Pair<String, String>> headers = new ArrayList<>();
@@ -124,9 +155,7 @@ public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
             headers.add(Pair.of(CONTENT_TYPE, "application/json"));
             headers.add(Pair.of(CONTENT_LENGTH, String.valueOf(bytes.length)));
         }
-        if (location != null) {
-            headers.add(Pair.of(LOCATION, location));
-        }
+        headers.addAll(innerHeaders);
         HttpParcel httpParcel = new HttpParcel("HTTP/1.1 200 OK", headers, bytes);
         byte[] innerResponse = httpParcel.toBytes();
         byte[] vauMessage = vauServer.encryptVauMessage(innerResponse);

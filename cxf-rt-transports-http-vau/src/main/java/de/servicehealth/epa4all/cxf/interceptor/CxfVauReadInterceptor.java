@@ -50,11 +50,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             String vauCid = (String) message.getExchange().get(VAU_CID);
             byte[] vauPayload = inputStream.readAllBytes();
 
-            // TODO - ErrorType
-
-            VauResponse vauResponse = vauResponseReader.read(
-                vauCid, responseCode, getProtocolHeaders(message), vauPayload
-            );
+            VauResponse vauResponse = vauResponseReader.read(vauCid, responseCode, getProtocolHeaders(message), vauPayload);
             restoreHeaders(vauResponse, message, Set.of(LOCATION, CONTENT_TYPE, CONTENT_LENGTH));
             String error = vauResponse.error();
             if (error != null) {

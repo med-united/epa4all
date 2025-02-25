@@ -16,33 +16,43 @@ import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
-import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage1Transformer;
-import de.servicehealth.epa4all.integration.bc.wiremock.VauMessage3Transformer;
+import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
+import de.servicehealth.epa4all.integration.bc.wiremock.setup.VauMessage1Transformer;
+import de.servicehealth.epa4all.integration.bc.wiremock.setup.VauMessage3Transformer;
 import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
+import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
+import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
+import de.servicehealth.registry.BeanRegistry;
+import de.servicehealth.vau.VauFacade;
 import io.netty.channel.embedded.EmbeddedChannel;
+import io.quarkus.test.junit.QuarkusMock;
 import jakarta.inject.Inject;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -54,9 +64,13 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.common.ResourceUtil.getResource;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static de.servicehealth.epa4all.common.TestUtils.WIREMOCK;
+import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.getFixture;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
@@ -79,13 +93,25 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     ClientFactory clientFactory;
 
     @Inject
+    protected BeanRegistry registry;
+
+    @Inject
     protected EventMapper eventMapper;
 
     @Inject
     protected EpaCallGuard epaCallGuard;
 
     @Inject
+    protected WebdavConfig webdavConfig;
+
+    @Inject
     protected FeatureConfig featureConfig;
+
+    @Inject
+    protected FolderService folderService;
+
+    @Inject
+    protected VauNpProvider vauNpProvider;
 
     @Inject
     ServicePortProvider servicePortProvider;
@@ -115,14 +141,15 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     @Inject
     protected KonnektorDefaultConfig konnektorDefaultConfig;
 
-
-    protected File configFolder = getResourcePath("wiremock").toFile();
-    
     @Inject
     protected EpaMultiService epaMultiService;
-    
+
+    protected static Path tempDir;
+
     @BeforeAll
-    public static void beforeAll() {
+    public static void beforeAll() throws Exception {
+        tempDir = Files.createTempDirectory(UUID.randomUUID().toString());
+
         System.setProperty(
             "javax.xml.transform.TransformerFactory",
             "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl"
@@ -151,14 +178,24 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         if (wiremock != null) {
             wiremock.stop();
         }
+        tempDir.toFile().delete();
     }
 
     @BeforeEach
     public void beforeEach() {
         clientFactory.onStart();
+        mockWebdavConfig(tempDir.toFile());
     }
 
-    protected void prepareVauStubs() {
+    @AfterEach
+    public void afterEach() {
+        registry.getInstances(VauFacade.class).forEach(registry::unregister);
+        deleteFiles(tempDir.toFile().listFiles());
+        QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
+        QuarkusMock.installMockForType(folderService, FolderService.class);
+    }
+
+    protected void prepareVauStubs(List<Pair<String, CallInfo>> responseFuncs) {
         epaMultiService.onStart();
         epaMultiService.getEpaBackendMap().forEach((backend, epaApi) -> {
             epaApi.getVauFacade().getEmptyClients().forEach(vc -> {
@@ -191,6 +228,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
                 }
             });
         });
+        responseFuncs.forEach(p-> vauMessage3Transformer.registerResponseFunc(p.getKey(), p.getValue()));
     }
 
     protected void prepareInformationStubs(int status) {
@@ -286,6 +324,13 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
         channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue, egkHandle));
         channel.pipeline().fireChannelReadComplete();
+    }
+
+    protected static FeatureConfig mockFeatureConfig(boolean externalPnw) {
+        FeatureConfig featureConfigMock = mock(FeatureConfig.class);
+        when(featureConfigMock.isExternalPnwEnabled()).thenReturn(externalPnw);
+        QuarkusMock.installMockForType(featureConfigMock, FeatureConfig.class);
+        return featureConfigMock;
     }
 
     protected DecodeResult decode(

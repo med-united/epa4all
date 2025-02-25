@@ -37,7 +37,7 @@ public abstract class AbstractJsonbReader implements MessageBodyReader {
             );
     }
 
-    protected byte[] getBytes(InputStream entityStream, MultivaluedMap httpHeaders) throws IOException {
+    protected byte[] getBytes(InputStream entityStream, MultivaluedMap httpHeaders) throws VauException, IOException {
         return entityStream.readAllBytes();
     }
 
@@ -58,6 +58,10 @@ public abstract class AbstractJsonbReader implements MessageBodyReader {
                 }
                 return build.fromJson(payload, type);
             }
+        } catch (IOException e) {
+            throw e;
+        } catch (VauException e) {
+            throw new IOException(e);
         } catch (Exception e) {
             throw new IOException(e.getMessage());
         }
