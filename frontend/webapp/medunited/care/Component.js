@@ -108,7 +108,8 @@ sap.ui.define([
 				let mParameters = this._buildParameters(this.iLength);
 				let fnSuccess = function (oData) {
 					if (oData.total === undefined) {
-						throw new Error("FHIR Server error: The \"total\" property is missing in the response for the requested FHIR resource " + this.sPath);
+						oData.total = oData?.entry?.length;
+						// throw new Error("FHIR Server error: The \"total\" property is missing in the response for the requested FHIR resource " + this.sPath);
 					}
 					this.bDirectCallPending = false;
 					if (!this.aKeys) {
@@ -118,6 +119,14 @@ sap.ui.define([
 						iStartIndex = this.aKeys.length;
 					}
 					if (oData.entry && oData.entry.length) {
+						let oOtherResources = oData.entry.filter(entry => entry.resource.resourceType != this.sPath.substring(1));
+						for(let oOtherResource of oOtherResources) {
+							if(!(oOtherResource.resource.resourceType in this.oModel.oData)) {
+								this.oModel.oData[oOtherResource.resource.resourceType] = {};
+							}
+							this.oModel.oData[oOtherResource.resource.resourceType][oOtherResource.resource.id] = oOtherResource.resource;
+						}
+						oData.entry = oData.entry.filter(entry => entry.resource.resourceType == this.sPath.substring(1));
 						let oResource;
 						let oBindingInfo = this.oModel.getBindingInfo(this.sPath, this.oContext, this.bUnique);
 						let sBindingResType = oBindingInfo.getResourceType();

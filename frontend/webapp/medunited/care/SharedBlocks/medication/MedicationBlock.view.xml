@@ -21,12 +21,6 @@
             <Column width="10%" importance="High">
                 <Text text="{i18n>columnLabelMedicationDosage}" />
             </Column>
-            <Column width="12%" importance="Medium">
-                <Text text="{i18n>columnLabelPractitioner}" />
-            </Column>
-            <Column width="12%" importance="Low">
-                <Text text="{i18n>columnLabelOrganization}" />
-            </Column>
         </columns>
         <dragDropConfig>
             <dnd:DragDropInfo
@@ -38,16 +32,10 @@
         <items>
             <ColumnListItem>
                 <cells>
-                    <Input value="{fhir>code/text}" showSuggestion="true" suggest=".onSuggestMedicationName" suggestionItemSelected=".onSuggestionMedicationNameSelected" enabled="{appState>/editMode}" />
+                    <Input value="{fhir>medication/code/text}{fhir>medication/ingredient/0/itemCodeableConcept/text}" showSuggestion="true" suggest=".onSuggestMedicationName" suggestionItemSelected=".onSuggestionMedicationNameSelected" enabled="{appState>/editMode}" />
                     <DatePicker value="{path: 'fhir>authoredOn', type: 'sap.ui.model.type.Date', formatOptions: {source: {pattern: 'yyyy-MM-dd'}}}" enabled="{appState>/editMode}" />
-                    <Input value="{fhir>code/coding/0/code}" showSuggestion="true" suggest=".onSuggestPZN" suggestionItemSelected=".onSuggestionPZNSelected" enabled="{appState>/editMode}" />
+                    <Input value="{fhir>medication/code/coding/0/code}" showSuggestion="true" suggest=".onSuggestPZN" suggestionItemSelected=".onSuggestionPZNSelected" enabled="{appState>/editMode}" />
                     <Input value="{fhir>dosageInstruction/0/text}" enabled="{appState>/editMode}" />
-                    <ComboBox items="{fhir>/Practitioner}" selectedKey="{fhir>requestor/reference}" enabled="{appState>/editMode}">
-                        <core:Item key="Practitioner/{id}" text="{fhir>name/0/given/0} {fhir>name/0/family}" />
-                    </ComboBox>
-                    <ComboBox items="{fhir>/Organization}" selectedKey="{fhir>derivedFrom/0/reference}" enabled="{appState>/editMode}">
-                        <core:Item key="Organization/{id}" text="{fhir>name}" />
-                    </ComboBox>
                 </cells>
             </ColumnListItem>
         </items>

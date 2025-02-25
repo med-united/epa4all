@@ -50,52 +50,22 @@ sap.ui.define([
             this.oRouter.getRoute("patient-detail").attachPatternMatched(this.onPatientRouteMatched, this);
         },
         onDataReceivedAsureStructure: function(oEvent) {
-			/*
+			const oModel = oEvent.getSource().getModel();
             const oData = oEvent.getParameter("data");
 			if(!oData.entry || oData.entry.length == 0) {
 				return;
 			}
             let dLastDouble = 0.0;
 
-			for(let oMedicationStatement of oData.entry) {
-				if(!oMedicationStatement.resource.identifier) {
-                    oMedicationStatement.resource.identifier = [
-                        {"value":undefined}
-                    ];
+			for(let oMedicationRequest of oData.entry) {
+				if(oMedicationRequest.resource.medicationReference) {
+					// set the medication attribute to the references medication
+					oMedicationRequest.resource.medication = oModel.getProperty("/"+oMedicationRequest.resource.medicationReference.reference);
                 }
-                if(!oMedicationStatement.resource.dosage) {
-                    oMedicationStatement.resource.dosage = [
-                        {"text":undefined}
-                    ];
-                }
-                if(!oMedicationStatement.resource.extension) {
-                    oMedicationStatement.resource.extension = [
-                        {"valueString":undefined},
-                        {"valueString":undefined},
-                        {"valueDecimal":dLastDouble}
-                    ];
-                } else if(oMedicationStatement.resource.extension.length == 1) {
-                    oMedicationStatement.resource.extension.push({"valueString":undefined});
-                    oMedicationStatement.resource.extension.push({"valueDecimal":dLastDouble});
-                } else if(oMedicationStatement.resource.extension.length == 2) {
-                    oMedicationStatement.resource.extension.push({"valueDecimal":dLastDouble});
-                }
-                if(!oMedicationStatement.resource.note) {
-                    oMedicationStatement.resource.note = [
-                        {"text":undefined}
-                    ];
-                }
-                if(!oMedicationStatement.resource.informationSource) {
-                    oMedicationStatement.resource.informationSource = {"reference":undefined};
-                }
-                if(!oMedicationStatement.resource.derivedFrom) {
-                    oMedicationStatement.resource.derivedFrom = [
-                        {"reference":undefined}
-                    ];
-                }
-                dLastDouble = oMedicationStatement.resource.extension[2].valueDecimal+1;
-            }
-            this.sortMedicationBySecondExtension();*/
+			}
+                
+            // this.sortMedicationBySecondExtension();
+			oModel.checkUpdate();
         },
         onPatientRouteMatched: function (oEvent) {
             var iPatientModelOffest = oEvent.getParameter("arguments").patient;

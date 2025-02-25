@@ -88,7 +88,7 @@
                                     <medication:MedicationBlock id="medicationBlock" />
                                 </uxap:blocks>
                             </uxap:ObjectPageSubSection>
-                            <uxap:ObjectPageSubSection id="dataMatrixSubSection" title="{i18n>titleSectionMedicationDataMatrix}">
+                            <!-- uxap:ObjectPageSubSection id="dataMatrixSubSection" title="{i18n>titleSectionMedicationDataMatrix}">
                                 <uxap:ObjectPageSubSection id="informationOnDatamatrixCode" title="{i18n>informationOnTheDatamatrixCode}">
                                     <Select id="groupMedicationsInXML" forceSelection="true" selectedKey="optionJustTheMedications" change="onChangeInfoOnDatamatrixCode">
                                         <core:Item key="optionJustTheMedications" text="{i18n>optionJustTheMedications}"/>
@@ -97,7 +97,7 @@
                                     <Button id="copyXMLOfDataMatrixCode" text="{i18n>btnCopyXMLOfDataMatrixCode}" press="copyXMLOfDataMatrixCodeToClipboard"></Button>
                                 </uxap:ObjectPageSubSection>
                                 <medunited:DataMatrixCode id="medicationPlanDataMatrixCode" msg="{path: 'id', formatter: '.formatPatientDataMatrix'}" backgroundColor="#f7f7f7" />
-                            </uxap:ObjectPageSubSection>
+                            </uxap:ObjectPageSubSection -->
                         </uxap:subSections>
                     </uxap:ObjectPageSection>
                 </uxap:sections>
