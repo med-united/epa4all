@@ -13,6 +13,10 @@ import jakarta.ws.rs.QueryParam;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import java.util.Map;
 import java.util.Optional;
@@ -29,11 +33,27 @@ import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 @Path(XDS_DOCUMENT_PATH)
 public class Download extends XdsResource {
 
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "ePA XDS RetrieveDocumentSetResponseType"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
     @GET
     @Path("download/{uniqueId}")
+    @Operation(summary = "Download single document from the XDS registry")
     public RetrieveDocumentSetResponseType download(
-        @PathParam("uniqueId") String uniqueId, // value from queryAllRemoteDocsInfo response
+        @Parameter(
+            name = "uniqueId",
+            description = "Document unique identifier from query response",
+            example = "2.259532960832105435533.4853516939077959994"
+        )
+        @PathParam("uniqueId") String uniqueId,
+        @Parameter(
+            name = X_KONNEKTOR,
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
+            hidden = true
+        )
         @QueryParam(X_KONNEKTOR) String konnektor,
+        @Parameter(name = KVNR, description = "Patient KVNR", required = true)
         @QueryParam(KVNR) String kvnr
     ) throws Exception {
         EpaContext epaContext = prepareEpaContext(kvnr);

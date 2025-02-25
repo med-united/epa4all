@@ -15,14 +15,22 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import java.util.Objects;
 
 import static de.servicehealth.logging.LogContext.withMdcEx;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static de.servicehealth.vau.VauClient.X_SUBJECT;
 import static jakarta.ws.rs.core.MediaType.WILDCARD;
+import static org.eclipse.microprofile.openapi.annotations.enums.ParameterIn.PATH;
 
-@SuppressWarnings("DuplicatedCode")
+@SuppressWarnings({"DuplicatedCode", "unused"})
 @RequestScoped
 @Path("{fhirPath: fhir/.*}")
 public class Fhir extends AbstractResource {
@@ -30,15 +38,38 @@ public class Fhir extends AbstractResource {
     @Inject
     EpaCallGuard epaCallGuard;
 
+    @APIResponses({
+        @APIResponse(description = "ePA response"),
+        @APIResponse(responseCode = "400", description = "x-insurantid is missed"),
+        @APIResponse(responseCode = "429", description = "duplicated call"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
     @GET
     @Consumes(WILDCARD)
     @Produces(WILDCARD)
-    public Response proxy(
+    @Operation(summary = "Forward client's FHIR GET request to ePA")
+    public Response forward(
+        @Parameter(
+            name = "fhirPath",
+            description = "ePA fhir path (doesn't work from swagger-ui)",
+            in = PATH,
+            allowReserved = true,
+            example = "pdf/xhtml/Medication"
+        )
         @PathParam("fhirPath") String fhirPath,
         @Context UriInfo uriInfo,
         @Context HttpHeaders httpHeaders,
+        @Parameter(
+            name = X_KONNEKTOR,
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
+            hidden = true
+        )
+        @QueryParam(X_KONNEKTOR) String konnektor,
+        @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
         @QueryParam(X_INSURANT_ID) String xInsurantId,
-        @QueryParam("subject") String subject,
+        @Parameter(name = X_SUBJECT, description = "Patient KVNR (FHIR compatible)")
+        @QueryParam(X_SUBJECT) String subject,
+        @Parameter(name = "ui5", description = "Flag of partial updates (JSON Patch) usage, true/false")
         @QueryParam("ui5") String ui5
     ) throws Exception {
         if (xInsurantId == null) {
@@ -53,16 +84,40 @@ public class Fhir extends AbstractResource {
         ));
     }
 
+    @APIResponses({
+        @APIResponse(description = "ePA response"),
+        @APIResponse(responseCode = "400", description = "x-insurantid is missed"),
+        @APIResponse(responseCode = "429", description = "duplicated call"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
     @POST
     @Consumes(WILDCARD)
     @Produces(WILDCARD)
-    public Response proxy(
+    @Operation(summary = "Forward client's FHIR POST request to ePA")
+    public Response forward(
+        @Parameter(
+            name = "fhirPath",
+            description = "ePA fhir path (doesn't work from swagger-ui)",
+            in = PATH,
+            allowReserved = true,
+            example = "pdf/xhtml/Medication?_count=10&_offset=0&_total=none"
+        )
         @PathParam("fhirPath") String fhirPath,
         @Context UriInfo uriInfo,
         @Context HttpHeaders httpHeaders,
+        @Parameter(
+            name = X_KONNEKTOR,
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
+            hidden = true
+        )
+        @QueryParam(X_KONNEKTOR) String konnektor,
+        @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
         @QueryParam(X_INSURANT_ID) String xInsurantId,
-        @QueryParam("subject") String subject,
+        @Parameter(name = X_SUBJECT, description = "Patient KVNR (FHIR compatible)")
+        @QueryParam(X_SUBJECT) String subject,
+        @Parameter(name = "ui5", description = "Flag of partial updates (JSON Patch) usage, true/false")
         @QueryParam("ui5") String ui5,
+        @Parameter(description = "Payload to submit to ePA", example = "xml/pdf")
         byte[] body
     ) throws Exception {
         if (xInsurantId == null) {

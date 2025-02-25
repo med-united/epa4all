@@ -12,6 +12,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import java.util.Base64;
 
@@ -28,13 +31,23 @@ public class Vsd extends AbstractResource {
     @Inject
     VsdService vsdService;
 
-    @Deprecated
+    @APIResponses({
+        @APIResponse(responseCode = "201", description = "The patient entitlement was successfully created"),
+        @APIResponse(responseCode = "400", description = "InsurantId was not extracted"),
+        @APIResponse(responseCode = "500", description = "PZ attribute was not found or other server error")
+    })
     @POST
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.WILDCARD)
     @Path("pnw")
     public Response proxy(
+        @Parameter(
+            name = X_KONNEKTOR,
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
+            hidden = true
+        )
         @QueryParam(X_KONNEKTOR) String konnektor,
+        @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
         @QueryParam(X_INSURANT_ID) String xInsurantId,
         byte[] base64EncodedBody
     ) throws Exception {
