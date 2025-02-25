@@ -22,7 +22,7 @@
 			</f:DynamicPageTitle>
 		</f:title>
 		<f:content>
-			<Table id="patientTable" inset="false" items="{/response}" width="auto" class="sapFDynamicPageAlignContent">
+			<Table id="patientTable" inset="false" items="{/response}" width="auto" class="sapFDynamicPageAlignContent" growing="true" growingThreshold="20">
 				<columns>
 					<Column>
 						<Text text="KVNR" />

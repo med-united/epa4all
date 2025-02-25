@@ -76,13 +76,6 @@ sap.ui.define([
                 console.log("Updating WebdavModel with new telematikId:", oData.telematikId);
                 this.sServiceUrl = `/webdav/${oData.telematikId}`;
 				this.oData = undefined;
-                this.readWebdavFolder("")
-                    .then(function(oResult) {
-                        console.log("readWebdavFolder:", oResult);
-                    })
-                    .catch(function(oError) {
-                        console.error("Error loading folder:", oError);
-                    });
             }
         },
         readWebdavFolder: function(sPath = "", iStartIndex, iPageSize, aSorters, aFilters) {
@@ -121,7 +114,7 @@ sap.ui.define([
 						} else {							
 							this.addFoldersToWebDavModel(sPath, xml);
 						}
-
+						this.checkUpdate();
                         return {
                             xml: xml,
                             headers: {
