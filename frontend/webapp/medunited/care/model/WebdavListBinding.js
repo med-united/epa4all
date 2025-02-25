@@ -43,7 +43,12 @@ sap.ui.define([
 		   	});
 		   });
            this.oModel.readWebdavFolder("", skip ? skip : this.iStartIndex, top ? top : this.iPageSize, this.aSorters, this.aFilters)
-               .then(({ xml, headers }) => {
+               .then((oResponse) => {
+				   // if we do not have a response just return
+				   if(!oResponse) {
+						return;
+				   }
+				   let { xml, headers } = oResponse;
                    // this.oModel.setXML(xml);
                    console.log("heree");
                    console.log(xml);
@@ -130,6 +135,10 @@ sap.ui.define([
 		// set the length to the amount of responses in the model
 		if(this.totalCount === undefined && this.oModel.oData) {
 			iLength = this.oModel.oData.querySelectorAll("response").length;
+		}
+		if(this.totalCount === undefined && this.oModel.oData === undefined) {
+			// there is no count and the model is not initialized
+			return [];
 		}
 
 		//	Loop through known data and check whether we already have all rows loaded

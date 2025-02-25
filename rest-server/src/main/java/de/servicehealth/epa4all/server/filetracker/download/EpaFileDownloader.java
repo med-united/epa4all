@@ -45,10 +45,15 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
             log.warn(String.format("[taskId=%s] file names mismatch: %s %s", taskId, fileName, fileDownload.getFileName()));
         }
 
-        StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(mimeType, documentBytes);
         String telematikId = fileDownload.getTelematikId();
         String insurantId = fileDownload.getKvnr();
-        String folderCode = getFolderCode(structureDefinition);
+        StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(mimeType, documentBytes);
+        String folderCode = "other";
+        if(structureDefinition == null) {
+        	log.warn(String.format("No structureDefinition for %s setting folderCode to %s", mimeType, folderCode));
+        } else {
+        	folderCode = getFolderCode(structureDefinition);
+        }
 
         folderService.storeNewFile(fileDownload.getFileName(), folderCode, telematikId, insurantId, documentBytes);
         log.info(String.format("[%s/%s] downloaded successfully", folderCode, fileDownload.getFileName()));

@@ -59,7 +59,9 @@ sap.ui.define([
 			.then(buf => decoder.decode(buf))
 			.then(str => new window.DOMParser().parseFromString(str, "text/xml"))
 			.then(xml => {
-				me._addImportNode(sPath, xml);
+				if(xml) {					
+					me._addImportNode(sPath, xml);
+				}
 			});
 		},
 		_addImportNode: function(sPath, xml) {
@@ -107,14 +109,15 @@ sap.ui.define([
 
             return fetch(sUrl, { method: "PROPFIND", headers: headers })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error("response was not ok: " + response.statusText);
-                    }
 					this.fireRequestCompleted({});
+                    if (!response.ok) {
+						this.checkUpdate();
+						return;
+                    }
                     return response.text().then(xml => {
-						if(!this.oData) {
+						if(!this.oData && xml) {
 							this.setXML(xml);
-						} else {							
+						} else if(xml) {							
 							this.addFoldersToWebDavModel(sPath, xml);
 						}
 						this.checkUpdate();
@@ -129,6 +132,14 @@ sap.ui.define([
                     console.error("PROPFIND Request Error:", error);
                 });
         },
+		
+		_getObject: function() {
+			if(this.oData) {
+				return XMLModel.prototype._getObject.apply(this, arguments);
+			} else {
+				return undefined;
+			}
+		},
 		
 		addFoldersToWebDavModel: function(sPath, xml) {
 			let oResponseDocument = this.oDomParser.parseFromString(xml, "application/xml");

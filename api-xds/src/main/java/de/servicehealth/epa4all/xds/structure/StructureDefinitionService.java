@@ -20,12 +20,15 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 
 @ApplicationScoped
 public class StructureDefinitionService {
+	
+	private static Logger log = Logger.getLogger(StructureDefinitionService.class.getName());
 
     private static final DocumentBuilderFactory DOCUMENT_BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
 
@@ -71,13 +74,15 @@ public class StructureDefinitionService {
 
         File schemaFolder = new File(schemasFolderPath);
         if (!schemaFolder.exists()) {
-            throw new IllegalStateException("IG-Schema files are not found");
+            log.warning("IG-Schema files are not found");
+            return null;
         }
         File[] files = schemaFolder.listFiles(f ->
             f.exists() && f.getName().equalsIgnoreCase(schemaFileName)
         );
         if (files == null || files.length == 0) {
-            throw new IllegalStateException(String.format("IG Schema file [%s] is not found", schemaFileName));
+            log.warning(String.format("IG Schema file [%s] is not found", schemaFileName));
+            return null;
         }
         return mapper.readValue(Files.readString(files[0].toPath()), StructureDefinition.class);
     }
