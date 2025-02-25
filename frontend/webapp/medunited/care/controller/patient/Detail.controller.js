@@ -541,7 +541,7 @@ sap.ui.define([
 		},
 		onUploadDocuments: function(oEvent) {
 			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
-			fetch("../xds-document/downloadAll/?x-insurantid="+sPatientId)
+			fetch("../xds-document/uploadAll/?kvnr="+sPatientId)
 				.then(o => o.text())
 				.then((text) => {
 					MessageToast.show(text);
@@ -549,7 +549,7 @@ sap.ui.define([
 		},
 		onDownloadDocuments: function(oEvent) {
 			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
-			fetch("../sync/upload/?x-insurantid="+sPatientId)
+			fetch("../xds-document/downloadAll/?kvnr="+sPatientId)
 				.then(o => o.text())
 				.then((text) => {
 					MessageToast.show(text);
