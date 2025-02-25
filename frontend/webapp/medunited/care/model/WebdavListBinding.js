@@ -122,17 +122,14 @@ sap.ui.define([
 		}
 		if (!iLength) {
 			iLength = this.oModel.iSizeLimit;
-			if (this.bLengthFinal && this.iLength < iLength) {
-				iLength = this.iLength;
-			}
+		}
+		if (this.totalCount > 0 && this.totalCount < iLength) {
+			iLength = this.totalCount;
 		}
 
 		//	Loop through known data and check whether we already have all rows loaded
-		for (var i = iStartIndex; i < iStartIndex + iLength; i++) {
+		for (var i = iStartIndex; i < iLength; i++) {
 			// do not return more context than we have loaded from the server
-			if(this.bLengthFinal && i>this.iLength) {
-				break;
-			}
 			oContext = this.oModel.getContext('/response/' + i);
 			aContexts.push(oContext);
 		}
