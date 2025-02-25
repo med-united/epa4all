@@ -1,4 +1,4 @@
 <mvc:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:uxap="sap.uxap" xmlns:html="http://www.w3.org/1999/xhtml">
-	<PDFViewer id="pdf" source="" title="PDF Viewer" height="100%">
+	<PDFViewer id="pdf" source="" title="PDF Viewer" height="100%" isTrustedSource="true">
 	</PDFViewer>
 </mvc:View>
