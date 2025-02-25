@@ -126,6 +126,11 @@ sap.ui.define([
 		if (this.totalCount > 0 && this.totalCount < iLength) {
 			iLength = this.totalCount;
 		}
+		// if we don't know the total count
+		// set the length to the amount of responses in the model
+		if(this.totalCount === undefined && this.oModel.oData) {
+			iLength = this.oModel.oData.querySelectorAll("response").length;
+		}
 
 		//	Loop through known data and check whether we already have all rows loaded
 		for (var i = iStartIndex; i < iLength; i++) {
