@@ -14,8 +14,7 @@
 					<Title text="{i18n>pageTitlePatients}" />
 				</f:heading>
 				<f:actions>
-					<!--  <Button text="{i18n>createPatientFromBMP}" press="onPressCreatePatientFromBMP" /> -->
-					<Button type="Emphasized" text="{i18n>CreatePatient}" press="onAdd" />
+					<Button type="Emphasized" text="{i18n>CreatePatientFromKVNR}" press="onAdd" />
 				</f:actions>
 			</f:DynamicPageTitle>
 		</f:title>

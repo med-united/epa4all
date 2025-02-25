@@ -45,14 +45,20 @@ public class VsdService {
         this.epaCallGuard = epaCallGuard;
     }
 
+    public static ReadVSDResponse buildSyntheticVSDResponse() throws Exception {
+    	return buildSyntheticVSDResponse(null, null);
+    }
+    
     public static ReadVSDResponse buildSyntheticVSDResponse(String xml, byte[] bytes) throws Exception {
         ReadVSDResponse readVSDResponse = new ReadVSDResponse();
         readVSDResponse.setAllgemeineVersicherungsdaten(new byte[0]);
         readVSDResponse.setGeschuetzteVersichertendaten(new byte[0]);
         readVSDResponse.setPersoenlicheVersichertendaten(new byte[0]);
 
-        byte[] gzipBytes = xml != null ? compress(xml.getBytes()) : compress(bytes);
-        readVSDResponse.setPruefungsnachweis(gzipBytes);
+        if(bytes != null) {
+	        byte[] gzipBytes = xml != null ? compress(xml.getBytes()) : compress(bytes);
+	        readVSDResponse.setPruefungsnachweis(gzipBytes);
+        }
 
         VSDStatusType vsdStatus = new VSDStatusType();
         vsdStatus.setStatus("0");

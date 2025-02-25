@@ -96,19 +96,6 @@ sap.ui.define([
         },
         _openCreateDialog: function (oDialog, sEntityName) {
             oDialog.open();
-
-            if (sEntityName === undefined) {
-                sEntityName = this.getEntityName();
-                sEntityName = sEntityName[0].toUpperCase() + sEntityName.slice(1);
-            }
-
-            const sContextPath = this._createContextPathFromModel(sEntityName);
-            oDialog.bindElement(sContextPath);
-        },
-        _createContextPathFromModel: function (sEntityName) {
-            const oModel = this.getView().getModel();
-            const sEntityId = oModel.create(sEntityName, {}, this.getEntityName().toLowerCase() + "Details");
-            return "/" + sEntityName + "/" + sEntityId;
         },
         save: function () {
             const fnSuccess = (oData) => {
@@ -128,7 +115,7 @@ sap.ui.define([
             this.oRouter.navTo(this.getEntityName().toLowerCase() + "-master");
         },
         onCancel: function (oEvent) {
-            this.getOwnerComponent().getModel().resetChanges();
+            // this.getOwnerComponent().getModel().resetChanges();
             oEvent.getSource().getParent().close();
             this.oRouter = this.getOwnerComponent().getRouter();
             this.oRouter.navTo(this.getEntityName().toLowerCase() + "-master");

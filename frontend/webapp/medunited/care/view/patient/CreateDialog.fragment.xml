@@ -9,31 +9,8 @@
 			emptySpanS="0" columnsXL="2" columnsL="2" columnsM="2"
 			singleContainerFullSize="true">
 			<form:content>
-				<Label text="{i18n>GivenName}" />
-				<Input type="Text" value="{name/[use=official]/given/0}" />
-				<Label text="{i18n>FamilyName}" />
-				<Input type="Text" value="{name/[use=official]/family}" />
-				<Label text="{i18n>BirthDate}" />
-				<DatePicker valueFormat="YYYY-MM-dd" value="{birthDate}" />
-				<Label text="{i18n>Street}" />
-				<Input type="Text" value="{address/[use=home]/line/0}" />
-				<Label text="{i18n>PostalCode}" />
-				<Input type="Text" value="{address/[use=home]/postalCode}" />
-				<Label text="{i18n>City}" />
-				<Input type="Text" value="{address/[use=home]/city}" />
-				<Label text="{i18n>labelPatientGender}" />
-				<Select id="patientGenderSelect" forceSelection="false" selectedKey="{gender}">
-                	<core:Item key="male" text="{i18n>Male}"/>
-                	<core:Item key="female" text="{i18n>Female}"/>
-				</Select>
-				<Label text="{i18n>GeneralPractitioner}" />
-				<ComboBox id="generalPractitionerSelect" items="{/Practitioner}" selectedKey="{generalPractitioner/0/reference}">
-                	<core:Item key="Practitioner/{id}" text="{name/0/given/0} {name/0/family}" />
-            	</ComboBox>
-				<Label text="{i18n>ManagingOrganization}" />
-				<ComboBox id="defaultOrganizationSelect" items="{/Organization}" selectedKey="{managingOrganization/reference}">
-                	<core:Item key="Organization/{id}" text="{name}" />
-            	</ComboBox>
+				<Label text="{i18n>KVNR}" />
+				<Input id="kvnr" type="Text" />
 			</form:content>
 		</form:SimpleForm>
 		<beginButton>

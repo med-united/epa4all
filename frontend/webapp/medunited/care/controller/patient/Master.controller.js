@@ -105,7 +105,31 @@ sap.ui.define([
             const oObject = oFhirModel.getProperty(sObjectPath);
             return oObject.name;
         },
+		save: function(oEvent) {
+			const fnSuccess = (oData) => {
+                MessageToast.show(this.translate(this.getEntityName()) + ' ' + this.translate("msgSaveResourceSuccessful"));
+            };
 
+            const fnError = (oError, sMessage) => {
+                MessageBox.show(this.translate(this.getEntityName()) + ' ' + this.translate("msgSaveResouceFailed", [oError.statusCode, sMessage ? sMessage : oError.statusText]));
+            };
+			let sKvnr = this.byId("kvnr").getValue();
+			fetch("/vsd/kvnr?x-insurantid="+encodeURIComponent(sKvnr), {"method": "POST"})
+			.then((oResponse) => {
+				if(!oResponse.ok) {
+					oResponse.statusCode = oResponse.status;
+					oResponse.json().then((oJson) => {					
+						fnError(oResponse, oJson?.error);
+					})
+				} else {					
+					this.byId("patientTable").getBinding("items").refresh();
+					fnSuccess();
+				}
+			})
+			.catch((oError) => {
+				fnError(oError);
+			});
+		},
         onValueScanned: function (oEvent) {
 
             const mPZN2Name = {};

@@ -64,4 +64,36 @@ public class Vsd extends AbstractResource {
             return Response.status(Response.Status.CREATED).build();
         }
     }
+    
+    @APIResponses({
+        @APIResponse(responseCode = "201", description = "The patient folder was successfully created"),
+        @APIResponse(responseCode = "400", description = "InsurantId was not extracted"),
+        @APIResponse(responseCode = "500", description = "other server error")
+    })
+    @POST
+    @Consumes(MediaType.WILDCARD)
+    @Produces(MediaType.WILDCARD)
+    @Path("kvnr")
+    public Response kvnr(
+        @Parameter(
+            name = X_KONNEKTOR,
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
+            hidden = true
+        )
+        @QueryParam(X_KONNEKTOR) String konnektor,
+        @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
+        @QueryParam(X_INSURANT_ID) String xInsurantId,
+        byte[] base64EncodedBody
+    ) throws Exception {
+        ReadVSDResponse readVSDResponse = buildSyntheticVSDResponse();
+        if (xInsurantId == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity(new EpaClientError("Unable to resolve 'x-insurantid'"))
+                .build();
+        } else {
+            vsdService.saveVsdFile(telematikId, xInsurantId, readVSDResponse);
+            prepareEpaContext(xInsurantId);
+            return Response.status(Response.Status.CREATED).build();
+        }
+    }
 }
