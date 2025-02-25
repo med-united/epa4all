@@ -15,6 +15,10 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import java.util.List;
 import java.util.Map;
@@ -36,11 +40,18 @@ import static jakarta.ws.rs.core.Response.Status.OK;
 @Path("{adminPath: admin/.*}")
 public class Admin extends AbstractResource {
 
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Refresh status"),
+        @APIResponse(responseCode = "429", description = "duplicated call"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
     @POST
     @Produces(APPLICATION_JSON)
+    @Operation(description = "Refresh VAU sessions")
     public Response refreshVauSessions(
         @PathParam("adminPath") String adminPath,
         @Context UriInfo uriInfo,
+        @Parameter(name = X_BACKEND, description = "The target ePA backend of the affected VAU sessions")
         @QueryParam(X_BACKEND) String backend
     ) throws Exception {
         String query = uriInfo.getRequestUri().getQuery();
@@ -51,14 +62,22 @@ public class Admin extends AbstractResource {
         });
     }
 
+    @APIResponses({
+        @APIResponse(description = "ePA response"),
+        @APIResponse(responseCode = "429", description = "duplicated call"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
     @GET
     @Consumes(WILDCARD)
     @Produces(WILDCARD)
-    public Response proxy(
+    @Operation(summary = "Forward client's Admin GET request to ePA")
+    public Response forward(
         @PathParam("adminPath") String adminPath,
         @Context UriInfo uriInfo,
         @Context HttpHeaders httpHeaders,
+        @Parameter(name = VAU_CLIENT_UUID, description = "The identifier of the VAU session to reload, all sessions if skipped")
         @QueryParam(VAU_CLIENT_UUID) String vauClientUuid,
+        @Parameter(name = X_BACKEND, description = "The target ePA backend of the affected VAU sessions")
         @QueryParam(X_BACKEND) String backend
     ) throws Exception {
         String query = uriInfo.getRequestUri().getQuery();

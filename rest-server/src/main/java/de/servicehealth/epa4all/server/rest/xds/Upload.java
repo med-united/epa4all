@@ -10,6 +10,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import java.io.InputStream;
 import java.util.UUID;
@@ -27,16 +31,28 @@ import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 public class Upload extends XdsResource {
 
     // Based on: https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/provideandregister.xml
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Task uuid"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
     @POST
     @Consumes(MediaType.MEDIA_TYPE_WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
     @Path("upload")
+    @Operation(summary = "Upload single document XML/PDF/etc to the XDS registry")
     public String upload(
         @HeaderParam(CONTENT_TYPE) String contentType,
         @HeaderParam("Lang-Code") String languageCode,
         @HeaderParam("File-Name") String fileName,
+        @Parameter(
+            name = X_KONNEKTOR,
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
+            hidden = true
+        )
         @QueryParam(X_KONNEKTOR) String konnektor,
+        @Parameter(name = KVNR, description = "Patient KVNR", required = true)
         @QueryParam(KVNR) String kvnr,
+        @Parameter(description = "Document to submit to the XDS registry", example = "xml/pdf")
         InputStream is
     ) throws Exception {
         EpaContext epaContext = prepareEpaContext(kvnr);
