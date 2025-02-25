@@ -26,11 +26,7 @@ sap.ui.define([
 			}
 
 			var sTelematikId = localStorage.getItem("telematikId");
-            if (sTelematikId) {
-                sap.ui.getCore().getEventBus().publish("WebdavModel", "TelematikIdUpdated", {
-                    telematikId: sTelematikId
-                });
-            } else {
+            if (!sTelematikId) {
                 this.showSettingsDialog();
             }
 		},

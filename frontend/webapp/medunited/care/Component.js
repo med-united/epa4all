@@ -25,7 +25,7 @@ sap.ui.define([
 			this.fixPagingAndAggregateSameQueriesOfFhirModel();
 			UIComponent.prototype.init.apply(this, arguments);
 
-			this.getModel().setSizeLimit(25);
+			this.getModel().setSizeLimit(20);
 
 
 			let oRouter = this.getRouter();
@@ -36,7 +36,14 @@ sap.ui.define([
 			me.afterAuthenticated();
 			let oModel = new JSONModel();
 			this.setModel(oModel, "Layout");
-
+			
+			let sTelematikId = localStorage.getItem("telematikId");
+			if(sTelematikId) {		
+				sap.ui.getCore().getEventBus().publish("WebdavModel", "TelematikIdUpdated", {
+					"telematikId": sTelematikId
+				});
+			}
+			
 		},
 
 		afterAuthenticated: function () {

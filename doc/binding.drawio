@@ -1,0 +1,97 @@
+<mxfile host="65bd71144e">
+    <diagram id="hjyNIb3RL2hflCilL39r" name="ListBinding">
+        <mxGraphModel dx="1098" dy="617" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="WebDavModel" style="shape=agent;offsetSize=8;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+                    <mxGeometry x="170" y="145" width="200" height="275" as="geometry"/>
+                </mxCell>
+                <mxCell id="0.1" value="Best viewed with the &lt;a href=&quot;https://github.com/ariel-bentu/tam-drawio&quot;&gt;TAM plugin&lt;/a&gt;" style="text;html=1;shape=tamPluginMissing;" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="413.75" y="450" width="200" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="oData&lt;div&gt;(XML Document)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=34;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+                    <mxGeometry x="180" y="185" width="140" height="190" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="Table" style="shape=agent;offsetSize=8;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+                    <mxGeometry x="707.5" y="257.5" width="110" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="Items" style="shape=agent;offsetSize=8;strokeWidth=2;multiple=true;" vertex="1" parent="1">
+                    <mxGeometry x="712.5" y="292.5" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" style="edgeStyle=none;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="12">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="ListBinding" style="shape=agent;offsetSize=8;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+                    <mxGeometry x="442.5" y="211.25" width="100" height="188.75" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="580" y="277.5" width="90" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="Context" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="570" y="287.5" width="90" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="" style="shape=updateedge;endArrow=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="8">
+                    <mxGeometry width="80" height="30" relative="1" as="geometry">
+                        <mxPoint x="570" y="335" as="sourcePoint"/>
+                        <mxPoint x="650" y="335" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="10" value="" style="shape=updateedge;endArrow=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="1" source="8" target="5">
+                    <mxGeometry width="80" height="30" relative="1" as="geometry">
+                        <mxPoint x="680" y="315" as="sourcePoint"/>
+                        <mxPoint x="760" y="315" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="11" value="iLength" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="447.5" y="236.25" width="90" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="/responses/0" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="205" y="233" width="90" height="17" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="/responses/1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="205" y="256.25" width="90" height="17.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="/responses/2" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="205" y="277.5" width="90" height="17.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="" style="shape=dot3;vertical=true;connectable=0;aspect=fixed;" vertex="1" parent="1">
+                    <mxGeometry x="243" y="305" width="15" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="iStartIndex" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="447.5" y="266.25" width="90" height="23.75" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="Best example:&amp;nbsp;sap.ui.model.odata.ODataListBinding" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+                    <mxGeometry x="383.75" y="160" width="260" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="getContexts" style="shape=agent;offsetSize=8;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="450" y="325" width="85" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="iPageSize" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="447.5" y="295" width="90" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="dataRequestedEvent" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="687.5" y="10" width="130" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="dataRequestedEvent" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="687.5" y="50" width="130" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="changeEvent" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="687.5" y="90" width="130" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="requestSent" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="687.5" y="130" width="135" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="requesCompleted" style="rounded=1;whiteSpace=wrap;html=1;arcSize=60;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="687.5" y="170" width="135" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="26" value="checkUpdate" style="shape=agent;offsetSize=8;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="280" y="380" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="checkUpdate" style="shape=agent;offsetSize=8;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="452.5" y="360" width="80" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

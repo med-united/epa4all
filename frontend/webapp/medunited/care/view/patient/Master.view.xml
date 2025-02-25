@@ -1,14 +1,13 @@
-<mvc:View controllerName="medunited.care.controller.patient.Master" 
-	xmlns="sap.m" 
-	xmlns:f="sap.f" 
-	xmlns:mvc="sap.ui.core.mvc"
-	xmlns:l="sap.ui.layout.form"
-	xmlns:medunited="medunited.base.control"
-	height="100%"
-	displayBlock="true">
+<mvc:View controllerName="medunited.care.controller.patient.Master"
+		  xmlns="sap.m"
+		  xmlns:f="sap.f"
+		  xmlns:mvc="sap.ui.core.mvc"
+		  xmlns:l="sap.ui.layout.form"
+		  xmlns:medunited="medunited.base.control"
+		  height="100%"
+		  displayBlock="true">
 	<f:DynamicPage id="patientPageId"
-		toggleHeaderOnTitleClick="false">
-		<!-- DynamicPage Title -->
+				   toggleHeaderOnTitleClick="false">
 		<f:title>
 			<f:DynamicPageTitle>
 				<f:heading>
@@ -20,10 +19,8 @@
 				</f:actions>
 			</f:DynamicPageTitle>
 		</f:title>
-
-		<!-- DynamicPage Content -->
 		<f:content>
-			<Table id="patientTable" inset="false" items="{/response}" width="auto" class="sapFDynamicPageAlignContent">
+			<Table id="patientTable" inset="false" items="{/response}" width="auto" class="sapFDynamicPageAlignContent" growing="true" growingThreshold="20">
 				<columns>
 					<Column>
 						<Text text="KVNR" />
@@ -56,7 +53,7 @@
 					</cells>
 				</ColumnListItem>
 			</Table>
-			<!-- 
+			<!--
 			<Table id="patientTable" inset="false" items="{path: '/Patient',
 					sorter: { path: 'family', descending: false},
 					parameters: {
@@ -103,12 +100,13 @@
 				</items>
 			</Table> -->
 		</f:content>
-		<f:footer>
+		<!-- <f:footer>
 			<OverflowToolbar>
-				<ToolbarSpacer />
-				<Button type="Reject" text="{i18n>DeleteSelected}" press="onDeleteSelected" />
+				<ToolbarSpacer/>
+				<Button text="Previous" press="onPreviousPage" enabled="{pageModel>/hasPrevious}" visible="{pageModel>/hasPrevious}"/>
+				<Button text="Next" press="onNextPage" enabled="{pageModel>/hasNext}" visible="{pageModel>/hasNext}"/>
 			</OverflowToolbar>
-		</f:footer>
+		</f:footer> -->
 		<f:dependents>
 			<medunited:ExtScanner id="extScanner" editMode="false" type="DatamatrixCode" laser="true" tryHarder="true" valueScanned="onValueScanned" />
 		</f:dependents>
