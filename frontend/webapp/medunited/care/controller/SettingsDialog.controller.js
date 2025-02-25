@@ -11,6 +11,7 @@ sap.ui.define([
             this._loadGetCardsResponse();
             this._previousSMCBKey = null;
             this._telematikIdAvailable = !!localStorage.getItem("telematikId");
+			this.byId("cardOptionsComboBox").setSelectedKey(localStorage.getItem("iccsn"));
         },
         onSavePress: function () {
             var oKonnektorComboBox = this.byId("settingsKonnektorComboBox");
@@ -29,13 +30,9 @@ sap.ui.define([
                 return;
             }
 
-            var oSelectedItem = oSmcbComboBox.getSelectedItem();
-            if (oSelectedItem) {
-                var sSelectedIccsn = oSelectedItem.getBindingContext("comboBoxModel").getObject().iccsn;
-            }
 
             if (this._previousSMCBKey !== sSelectedSmcb) {
-                var sQueryUrl = "/telematik/id?iccsn=" + encodeURIComponent(sSelectedIccsn);
+                var sQueryUrl = "/telematik/id?iccsn=" + encodeURIComponent(sSelectedSmcb);
 
                 jQuery.ajax({
                     url: sQueryUrl,
@@ -45,6 +42,7 @@ sap.ui.define([
                         console.log("Telematik ID Response:", sRawResponse);
 
                         localStorage.setItem("telematikId", sRawResponse);
+						localStorage.setItem("iccsn", sSelectedSmcb);
 
                         sap.ui.getCore().getEventBus().publish("WebdavModel", "TelematikIdUpdated", {
                             telematikId: sRawResponse
@@ -178,39 +176,17 @@ sap.ui.define([
                 success: function (oData) {
                     var sXml = typeof oData === "string" ? oData : new XMLSerializer().serializeToString(oData);
 
-                    console.log("Raw XML Response:", sXml);
-
                     var aOptions = this._parseGetCardsResponseXmlToJson(sXml);
-                    console.log("Parsed cards Options:", aOptions);
 
                     if (aOptions.length === 0) {
                         console.warn("No SMC-B card options were found in the response.");
                     }
 
                     oGetCardsResponseModel.setData({
-                        options: aOptions,
-                        selectedKey: ""
+                        options: aOptions
                     });
                     this.getView().setModel(oGetCardsResponseModel, "comboBoxModel");
 
-                    console.log("CardsComboBox Model Data:", oGetCardsResponseModel.getData());
-
-                    var oCardsComboBox = this.byId("cardOptionsComboBox");
-                    oCardsComboBox.bindItems({
-                        path: "comboBoxModel>/options",
-                        template: new sap.ui.core.Item({
-                            key: "{comboBoxModel>key}",
-                            text: {
-                                parts: [
-                                    { path: 'comboBoxModel>key' },
-                                    { path: 'comboBoxModel>text' }
-                                ],
-                                formatter: this.formatKeyAndText
-                            }
-                        })
-                    });
-
-                    oGetCardsResponseModel.refresh();
                 }.bind(this),
                 error: function (oError) {
                     console.error("Error fetching configs:", oError);
@@ -241,9 +217,8 @@ sap.ui.define([
                 var sCardIccsn = oCard.getElementsByTagNameNS("http://ws.gematik.de/conn/CardServiceCommon/v2.0", "Iccsn")[0].textContent;
 
                 aCards.push({
-                    key: sCardHandle,
-                    text: sCardHolderName,
-                    iccsn: sCardIccsn
+                    key: sCardIccsn,
+                    text: sCardHolderName
                 });
             }
 

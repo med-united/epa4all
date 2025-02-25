@@ -5,7 +5,7 @@
         controllerName="medunited.care.controller.SettingsDialog">
     <Dialog id="settingsDialog" title="{i18n>settings}">
         <content>
-            <VBox class="sapUiSmallMarginBottom">
+            <VBox class="sapUiSmallMargin">
                 <SegmentedButton id="menuOptions" selectedKey="KonnektorOptions" selectionChange="onMenuOptionChange">
                     <layoutData>
                         <FlexItemData styleClass="sapUiSmallMarginBottom"/>
@@ -16,7 +16,7 @@
                     </items>
                 </SegmentedButton>
 
-                <VBox id="contentContainer">
+                <VBox id="contentContainer" class="sapUiSmallMargin">
                     <VBox id="konnektorOptionsContent" visible="true">
                         <Label text="{i18n>selectAKonnektor}"/>
                         <ComboBox id="settingsKonnektorComboBox" selectedKey="{konnektorComboBoxModel>/selectedKey}">
@@ -26,32 +26,23 @@
                         </ComboBox>
                     </VBox>
 
-                    <VBox id="cardOptionsContent" visible="false">
+                    <VBox id="cardOptionsContent" visible="false" class="sapUiSmallMargin">
                         <Label text="{i18n>selectAnSMCB}"/>
                         <ComboBox id="cardOptionsComboBox"
                                   placeholder="{i18n>smcbCards}"
-                                  selectedKey="{comboBoxModel>/selectedKey}"
-                                  items="{
-                                            path: 'comboBoxModel>/options'
-                                  }">
+                                  items="{comboBoxModel>/options}">
                             <core:Item key="{comboBoxModel>key}"
-                                       text="{
-                                  parts: [
-                                      {path: 'comboBoxModel>key'},
-                                      {path: 'comboBoxModel>text'}
-                                  ],
-                                  formatter: '.formatKeyAndText'
-                                }"/>
+                                       text="{comboBoxModel>text} {comboBoxModel>key}"/>
                         </ComboBox>
                     </VBox>
                 </VBox>
             </VBox>
         </content>
         <beginButton>
-            <Button text="{i18n>save}" type="Emphasized" press="onSavePress"/>
+            <Button text="{i18n>cancel}" type="Transparent" press="onCancelPress"/>
         </beginButton>
         <endButton>
-            <Button text="{i18n>cancel}" type="Transparent" press="onCancelPress"/>
+            <Button text="{i18n>save}" type="Emphasized" press="onSavePress"/>
         </endButton>
     </Dialog>
 </mvc:View>

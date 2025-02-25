@@ -135,11 +135,11 @@ sap.ui.define([
         			    new sap.m.MenuItem({
                             text: this.translate("settings"),
                             press: this.showSettingsDialog.bind(this)
-                        }),
+                        })/*,
         				new sap.m.MenuItem({
         					text: this.translate("logOut"),
         					press: this.dialogToLogOut.bind(this)
-        				})
+        				})*/
         			]
         		});
         	}

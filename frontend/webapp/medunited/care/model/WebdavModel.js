@@ -21,6 +21,7 @@ sap.ui.define([
 			// Absolute ones work {/D:response}
 			this.setNameSpace("DAV:");
 			this.setNameSpace("http://ws.gematik.de/fa/vsdm/vsd/v5.2", "vsdm");
+			this.bFirstSetOfTelematikId = true;
 			
 
 			sap.ui.getCore().getEventBus().subscribe("WebdavModel", "TelematikIdUpdated", this._onTelematikIdUpdated, this);
@@ -72,11 +73,13 @@ sap.ui.define([
 			this.updateBindings();
 		},
 		_onTelematikIdUpdated: function(sChannelId, sEventId, oData) {
-            if (oData && oData.telematikId) {
-                console.log("Updating WebdavModel with new telematikId:", oData.telematikId);
-                this.sServiceUrl = `/webdav/${oData.telematikId}`;
+            if (oData && oData.telematikId && this.bFirstSetOfTelematikId) {
+                this.bFirstSetOfTelematikId = false;
+				this.sServiceUrl = `/webdav/${oData.telematikId}`;
 				this.oData = undefined;
-            }
+            } else {
+				window.location.reload();
+			}
         },
         readWebdavFolder: function(sPath = "", iStartIndex, iPageSize, aSorters, aFilters) {
 
