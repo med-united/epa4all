@@ -46,8 +46,7 @@ public class Upload extends XdsResource {
         @HeaderParam("File-Name") String fileName,
         @Parameter(
             name = X_KONNEKTOR,
-            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
-            hidden = true
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)"
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = KVNR, description = "Patient KVNR", required = true)

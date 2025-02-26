@@ -61,8 +61,7 @@ public class Fhir extends AbstractResource {
         @Context HttpHeaders httpHeaders,
         @Parameter(
             name = X_KONNEKTOR,
-            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
-            hidden = true
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)"
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
@@ -107,8 +106,7 @@ public class Fhir extends AbstractResource {
         @Context HttpHeaders httpHeaders,
         @Parameter(
             name = X_KONNEKTOR,
-            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
-            hidden = true
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)"
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)

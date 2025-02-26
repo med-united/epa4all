@@ -41,8 +41,7 @@ public class Konnektor extends AbstractResource {
         @HeaderParam(ACCEPT) String accept,
         @Parameter(
             name = X_KONNEKTOR,
-            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
-            hidden = true
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)"
         )
         @QueryParam(X_KONNEKTOR) String konnektor
     ) {

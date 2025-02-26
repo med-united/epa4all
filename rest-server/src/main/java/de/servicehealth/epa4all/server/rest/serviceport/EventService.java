@@ -38,8 +38,7 @@ public class EventService extends AbstractResource {
     public GetCardsResponse cards(
         @Parameter(
             name = X_KONNEKTOR,
-            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
-            hidden = true
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)"
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(
@@ -64,8 +63,7 @@ public class EventService extends AbstractResource {
     public GetCardTerminalsResponse cardterminals(
         @Parameter(
             name = X_KONNEKTOR,
-            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
-            hidden = true
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)"
         )
         @QueryParam(X_KONNEKTOR) String konnektor
     ) throws Exception {
