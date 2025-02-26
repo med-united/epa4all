@@ -10,6 +10,7 @@ import jakarta.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static de.servicehealth.utils.ServerUtils.getOriginalCause;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -42,7 +43,7 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
 
     @Override
     public Response toResponse(Exception exception) {
-        log.error("Client EXCEPTION", exception);
+        log.error("Client EXCEPTION", getOriginalCause(exception));
 
         ExInfo exInfo = switch (exception) {
             case ResponseProcessingException processingException -> extractPossibleVauException(getOriginalCause(processingException));
@@ -54,13 +55,5 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
             .entity(exInfo.jsonNode == null ? new EpaClientError(exInfo.message) : exInfo.jsonNode)
             .type(APPLICATION_JSON)
             .build();
-    }
-
-    private Throwable getOriginalCause(Exception exception) {
-        Throwable cause = exception.getCause();
-        while (cause.getCause() != null) {
-            cause = cause.getCause();
-        }
-        return cause;
     }
 }

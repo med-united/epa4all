@@ -26,6 +26,7 @@ public class VauClient {
     public static final String VAU_NON_PU_TRACING = "VAU-nonPU-Tracing";
     public static final String VAU_ERROR = "VAU_ERROR";
     public static final String VAU_NO_SESSION = "VAU_NO_SESSION";
+    public static final String VAU_STATUS = "VAU_STATUS";
 
     public static final String X_INSURANT_ID = "x-insurantid";
     public static final String X_USER_AGENT = "x-useragent";

@@ -120,7 +120,9 @@ public abstract class AbstractResource {
         );
         return withMdcEx(mdcMap, () -> {
             InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
-            if (insuranceData == null && !featureConfig.isExternalPnwEnabled()) {
+
+            // todo - confirm if PNW check is needed
+            if (insuranceData == null || insuranceData.getPersoenlicheVersichertendaten() == null) {
                 insuranceData = insuranceDataService.loadInsuranceData(userRuntimeConfig, smcbHandle, telematikId, kvnr);
             }
             String insurantId = insuranceData == null ? kvnr : insuranceData.getInsurantId();

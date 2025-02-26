@@ -17,11 +17,13 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -30,6 +32,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ServerUtils {
 
+    public static final String APPLICATION_PDF = "application/pdf";
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private ServerUtils() {
@@ -90,6 +93,23 @@ public class ServerUtils {
 
     public static Date asDate(LocalDate localDate) {
         return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    public static Throwable getOriginalCause(Exception exception) {
+        Throwable cause = exception;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause;
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static List<Pair<String, String>> extractHeaders(Map<String, Object> httpHeaders, Set<String> excluded) {
+        return new ArrayList<>(httpHeaders.entrySet()
+            .stream()
+            .filter(p -> excluded.isEmpty() || excluded.stream().noneMatch(ex -> p.getKey().equalsIgnoreCase(ex)))
+            .map(p -> Pair.of(p.getKey(), String.valueOf(((List) p.getValue()).getFirst())))
+            .toList());
     }
 
     public static String getHeaderValue(List<Pair<String, String>> headers, String headerName) {

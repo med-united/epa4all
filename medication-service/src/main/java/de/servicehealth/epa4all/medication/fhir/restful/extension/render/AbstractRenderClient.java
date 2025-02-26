@@ -16,8 +16,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
+import static de.servicehealth.utils.ServerUtils.APPLICATION_PDF;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
+import static jakarta.ws.rs.core.MediaType.WILDCARD;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.CONNECTION;
 import static org.apache.http.HttpHeaders.UPGRADE;
@@ -82,7 +84,7 @@ public abstract class AbstractRenderClient implements IRenderClient {
         int total = mandatoryHeadersCount + xHeaders.size();
         Header[] headers = new Header[total];
         headers[0] = new BasicHeader(CONNECTION, "Upgrade, HTTP2-Settings");
-        headers[1] = new BasicHeader(ACCEPT, ext.equals(PDF_EXT) ? "application/pdf" : "*/*");
+        headers[1] = new BasicHeader(ACCEPT, ext.equals(PDF_EXT) ? APPLICATION_PDF : WILDCARD);
         headers[2] = new BasicHeader(UPGRADE, "h2c");
         headers[3] = new BasicHeader(USER_AGENT, "Apache-CXF/4.0.5");
         headers[4] = new BasicHeader(X_USER_AGENT, epaUserAgent); // was added to FhirProxy call in the CETPEventHandler

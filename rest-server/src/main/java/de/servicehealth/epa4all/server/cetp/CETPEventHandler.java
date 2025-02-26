@@ -19,7 +19,6 @@ import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.Response;
-import kong.unirest.core.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +39,8 @@ import static de.servicehealth.logging.LogField.SLOT;
 import static de.servicehealth.logging.LogField.SMCB_HANDLE;
 import static de.servicehealth.logging.LogField.TELEMATIKID;
 import static de.servicehealth.logging.LogField.WORKPLACE;
+import static de.servicehealth.utils.ServerUtils.APPLICATION_PDF;
+import static de.servicehealth.utils.ServerUtils.getOriginalCause;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
@@ -150,21 +151,6 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                         epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders)
                     )) {
                         byte[] bytes = response.readEntity(byte[].class);
-                        if (bytes.length < 300) {
-                            String payload = new String(bytes);
-                            JSONObject jsonObject = null;
-                            try {
-                                jsonObject = new JSONObject(payload);
-                            } catch (Exception ignored) {
-                            }
-                            if (jsonObject != null) {
-                                Object errorCodeNode = jsonObject.get("errorCode");
-                                if (errorCodeNode != null) {
-                                    log.warn("Internal framework error: JsonbReader failed");
-                                    throw new IllegalArgumentException("Error while downloading medication PDF: " + payload);
-                                }
-                            }
-                        }
                         EpaContext epaContext = new EpaContext(insurantId, backend, entitlementExpiry, insuranceData, Map.of());
                         handleDownloadResponse(bytes, ctId, telematikId, epaContext, insurantId);
                         String encodedPdf = Base64.getEncoder().encodeToString(bytes);
@@ -180,7 +166,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     KONNEKTOR, konnektorHost,
                     WORKPLACE, workplaceId
                 ), () -> {
-                    log.warn(String.format("[%s] Could not get medication PDF", correlationId), e);
+                    log.warn(String.format("[%s] Could not get medication PDF", correlationId), getOriginalCause(e));
                     String error = printException(e);
                     cardlinkClient.sendJson(
                         correlationId,
@@ -223,7 +209,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
         RetrieveDocumentSetResponseType.DocumentResponse documentResponse = new RetrieveDocumentSetResponseType.DocumentResponse();
         documentResponse.setDocument(bytes);
-        documentResponse.setMimeType("application/pdf");
+        documentResponse.setMimeType(APPLICATION_PDF);
         documentResponse.setDocumentUniqueId(fileName);
 
         epaFileDownloader.handleDownloadResponse(fileDownload, documentResponse);

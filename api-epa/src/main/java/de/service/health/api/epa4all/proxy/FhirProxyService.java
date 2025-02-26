@@ -1,11 +1,11 @@
 package de.service.health.api.epa4all.proxy;
 
 import de.service.health.api.epa4all.EpaConfig;
+import de.servicehealth.epa4all.cxf.model.FhirResponse;
 import de.servicehealth.epa4all.cxf.model.ForwardRequest;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static de.servicehealth.utils.ServerUtils.APPLICATION_PDF;
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
@@ -29,6 +30,7 @@ import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_PATCH_JSON_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_HTML;
 import static jakarta.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
@@ -87,9 +89,9 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
 
         List<Pair<String, String>> acceptHeaders;
         if (isPdf) {
-            acceptHeaders = List.of(Pair.of(ACCEPT, "application/pdf"));
+            acceptHeaders = List.of(Pair.of(ACCEPT, APPLICATION_PDF));
         } else if (isXhtml) {
-            acceptHeaders = List.of(Pair.of(ACCEPT, "text/html"));
+            acceptHeaders = List.of(Pair.of(ACCEPT, TEXT_HTML));
         } else {
             acceptHeaders = List.of(
                 Pair.of(ACCEPT_ENCODING, "gzip"),
@@ -98,21 +100,22 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
         }
         List<Pair<String, String>> contentHeaders = buildContentHeaders(body);
         ForwardRequest forwardRequest = new ForwardRequest(isGet, acceptHeaders, contentHeaders, body);
-        Response response = webClient
+        FhirResponse response = webClient
             .headers(map)
             .replacePath(fhirPath.replace("fhir", ""))
             .replaceQuery(query)
-            .post(forwardRequest);
+            .post(forwardRequest, FhirResponse.class);
 
+        Response.ResponseBuilder builder = Response.status(response.getStatus()).entity(response.getPayload());
+        response.getHeaders().forEach(p -> builder.header(p.getKey(), p.getValue()));
         if (isPdf) {
-            return Response.fromResponse(response).type("application/pdf").build();
+            builder.type(APPLICATION_PDF);
+        } else if (isXhtml) {
+            builder.type(TEXT_HTML_TYPE);
         } else {
-            // Add JSON as content type. This is needed for UI5 so it can correctly
-            // parse the data
-            MediaType type = isXhtml ? TEXT_HTML_TYPE
-                : ui5 ? APPLICATION_JSON_PATCH_JSON_TYPE : APPLICATION_JSON_TYPE;
-            return Response.fromResponse(response).type(type).build();
+            builder.type(ui5 ? APPLICATION_JSON_PATCH_JSON_TYPE : APPLICATION_JSON_TYPE);
         }
+        return builder.build();
     }
 
     @Override

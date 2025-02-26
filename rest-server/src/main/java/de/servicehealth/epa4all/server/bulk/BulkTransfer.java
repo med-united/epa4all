@@ -21,6 +21,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static de.servicehealth.utils.ServerUtils.APPLICATION_PDF;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
+
 @ApplicationScoped
 public class BulkTransfer {
 
@@ -85,9 +88,7 @@ public class BulkTransfer {
 
                 log.info(String.format("[%s] Uploading [%s/%s]", kvnr, folderName, fileName));
 
-                String contentType = fileName.toLowerCase().endsWith(".xml")
-                    ? "application/xml"
-                    : "application/pdf";
+                String contentType = fileName.toLowerCase().endsWith(".xml") ? APPLICATION_XML : APPLICATION_PDF;
                 try {
                     byte[] documentBytes = Files.readAllBytes(f.toPath());
                     String taskId = UUID.randomUUID().toString();

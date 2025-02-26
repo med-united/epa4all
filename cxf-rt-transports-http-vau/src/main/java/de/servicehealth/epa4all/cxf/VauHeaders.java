@@ -2,12 +2,12 @@ package de.servicehealth.epa4all.cxf;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static de.servicehealth.utils.ServerUtils.extractHeaders;
 import static de.servicehealth.utils.ServerUtils.findHeader;
 import static de.servicehealth.vau.VauClient.VAU_NON_PU_TRACING;
 import static de.servicehealth.vau.VauClient.VAU_NP;
@@ -24,13 +24,11 @@ public interface VauHeaders {
         return headerList == null || headerList.isEmpty() ? null : String.valueOf(headerList.getFirst());
     }
 
-    default List<Pair<String, String>> extractHeaders(Map<String, Object> httpHeaders, Set<String> excluded) {
-        return new ArrayList<>(httpHeaders.entrySet()
-            .stream()
-            .filter(p -> excluded.isEmpty() || excluded.stream().noneMatch(ex -> p.getKey().equalsIgnoreCase(ex)))
-            .map(p -> Pair.of(p.getKey(), String.valueOf(((List) p.getValue()).getFirst())))
-            .toList());
-    }
+    Map<String, String> backendMap = Map.of(
+        "localhost:443", "localhost:443",
+        "localhost:8071", "epa-as-1.dev.epa4all.de:443",
+        "localhost:8072", "epa-as-2.dev.epa4all.de:443"
+    );
 
     default List<Pair<String, String>> prepareInnerHeaders(
         Map<String, Object> httpHeaders,

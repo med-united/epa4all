@@ -8,6 +8,7 @@ import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.IdpConfig;
+import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.model.SendAuthCodeSCtype;
 import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
@@ -44,6 +45,9 @@ public class IdpClientIT {
     IdpClient idpClient;
 
     @Inject
+    VauNpProvider vauNpProvider;
+
+    @Inject
     IKonnektorClient konnektorClient;
 
     @Inject
@@ -71,6 +75,8 @@ public class IdpClientIT {
     public void testGetVauNp() throws Exception {
         EpaAPI epaAPI = epaMultiService.findEpaAPI("X110485291");
         String backend = epaAPI.getBackend();
+
+        // TODO disable vauNpProvider.onStart();
 
         VauFacade vauFacade = epaAPI.getVauFacade();
         VauClient vauClient = vauFacade.getSessionClients().getFirst();

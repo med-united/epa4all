@@ -22,6 +22,7 @@ import static de.servicehealth.utils.ServerUtils.isAuthError;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
 import static de.servicehealth.vau.VauClient.VAU_NO_SESSION;
+import static de.servicehealth.vau.VauClient.VAU_STATUS;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
@@ -51,7 +52,8 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
             byte[] vauPayload = inputStream.readAllBytes();
 
             VauResponse vauResponse = vauResponseReader.read(vauCid, responseCode, getProtocolHeaders(message), vauPayload);
-            restoreHeaders(vauResponse, message, Set.of(LOCATION, CONTENT_TYPE, CONTENT_LENGTH));
+            restoreProtocolHeaders(vauResponse, message, Set.of(LOCATION, CONTENT_TYPE, CONTENT_LENGTH));
+            putProtocolHeader(message, VAU_STATUS, vauResponse.status());
             String error = vauResponse.error();
             if (error != null) {
                 boolean noUserSession = isAuthError(error);
@@ -89,7 +91,7 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
         } 
     }
 
-    private void restoreHeaders(VauResponse vauResponse, Message message, Set<String> headersNames) {
+    private void restoreProtocolHeaders(VauResponse vauResponse, Message message, Set<String> headersNames) {
         vauResponse.headers().stream()
             .filter(p -> headersNames.stream().anyMatch(headersName -> headersName.equalsIgnoreCase(p.getKey())))
             .forEach(p -> putProtocolHeader(message, p.getKey(), p.getValue()));
