@@ -34,7 +34,7 @@ public class EventService extends AbstractResource {
     @GET
     @Produces(APPLICATION_XML)
     @Path("cards")
-    @Operation(summary = "Return cards inserted into Konnektor")
+    @Operation(summary = "Return cards attached to the Konnektor")
     public GetCardsResponse cards(
         @Parameter(
             name = X_KONNEKTOR,

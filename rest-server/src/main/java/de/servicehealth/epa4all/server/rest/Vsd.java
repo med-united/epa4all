@@ -14,6 +14,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
@@ -44,7 +45,8 @@ public class Vsd extends AbstractResource {
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.WILDCARD)
     @Path("pnw")
-    public Response proxy(
+    @Operation(summary = "Set entitlement for KVNR using PNW")
+    public Response setEntitlement(
         @Parameter(
             name = X_KONNEKTOR,
             description = "IP of the target Konnektor (can be skipped for single-tenancy)"
