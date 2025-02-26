@@ -24,12 +24,6 @@ public interface VauHeaders {
         return headerList == null || headerList.isEmpty() ? null : String.valueOf(headerList.getFirst());
     }
 
-    Map<String, String> backendMap = Map.of(
-        "localhost:443", "localhost:443",
-        "localhost:8071", "epa-as-1.dev.epa4all.de:443",
-        "localhost:8072", "epa-as-2.dev.epa4all.de:443"
-    );
-
     default List<Pair<String, String>> prepareInnerHeaders(
         Map<String, Object> httpHeaders,
         String backend,
