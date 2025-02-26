@@ -24,8 +24,6 @@ public class VsdResponseFile {
 
     private static final Logger log = LoggerFactory.getLogger(VsdResponseFile.class.getName());
 
-    public static final String UNDEFINED_PZ = "undefined";
-
     public static final String ALLGEMEINE_VERSICHERUNGSDATEN_XML = "AllgemeineVersicherungsdaten.xml";
     public static final String PERSOENLICHE_VERSICHERTENDATEN_XML = "PersoenlicheVersichertendaten.xml";
     public static final String GESCHUETZTE_VERSICHERTENDATEN_XML = "GeschuetzteVersichertendaten.xml";
@@ -87,7 +85,7 @@ public class VsdResponseFile {
     public static String extractPz(byte[] pruefungsnachweis) throws Exception {
         PruefungsnachweisNodes nodes = getPruefungsnachweisNodes(pruefungsnachweis);
         return nodes.eNode.getTextContent().equals("3") && nodes.pzNode == null
-            ? UNDEFINED_PZ
+            ? null
             : nodes.pzNode.getTextContent();
     }
 

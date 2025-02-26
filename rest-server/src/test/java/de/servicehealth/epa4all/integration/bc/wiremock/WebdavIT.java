@@ -6,13 +6,11 @@ import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
-import de.servicehealth.epa4all.server.config.WebdavConfig;
-import de.servicehealth.epa4all.server.filetracker.IFolderService;
+import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
 import de.servicehealth.epa4all.server.vsd.VsdService;
-import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
@@ -23,9 +21,6 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -35,15 +30,11 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_LIMIT;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_OFFSET;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_SORT_BY;
@@ -64,13 +55,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class WebdavIT extends AbstractWiremockTest {
 
     @Inject
-    WebdavConfig webdavConfig;
-
-    @Inject
     VsdService vsdService;
 
     @Inject
-    IFolderService folderService;
+    FolderService folderService;
 
     @Inject
     InsuranceDataService insuranceDataService;
@@ -80,24 +68,6 @@ public class WebdavIT extends AbstractWiremockTest {
 
     @Inject
     protected KonnektorDefaultConfig konnektorDefaultConfig;
-
-    private static Path tempDir;
-
-    @BeforeAll
-    public static void beforeAllLocal() throws Exception {
-        tempDir = Files.createTempDirectory(UUID.randomUUID().toString());
-    }
-
-    @BeforeEach
-    public void beforeEachLocal() {
-        mockWebdavConfig(tempDir.toFile());
-    }
-
-    @AfterEach
-    public void afterEach() {
-        deleteFiles(tempDir.toFile().listFiles());
-        QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
-    }
 
     private UCPersoenlicheVersichertendatenXML.Versicherter.Person prepareInsurantFiles(
         String telematikId,
@@ -109,7 +79,7 @@ public class WebdavIT extends AbstractWiremockTest {
         String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
         String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
 
-        String insurantId = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig, telematikId, null);
+        String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, null);
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
         UCPersoenlicheVersichertendatenXML versichertendaten = insuranceData.getPersoenlicheVersichertendaten();
         UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();

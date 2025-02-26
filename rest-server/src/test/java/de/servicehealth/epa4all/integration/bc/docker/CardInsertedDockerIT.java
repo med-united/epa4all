@@ -6,6 +6,7 @@ import de.servicehealth.epa4all.common.profile.ProxyLocalTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
+import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.junit.QuarkusMock;
@@ -81,5 +82,6 @@ public class CardInsertedDockerIT extends AbstractVsdTest {
         QuarkusMock.installMockForType(vauNpProvider, VauNpProvider.class);
         QuarkusMock.installMockForType(konnektorClient, IKonnektorClient.class);
         QuarkusMock.installMockForType(entitlementService, EntitlementService.class);
+        QuarkusMock.installMockForType(folderService, FolderService.class);
     }
 }

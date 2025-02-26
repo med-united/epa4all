@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.integration.base;
 
 import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.epa4all.server.filetracker.FolderService;
 import io.quarkus.test.junit.QuarkusMock;
 
 import java.io.File;
@@ -39,6 +40,8 @@ public class AbstractWebdavIT {
                 "local_00000000-0000-0000-0000-000000000000"
             )
         );
+
+        QuarkusMock.installMockForType(new FolderService(webdavConfig), FolderService.class);
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
         return webdavConfig;
     }

@@ -148,10 +148,8 @@ public class Fhir extends AbstractResource {
         return withMdcEx(epaContext.getMdcMap(), () -> {
             EpaAPI epaAPI = epaMultiService.findEpaAPI(epaContext.getInsurantId());
             String baseQuery = uriInfo.getRequestUri().getQuery();
-            String konnektor = userRuntimeConfig.getKonnektorHost();
-            String workplace = userRuntimeConfig.getWorkplaceId();
             return epaAPI.getFhirProxy().forward(
-                isGet, ui5, fhirPath, baseQuery, konnektor, workplace, headers, body, epaContext.getXHeaders()
+                isGet, ui5, fhirPath, baseQuery, headers, body, epaContext.getXHeaders()
             );
         });
     }

@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.rest.fileserver.prop;
 import java.util.Map;
 import java.util.Set;
 
+import static de.servicehealth.utils.ServerUtils.APPLICATION_PDF;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
@@ -11,8 +12,6 @@ import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 import static jakarta.ws.rs.core.MediaType.WILDCARD;
 
 public class MimeHelper {
-
-    public static final String APPLICATION_PDF = "application/pdf";
 
     private static final Map<String, Set<String>> MIME_MAP = Map.of(
         TEXT_PLAIN, Set.of(".txt", ".log"),

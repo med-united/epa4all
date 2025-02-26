@@ -4,7 +4,8 @@ import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
-import de.servicehealth.epa4all.cxf.provider.JsonbVauReaderProvider;
+import de.servicehealth.epa4all.cxf.provider.JsonbInnerVauReaderProvider;
+import de.servicehealth.epa4all.cxf.provider.JsonbOuterVauReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
@@ -40,8 +41,11 @@ public abstract class BaseProxyService {
     ) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
         JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade, maskedHeaders, maskedAttributes);
-        JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
-        List<Object> providers = List.of(cborWriterProvider, jsonbVauWriterProvider, jsonbVauReaderProvider);
+        JsonbInnerVauReaderProvider jsonbInnerVauReaderProvider = new JsonbInnerVauReaderProvider();
+        JsonbOuterVauReaderProvider jsonbOuterVauReaderProvider = new JsonbOuterVauReaderProvider();
+        List<Object> providers = List.of(
+            cborWriterProvider, jsonbVauWriterProvider, jsonbInnerVauReaderProvider, jsonbOuterVauReaderProvider
+        );
 
         WebClient webClient = WebClient.create(url, providers, features, null);
         HTTPConduit conduit = (HTTPConduit) webClient.getConfiguration().getConduit();

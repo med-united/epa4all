@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.ToString;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
@@ -19,7 +20,7 @@ public class EpaContext {
 
     private String insurantId;
     private String backend;
-    private boolean entitlementValid;
+    private Instant entitlementExpiry;
     private InsuranceData insuranceData;
     private Map<String, String> headers;
 

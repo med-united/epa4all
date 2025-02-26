@@ -1,6 +1,8 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
+import de.service.health.api.epa4all.EpaAPI;
+import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.rest.exception.EpaClientError;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import jakarta.enterprise.context.RequestScoped;
@@ -16,6 +18,7 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
+import java.time.Instant;
 import java.util.Base64;
 
 import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.extractInsurantId;
@@ -32,9 +35,10 @@ public class Vsd extends AbstractResource {
     VsdService vsdService;
 
     @APIResponses({
-        @APIResponse(responseCode = "201", description = "The patient entitlement was successfully created"),
+        @APIResponse(responseCode = "200", description = "The patient entitlement was successfully created"),
         @APIResponse(responseCode = "400", description = "InsurantId was not extracted"),
-        @APIResponse(responseCode = "500", description = "PZ attribute was not found or other server error")
+        @APIResponse(responseCode = "409", description = "ePA error response"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @POST
     @Consumes(MediaType.WILDCARD)
@@ -60,8 +64,13 @@ public class Vsd extends AbstractResource {
                 .build();
         } else {
             vsdService.saveVsdFile(telematikId, insurantId, readVSDResponse);
-            prepareEpaContext(insurantId);
-            return Response.status(Response.Status.CREATED).build();
+            InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
+            EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
+            String userAgent = epaConfig.getEpaUserAgent();
+            Instant entitlementExpiry = entitlementService.setEntitlement(
+                userRuntimeConfig, insuranceData, epaApi, telematikId, userAgent, smcbHandle
+            );
+            return Response.ok().entity(entitlementExpiry).build();
         }
     }
     

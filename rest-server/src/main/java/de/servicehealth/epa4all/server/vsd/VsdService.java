@@ -71,7 +71,7 @@ public class VsdService {
         return readVSDResponse;
     }
 
-    public synchronized String readVsd(
+    public synchronized String read(
         String egkHandle,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig,

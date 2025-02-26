@@ -4,10 +4,10 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.EpaMultiService;
+import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
-import de.servicehealth.epa4all.server.entitlement.AuditEvidenceException;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.epa.ResponseAction;
 import de.servicehealth.epa4all.server.idp.IdpConfig;
@@ -21,6 +21,7 @@ import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +59,9 @@ public abstract class AbstractResource {
 
     @Inject
     EpaConfig epaConfig;
+
+    @Inject
+    FeatureConfig featureConfig;
 
     @Inject
     protected EpaMultiService epaMultiService;
@@ -100,10 +104,6 @@ public abstract class AbstractResource {
         EpaContext epaContext;
         try {
             epaContext = buildEpaContext(kvnr);
-        } catch (AuditEvidenceException e) {
-            log.error(errMsg, e);
-            insuranceDataService.cleanUpInsuranceData(telematikId, kvnr);
-            throw e;
         } catch (Exception e) {
             log.error(errMsg, e instanceof ResponseProcessingException ? e.getCause() : e);
             insuranceDataService.cleanUpInsuranceData(telematikId, kvnr);
@@ -120,19 +120,20 @@ public abstract class AbstractResource {
         );
         return withMdcEx(mdcMap, () -> {
             InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
-            if (insuranceData == null) {
+
+            // todo - confirm if PNW check is needed
+            if (insuranceData == null || insuranceData.getPersoenlicheVersichertendaten() == null) {
                 insuranceData = insuranceDataService.loadInsuranceData(userRuntimeConfig, smcbHandle, telematikId, kvnr);
             }
             String insurantId = insuranceData == null ? kvnr : insuranceData.getInsurantId();
             EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
             String userAgent = epaConfig.getEpaUserAgent();
             String backend = epaApi.getBackend();
-            boolean entitlementIsSet = entitlementService.getEntitlement(
-                userRuntimeConfig, epaApi, insuranceData, userAgent, null,
-                smcbHandle, telematikId, insurantId
+            Instant entitlementExpiry = entitlementService.getEntitlementExpiry(
+                userRuntimeConfig, insuranceData, epaApi, userAgent, smcbHandle, telematikId, insurantId
             );
             Map<String, String> xHeaders = prepareXHeaders(userAgent, backend, Optional.of(insurantId));
-            return new EpaContext(insurantId, backend, entitlementIsSet, insuranceData, xHeaders);
+            return new EpaContext(insurantId, backend, entitlementExpiry, insuranceData, xHeaders);
         });
     }
 

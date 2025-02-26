@@ -147,7 +147,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
     protected VsdService mockVsdService(String kvnr) throws Exception {
         VsdService vsdServiceMock = mock(VsdService.class);
         ReadVSDResponse readVSDResponse = prepareReadVSDResponse(); // TODO
-        when(vsdServiceMock.readVsd(any(), any(), any(), any(), any())).thenReturn(kvnr);
+        when(vsdServiceMock.read(any(), any(), any(), any(), any())).thenReturn(kvnr);
         QuarkusMock.installMockForType(vsdServiceMock, VsdService.class);
         return vsdServiceMock;
     }

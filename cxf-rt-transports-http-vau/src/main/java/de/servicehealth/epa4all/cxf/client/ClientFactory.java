@@ -4,8 +4,9 @@ import de.servicehealth.epa4all.cxf.interceptor.CxfHeadersInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
+import de.servicehealth.epa4all.cxf.provider.JsonbInnerVauReaderProvider;
+import de.servicehealth.epa4all.cxf.provider.JsonbOuterVauReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbPlainReaderProvider;
-import de.servicehealth.epa4all.cxf.provider.JsonbVauReaderProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbVauWriterProvider;
 import de.servicehealth.epa4all.cxf.provider.JsonbWriterProvider;
 import de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory;
@@ -80,8 +81,11 @@ public class ClientFactory extends StartableService {
     ) throws Exception {
         CborWriterProvider cborWriterProvider = new CborWriterProvider();
         JsonbVauWriterProvider jsonbVauWriterProvider = new JsonbVauWriterProvider(vauFacade, maskedHeaders, maskedAttributes);
-        JsonbVauReaderProvider jsonbVauReaderProvider = new JsonbVauReaderProvider();
-        List<Object> providers = List.of(cborWriterProvider, jsonbVauWriterProvider, jsonbVauReaderProvider);
+        JsonbInnerVauReaderProvider jsonbInnerVauReaderProvider = new JsonbInnerVauReaderProvider();
+        JsonbOuterVauReaderProvider jsonbOuterVauReaderProvider = new JsonbOuterVauReaderProvider();
+        List<Object> providers = List.of(
+            cborWriterProvider, jsonbVauWriterProvider, jsonbInnerVauReaderProvider, jsonbOuterVauReaderProvider
+        );
         T api = JAXRSClientFactory.create(url, clazz, providers, features, null);
         initClient(
             WebClient.getConfig(api),

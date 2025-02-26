@@ -21,15 +21,12 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Base64;
 
-import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.UNDEFINED_PZ;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 @ApplicationScoped
 public class EntitlementService {
 
     private static final Logger log = LoggerFactory.getLogger(EntitlementService.class.getName());
-
-    public static final String AUDIT_EVIDENCE_NO_DEFINED = "AuditEvidence is not defined";
 
     IdpClient idpClient;
     VauNpProvider vauNpProvider;
@@ -49,81 +46,49 @@ public class EntitlementService {
         this.insuranceDataService = insuranceDataService;
     }
 
-    public boolean getEntitlement(
+    public Instant getEntitlementExpiry(
         UserRuntimeConfig runtimeConfig,
-        EpaAPI epaApi,
         InsuranceData insuranceData,
+        EpaAPI epaApi,
         String userAgent,
-        String egkHandle,
         String smcbHandle,
         String telematikId,
         String insurantId
-    ) throws Exception {
+    ) {
         try {
-            return resolveEntitlement(
-                runtimeConfig, epaApi, insuranceData, userAgent, smcbHandle, telematikId, insurantId
-            );
-        } catch (AuditEvidenceException e) {
-            log.error("AuditEvidenceException while resolveEntitlement", e);
-            insuranceDataService.cleanUpInsuranceData(telematikId, insurantId);
-            if (egkHandle == null) {
-                egkHandle = konnektorClient.getEgkHandle(runtimeConfig, insurantId);
+            Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
+            log.info("Current entitlement-expiry = {}", validTo);
+            if (validTo != null && validTo.isAfter(Instant.now())) {
+                return validTo;
             }
-            insuranceDataService.loadInsuranceDataEx(runtimeConfig, egkHandle, smcbHandle, telematikId);
-            return resolveEntitlement(
-                runtimeConfig, epaApi, insuranceData, userAgent, smcbHandle, telematikId, insurantId
-            );
-        } catch (Exception e) {
-            log.error("Error while resolveEntitlement", e);
-            return false;
-        }
-    }
-
-    public boolean resolveEntitlement(
-        UserRuntimeConfig userRuntimeConfig,
-        EpaAPI epaApi,
-        InsuranceData insuranceData,
-        String userAgent,
-        String smcbHandle,
-        String telematikId,
-        String insurantId
-    ) throws AuditEvidenceException {
-        Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
-        log.info("Current entitlement-expiry = {}", validTo);
-        if (validTo == null || validTo.isBefore(Instant.now())) {
+            if (insuranceData == null) {
+                log.info("Call setEntitlement is skipped, insuranceData == NULL");
+                return null;
+            }
             return setEntitlement(
-                userRuntimeConfig,
+                runtimeConfig,
                 insuranceData,
                 epaApi,
                 telematikId,
                 userAgent,
                 smcbHandle
             );
-        } else {
-            return true;
+        } catch (Exception e) {
+            log.error("Error while resolveEntitlement", e);
+            return null;
         }
     }
 
-    public boolean setEntitlement(
+    public Instant setEntitlement(
         UserRuntimeConfig userRuntimeConfig,
         InsuranceData insuranceData,
         EpaAPI epaAPI,
         String telematikId,
         String userAgent,
         String smcbHandle
-    ) throws AuditEvidenceException {
-        if (insuranceData == null) {
-            log.info("Call setEntitlement is skipped, insuranceData == NULL");
-            return false;
-        }
-        log.info("Call setEntitlement");
+    ) {
         String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
-        if (UNDEFINED_PZ.equalsIgnoreCase(pz)) {
-            String msg = String.format("%s for KVNR=%s, skipping the request", AUDIT_EVIDENCE_NO_DEFINED, insurantId);
-            log.error(msg);
-            throw new AuditEvidenceException(msg);
-        }
         String hcv = extractHCV(insuranceData);
         String jwt = idpClient.createEntitlementPSJWT(smcbHandle, pz, hcv, userRuntimeConfig);
 
@@ -132,17 +97,13 @@ public class EntitlementService {
 
         EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
         ValidToResponseType response = entitlementsApi.setEntitlementPs(
-            insurantId, userAgent, epaAPI.getBackend(), /*vauNp, */
+            insurantId, userAgent, epaAPI.getBackend(),
             "Apache-CXF/4.0.5", "Upgrade, HTTP2-Settings", "h2c", entitlementRequest
         );
-        if (response.getValidTo() != null) {
-            log.info("Updating local entitlement expiry with {}", response.getValidTo());
-            insuranceDataService.updateEntitlement(response.getValidTo().toInstant(), telematikId, insurantId);
-            return true;
-        } else {
-            log.info("Local entitlement expiry update failed, response.getValidTo() == NULL");
-            return false;
-        }
+        log.info("Updating local entitlement expiry with {}", response.getValidTo());
+        Instant instant = response.getValidTo().toInstant();
+        insuranceDataService.setEntitlementExpiry(instant, telematikId, insurantId);
+        return instant;
     }
 
     static synchronized String extractHCV(InsuranceData insuranceData) {

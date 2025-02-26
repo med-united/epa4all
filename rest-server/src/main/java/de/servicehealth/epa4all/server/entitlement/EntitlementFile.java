@@ -43,7 +43,7 @@ public class EntitlementFile extends MapDumpFile<String, Instant> {
         return get().get(insurantId);
     }
 
-    public void updateEntitlement(Instant validTo) {
+    public void setEntitlement(Instant validTo) {
         Map<String, Instant> map = get();
         map.put(insurantId, validTo);
         overwrite(map);

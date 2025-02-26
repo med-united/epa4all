@@ -19,10 +19,10 @@ import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.Response;
-import kong.unirest.core.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,9 +39,13 @@ import static de.servicehealth.logging.LogField.SLOT;
 import static de.servicehealth.logging.LogField.SMCB_HANDLE;
 import static de.servicehealth.logging.LogField.TELEMATIKID;
 import static de.servicehealth.logging.LogField.WORKPLACE;
+import static de.servicehealth.utils.ServerUtils.APPLICATION_PDF;
+import static de.servicehealth.utils.ServerUtils.getOriginalCause;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
+import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
+import static de.servicehealth.vau.VauClient.X_WORKPLACE;
 
 public class CETPEventHandler extends AbstractCETPEventHandler {
 
@@ -92,28 +96,23 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             .filter(p -> !p.getKey().equals("CardHolderName"))
             .map(p -> String.format("key=%s value=%s", p.getKey(), p.getValue())).collect(Collectors.joining(", "));
 
-        log.debug(String.format("[%s] Card inserted: params: %s", correlationId, paramsStr));
+        log.info(String.format("[%s] Card inserted: params: %s", correlationId, paramsStr));
     }
 
     @Override
     protected void processEvent(IUserConfigurations configurations, Map<String, String> paramsMap) {
         String correlationId = UUID.randomUUID().toString();
-
-        log.info("%s event received, slot=%s, ctId=%s, iccsn=%s, correlationId=%s".formatted(
-            getTopicName(),
-            paramsMap.getOrDefault("SlotID", "NoSlotIDProvided"),
-            paramsMap.getOrDefault("CtID", "NoCtIDProvided"),
-            paramsMap.getOrDefault("ICCSN", "NoICCSNProvided"),
-            correlationId
-        ));
+        logCardInsertedEvent(paramsMap, correlationId);
+        if (featureConfig.isExternalPnwEnabled()) {
+            log.warn("External PNW is enabled, skipping CARD/INSERTED event processing");
+            return;
+        }
 
         boolean hasEGK = "EGK".equalsIgnoreCase(paramsMap.get("CardType"));
         boolean hasCardHandle = paramsMap.containsKey("CardHandle");
         boolean hasSlotID = paramsMap.containsKey("SlotID");
         boolean hasCtID = paramsMap.containsKey("CtID");
         if (hasEGK && hasCardHandle && hasSlotID && hasCtID) {
-            logCardInsertedEvent(paramsMap, correlationId);
-
             String iccsn = paramsMap.get("ICCSN");
             String ctId = paramsMap.get("CtID");
             Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
@@ -135,14 +134,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 ), () -> {
                     InsuranceData insuranceData = insuranceDataService.getData(telematikId, egkHandle, runtimeConfig);
                     if (insuranceData == null) {
-                        if (featureConfig.isExternalPnwEnabled()) {
-                            log.warn(String.format(
-                                "PNW is not found for EGK=%s, ReadVSD is disabled, use external PNW call", egkHandle
-                            ));
-                            return;
-                        } else {
-                            insuranceData = insuranceDataService.loadInsuranceDataEx(runtimeConfig, egkHandle, smcbHandle, telematikId);
-                        }
+                        insuranceData = insuranceDataService.loadInsuranceDataEx(runtimeConfig, egkHandle, smcbHandle, telematikId);
                     }
                     if (insuranceData == null) {
                         throw new IllegalStateException("Unable to read InsuranceData after VSD call");
@@ -151,31 +143,15 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
                     String backend = epaApi.getBackend();
 
-                    entitlementService.getEntitlement(
-                        runtimeConfig, epaApi, insuranceData, userAgent, egkHandle,
-                        smcbHandle, telematikId, insurantId
+                    Instant entitlementExpiry = entitlementService.getEntitlementExpiry(
+                        runtimeConfig, insuranceData, epaApi, userAgent, smcbHandle, telematikId, insurantId
                     );
-                    Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId);
+                    Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, konnektorHost, workplaceId);
                     try (Response response = epaCallGuard.callAndRetry(backend, () ->
-                        epaApi.getFhirProxy().forwardGet("fhir/pdf", konnektorHost, workplaceId, xHeaders)
+                        epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders)
                     )) {
                         byte[] bytes = response.readEntity(byte[].class);
-                        if (bytes.length < 300) {
-                            String payload = new String(bytes);
-                            JSONObject jsonObject = null;
-                            try {
-                                jsonObject = new JSONObject(payload);
-                            } catch (Exception ignored) {
-                            }
-                            if (jsonObject != null) {
-                                Object errorCodeNode = jsonObject.get("errorCode");
-                                if (errorCodeNode != null) {
-                                    log.warn("Internal framework error: JsonbReader failed");
-                                    throw new IllegalArgumentException("Error while downloading medication PDF: " + payload);
-                                }
-                            }
-                        }
-                        EpaContext epaContext = new EpaContext(insurantId, backend, true, insuranceData, Map.of());
+                        EpaContext epaContext = new EpaContext(insurantId, backend, entitlementExpiry, insuranceData, Map.of());
                         handleDownloadResponse(bytes, ctId, telematikId, epaContext, insurantId);
                         String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                         Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
@@ -190,7 +166,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     KONNEKTOR, konnektorHost,
                     WORKPLACE, workplaceId
                 ), () -> {
-                    log.warn(String.format("[%s] Could not get medication PDF", correlationId), e);
+                    log.warn(String.format("[%s] Could not get medication PDF", correlationId), getOriginalCause(e));
                     String error = printException(e);
                     cardlinkClient.sendJson(
                         correlationId,
@@ -206,10 +182,12 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         }
     }
 
-    private Map<String, String> prepareXHeaders(EpaAPI epaApi, String insurantId) {
+    private Map<String, String> prepareXHeaders(EpaAPI epaApi, String insurantId, String konnektorHost, String workplaceId) {
         String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
         String epaBackend = epaApi.getBackend();
         return new HashMap<>(Map.of(
+            X_KONNEKTOR, konnektorHost,
+            X_WORKPLACE, workplaceId,
             X_INSURANT_ID, insurantId,
             X_BACKEND, epaBackend,
             X_USER_AGENT, userAgent
@@ -231,7 +209,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
 
         RetrieveDocumentSetResponseType.DocumentResponse documentResponse = new RetrieveDocumentSetResponseType.DocumentResponse();
         documentResponse.setDocument(bytes);
-        documentResponse.setMimeType("application/pdf");
+        documentResponse.setMimeType(APPLICATION_PDF);
         documentResponse.setDocumentUniqueId(fileName);
 
         epaFileDownloader.handleDownloadResponse(fileDownload, documentResponse);

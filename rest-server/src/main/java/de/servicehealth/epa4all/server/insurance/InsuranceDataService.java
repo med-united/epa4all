@@ -43,7 +43,7 @@ public class InsuranceDataService {
         String telematikId
     ) throws Exception {
         String kvnr = getKvnr(egkHandle, runtimeConfig);
-        String insurantId = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig, telematikId, kvnr);
+        String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, kvnr);
         return getData(telematikId, insurantId);
     }
 
@@ -55,7 +55,7 @@ public class InsuranceDataService {
     ) {
         try {
             String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
-            String insurantId = vsdService.readVsd(egkHandle, smcbHandle, runtimeConfig, telematikId, kvnr);
+            String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, kvnr);
             return getData(telematikId, insurantId);
         } catch (Exception e) {
             log.error("Error while get InsuranceData", e);
@@ -102,10 +102,10 @@ public class InsuranceDataService {
         }
     }
 
-    public void updateEntitlement(Instant validTo, String telematikId, String kvnr) {
+    public void setEntitlementExpiry(Instant validTo, String telematikId, String kvnr) {
         try {
             File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-            new EntitlementFile(localFolder, kvnr).updateEntitlement(validTo);
+            new EntitlementFile(localFolder, kvnr).setEntitlement(validTo);
         } catch (Exception e) {
             log.error("Error while updateEntitlement", e);
         }

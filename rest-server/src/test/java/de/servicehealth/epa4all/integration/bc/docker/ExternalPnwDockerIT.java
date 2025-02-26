@@ -8,6 +8,7 @@ import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
+import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
@@ -92,7 +93,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
 
             EntitlementService entitlementServiceMock = mock(EntitlementService.class);
             doAnswer((Answer<Void>) invocation -> {
-                insuranceDataService.updateEntitlement(Instant.now(), telematikId, kvnr);
+                insuranceDataService.setEntitlementExpiry(Instant.now(), telematikId, kvnr);
                 return null;
             }).when(entitlementServiceMock).setEntitlement(any(), any(), any(), any(), any(), any());
             QuarkusMock.installMockForType(entitlementServiceMock, EntitlementService.class);
@@ -131,5 +132,6 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
         QuarkusMock.installMockForType(vauNpProvider, VauNpProvider.class);
         QuarkusMock.installMockForType(konnektorClient, IKonnektorClient.class);
         QuarkusMock.installMockForType(entitlementService, EntitlementService.class);
+        QuarkusMock.installMockForType(folderService, FolderService.class);
     }
 }

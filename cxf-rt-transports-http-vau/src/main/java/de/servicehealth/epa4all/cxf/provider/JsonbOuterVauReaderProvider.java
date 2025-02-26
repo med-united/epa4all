@@ -11,21 +11,21 @@ import java.util.List;
 
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
 
-public class JsonbVauReaderProvider extends AbstractJsonbReader {
+public class JsonbOuterVauReaderProvider extends AbstractJsonbReader {
 
     @Override
     public boolean isReadable(Class type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return mediaType.getSubtype().contains("json");
+        return mediaType.getSubtype().contains("cbor");
     }
 
     @SuppressWarnings("rawtypes")
     @Override
-    protected byte[] getBytes(InputStream entityStream, MultivaluedMap httpHeaders) throws IOException {
+    protected byte[] getBytes(InputStream entityStream, MultivaluedMap httpHeaders) throws VauException, IOException {
         List vauErrorList = (List) httpHeaders.get(VAU_ERROR);
-        if (vauErrorList != null && !vauErrorList.isEmpty()) {
-            String error = (String) vauErrorList.getFirst();
-            throw new IOException(error);
+        if (vauErrorList == null || vauErrorList.isEmpty()) {
+            throw new IOException("CBOR message was not decrypted");
         }
-        return entityStream.readAllBytes();
+        String error = (String) vauErrorList.getFirst();
+        throw new VauException(error);
     }
 }
