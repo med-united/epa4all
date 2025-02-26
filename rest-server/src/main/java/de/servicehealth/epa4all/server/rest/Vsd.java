@@ -84,7 +84,7 @@ public class Vsd extends AbstractResource {
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.WILDCARD)
     @Path("kvnr")
-    @Operation(summary = "Set entitlement for KVNR using ReadVSD")
+    @Operation(summary = "Create KVNR folder in the WebDav storage")
     public Response setEntitlement(
         @Parameter(
             name = X_KONNEKTOR,
