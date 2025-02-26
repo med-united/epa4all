@@ -94,11 +94,13 @@ public class Vsd extends AbstractResource {
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
         @QueryParam(X_INSURANT_ID) String xInsurantId
     ) throws Exception {
+        ReadVSDResponse readVSDResponse = buildSyntheticVSDResponse();
         if (xInsurantId == null) {
             return Response.status(Response.Status.BAD_REQUEST)
                 .entity(new EpaClientError("Unable to resolve 'x-insurantid'"))
                 .build();
         } else {
+            vsdService.saveVsdFile(telematikId, xInsurantId, readVSDResponse);
             prepareEpaContext(xInsurantId);
             return Response.status(Response.Status.CREATED).build();
         }
