@@ -104,7 +104,7 @@ sap.ui.define([
                 "Depth": "1",
                 "X-Offset": String(iStartIndex),
                 "X-Limit": String(iPageSize),
-                "X-Sort-By": "Earliest"
+                "X-Sort-By": "Latest"
             };
 
             return fetch(sUrl, { method: "PROPFIND", headers: headers })
