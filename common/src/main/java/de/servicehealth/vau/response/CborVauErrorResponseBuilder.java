@@ -11,6 +11,8 @@ import de.servicehealth.vau.VauClient;
 import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauResponse;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -23,6 +25,8 @@ import static org.apache.cxf.helpers.HttpHeaderHelper.CONTENT_TYPE;
 
 // 2
 public class CborVauErrorResponseBuilder extends AbstractVauResponseBuilder {
+
+    private static final Logger log = LoggerFactory.getLogger(CborVauErrorResponseBuilder.class.getName());
 
     private final VauFacade vauFacade;
     private final Gson gson;
@@ -60,7 +64,17 @@ public class CborVauErrorResponseBuilder extends AbstractVauResponseBuilder {
                 error = "Vau request read timed out";
                 return new VauResponse(responseCode, error, error.getBytes(UTF_8), headers, false);
             }
-            byte[] decryptedBytes = vauClient.decryptVauMessage(bytes);
+            byte[] decryptedBytes;
+            try {
+                decryptedBytes = vauClient.decryptVauMessage(bytes);
+            } catch (Throwable e) {
+                log.error("Error while CborVauErrorResponseBuilder.decryptVauMessage", e);
+                String errorMsg = e.getMessage();
+                if (errorMsg == null) {
+                    errorMsg = "Empty error";
+                }
+                return new VauResponse(responseCode, errorMsg, errorMsg.getBytes(UTF_8), headers, false);
+            }
             return super.build(vauCid, responseCode, headers, decryptedBytes);
         }
     }

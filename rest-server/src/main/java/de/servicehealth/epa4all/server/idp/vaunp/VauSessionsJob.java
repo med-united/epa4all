@@ -104,8 +104,8 @@ public class VauSessionsJob extends StartableService {
     }
 
     @Scheduled(
-        every = "${epa.vau.sessions.refresh.interval.sec:300s}",
-        delay = 300,
+        every = "${epa.vau.sessions.refresh.interval.sec:900s}",
+        delay = 900,
         delayUnit = SECONDS,
         concurrentExecution = SKIP
     )
