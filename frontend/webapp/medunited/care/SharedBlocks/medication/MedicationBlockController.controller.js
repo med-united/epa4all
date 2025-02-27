@@ -30,8 +30,9 @@ sap.ui.define([
                 if (oBindingContext) {
                     const sPatientId = oBindingContext.getPath().split("/")[2];
 
-                    if (sPatientId) {
+                    if (sPatientId && !oMedicationTable.__isFiltered) {
                         this.filterMedicationTableToPatient(sPatientId);
+                        oMedicationTable.__isFiltered = true;
                         oMedicationTable.detachModelContextChange(fnInitialFilteringBound);
                     }
                 }
@@ -52,15 +53,27 @@ sap.ui.define([
         onDataReceivedAsureStructure: function(oEvent) {
 			const oModel = oEvent.getSource().getModel();
             const oData = oEvent.getParameter("data");
+
 			if(!oData.entry || oData.entry.length == 0) {
 				return;
 			}
             let dLastDouble = 0.0;
 
 			for(let oMedicationRequest of oData.entry) {
+                if (oMedicationRequest.__processed) {
+                    continue;
+                }
 				if(oMedicationRequest.resource.medicationReference) {
 					// set the medication attribute to the references medication
-					oMedicationRequest.resource.medication = oModel.getProperty("/"+oMedicationRequest.resource.medicationReference.reference);
+					const sReferencePath = "/" + oMedicationRequest.resource.medicationReference.reference;
+                    const oReferencedMedication = oModel.getProperty(sReferencePath);
+
+                    if (oReferencedMedication) {
+                        oMedicationRequest.resource.medication = oReferencedMedication;
+                        oMedicationRequest.__processed = true;
+                    } else {
+                        console.warn("Referenced medication not in model yet:", sReferencePath);
+                    }
                 }
 			}
                 
