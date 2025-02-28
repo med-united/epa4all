@@ -11,7 +11,6 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.WebClient;
@@ -27,7 +26,9 @@ import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static de.servicehealth.utils.CborUtils.printCborMessage;
+import static de.servicehealth.utils.CborUtils.printCborM2;
+import static de.servicehealth.utils.CborUtils.printCborM4;
+import static de.servicehealth.utils.ServerUtils.APPLICATION_CBOR;
 import static de.servicehealth.utils.ServerUtils.decompress;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_C2S;
@@ -94,7 +95,7 @@ public class VauHandshake {
         String vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK1_S2C);
         String vauDebugCS = getHeaderValue(response, VAU_DEBUG_SK1_C2S);
         String contentLength = getHeaderValue(response, CONTENT_LENGTH);
-        printCborMessage(true, message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
+        printCborM2(vauCid, message2, vauDebugSC, vauDebugCS, contentLength);
         
         return new M2Result(message2, vauCid);
     }
@@ -118,7 +119,7 @@ public class VauHandshake {
         String vauDebugSC = getHeaderValue(response, VAU_DEBUG_SK2_S2C_INFO);
         String vauDebugCS = getHeaderValue(response, VAU_DEBUG_SK2_C2S_INFO);
         String contentLength = getHeaderValue(response, CONTENT_LENGTH);
-        printCborMessage(false, message4, null, vauDebugSC, vauDebugCS, contentLength);
+        printCborM4(message4, vauDebugSC, vauDebugCS, contentLength);
 
         vauClient.receiveMessage4(message4);
         vauClient.setVauInfo(new VauInfo(mock + vauCid, c2sAppData, s2cAppData));
@@ -155,7 +156,7 @@ public class VauHandshake {
         headers.add(CONNECTION, "Keep-Alive");
         headers.add(ACCEPT, "application/octet-stream, application/json, application/cbor, application/*+json, */*");
         headers.add(ACCEPT_ENCODING, "gzip, x-gzip, deflate");
-        headers.add(CONTENT_TYPE, "application/cbor");
+        headers.add(CONTENT_TYPE, APPLICATION_CBOR);
         headers.add(CONTENT_LENGTH, String.valueOf(length));
         headers.add(HOST, URI.create(uri).getHost());
         headers.add(X_USER_AGENT, epaUserAgent);

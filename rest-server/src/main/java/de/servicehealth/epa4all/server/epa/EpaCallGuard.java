@@ -15,8 +15,8 @@ import java.util.Objects;
 import java.util.Set;
 
 import static de.service.health.api.epa4all.EpaMultiService.EPA_RECORD_IS_NOT_FOUND;
-import static de.servicehealth.epa4all.cxf.interceptor.CxfVauReadSoapInterceptor.SOAP_INVAL_AUTH;
 import static de.servicehealth.vau.VauClient.VAU_NO_SESSION;
+import static de.servicehealth.vau.VauFacade.SOAP_INVAL_AUTH;
 
 @ApplicationScoped
 public class EpaCallGuard {

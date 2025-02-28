@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.cxf.interceptor;
 import de.servicehealth.vau.VauFacade;
 import de.servicehealth.vau.VauResponse;
 import de.servicehealth.vau.VauResponseReader;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.io.CachedOutputStream;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Set;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.getProtocolHeaders;
@@ -44,14 +46,12 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
     @Override
     public void handleMessage(Message message) throws Fault {
+        String vauCid = (String) message.getExchange().get(VAU_CID);
         try {
             InputStream inputStream = message.getContent(InputStream.class);
-            Integer responseCode = (Integer) message.get(RESPONSE_CODE);
-
-            String vauCid = (String) message.getExchange().get(VAU_CID);
-            byte[] vauPayload = inputStream.readAllBytes();
-
-            VauResponse vauResponse = vauResponseReader.read(vauCid, responseCode, getProtocolHeaders(message), vauPayload);
+            Integer outerStatusCode = (Integer) message.get(RESPONSE_CODE);
+            List<Pair<String, String>> protocolHeaders = getProtocolHeaders(message);
+            VauResponse vauResponse = vauResponseReader.read(vauCid, outerStatusCode, inputStream, protocolHeaders);
             restoreProtocolHeaders(vauResponse, message, Set.of(LOCATION, CONTENT_TYPE, CONTENT_LENGTH));
             putProtocolHeader(message, VAU_STATUS, vauResponse.status());
             String error = vauResponse.error();
@@ -75,7 +75,10 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
                 putProtocolHeader(message, CONTENT_LENGTH, payload.length);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            log.error("Error while CxfVauReadInterceptor.handle", e);
+            // No call to `vauFacade.handleVauSessionError` here because main exception
+            // handling is performed in vauResponseReader.read
             throw new Fault(e);
         }
     }

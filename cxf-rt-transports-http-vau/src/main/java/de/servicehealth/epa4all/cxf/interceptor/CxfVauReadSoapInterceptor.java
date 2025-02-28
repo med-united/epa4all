@@ -5,6 +5,7 @@ import de.servicehealth.vau.VauFacade;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.cxf.interceptor.AttachmentInInterceptor;
 import org.apache.cxf.interceptor.Fault;
+import org.apache.cxf.interceptor.security.AuthenticationException;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.slf4j.Logger;
@@ -21,7 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static de.servicehealth.utils.ServerUtils.isAuthError;
 import static de.servicehealth.vau.VauClient.VAU_CID;
+import static de.servicehealth.vau.VauFacade.SOAP_INVAL_AUTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.message.Message.RESPONSE_CODE;
@@ -30,8 +33,6 @@ import static org.apache.cxf.phase.Phase.RECEIVE;
 public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger log = LoggerFactory.getLogger(CxfVauReadSoapInterceptor.class.getName());
-
-    public static final String SOAP_INVAL_AUTH = "InvalAuth";
 
     private final VauFacade vauFacade;
 
@@ -44,15 +45,21 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
     @SuppressWarnings("unchecked")
     @Override
     public void handleMessage(Message message) throws Fault {
+        boolean decrypted = false;
+        String vauCid = (String) message.getExchange().get(VAU_CID);
         try {
             if (!message.get(RESPONSE_CODE).equals(200)) {
                 String body = new String(message.getContent(InputStream.class).readAllBytes());
-                throw new Fault(new IllegalStateException(body));
+                throw new IllegalStateException(body);
             }
-            String vauCid = (String) message.getExchange().get(VAU_CID);
             VauClient vauClient = vauFacade.find(vauCid);
+            if (vauClient == null) {
+                String error = "Vau request read timed out, vauCid not found: " + vauCid;
+                throw new IllegalStateException(error);
+            }
             byte[] encryptedVauData = readContentFromMessage(message);
             byte[] decryptedBytes = vauClient.decryptVauMessage(encryptedVauData);
+            decrypted = true;
             String fullRequest = new String(decryptedBytes);
 
             message.put("org.apache.cxf.message.Message.ENCODING", Charset.defaultCharset().toString());
@@ -64,12 +71,13 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
             }
             String body = fullRequest.substring(fullRequest.indexOf("\r\n\r\n") + 1);
             if (body.contains("RegistryError ") && body.contains(SOAP_INVAL_AUTH)) {
-                // TODO - confirm
-                // vauGateway.handleVauSession(vauCid, true, true);
+                throw new AuthenticationException(body);
             }
             InputStream is = new ByteArrayInputStream(body.getBytes());
             message.setContent(InputStream.class, is);
         } catch (Exception e) {
+            boolean noUserSession = isAuthError(e.getMessage());
+            vauFacade.handleVauSessionError(vauCid, noUserSession, decrypted);
             throw new Fault(e);
         }
     }

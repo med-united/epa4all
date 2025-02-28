@@ -6,7 +6,6 @@ import de.servicehealth.vau.VauFacade;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -45,7 +44,7 @@ public class Admin extends AbstractResource {
         @APIResponse(responseCode = "429", description = "duplicated call"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
-    @POST
+    @GET
     @Produces(APPLICATION_JSON)
     @Operation(description = "Refresh VAU sessions")
     public Response refreshVauSessions(
