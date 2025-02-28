@@ -102,11 +102,13 @@ public class VauClient {
         return hangs ? hangsTime : null;
     }
 
-    public void release() {
-        try {
-            semaphore.release();
-        } finally {
-            acquiredAt.set(0L);
+    private void release() {
+        if (acquiredAt.get() > 0) {
+            try {
+                semaphore.release();
+            } finally {
+                acquiredAt.set(0L);
+            }
         }
     }
 
@@ -131,13 +133,11 @@ public class VauClient {
     }
 
     public byte[] decryptVauMessage(byte[] bytes) {
-        try {
-            return vauStateMachine.decryptVauMessage(bytes);
-        } finally {
-            String msg = "[VauClient %s] RELEASE acquiredAt=%d permits=%d";
-            log.debug(String.format(msg, uuid, acquiredAt.get(), semaphore.availablePermits()));
-            release();
-        }
+        byte[] decryptedBytes = vauStateMachine.decryptVauMessage(bytes);
+        String msg = "[VauClient %s] RELEASE acquiredAt=%d permits=%d";
+        log.debug(String.format(msg, uuid, acquiredAt.get(), semaphore.availablePermits()));
+        release();
+        return decryptedBytes;
     }
 
     public String forceRelease(Long hangsTime) {

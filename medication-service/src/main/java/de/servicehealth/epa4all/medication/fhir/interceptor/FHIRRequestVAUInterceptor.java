@@ -36,7 +36,9 @@ import java.util.Base64;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static de.servicehealth.utils.CborUtils.printCborMessage;
+import static de.servicehealth.utils.CborUtils.printCborM2;
+import static de.servicehealth.utils.CborUtils.printCborM4;
+import static de.servicehealth.utils.ServerUtils.APPLICATION_CBOR;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_C2S;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_S2C;
@@ -204,7 +206,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         byte[] message2 = httpResponse.getEntity().getContent().readAllBytes();
 
-        printCborMessage(true, message2, vauCid, vauDebugSC, vauDebugCS, contentLength);
+        printCborM2(vauCid, message2, vauDebugSC, vauDebugCS, contentLength);
 
         byte[] message3 = vauClient.receiveMessage2(message2);
 
@@ -228,7 +230,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
 
         byte[] message4 = httpResponse.getEntity().getContent().readAllBytes();
 
-        printCborMessage(false, message4, null, vauDebugSC, vauDebugCS, contentLength);
+        printCborM4(message4, vauDebugSC, vauDebugCS, contentLength);
 
         vauClient.receiveMessage4(message4);
         vauClient.setVauInfo(vauInfo);
@@ -246,7 +248,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         headers[0] = new BasicHeader(CONNECTION, "Keep-Alive");
         headers[1] = new BasicHeader(ACCEPT, "application/octet-stream, application/json, application/cbor, application/*+json, */*");
         headers[2] = new BasicHeader(ACCEPT_ENCODING, "gzip, x-gzip, deflate");
-        headers[3] = new BasicHeader(CONTENT_TYPE, "application/cbor");
+        headers[3] = new BasicHeader(CONTENT_TYPE, APPLICATION_CBOR);
         headers[4] = new BasicHeader(HOST, host);
         headers[5] = new BasicHeader(X_USER_AGENT, epaUserAgent);
         return headers;

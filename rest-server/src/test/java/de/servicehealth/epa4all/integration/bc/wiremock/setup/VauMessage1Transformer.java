@@ -11,6 +11,7 @@ import lombok.Getter;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import static de.servicehealth.utils.ServerUtils.APPLICATION_CBOR;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_C2S;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK1_S2C;
@@ -63,7 +64,7 @@ public class VauMessage1Transformer implements ResponseDefinitionTransformerV2 {
             .withHeader(VAU_CID, "/VAU/" + uniquePath)
             .withHeader(VAU_DEBUG_SK1_S2C, "")
             .withHeader(VAU_DEBUG_SK1_C2S, "")
-            .withHeader(CONTENT_TYPE, "application/cbor")
+            .withHeader(CONTENT_TYPE, APPLICATION_CBOR)
             .withHeader(CONTENT_LENGTH, String.valueOf(message2.length))
             .withStatus(200)
             .withBody(message2)

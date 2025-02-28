@@ -1,5 +1,6 @@
 package de.servicehealth.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -33,6 +34,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ServerUtils {
 
     public static final String APPLICATION_PDF = "application/pdf";
+    public static final String APPLICATION_CBOR = "application/cbor";
+
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private ServerUtils() {
@@ -147,6 +150,14 @@ public class ServerUtils {
                 return Pair.of(h.getKey(), value);
             })
             .findFirst();
+    }
+
+    public static <T> T from(JsonNode jsonNode, Class<T> clazz) throws IOException {
+        return OBJECT_MAPPER.readerFor(clazz).readValue(jsonNode);
+    }
+
+    public static String asString(Object object) throws JsonProcessingException {
+        return OBJECT_MAPPER.writeValueAsString(object);
     }
 
     public static JsonNode extractJsonNode(Object entity) {

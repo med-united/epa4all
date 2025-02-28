@@ -21,6 +21,7 @@ import java.util.function.Function;
 
 import static de.servicehealth.epa4all.common.TestUtils.FIXTURES;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
+import static de.servicehealth.utils.ServerUtils.APPLICATION_CBOR;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_C2S_INFO;
 import static de.servicehealth.vau.VauClient.VAU_DEBUG_SK2_S2C_INFO;
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
@@ -89,7 +90,7 @@ public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
             return new ResponseDefinitionBuilder()
                 .withHeader(VAU_DEBUG_SK2_S2C_INFO, "")
                 .withHeader(VAU_DEBUG_SK2_C2S_INFO, "")
-                .withHeader(CONTENT_TYPE, "application/cbor")
+                .withHeader(CONTENT_TYPE, APPLICATION_CBOR)
                 .withHeader(CONTENT_LENGTH, String.valueOf(message4.length))
                 .withStatus(200)
                 .withBody(message4)
@@ -161,7 +162,7 @@ public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
         byte[] vauMessage = vauServer.encryptVauMessage(innerResponse);
 
         ResponseDefinitionBuilder builder = new ResponseDefinitionBuilder()
-            .withHeader(CONTENT_TYPE, "application/cbor")
+            .withHeader(CONTENT_TYPE, APPLICATION_CBOR)
             .withHeader(CONTENT_LENGTH, String.valueOf(vauMessage.length));
         if (errorHeader != null) {
             builder.withHeader(VAU_ERROR, errorHeader);

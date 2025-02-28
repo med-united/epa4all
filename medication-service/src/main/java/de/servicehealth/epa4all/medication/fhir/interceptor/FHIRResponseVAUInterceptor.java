@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
@@ -40,7 +41,7 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
 
     @Override
     public void process(HttpResponse response, HttpContext context) throws HttpException, IOException {
-        byte[] bytes = response.getEntity().getContent().readAllBytes();
+        InputStream inputStream = response.getEntity().getContent();
         List<Pair<String, String>> originHeaders = Arrays.stream(response.getAllHeaders())
             .map(h -> Pair.of(h.getName(), h.getValue()))
             .toList();
@@ -49,7 +50,7 @@ public class FHIRResponseVAUInterceptor implements HttpResponseInterceptor {
         String uri = ((HttpClientContext) context).getRequest().getRequestLine().getUri();
         String vauCid = URI.create(uri).getPath();
 
-        VauResponse vauResponse = vauResponseReader.read(vauCid, responseCode, originHeaders, bytes);
+        VauResponse vauResponse = vauResponseReader.read(vauCid, responseCode, inputStream, originHeaders);
         String error = vauResponse.error();
         if (error != null) {
             String msg = "Error while receiving DIRECT Fhir response, decrypted = " + vauResponse.decrypted() + " : " + error;

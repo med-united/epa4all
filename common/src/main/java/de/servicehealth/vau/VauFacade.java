@@ -35,12 +35,14 @@ public class VauFacade {
     public static final String NO_USER_SESSION = "no userSession";
     public static final String NOT_AUTHORIZED = "not authorized";
     public static final String ACCESS_DENIED = "accessDenied";
+    public static final String SOAP_INVAL_AUTH = "InvalAuth";
     public static final String INVAL_AUTH = "invalAuth";
 
     public static final Set<String> AUTH_ERRORS = Set.of(
         NO_USER_SESSION,
         NOT_AUTHORIZED,
         ACCESS_DENIED,
+        SOAP_INVAL_AUTH,
         INVAL_AUTH
     );
 
