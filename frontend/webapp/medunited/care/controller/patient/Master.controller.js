@@ -20,9 +20,42 @@ sap.ui.define([
 
             console.log("Patient table binding:", oBinding);
 
+            let sTelematikId = localStorage.getItem("telematikId");
 
+            if (!sTelematikId) {
+                console.error("Telematik ID is missing. Cannot establish WebSocket connection.");
+                return;
+            }
 
+            console.log("Using Telematik ID:", sTelematikId);
 
+            //const sWebSocketUrl = `wss://localhost/ws/${sTelematikId}`;
+            const sWebSocketUrl = `ws://localhost:8765`;
+
+            console.log("Connecting to WebSocket:", sWebSocketUrl);
+
+            this.oWebSocket = new WebSocket(sWebSocketUrl);
+
+            this.oWebSocket.onopen = () => {
+                console.log("WebSocket connected:", sWebSocketUrl);
+            };
+
+            this.oWebSocket.onmessage = (oEvent) => {
+                let oMessage = JSON.parse(oEvent.data);
+                console.log("WebSocket Message Received:", oMessage);
+
+                if (oMessage.type === "CARD_INSERTED") {
+                    console.log("eGK Card Inserted - Reloading Patient List");
+                    this._refreshPatientList();
+                }
+
+                if (oMessage.kvnr && oMessage.medicationPdfBase64) {
+                    this._openMedicationPlan(oMessage.kvnr, oMessage.medicationPdfBase64);
+                }
+            };
+
+            this.oWebSocket.onerror = (oError) => console.error("WebSocket error:", oError);
+            this.oWebSocket.onclose = () => console.log("WebSocket disconnected:", sWebSocketUrl);
         },
         getEntityName: function () {
             return "Patient";
@@ -375,6 +408,30 @@ sap.ui.define([
                 oModel.create("MedicationStatement", oMedicationStatement, "patientDetails");
 
             }
+        },
+        _refreshPatientList: function() {
+            console.log("started _refreshPatientList");
+
+            const oTable = this.byId("patientTable");
+            if (!oTable) {
+                console.error("Patient table not found");
+                return;
+            }
+
+            const oModel = this.getOwnerComponent().getModel();
+            if (!oModel) {
+                console.error("WebDAV model not found");
+                return;
+            }
+
+            oModel.refresh(true);
+
+            oTable.bindItems({
+                path: "/response",
+                template: oTable.getBindingInfo("items").template
+            });
+
+            console.log("finished _refreshPatientList");
         }
     });
 }, true);
