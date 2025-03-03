@@ -4,7 +4,6 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.service.health.api.epa4all.EpaAPI;
 import de.service.health.api.epa4all.EpaConfig;
 import de.service.health.api.epa4all.EpaMultiService;
-import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;
@@ -28,7 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
-import static de.servicehealth.logging.LogContext.withMdcEx;
+import static de.servicehealth.logging.LogContext.resultMdcEx;
 import static de.servicehealth.logging.LogField.INSURANT;
 import static de.servicehealth.logging.LogField.SMCB_HANDLE;
 import static de.servicehealth.logging.LogField.TELEMATIKID;
@@ -59,9 +58,6 @@ public abstract class AbstractResource {
 
     @Inject
     EpaConfig epaConfig;
-
-    @Inject
-    FeatureConfig featureConfig;
 
     @Inject
     protected EpaMultiService epaMultiService;
@@ -118,7 +114,7 @@ public abstract class AbstractResource {
             INSURANT, kvnr,
             SMCB_HANDLE, smcbHandle
         );
-        return withMdcEx(mdcMap, () -> {
+        return resultMdcEx(mdcMap, () -> {
             InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
 
             // todo - confirm if PNW check is needed

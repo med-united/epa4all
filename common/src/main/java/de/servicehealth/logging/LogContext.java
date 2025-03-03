@@ -1,14 +1,12 @@
 package de.servicehealth.logging;
 
 import com.google.common.collect.Streams;
-import de.servicehealth.utils.Action;
-import de.servicehealth.utils.ActionEx;
-import de.servicehealth.utils.ActionNr;
-import de.servicehealth.utils.ActionWrNr;
+import de.servicehealth.utils.actions.ResultAction;
+import de.servicehealth.utils.actions.ResultActionEx;
+import de.servicehealth.utils.actions.VoidAction;
+import de.servicehealth.utils.actions.VoidActionEx;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
 import java.io.Closeable;
@@ -20,8 +18,6 @@ import java.util.stream.Stream;
 
 @SuppressWarnings("resource")
 public class LogContext implements Closeable {
-
-    private static final Logger log = LoggerFactory.getLogger(LogContext.class.getName());
 
     private static final Config CONFIG = ConfigProvider.getConfig();
 
@@ -42,25 +38,25 @@ public class LogContext implements Closeable {
         ).filter(s -> !s.isEmpty()).toList()
     );
 
-    public static <T> T withMdc(Map<LogField, String> ctx, Action<T> action) {
+    public static <T> T resultMdc(Map<LogField, String> ctx, ResultAction<T> action) {
         try (LogContext ignored = new LogContext(ctx)) {
             return action.execute();
         } 
     }
 
-    public static <T> T withMdcEx(Map<LogField, String> ctx, ActionEx<T> action) throws Exception {
+    public static <T> T resultMdcEx(Map<LogField, String> ctx, ResultActionEx<T> action) throws Exception {
         try (LogContext ignored = new LogContext(ctx)) {
             return action.execute();
         }
     }
 
-    public static void withMdcNr(Map<LogField, String> ctx, ActionNr action) {
+    public static void voidMdc(Map<LogField, String> ctx, VoidAction action) {
         try (LogContext ignored = new LogContext(ctx)) {
             action.execute();
         }
     }
 
-    public static void withMdcExNr(Map<LogField, String> ctx, ActionWrNr action) throws Exception {
+    public static void voidMdcEx(Map<LogField, String> ctx, VoidActionEx action) throws Exception {
         try (LogContext ignored = new LogContext(ctx)) {
             action.execute();
         }

@@ -11,7 +11,7 @@ import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
-import io.restassured.response.ResponseBodyExtractionOptions;
+import io.restassured.path.xml.XmlPath;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
@@ -25,9 +25,9 @@ import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasXPath;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -40,7 +40,8 @@ public class ExternalPnwIT extends AbstractWiremockTest {
     private String initStubsAndHandleCardInsertedEvent(
         String kvnr,
         String validToPayload,
-        String errorHeader
+        String errorHeader,
+        int informationStatus
     ) throws Exception {
         String ctId = "cardTerminal-124";
 
@@ -56,7 +57,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
             Pair.of("/epa/basic/api/v1/ps/entitlements", callInfo)
         ));
         prepareKonnektorStubs();
-        prepareInformationStubs(204);
+        prepareInformationStubs(informationStatus);
 
         vauNpProvider.onStart();
 
@@ -80,23 +81,30 @@ public class ExternalPnwIT extends AbstractWiremockTest {
     @Test
     public void entitlementIsCreatedForExternalPnwAndCetpEventIsNotHandled() throws Exception {
         String kvnr = "X110624006";
+        String startDate = "2025-01-15T22:59:59Z";
         String validToValue = "2025-02-15T22:59:59";
         String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
-        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null);
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204);
 
         String pnw = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
 
-        given()
+        ValidatableResponse response = given()
             .body(pnw.getBytes())
             .queryParams(Map.of(
+                "startDate", startDate,
                 X_KONNEKTOR, "localhost",
-                X_INSURANT_ID, "X110624006"
+                X_INSURANT_ID, kvnr
             ))
             .when()
             .post("/vsd/pnw")
             .then()
             .statusCode(200)
-            .body(containsString(validToValue));
+            .body(hasXPath("//startDate", containsString(startDate)))
+            .body(hasXPath("//endDate", containsString(validToValue)))
+            .body(hasXPath("//kvnr", containsString(kvnr)));
+
+        XmlPath xmlPath = response.extract().xmlPath();
+        System.out.println(xmlPath.prettify());
 
         Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, kvnr);
         assertNotNull(validTo);
@@ -106,10 +114,11 @@ public class ExternalPnwIT extends AbstractWiremockTest {
     }
 
     @Test
-    public void entitlementIsNotCreatedForExternalPnwAndCetpEventIsNotHandled() throws Exception {
-        String kvnr = "X110624006";
-        String errorHeader = "{\"errorCode\":\"internalError\",\"errorDetail\":\"Internal error occurred during entitlement processing.\"}";
-        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, null, errorHeader);
+    public void entitlementIsNotSetAndKVNRFoldersAreNotCreatedAndCetpEventIsNotHandledDueToEPARecordIsNotFound() throws Exception {
+        String kvnr = "X110624007";
+        String validToValue = "2025-02-15T22:59:59";
+        String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 404);
 
         String pnw = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
 
@@ -117,17 +126,46 @@ public class ExternalPnwIT extends AbstractWiremockTest {
             .body(pnw.getBytes())
             .queryParams(Map.of(
                 X_KONNEKTOR, "localhost",
-                X_INSURANT_ID, "X110624006"
+                X_INSURANT_ID, kvnr
             ))
             .when()
             .post("/vsd/pnw")
             .then()
-            .statusCode(409);
+            .statusCode(409)
+            .body(hasXPath("//text", containsString("ePA record is not found")));
 
-        ResponseBodyExtractionOptions body = response.extract().body();
-        String json = body.jsonPath().prettify();
-        assertTrue(json.contains("internalError"));
-        System.out.println(json);
+        XmlPath xmlPath = response.extract().xmlPath();
+        System.out.println(xmlPath.prettify());
+
+        Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, kvnr);
+        assertNull(validTo);
+
+        InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
+        assertNull(insuranceData);
+    }
+
+    @Test
+    public void entitlementIsNotSetAndCetpEventIsNotHandledDueToEPAInternalError() throws Exception {
+        String kvnr = "X110624008";
+        String errorHeader = "{\"errorCode\":\"internalError\",\"errorDetail\":\"Internal error occurred during entitlement processing.\"}";
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, null, errorHeader, 204);
+
+        String pnw = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
+
+        ValidatableResponse response = given()
+            .body(pnw.getBytes())
+            .queryParams(Map.of(
+                X_KONNEKTOR, "localhost",
+                X_INSURANT_ID, kvnr
+            ))
+            .when()
+            .post("/vsd/pnw")
+            .then()
+            .statusCode(409)
+            .body(hasXPath("//text", containsString("Internal error occurred during entitlement processing")));
+
+        XmlPath xmlPath = response.extract().xmlPath();
+        System.out.println(xmlPath.prettify());
 
         Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, kvnr);
         assertNull(validTo);

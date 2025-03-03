@@ -46,7 +46,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static de.health.service.cetp.konnektorconfig.FSConfigService.CONFIG_DELIMETER;
-import static de.servicehealth.logging.LogContext.withMdcNr;
+import static de.servicehealth.logging.LogContext.voidMdc;
 import static de.servicehealth.logging.LogField.BACKEND;
 import static de.servicehealth.logging.LogField.CLIENT_UUID;
 import static de.servicehealth.logging.LogField.KONNEKTOR;
@@ -234,7 +234,7 @@ public class VauNpProvider extends StartableService {
                 WORKPLACE, info.workplaceId,
                 CLIENT_UUID, uuid
             );
-            withMdcNr(mdcMap, () -> {
+            voidMdc(mdcMap, () -> {
                 vauHandshake.get().apply(uri, vauClient);
                 // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
                 String nonce = smcBApi.getNonce(clientId, userAgent, backend, uuid).getNonce();
