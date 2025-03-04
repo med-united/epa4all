@@ -51,7 +51,6 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -68,7 +67,6 @@ import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.getFixture;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -150,10 +148,8 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     public static void beforeAll() throws Exception {
         tempDir = Files.createTempDirectory(UUID.randomUUID().toString());
 
-        System.setProperty(
-            "javax.xml.transform.TransformerFactory",
-            "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl"
-        );
+        System.setProperty("javax.xml.accessExternalDTD", "all");
+        System.setProperty("javax.xml.transform.TransformerFactory", "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl");
 
         vauMessage1Transformer = new VauMessage1Transformer(VAU_MESSAGE1_TRANSFORMER);
         vauMessage3Transformer = new VauMessage3Transformer(VAU_MESSAGE3_TRANSFORMER);

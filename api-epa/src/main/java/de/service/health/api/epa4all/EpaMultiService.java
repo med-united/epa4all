@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 
 import static de.servicehealth.epa4all.cxf.client.ClientFactory.initConduit;
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
-import static de.servicehealth.logging.LogContext.withMdc;
+import static de.servicehealth.logging.LogContext.resultMdc;
 import static de.servicehealth.logging.LogField.BACKEND;
 import static de.servicehealth.logging.LogField.INSURANT;
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
@@ -247,7 +247,7 @@ public class EpaMultiService extends StartableService {
     }
 
     private boolean hasEpaRecord(EpaAPI api, String insurantId) {
-        return withMdc(Map.of(INSURANT, insurantId, BACKEND, api.getBackend()), () -> {
+        return resultMdc(Map.of(INSURANT, insurantId, BACKEND, api.getBackend()), () -> {
             boolean result = false;
             try {
                 api.getAccountInformationApi().getRecordStatus(insurantId, epaConfig.getEpaUserAgent());

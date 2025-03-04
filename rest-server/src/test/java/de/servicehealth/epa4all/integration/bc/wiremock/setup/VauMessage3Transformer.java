@@ -100,37 +100,8 @@ public class VauMessage3Transformer implements ResponseDefinitionTransformerV2 {
             String path = httpRequest.getPath();
 
             return responseMap.get(path).apply(vauServer);
-
-            // return switch (path) {
-            //     case "/epa/authz/v1/getNonce" -> prepareVauResponse(vauServer, getFixture("GetNonce.json"));
-            //     case "/epa/authz/v1/send_authorization_request_sc" -> prepareVauResponse(
-            //         vauServer,
-            //         200,
-            //         null,
-            //         "https://idp-ref.zentral.idp.splitdns.ti-dienste.de/auth?response_type=code&scope=openid+ePA-bmt-rt&nonce=GsUcyAvdAhvlorTpFyBzurZiYSaJjCdCnhB9Rgd7L4RxafFyxMDlYwHuhdR5JqE7&client_id=GEMBITMAePAe2zrxzLOR&redirect_uri=https%3A%2F%2Fe4a-rt.deine-epa.de%2F&code_challenge=CCshxJ-_K29-X3VjUfOfw2N670igmawapHepPmEfXTM&code_challenge_method=S256&state=v8XOGFO35IDqvGwS5ciaA5TVjioklDDqFrC9JUYvGejRw5i4z1dU1GRwd77rqP8y",
-            //         null
-            //     );
-            //     case "/epa/authz/v1/send_authcode_sc" -> prepareVauResponse(vauServer, getFixture("SendAuthCodeSC.json"));
-            //
-            //     // TODO register fixtures
-            //     case "/epa/basic/api/v1/ps/entitlements" -> prepareVauResponse(vauServer, "{\"validTo\":\"2027-02-15T22:59:59Z\"}");
-            //     case "/epa/medication/render/v1/eml/pdf" -> prepareVauErrorResponse(vauServer, "{\"errorCode\":\"internalError\",\"errorDetail\":\"Requestor not authorized\"}");
-            //     default -> throw new IllegalArgumentException("Unknown path: " + path);
-            // };
         }
     }
-
-    // private ResponseDefinition prepareVauEmptyResponse(VauServerStateMachine vauServer, int status) {
-    //     return prepareVauResponse(vauServer, status, null, null, null);
-    // }
-    //
-    // private ResponseDefinition prepareVauResponse(VauServerStateMachine vauServer, String payload) {
-    //     return prepareVauResponse(vauServer, 200, payload, null, null);
-    // }
-    //
-    // private ResponseDefinition prepareVauErrorResponse(VauServerStateMachine vauServer, String error) {
-    //     return prepareVauResponse(vauServer, 200, error, null, error);
-    // }
 
     private ResponseDefinition prepareVauResponse(VauServerStateMachine vauServer, CallInfo callInfo) {
         return prepareVauResponse(

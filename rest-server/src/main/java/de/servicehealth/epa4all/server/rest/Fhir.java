@@ -16,14 +16,13 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import java.util.Objects;
 
-import static de.servicehealth.logging.LogContext.withMdcEx;
+import static de.servicehealth.logging.LogContext.resultMdcEx;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static de.servicehealth.vau.VauClient.X_SUBJECT;
@@ -143,7 +142,7 @@ public class Fhir extends AbstractResource {
         // Use fhir compatible variables
         String insurantId = subject != null ? subject : xInsurantId;
         EpaContext epaContext = prepareEpaContext(insurantId);
-        return withMdcEx(epaContext.getMdcMap(), () -> {
+        return resultMdcEx(epaContext.getMdcMap(), () -> {
             EpaAPI epaAPI = epaMultiService.findEpaAPI(epaContext.getInsurantId());
             String baseQuery = uriInfo.getRequestUri().getQuery();
             return epaAPI.getFhirProxy().forward(

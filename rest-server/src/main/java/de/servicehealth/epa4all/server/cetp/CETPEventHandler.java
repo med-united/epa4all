@@ -30,8 +30,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
-import static de.servicehealth.logging.LogContext.withMdcExNr;
-import static de.servicehealth.logging.LogContext.withMdcNr;
+import static de.servicehealth.logging.LogContext.voidMdc;
+import static de.servicehealth.logging.LogContext.voidMdcEx;
 import static de.servicehealth.logging.LogField.CT_ID;
 import static de.servicehealth.logging.LogField.EGK_HANDLE;
 import static de.servicehealth.logging.LogField.KONNEKTOR;
@@ -123,7 +123,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             try {
                 String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
                 String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
-                withMdcExNr(Map.of(
+                voidMdcEx(Map.of(
                     CT_ID, ctId,
                     SLOT, String.valueOf(slotId),
                     EGK_HANDLE, egkHandle,
@@ -159,7 +159,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     }
                 });
             } catch (Exception e) {
-                withMdcNr(Map.of(
+                voidMdc(Map.of(
                     CT_ID, ctId,
                     SLOT, String.valueOf(slotId),
                     EGK_HANDLE, egkHandle,
