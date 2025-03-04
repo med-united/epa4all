@@ -27,29 +27,30 @@ sap.ui.define([
                 return;
             }
 
-            console.log("Using Telematik ID:", sTelematikId);
-
-            //const sWebSocketUrl = `wss://localhost/ws/${sTelematikId}`;
-            const sWebSocketUrl = `ws://localhost:8765`;
-
+            let sProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+            let sHost = window.location.host;
+            let sWebSocketUrl = `${sProtocol}${sHost}/ws/${sTelematikId}`;
+            // const sWebSocketUrl = `ws://localhost:8765`; // just for testing
             console.log("Connecting to WebSocket:", sWebSocketUrl);
 
             this.oWebSocket = new WebSocket(sWebSocketUrl);
-
             this.oWebSocket.onopen = () => {
                 console.log("WebSocket connected:", sWebSocketUrl);
             };
 
             this.oWebSocket.onmessage = (oEvent) => {
-                let oMessage = JSON.parse(oEvent.data);
-                console.log("WebSocket Message Received:", oMessage);
-
-                if (oMessage.type === "CARD_INSERTED") {
-                    console.log("eGK Card Inserted - Reloading Patient List");
-                    this._refreshPatientList();
+                let oMessage;
+                try {
+                    oMessage = JSON.parse(oEvent.data);
+                } catch (error) {
+                    console.warn("Received non-JSON message:", oEvent.data);
+                    return;
                 }
 
+                console.log("Parsed websocket message:", oMessage);
+
                 if (oMessage.kvnr && oMessage.medicationPdfBase64) {
+                    this._refreshPatientList();
                     this._openMedicationPlan(oMessage.kvnr, oMessage.medicationPdfBase64);
                 }
             };
@@ -410,28 +411,30 @@ sap.ui.define([
             }
         },
         _refreshPatientList: function() {
-            console.log("started _refreshPatientList");
-
             const oTable = this.byId("patientTable");
             if (!oTable) {
                 console.error("Patient table not found");
                 return;
             }
+            const oBinding = oTable.getBinding("items");
+            if (!oBinding) {
+                console.error("No binding found for patient table");
+                return;
+            }
+            if (typeof oBinding.loadData === "function") {
+                oBinding.loadData();
+            }
 
-            const oModel = this.getOwnerComponent().getModel();
-            if (!oModel) {
-                console.error("WebDAV model not found");
+            oBinding.refresh(true);
+        },
+        _openMedicationPlan: function(kvnr) {
+            if (!kvnr) {
+                console.error("No KVNR provided, cannot open medication plan.");
                 return;
             }
 
-            oModel.refresh(true);
-
-            oTable.bindItems({
-                path: "/response",
-                template: oTable.getBindingInfo("items").template
-            });
-
-            console.log("finished _refreshPatientList");
+            const sPdfUrl = `/fhir/pdf?x-insurantid=${kvnr}`;
+            window.open(sPdfUrl, "_blank");
         }
     });
 }, true);
