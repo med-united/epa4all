@@ -68,6 +68,8 @@ public class Vsd extends AbstractResource {
         @QueryParam(X_INSURANT_ID) String xInsurantId,
         @Parameter(name = "startDate", description = "Patient entitlement start date", required = true)
         @QueryParam("startDate") String startDate,
+        @Parameter(name = "street", description = "Patient street", required = true)
+        @QueryParam("street") String street,
         byte[] base64EncodedBody
     ) throws Exception {
         byte[] pruefungsnachweis = Base64.getDecoder().decode(base64EncodedBody);
@@ -91,7 +93,7 @@ public class Vsd extends AbstractResource {
                     Instant expiry = entitlementService.setEntitlement(
                         userRuntimeConfig, insuranceData, epaApi, telematikId, userAgent, smcbHandle
                     );
-                    PnwResponse pnwResponse = new PnwResponse(insurantId, startDate, expiry.toString(), null);
+                    PnwResponse pnwResponse = new PnwResponse(insurantId, startDate, expiry.toString(), street, null);
                     return Response.ok().entity(pnwResponse).build();
                 } catch (Exception e) {
                     Throwable cause = getOriginalCause(e);

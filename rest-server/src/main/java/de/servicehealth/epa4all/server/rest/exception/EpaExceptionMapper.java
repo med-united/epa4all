@@ -46,6 +46,7 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
                 pnwException.getKvnr(),
                 null,
                 null,
+                null,
                 pnwException.getMessage()
             );
             return new ExInfo(null, null, pnwResponse, CONFLICT);

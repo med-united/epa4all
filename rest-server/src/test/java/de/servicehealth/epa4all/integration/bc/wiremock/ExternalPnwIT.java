@@ -49,10 +49,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         mockFeatureConfig(true);
         prepareIdpStubs();
 
-        CallInfo callInfo = validToPayload != null
-            ? new CallInfo().withPayload(validToPayload)
-            : new CallInfo().withErrorHeader(errorHeader);
-        
+        CallInfo callInfo = new CallInfo().withPayload(validToPayload).withErrorHeader(errorHeader);
         prepareVauStubs(List.of(
             Pair.of("/epa/basic/api/v1/ps/entitlements", callInfo)
         ));
@@ -81,6 +78,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
     @Test
     public void entitlementIsCreatedForExternalPnwAndCetpEventIsNotHandled() throws Exception {
         String kvnr = "X110624006";
+        String street = "Achenseeweg 150";
         String startDate = "2025-01-15T22:59:59Z";
         String validToValue = "2025-02-15T22:59:59";
         String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
@@ -92,6 +90,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
             .body(pnw.getBytes())
             .queryParams(Map.of(
                 "startDate", startDate,
+                "street", street,
                 X_KONNEKTOR, "localhost",
                 X_INSURANT_ID, kvnr
             ))
@@ -101,7 +100,8 @@ public class ExternalPnwIT extends AbstractWiremockTest {
             .statusCode(200)
             .body(hasXPath("//startDate", containsString(startDate)))
             .body(hasXPath("//endDate", containsString(validToValue)))
-            .body(hasXPath("//kvnr", containsString(kvnr)));
+            .body(hasXPath("//kvnr", containsString(kvnr)))
+            .body(hasXPath("//street", containsString(street)));
 
         XmlPath xmlPath = response.extract().xmlPath();
         System.out.println(xmlPath.prettify());

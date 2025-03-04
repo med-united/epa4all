@@ -18,5 +18,6 @@ public class PnwResponse {
     String kvnr;
     String startDate;
     String endDate;
+    String street;
     String text;
 }
