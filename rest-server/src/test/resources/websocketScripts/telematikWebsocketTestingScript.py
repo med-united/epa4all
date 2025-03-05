@@ -5,7 +5,7 @@ import base64
 
 class TelematikWebSocketServer:
 
-    def __init__(self, telematik_id="X110486750"):
+    def __init__(self, telematik_id="X110683202"):
         self.telematik_id = telematik_id
         self.fake_pdf_base64 = base64.b64encode(b"%PDF Content").decode()
 
@@ -25,7 +25,7 @@ class TelematikWebSocketServer:
             print("time starts 10")
             await asyncio.sleep(10)
             medication_pdf_event = json.dumps({
-                "kvnr": "X110683202",
+                "kvnr": "X110624006",
                 "medicationPdfBase64": self.fake_pdf_base64
             })
             await websocket.send(medication_pdf_event)
@@ -34,7 +34,16 @@ class TelematikWebSocketServer:
             print("time starts 10")
             await asyncio.sleep(10)
             medication_pdf_event = json.dumps({
-                "kvnr": "X110486750",
+                "kvnr": "X111486711",
+                "medicationPdfBase64": self.fake_pdf_base64
+            })
+            await websocket.send(medication_pdf_event)
+            print("Sent Medication PDF event")
+
+            print("time starts 10")
+            await asyncio.sleep(10)
+            medication_pdf_event = json.dumps({
+                "kvnr": "X123456789",
                 "medicationPdfBase64": self.fake_pdf_base64
             })
             await websocket.send(medication_pdf_event)

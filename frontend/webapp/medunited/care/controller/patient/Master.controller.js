@@ -13,17 +13,16 @@ sap.ui.define([
     return AbstractMasterController.extend("medunited.care.controller.patient.Master", {
 
         onInit: function() {
+
             AbstractMasterController.prototype.onInit.apply(this, arguments);
 
-            var oTable = this.byId("patientTable");
-            var oBinding = oTable.getBinding("items");
-
-            console.log("Patient table binding:", oBinding);
-
+            this._connectWebSocket();
+        },
+        _connectWebSocket: function(retryCount = 0) {
             let sTelematikId = localStorage.getItem("telematikId");
 
             if (!sTelematikId) {
-                console.error("Telematik ID is missing. Cannot establish WebSocket connection.");
+                console.error("Telematik ID is missing. Cannot establish websocket connection.");
                 return;
             }
 
@@ -31,32 +30,47 @@ sap.ui.define([
             let sHost = window.location.host;
             let sWebSocketUrl = `${sProtocol}${sHost}/ws/${sTelematikId}`;
             // const sWebSocketUrl = `ws://localhost:8765`; // just for testing
-            console.log("Connecting to WebSocket:", sWebSocketUrl);
+            console.log(`Connecting to WebSocket: ${sWebSocketUrl} (Attempt ${retryCount + 1})`);
 
             this.oWebSocket = new WebSocket(sWebSocketUrl);
             this.oWebSocket.onopen = () => {
-                console.log("WebSocket connected:", sWebSocketUrl);
+                console.log("Websocket connected:", sWebSocketUrl);
+                this._retryDelay = 1000;
             };
 
             this.oWebSocket.onmessage = (oEvent) => {
-                let oMessage;
+                // console.log("Raw websocket message:", oEvent.data);
                 try {
-                    oMessage = JSON.parse(oEvent.data);
+                    let oMessage = JSON.parse(oEvent.data);
+                    console.log("Parsed websocket message:", oMessage);
+
+                    if (oMessage.kvnr && oMessage.medicationPdfBase64) {
+                        this._refreshPatientList();
+                        this._openMedicationList(oMessage.kvnr, oMessage.medicationPdfBase64);
+                    }
                 } catch (error) {
                     console.warn("Received non-JSON message:", oEvent.data);
-                    return;
-                }
-
-                console.log("Parsed websocket message:", oMessage);
-
-                if (oMessage.kvnr && oMessage.medicationPdfBase64) {
-                    this._refreshPatientList();
-                    this._openMedicationPlan(oMessage.kvnr, oMessage.medicationPdfBase64);
                 }
             };
 
-            this.oWebSocket.onerror = (oError) => console.error("WebSocket error:", oError);
-            this.oWebSocket.onclose = () => console.log("WebSocket disconnected:", sWebSocketUrl);
+            this.oWebSocket.onerror = (oError) => {
+                console.error("Websocket error:", oError);
+            };
+
+            this.oWebSocket.onclose = () => {
+                console.warn(`Websocket disconnected. Retrying in ${this._retryDelay / 1000} seconds...`);
+
+                setTimeout(() => {
+                    if (retryCount < 5) {
+                        this._connectWebSocket(retryCount + 1);
+                        this._retryDelay = Math.min(this._retryDelay * 2, 30000);
+                    } else {
+                        console.error("Max reconnection attempts reached. Websocket will not retry further.");
+                    }
+                }, this._retryDelay);
+
+                this._retryDelay = this._retryDelay || 1000;
+            };
         },
         getEntityName: function () {
             return "Patient";
@@ -416,25 +430,127 @@ sap.ui.define([
                 console.error("Patient table not found");
                 return;
             }
+
+            const oModel = this.getOwnerComponent().getModel();
+            if (!oModel) {
+                console.error("WebDAV model not found");
+                return;
+            }
             const oBinding = oTable.getBinding("items");
             if (!oBinding) {
                 console.error("No binding found for patient table");
                 return;
             }
-            if (typeof oBinding.loadData === "function") {
-                oBinding.loadData();
-            }
 
-            oBinding.refresh(true);
+            oModel.refresh(true);
+
+            oModel.attachEventOnce("requestCompleted", function() {
+                oBinding.refresh(true);
+            });
         },
-        _openMedicationPlan: function(kvnr) {
+        _openMedicationList: function (kvnr) {
             if (!kvnr) {
-                console.error("No KVNR provided, cannot open medication plan.");
+                console.error("No KVNR provided, cannot open medication list.");
                 return;
             }
 
+            let oModel = this.getOwnerComponent().getModel("webdav") || this.getOwnerComponent().getModel();
+            if (!oModel) {
+                console.warn("Webdav model not found.");
+                return;
+            }
+
+            const oTable = this.byId("patientTable");
+            if (!oTable) {
+                console.error("Patient table not found");
+                return;
+            }
+
+            const oBinding = oTable.getBinding("items");
+            if (!oBinding) {
+                console.error("No binding found for patient table.");
+                return;
+            }
+
+            const iVisibleItems = oTable.getGrowingThreshold() || 20;
+            const aTableContexts = oBinding.getContexts(0, iVisibleItems);
+
+            if (!Array.isArray(aTableContexts) || aTableContexts.length === 0) {
+                console.error("No patients found in the table binding.");
+                return;
+            }
+
+            const aTableItems = aTableContexts.map(ctx => ctx.getObject());
+            console.log(`Currently displayed patients in table (Max ${iVisibleItems}):`, aTableItems);
+
+            let sPatientIndex = -1;
+
+            aTableItems.forEach((oPatient, index) => {
+                let sDisplayName = null;
+
+                try {
+                    let oPropStat = oPatient?.childNodes?.[1];
+                    let oProp = oPropStat?.childNodes?.[0];
+                    let oDisplayNameNode = Array.from(oProp?.childNodes || []).find(node => node.nodeName === "D:displayname");
+
+                    sDisplayName = oDisplayNameNode ? oDisplayNameNode.textContent.trim() : null;
+                } catch (e) {
+                    console.warn(`Error extracting display name at index ${index}:`, e);
+                }
+
+                // console.log(`Checking index ${index} | Extracted displayname: '${sDisplayName}'`);
+
+                if (sDisplayName === kvnr) {
+                    console.log(`Match found at index ${index}`);
+                    sPatientIndex = index;
+                }
+            });
+
             const sPdfUrl = `/fhir/pdf?x-insurantid=${kvnr}`;
             window.open(sPdfUrl, "_blank");
+
+            if (sPatientIndex === -1) {
+                console.warn(`Patient with KVNR '${kvnr}' is NOT currently displayed in the table. No navigation.`);
+                MessageToast.show(
+                    "- eGK-Karte erkannt\n- Medikamentenliste in neuem Tab geöffnet",
+                    {
+                        duration: 10000,
+                        width: "25em"
+                    }
+                );
+                return;
+            }
+
+            console.log(`Patient with KVNR '${kvnr}' found at table index:`, sPatientIndex);
+            MessageToast.show(
+                "- eGK-Karte erkannt\n- Medikamentenliste in neuem Tab geöffnet\n- Patientendetails der zuletzt erkannten eGK-Karte werden angezeigt",
+                {
+                    duration: 10000,
+                    width: "25em"
+                }
+            );
+
+            sap.ui.core.BusyIndicator.show(0);
+
+            if (this.oRouter) {
+                const oRouter = this.oRouter;
+                const targetRoute = "patient-detail";
+
+                // console.log("Patient index:", sPatientIndex);
+                oRouter.getRoute(targetRoute).attachPatternMatched(() => {
+                    sap.ui.core.BusyIndicator.hide();
+                });
+
+                oRouter.navTo(targetRoute, {
+                    "patient": sPatientIndex,
+                    "layout": "ThreeColumnsEndExpanded",
+                    "document": encodeURIComponent(sPdfUrl)
+                });
+
+            } else {
+                console.error("Navigation failed: router is missing.");
+                sap.ui.core.BusyIndicator.hide();
+            }
         }
     });
 }, true);
