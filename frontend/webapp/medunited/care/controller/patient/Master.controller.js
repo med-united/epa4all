@@ -6,8 +6,9 @@ sap.ui.define([
     'sap/m/MessageToast',
     "sap/ui/core/Fragment",
     "sap/ui/model/json/JSONModel",
-    'medunited/care/model/WebdavModel'
-], function (AbstractMasterController, Filter, FilterOperator, MessageBox, MessageToast, Fragment, JSONModel, WebdavModel) {
+    'medunited/care/model/WebdavModel',
+    "sap/ui/core/BusyIndicator"
+], function (AbstractMasterController, Filter, FilterOperator, MessageBox, MessageToast, Fragment, JSONModel, WebdavModel, BusyIndicator) {
     "use strict";
 
     return AbstractMasterController.extend("medunited.care.controller.patient.Master", {
@@ -49,7 +50,7 @@ sap.ui.define([
                         this._openMedicationList(oMessage.kvnr, oMessage.medicationPdfBase64);
                     }
                 } catch (error) {
-                    console.warn("Received non-JSON message:", oEvent.data);
+                    console.warn("Received message:", oEvent.data);
                 }
             };
 
@@ -454,12 +455,6 @@ sap.ui.define([
                 return;
             }
 
-            let oModel = this.getOwnerComponent().getModel("webdav") || this.getOwnerComponent().getModel();
-            if (!oModel) {
-                console.warn("Webdav model not found.");
-                return;
-            }
-
             const oTable = this.byId("patientTable");
             if (!oTable) {
                 console.error("Patient table not found");
@@ -472,16 +467,22 @@ sap.ui.define([
                 return;
             }
 
-            const iVisibleItems = oTable.getGrowingThreshold() || 20;
-            const aTableContexts = oBinding.getContexts(0, iVisibleItems);
+            let iLoadedItems = oBinding.getLength();
+            // console.log("Total loaded items:", iLoadedItems);
+            if (iLoadedItems === 0) {
+                console.warn("No patients loaded in the table yet.");
+                return;
+            }
+
+            const aTableContexts = oBinding.getContexts(0, iLoadedItems);
 
             if (!Array.isArray(aTableContexts) || aTableContexts.length === 0) {
-                console.error("No patients found in the table binding.");
+                console.error("No patients found in the binding contexts.");
                 return;
             }
 
             const aTableItems = aTableContexts.map(ctx => ctx.getObject());
-            console.log(`Currently displayed patients in table (Max ${iVisibleItems}):`, aTableItems);
+            // console.log(`Currently displayed patients in table:`, aTableItems);
 
             let sPatientIndex = -1;
 
@@ -489,6 +490,7 @@ sap.ui.define([
                 let sDisplayName = null;
 
                 try {
+                    // console.log(`Patient ${index}:`, oPatient);
                     let oPropStat = oPatient?.childNodes?.[1];
                     let oProp = oPropStat?.childNodes?.[0];
                     let oDisplayNameNode = Array.from(oProp?.childNodes || []).find(node => node.nodeName === "D:displayname");
@@ -507,12 +509,12 @@ sap.ui.define([
             });
 
             const sPdfUrl = `/fhir/pdf?x-insurantid=${kvnr}`;
-            window.open(sPdfUrl, "_blank");
 
             if (sPatientIndex === -1) {
                 console.warn(`Patient with KVNR '${kvnr}' is NOT currently displayed in the table. No navigation.`);
+                window.open(sPdfUrl, "_blank");
                 MessageToast.show(
-                    "- eGK-Karte erkannt\n- Medikamentenliste in neuem Tab geöffnet",
+                    "eGK-Karte erkannt, Medikamentenliste in neuem Tab geöffnet, da Patient nicht geladen",
                     {
                         duration: 10000,
                         width: "25em"
@@ -523,22 +525,21 @@ sap.ui.define([
 
             console.log(`Patient with KVNR '${kvnr}' found at table index:`, sPatientIndex);
             MessageToast.show(
-                "- eGK-Karte erkannt\n- Medikamentenliste in neuem Tab geöffnet\n- Patientendetails der zuletzt erkannten eGK-Karte werden angezeigt",
+                "Die eGK-Karte dieses Patienten wurde erkannt.",
                 {
                     duration: 10000,
                     width: "25em"
                 }
             );
 
-            sap.ui.core.BusyIndicator.show(0);
+            BusyIndicator.show(0);
 
             if (this.oRouter) {
                 const oRouter = this.oRouter;
                 const targetRoute = "patient-detail";
 
-                // console.log("Patient index:", sPatientIndex);
                 oRouter.getRoute(targetRoute).attachPatternMatched(() => {
-                    sap.ui.core.BusyIndicator.hide();
+                    BusyIndicator.hide();
                 });
 
                 oRouter.navTo(targetRoute, {
@@ -549,7 +550,7 @@ sap.ui.define([
 
             } else {
                 console.error("Navigation failed: router is missing.");
-                sap.ui.core.BusyIndicator.hide();
+                BusyIndicator.hide();
             }
         }
     });
