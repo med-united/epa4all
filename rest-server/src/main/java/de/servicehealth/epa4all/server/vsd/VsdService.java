@@ -8,6 +8,7 @@ import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
+import de.servicehealth.epa4all.server.jcr.WorkspaceService;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -31,16 +32,19 @@ public class VsdService {
     private static final Logger log = LoggerFactory.getLogger(VsdService.class.getName());
 
     private final MultiKonnektorService multiKonnektorService;
+    private final WorkspaceService workspaceService;
     private final FolderService folderService;
     private final EpaCallGuard epaCallGuard;
 
     @Inject
     public VsdService(
         MultiKonnektorService multiKonnektorService,
+        WorkspaceService workspaceService,
         FolderService folderService,
         EpaCallGuard epaCallGuard
     ) {
         this.multiKonnektorService = multiKonnektorService;
+        this.workspaceService = workspaceService;
         this.folderService = folderService;
         this.epaCallGuard = epaCallGuard;
     }
@@ -99,6 +103,8 @@ public class VsdService {
         try {
             // 1. Make sure all med folders are created
             folderService.initInsurantFolders(telematikId, insurantId);
+
+            workspaceService.createWorkspace(telematikId, "template");
 
             // 2. Store VDS response into "local" folder
             File localFolder = folderService.getMedFolder(telematikId, insurantId, LOCAL_FOLDER);
