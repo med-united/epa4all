@@ -21,7 +21,7 @@
                   text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum', formatter: 'Formatter.formatSimpleBirthDate'}"/>
             <Label text="{i18n>labelPatientGender}" labelFor="patientGenderText"/>
             <Text id="patientGenderText"
-                  text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geschlecht'}"/>
+                  text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geschlecht', formatter: 'Formatter.formatGender'}"/>
         </form:content>
     </form:SimpleForm>
     <form:SimpleForm id="biologicalFormEdit"

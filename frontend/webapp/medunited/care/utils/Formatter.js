@@ -65,6 +65,20 @@ sap.ui.define(["sap/ui/core/format/DateFormat"], function(DateFormat) {
                 return "";
             }
             return sDate.substring(6, 8) + "-" + sDate.substring(4, 6) + "-" + sDate.substring(0, 4);
+        },
+
+        formatGender: function(sGender) {
+            if (!sGender) {
+                return "";
+            }
+            switch (sGender.toUpperCase()) {
+                case "W":
+                    return "Weiblich";
+                case "M":
+                    return "Männlich";
+                default:
+                    return sGender;
+            }
         }
     };
 });
