@@ -8,13 +8,11 @@ import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
-import de.servicehealth.epa4all.server.jcr.RepositoryService;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.path.xml.XmlPath;
 import io.restassured.response.ValidatableResponse;
-import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -39,8 +37,8 @@ import static org.mockito.Mockito.verify;
 @TestProfile(WireMockProfile.class)
 public class ExternalPnwIT extends AbstractWiremockTest {
 
-    @Inject
-    RepositoryService repositoryService;
+    // @Inject
+    // RepositoryService repositoryService;
 
     private String initStubsAndHandleCardInsertedEvent(
         String kvnr,
@@ -82,7 +80,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
 
     @Test
     public void entitlementIsCreatedForExternalPnwAndCetpEventIsNotHandled() throws Exception {
-        repositoryService.onStart();
+        // repositoryService.onStart();
         
         String kvnr = "X110624006";
         String street = "Achenseeweg 150";

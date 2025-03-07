@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.time.Instant;
 
-import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
+import static de.servicehealth.folder.IFolderService.LOCAL_FOLDER;
 
 @ApplicationScoped
 public class InsuranceDataService {

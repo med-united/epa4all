@@ -2,7 +2,6 @@ package de.servicehealth.epa4all.server.rest.fileserver.prop;
 
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
-import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
@@ -14,6 +13,7 @@ import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.FirstName;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.LastName;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.Smcb;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.ValidTo;
+import de.servicehealth.folder.WebdavConfig;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
 import jakarta.xml.bind.JAXBElement;
@@ -39,7 +39,6 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -49,7 +48,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.MimeHelper.resolveMimeType;
+import static de.servicehealth.utils.MimeHelper.resolveMimeType;
 import static de.servicehealth.utils.ServerUtils.asDate;
 import static org.jugs.webdav.jaxrs.xml.properties.ResourceType.COLLECTION;
 

@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.integration.base;
 
-import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
+import de.servicehealth.folder.WebdavConfig;
 import io.quarkus.test.junit.QuarkusMock;
 
 import java.io.File;

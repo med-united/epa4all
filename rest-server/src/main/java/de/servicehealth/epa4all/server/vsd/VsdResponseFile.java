@@ -3,7 +3,6 @@ package de.servicehealth.epa4all.server.vsd;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
-import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import org.slf4j.Logger;
@@ -17,8 +16,9 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.createUCEntity;
+import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.createUCEntity;
 import static de.servicehealth.utils.ServerUtils.unzipAndSaveDataToFile;
+import static de.servicehealth.utils.XmlUtils.createDocument;
 
 public class VsdResponseFile {
 
@@ -149,7 +149,7 @@ public class VsdResponseFile {
     }
 
     private static PruefungsnachweisNodes getPruefungsnachweisNodes(byte[] pruefungsnachweis) throws Exception {
-        Document doc = InsuranceXmlUtils.createDocument(pruefungsnachweis);
+        Document doc = createDocument(pruefungsnachweis);
         Node eNode = doc.getElementsByTagName("E").item(0);
         Node pzNode = doc.getElementsByTagName("PZ").item(0);
         return new PruefungsnachweisNodes(eNode, pzNode);

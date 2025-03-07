@@ -6,29 +6,19 @@ import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import jakarta.xml.bind.JAXBContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 
 import static de.servicehealth.utils.ServerUtils.decompress;
 
-public class InsuranceXmlUtils {
+public class InsuranceUtils {
 
-    private static final Logger log = LoggerFactory.getLogger(InsuranceXmlUtils.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(InsuranceUtils.class.getName());
 
-    private static DocumentBuilder documentBuilder;
     private static JAXBContext jaxbContext;
 
     static {
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            documentBuilder = factory.newDocumentBuilder();
             jaxbContext = createJaxbContext();
         } catch (Exception e) {
             log.error("Could create parser", e);
@@ -43,10 +33,6 @@ public class InsuranceXmlUtils {
         );
     }
 
-    public static synchronized Document createDocument(byte[] bytes) throws IOException, SAXException {
-        return documentBuilder.parse(new ByteArrayInputStream(decompress(bytes)));
-    }
-
     @SuppressWarnings("unchecked")
     public static <T> T createUCEntity(byte[] bytes) throws Exception {
         if (bytes == null || bytes.length == 0) {
@@ -55,6 +41,6 @@ public class InsuranceXmlUtils {
         return (T) jaxbContext.createUnmarshaller().unmarshal(new ByteArrayInputStream(decompress(bytes)));
     }
 
-    private InsuranceXmlUtils() {
+    private InsuranceUtils() {
     }
 }

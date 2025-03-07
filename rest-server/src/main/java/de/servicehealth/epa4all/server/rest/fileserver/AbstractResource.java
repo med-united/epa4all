@@ -1,9 +1,9 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
-import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.FileProp;
+import de.servicehealth.folder.WebdavConfig;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.HttpHeaders;

@@ -9,7 +9,6 @@ import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -42,6 +41,7 @@ import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy.Latest;
 import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYYMMDD;
 import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYY_MM_DD;
+import static de.servicehealth.utils.XmlUtils.createDocument;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -376,7 +376,7 @@ public class WebdavIT extends AbstractWiremockTest {
     }
 
     private NodeList getResponsesNodeList(String responseBody) throws Exception {
-        Document document = InsuranceXmlUtils.createDocument(responseBody.getBytes());
+        Document document = createDocument(responseBody.getBytes());
         XPathFactory xPathFactory = XPathFactory.newInstance();
         XPath xPath = xPathFactory.newXPath();
         XPathExpression xPathExpression = xPath.compile("/multistatus/response");

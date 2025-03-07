@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.config;
+package de.servicehealth.folder;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;

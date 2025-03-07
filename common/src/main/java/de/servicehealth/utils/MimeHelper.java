@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.rest.fileserver.prop;
+package de.servicehealth.utils;
 
 import java.util.Map;
 import java.util.Set;

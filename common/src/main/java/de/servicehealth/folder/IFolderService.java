@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.filetracker;
+package de.servicehealth.folder;
 
 import java.io.File;
 import java.util.ArrayList;

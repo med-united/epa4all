@@ -14,12 +14,16 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import static de.servicehealth.epa4all.server.entitlement.EntitlementFile.ENTITLEMENT_FILE;
 import static de.servicehealth.epa4all.server.filetracker.ChecksumFile.CHECKSUM_FILE_NAME;
 import static java.util.stream.Collectors.toMap;
 
 @ApplicationScoped
 public class DirectoryProp extends AbstractProp {
+
+    public static final Set<String> SKIPPED_FILES = Set.of(ENTITLEMENT_FILE, CHECKSUM_FILE_NAME, ".DS_Store");
 
     @Inject
     FileProp fileProp;
@@ -85,7 +89,7 @@ public class DirectoryProp extends AbstractProp {
                     multiStatus = propfind(nestedBuilder, propFind, nestedBuilder.build(), file, initialDepth, currentDepth, sortBy);
                 }
             } else {
-                if (!file.getName().equals(CHECKSUM_FILE_NAME)) {
+                if (SKIPPED_FILES.stream().noneMatch(s -> s.equals(file.getName()))) {
                     multiStatus = fileProp.propfind(nestedBuilder, propFind, nestedBuilder.build(), file, initialDepth, -1, sortBy);
                 }
             }

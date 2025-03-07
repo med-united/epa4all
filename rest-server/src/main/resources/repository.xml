@@ -6,60 +6,43 @@
     <DataStore class="org.apache.jackrabbit.core.data.FileDataStore"/>
     
     <FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
-        <param name="path" value="${rep.home}"/>
+        <param name="path" value="${repository.home}"/>
     </FileSystem>
-
-    <Security appName="epa4all">
-        <SecurityManager class="org.apache.jackrabbit.core.DefaultSecurityManager" workspaceName="security">
-            <!--
-            workspace access:
-            class: FQN of class implementing the WorkspaceAccessManager interface
-            -->
-            <!-- <WorkspaceAccessManager class="..."/> -->
-            <!-- <param name="config" value="${rep.home}/security.xml"/> -->
-        </SecurityManager>
-
-        <AccessManager class="org.apache.jackrabbit.core.security.DefaultAccessManager">
-            <!-- <param name="config" value="${rep.home}/access.xml"/> -->
-        </AccessManager>
-
-        <LoginModule class="org.apache.jackrabbit.core.security.authentication.DefaultLoginModule">
-            <!--
-               anonymous username ('anonymous' is the default value)
-             -->
-            <param name="anonymousId" value="anonymous"/>
-            <!--
-               administrator user id (default value if param is missing is 'admin')
-             -->
-            <param name="adminId" value="admin"/>
-        </LoginModule>
-    </Security>
 
     <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.BundleFsPersistenceManager"/>
 
-    <Workspaces rootPath="${webdav.home}" defaultWorkspace="template" maxIdleTime="2"/>
-
-    <Workspace name="template">
+    <Versioning rootPath="${repository.home}/version">
         <FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
-            <param name="path" value="${rep.home}/test"/>
-        </FileSystem>
-        <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.BundleFsPersistenceManager"/>
-        <SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
-            <param name="path" value="${rep.home}/test/index"/>
-            <param name="supportHighlighting" value="true"/>
-        </SearchIndex>
-    </Workspace>
-
-    <Versioning rootPath="${rep.home}/version">
-        <FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
-            <param name="path" value="${rep.home}/version" />
+            <param name="path" value="${repository.home}/version" />
         </FileSystem>
         <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.BundleFsPersistenceManager"/>
     </Versioning>
 
     <SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
-        <param name="path" value="${rep.home}/index"/>
+        <param name="path" value="${repository.home}/index"/>
         <param name="useSimpleFSDirectory" value="true"/>
     </SearchIndex>
+
+    <Security appName="epa4all">
+        <SecurityManager class="org.apache.jackrabbit.core.DefaultSecurityManager" workspaceName="security"/>
+        <AccessManager class="org.apache.jackrabbit.core.security.DefaultAccessManager"/>
+        <LoginModule class="org.apache.jackrabbit.core.security.authentication.DefaultLoginModule">
+            <param name="anonymousId" value="anonymous"/>
+            <param name="adminId" value="admin"/>
+        </LoginModule>
+    </Security>
+
+    <Workspaces rootPath="${workspaces.home}" defaultWorkspace="default" maxIdleTime="2"/>
+
+    <Workspace name="default">
+        <FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
+            <param name="path" value="${workspaces.home}/default"/>
+        </FileSystem>
+        <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.BundleFsPersistenceManager"/>
+        <SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
+            <param name="path" value="${workspaces.home}/default/index"/>
+            <param name="supportHighlighting" value="true"/>
+        </SearchIndex>
+    </Workspace>
 
 </Repository>

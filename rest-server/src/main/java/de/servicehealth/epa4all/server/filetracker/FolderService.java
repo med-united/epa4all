@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.filetracker;
 
-import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.folder.IFolderService;
+import de.servicehealth.folder.WebdavConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;

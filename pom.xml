@@ -10,18 +10,13 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
+        <skipIT>true</skipIT>
+
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <cxf-version>4.0.5</cxf-version>
-
-        <logback-version>1.5.8</logback-version>
-
         <quarkus.platform.version>3.17.2</quarkus.platform.version>
-        <surefire-plugin.version>3.5.0</surefire-plugin.version>
-        <failsafe-plugin.version>3.5.0</failsafe-plugin.version>
-
-        <skipIT>true</skipIT>
     </properties>
 
     <packaging>pom</packaging>
@@ -207,12 +202,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
+                <version>3.5.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${failsafe-plugin.version}</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <id>no-bc</id>

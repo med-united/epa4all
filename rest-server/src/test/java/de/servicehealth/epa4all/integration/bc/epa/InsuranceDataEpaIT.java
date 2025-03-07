@@ -4,11 +4,11 @@ import de.health.service.cetp.IKonnektorClient;
 import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
-import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
+import de.servicehealth.folder.WebdavConfig;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
+import static de.servicehealth.folder.IFolderService.LOCAL_FOLDER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @QuarkusTest
