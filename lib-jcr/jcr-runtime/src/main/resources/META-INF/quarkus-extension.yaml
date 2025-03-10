@@ -1,0 +1,11 @@
+name: lib jcr extension
+description: jackrabbit jakarta port
+metadata:
+  keywords:
+    - jcr
+    - webdav
+    - servlet
+  guide: https://github.com/med-united/epa4all/tree/main
+  categories:
+    - "backend"
+  status: "experimental"

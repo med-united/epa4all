@@ -75,10 +75,9 @@ public class RepositoryService extends StartableService {
             Session adminSession = repository.login(credentials);
             Arrays.stream(folderService.getTelematikFolders()).forEach(telematikFolder -> {
                 try {
-                    String webdavHome = webdavConfig.getRootFolder();
                     String telematikId = telematikFolder.getName();
                     workspaceService.createWorkspace(adminSession, telematikId);
-                    importFilesIntoJCR(webdavHome + "/" + telematikId, telematikId);
+                    importFilesIntoJCR(credentials, telematikFolder, telematikId);
                 } catch (Exception e) {
                     log.error("Error while importing webdav into JCR repository", e);
                 }
@@ -92,16 +91,16 @@ public class RepositoryService extends StartableService {
         }
     }
 
-    public void importFilesIntoJCR(String rootDir, String workspace) throws RepositoryException {
-        SimpleCredentials credentials = new SimpleCredentials("admin", "admin".toCharArray());
+    public void importFilesIntoJCR(
+        SimpleCredentials credentials,
+        File telematikFolder,
+        String workspace
+    ) throws RepositoryException {
         Session session = repository.login(credentials, workspace);
-        try {
-            Node rootNode = session.getRootNode();
-            importDirectory(new File(rootDir), rootNode, session);
-            session.save();
-        } finally {
-            session.logout();
-        }
+        Node rootNode = session.getRootNode();
+        importDirectory(telematikFolder, rootNode, session);
+        session.save();
+        session.logout();
     }
 
     private void importDirectory(File dir, Node parentNode, Session session) throws RepositoryException {

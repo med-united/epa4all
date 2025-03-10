@@ -24,6 +24,7 @@
     <modules>
       <module>common</module>
       <module>common-test</module>
+      <module>lib-jcr</module>
       <module>lib-vau</module>
       <module>cxf-rt-transports-http-vau</module>
       <module>api-xds</module>
