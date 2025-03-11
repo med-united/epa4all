@@ -23,7 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.function.Function;
 
-import static de.servicehealth.epa4all.server.propsource.PropBuilder.EPA_NAMESPACE_PREFIX;
+import static de.servicehealth.epa4all.server.jcr.RepositoryService.EPA_NAMESPACE_PREFIX;
 import static javax.jcr.PropertyType.DATE;
 import static javax.jcr.PropertyType.LONG;
 import static javax.jcr.PropertyType.STRING;

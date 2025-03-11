@@ -16,6 +16,7 @@ import org.apache.jackrabbit.webdav.DavSession;
 import org.apache.jackrabbit.webdav.jcr.DefaultItemResource;
 import org.apache.jackrabbit.webdav.jcr.JEventJournalResource;
 import org.apache.jackrabbit.webdav.jcr.JRootCollection;
+import org.apache.jackrabbit.webdav.jcr.JVersionControlledItemCollection;
 import org.apache.jackrabbit.webdav.jcr.JWorkspaceResource;
 import org.apache.jackrabbit.webdav.jcr.JcrDavException;
 import org.apache.jackrabbit.webdav.jcr.JcrDavSession;
@@ -185,7 +186,7 @@ public class JDavResourceFactory implements DavResourceFactory {
             } else if (item instanceof VersionHistory) {
                 resource = new VersionHistoryItemCollection(locator, sessionImpl, this, item);
             } else {
-                resource = new VersionControlledItemCollection(locator, sessionImpl, this, item);
+                resource = new JVersionControlledItemCollection(locator, sessionImpl, this, item);
             }
         } else {
             resource = new DefaultItemResource(locator, sessionImpl, this, item);

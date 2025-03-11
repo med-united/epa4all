@@ -18,12 +18,17 @@ import de.servicehealth.epa4all.server.rest.fileserver.prop.type.FileType;
 import de.servicehealth.folder.WebdavConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.jackrabbit.value.LongValue;
 import org.jugs.webdav.jaxrs.xml.properties.CreationDate;
 import org.jugs.webdav.jaxrs.xml.properties.DisplayName;
 import org.jugs.webdav.jaxrs.xml.properties.GetContentLength;
 import org.jugs.webdav.jaxrs.xml.properties.GetContentType;
 import org.jugs.webdav.jaxrs.xml.properties.GetLastModified;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.jcr.Node;
+import javax.jcr.Value;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -50,15 +55,14 @@ import static de.servicehealth.epa4all.server.propsource.JcrProp.validto;
 import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYYMMDD;
 import static de.servicehealth.utils.MimeHelper.resolveMimeType;
 import static de.servicehealth.utils.ServerUtils.asDate;
+import static de.servicehealth.utils.ServerUtils.getPathParts;
 import static java.util.stream.Collectors.toMap;
 import static org.jugs.webdav.jaxrs.xml.properties.ResourceType.COLLECTION;
 
 @ApplicationScoped
 public class PropBuilder {
 
-    public static final String EPA_MIXIN_NAME = "epa:custom";
-    public static final String EPA_NAMESPACE_PREFIX = "epa";
-    public static final String EPA_NAMESPACE_URI = "https://www.service-health.de/epa";
+    private static final Logger log = LoggerFactory.getLogger(PropBuilder.class.getName());
 
     private static final Map<JcrProp, Function<PropSource, Object>> propSupplierMap;
 
@@ -174,5 +178,41 @@ public class PropBuilder {
                 ? resource.lastModified()
                 : sortedLeafFiles.getFirst().lastModified();
         }
+    }
+
+    public void setEpaProps(File file, Node node) {
+        boolean directory = file.isDirectory();
+
+        List<String> pathParts = getPathParts(file.getPath());
+        pathParts = pathParts.subList(pathParts.indexOf("webdav"), pathParts.size());
+        PropSource propSource = buildPropSource(file, pathParts);
+
+        int level = pathParts.size() - 1;
+        List<String> props = directory
+            ? resolveDirectoryProps(level).stream().toList()
+            : resolveFileProps(file);
+
+        getPropSupplierMap().entrySet().stream()
+            .filter(e -> props.contains(e.getKey().name()))
+            .forEach(e -> {
+                JcrProp jcrProp = e.getKey();
+                Function<PropSource, Object> propFunc = e.getValue();
+                Function<Object, Value> valueFunc = jcrProp.getValueFunc();
+                try {
+                    if (jcrProp == getlastmodified) {
+                        long lastModified = getLastModified(file, SortBy.Latest);
+                        node.setProperty(getlastmodified.epaName(), new LongValue(lastModified));
+                    } else {
+                        Value value = valueFunc.apply(propFunc.apply(propSource));
+                        node.setProperty(jcrProp.epaName(), value);
+                    }
+                } catch (Exception ex) {
+                    String msg = String.format(
+                        "Error while setting property: file=%s prop=%s",
+                        file.getAbsolutePath(), jcrProp.epaName()
+                    );
+                    log.error(msg, ex);
+                }
+            });
     }
 }
