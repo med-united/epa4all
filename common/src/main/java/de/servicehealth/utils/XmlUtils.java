@@ -33,7 +33,6 @@ public class XmlUtils {
         try {
             DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
             documentFactory.setFeature(FEATURE_SECURE_PROCESSING, true);
-            documentFactory.setNamespaceAware(true);
             documentBuilder = documentFactory.newDocumentBuilder();
             transformerFactory = TransformerFactory.newInstance();
         } catch (Exception e) {

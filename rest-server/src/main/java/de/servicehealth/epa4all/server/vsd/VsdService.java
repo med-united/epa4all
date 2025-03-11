@@ -7,8 +7,10 @@ import de.gematik.ws.conn.vsds.vsdservice.v5.VSDStatusType;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
+import de.servicehealth.epa4all.server.filetracker.FileEvent;
+import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
-import de.servicehealth.epa4all.server.jcr.WorkspaceService;
+import de.servicehealth.epa4all.server.filetracker.WorkspaceEvent;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -32,36 +34,36 @@ public class VsdService {
     private static final Logger log = LoggerFactory.getLogger(VsdService.class.getName());
 
     private final MultiKonnektorService multiKonnektorService;
-    private final WorkspaceService workspaceService;
+    private final FileEventSender fileEventSender;
     private final FolderService folderService;
     private final EpaCallGuard epaCallGuard;
 
     @Inject
     public VsdService(
         MultiKonnektorService multiKonnektorService,
-        WorkspaceService workspaceService,
+        FileEventSender fileEventSender,
         FolderService folderService,
         EpaCallGuard epaCallGuard
     ) {
         this.multiKonnektorService = multiKonnektorService;
-        this.workspaceService = workspaceService;
+        this.fileEventSender = fileEventSender;
         this.folderService = folderService;
         this.epaCallGuard = epaCallGuard;
     }
 
     public static ReadVSDResponse buildSyntheticVSDResponse() throws Exception {
-    	return buildSyntheticVSDResponse(null, null);
+        return buildSyntheticVSDResponse(null, null);
     }
-    
+
     public static ReadVSDResponse buildSyntheticVSDResponse(String xml, byte[] bytes) throws Exception {
         ReadVSDResponse readVSDResponse = new ReadVSDResponse();
         readVSDResponse.setAllgemeineVersicherungsdaten(new byte[0]);
         readVSDResponse.setGeschuetzteVersichertendaten(new byte[0]);
         readVSDResponse.setPersoenlicheVersichertendaten(new byte[0]);
 
-        if(bytes != null) {
-	        byte[] gzipBytes = xml != null ? compress(xml.getBytes()) : compress(bytes);
-	        readVSDResponse.setPruefungsnachweis(gzipBytes);
+        if (bytes != null) {
+            byte[] gzipBytes = xml != null ? compress(xml.getBytes()) : compress(bytes);
+            readVSDResponse.setPruefungsnachweis(gzipBytes);
         }
 
         VSDStatusType vsdStatus = new VSDStatusType();
@@ -102,13 +104,15 @@ public class VsdService {
     public void saveVsdFile(String telematikId, String insurantId, ReadVSDResponse readVSDResponse) {
         try {
             // 1. Make sure all med folders are created
-            folderService.initInsurantFolders(telematikId, insurantId);
-
-            workspaceService.createWorkspace(telematikId);
+            File telematikFolder = folderService.initInsurantFolders(telematikId, insurantId);
+            fileEventSender.send(new WorkspaceEvent(telematikFolder));
 
             // 2. Store VDS response into "local" folder
             File localFolder = folderService.getMedFolder(telematikId, insurantId, LOCAL_FOLDER);
-            new VsdResponseFile(localFolder).store(readVSDResponse);
+            VsdResponseFile vsdResponseFile = new VsdResponseFile(localFolder);
+            vsdResponseFile.store(readVSDResponse);
+
+            fileEventSender.sendAsync(new FileEvent(telematikId, vsdResponseFile.getFiles()));
         } catch (Exception e) {
             log.warn("Could not save ReadVSDResponse", e);
         }

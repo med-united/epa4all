@@ -63,6 +63,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -82,9 +83,9 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
 import static de.servicehealth.epa4all.server.jcr.webdav.AbstractJCRServlet.getContentCodings;
-import static de.servicehealth.utils.XmlUtils.createDocument;
 import static jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
 /**
  * <code>WebdavRequestImpl</code>...
@@ -334,7 +335,7 @@ public class JWebdavRequestImpl implements JWebdavRequest, DavConstants, Content
                 boolean isEmpty = -1 == bin.read();
                 bin.reset();
                 if (!isEmpty) {
-                    requestDocument = createDocument(bin);
+                    requestDocument = DomUtil.parseDocument(bin);
                 }
             }
         } catch (IOException e) {
@@ -343,6 +344,11 @@ public class JWebdavRequestImpl implements JWebdavRequest, DavConstants, Content
             }
             Throwable cause = e.getCause();
             throw (cause instanceof DavException) ? (DavException) cause : new DavException(SC_BAD_REQUEST);
+        } catch (ParserConfigurationException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Unable to build an XML Document from the request body: " + e.getMessage());
+            }
+            throw new DavException(SC_INTERNAL_SERVER_ERROR);
         } catch (SAXException e) {
             if (log.isDebugEnabled()) {
                 log.debug("Unable to build an XML Document from the request body: " + e.getMessage());
@@ -397,7 +403,7 @@ public class JWebdavRequestImpl implements JWebdavRequest, DavConstants, Content
             } else {
                 String message = "Unsupported content coding: " + s;
                 try {
-                    Element condition = DomUtil.createElement(createDocument(), PRECONDITION_SUPPORTED);
+                    Element condition = DomUtil.createElement(DomUtil.createDocument(), PRECONDITION_SUPPORTED);
                     DavException davException = new DavException(
                         HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, message, null, condition
                     );

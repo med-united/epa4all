@@ -13,10 +13,6 @@ import java.time.format.DateTimeFormatter;
 
 public interface WebDavProp {
 
-    DateTimeFormatter LOCALDATE_YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
-    DateTimeFormatter LOCALDATE_YYYY_MM_DD = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    SimpleDateFormat DATE_YYYY_MM_DD = new SimpleDateFormat("yyyy-MM-dd");
-
     MultiStatus propfind(
         UriBuilder uriBuilder,
         PropFind propFind,

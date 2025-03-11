@@ -2,11 +2,13 @@ package de.servicehealth.epa4all.server.jcr;
 
 import de.servicehealth.epa4all.server.jcr.webdav.AbstractJCRServlet;
 import de.servicehealth.epa4all.server.jcr.webdav.JDavMethods;
+import de.servicehealth.epa4all.server.jcr.webdav.RepositoryProvider;
 import de.servicehealth.epa4all.server.jcr.webdav.request.JWebdavRequest;
 import de.servicehealth.epa4all.server.jcr.webdav.request.JWebdavRequestImpl;
 import de.servicehealth.epa4all.server.jcr.webdav.request.context.JWebdavRequestContextHolder;
 import de.servicehealth.epa4all.server.jcr.webdav.request.context.JWebdavRequestContextImpl;
 import de.servicehealth.epa4all.server.jcr.webdav.request.util.CSRFUtil;
+import de.servicehealth.epa4all.server.jcr.webdav.resource.JDavResourceFactory;
 import de.servicehealth.epa4all.server.jcr.webdav.response.JWebdavResponse;
 import de.servicehealth.epa4all.server.jcr.webdav.response.JWebdavResponseImpl;
 import de.servicehealth.epa4all.server.jcr.webdav.server.JCRWebdavServer;
@@ -15,7 +17,6 @@ import de.servicehealth.epa4all.server.jcr.webdav.session.JBasicCredentialsProvi
 import de.servicehealth.epa4all.server.jcr.webdav.session.JSessionProviderImpl;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +27,6 @@ import org.apache.jackrabbit.webdav.DavLocatorFactory;
 import org.apache.jackrabbit.webdav.DavMethods;
 import org.apache.jackrabbit.webdav.DavResource;
 import org.apache.jackrabbit.webdav.jcr.DavLocatorFactoryImpl;
-import de.servicehealth.epa4all.server.jcr.webdav.resource.JDavResourceFactory;
 import org.apache.jackrabbit.webdav.jcr.JcrDavSession;
 import org.apache.jackrabbit.webdav.jcr.observation.SubscriptionManagerImpl;
 import org.apache.jackrabbit.webdav.jcr.transaction.TxLockManagerImpl;
@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
-import javax.jcr.Repository;
 import javax.jcr.Session;
 import java.io.IOException;
 import java.io.Serial;
@@ -49,16 +48,7 @@ import static de.servicehealth.epa4all.server.jcr.webdav.JCRParams.INIT_PARAM_RE
 import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static jakarta.servlet.http.HttpServletResponse.SC_PRECONDITION_FAILED;
 
-// check VertxHttpServletRequest
-
-@WebServlet(
-    urlPatterns = "/webdav2/*",
-    initParams = {
-        // @WebInitParam(name = "resource-path-prefix", value = "/webdav2"),
-        // @WebInitParam(name = "missing-auth-mapping", value = "admin:admin"),
-        // @WebInitParam(name = "repository-prefix", value = "repository")
-    }
-)
+@WebServlet(urlPatterns = "/webdav2/*")
 @ApplicationScoped
 public class WebdavServlet extends AbstractJCRServlet {
 
@@ -73,12 +63,14 @@ public class WebdavServlet extends AbstractJCRServlet {
     private JDavResourceFactory resourceFactory;
     private TxLockManagerImpl transactionManager;
 
-    @Inject
-    RepositoryService repositoryService;
+    private final RepositoryProvider repositoryProvider;
+    private final JcrConfig jcrConfig;
 
     @Inject
-    JcrConfig jcrConfig;
-
+    public WebdavServlet(RepositoryProvider repositoryProvider, JcrConfig jcrConfig) {
+        this.repositoryProvider = repositoryProvider;
+        this.jcrConfig = jcrConfig;
+    }
 
     @Override
     public void init() throws ServletException {
@@ -102,11 +94,6 @@ public class WebdavServlet extends AbstractJCRServlet {
         resourceFactory = new JDavResourceFactory(transactionManager, subscriptionManager);
     }
 
-    // Returns the configured path prefix
-    public static String getPathPrefix(ServletContext ctx) {
-        return (String) ctx.getAttribute(CTX_ATTR_RESOURCE_PATH_PREFIX);
-    }
-
     @Override
     public JDavResourceFactory getResourceFactory() {
         return resourceFactory;
@@ -127,7 +114,8 @@ public class WebdavServlet extends AbstractJCRServlet {
         // DeltaV requires 'Cache-Control' header for all methods except 'VERSION-CONTROL' and 'REPORT'.
         int methodCode = DavMethods.getMethodCode(request.getMethod());
         boolean deltaVMethod = JDavMethods.isDeltaVMethod(webdavRequest);
-        boolean noCache = deltaVMethod && !(DavMethods.DAV_VERSION_CONTROL == methodCode || DavMethods.DAV_REPORT == methodCode);
+        boolean versionControlOrReport = DavMethods.DAV_VERSION_CONTROL == methodCode || DavMethods.DAV_REPORT == methodCode;
+        boolean noCache = deltaVMethod && !versionControlOrReport;
         JWebdavResponse webdavResponse = new JWebdavResponseImpl(response, noCache);
 
         try {
@@ -208,17 +196,16 @@ public class WebdavServlet extends AbstractJCRServlet {
         if (server == null) {
             JBasicCredentialsProvider basicCredentialsProvider = new JBasicCredentialsProvider(jcrConfig.getMissingAuthMapping());
             JSessionProviderImpl sessionProvider = new JSessionProviderImpl(basicCredentialsProvider);
-            Repository repository = repositoryService.getRepository();
             String cl = getInitParameter(INIT_PARAM_CONCURRENCY_LEVEL);
             if (cl != null) {
                 try {
-                    server = new JCRWebdavServer(repository, sessionProvider, Integer.parseInt(cl));
+                    server = new JCRWebdavServer(repositoryProvider, sessionProvider, Integer.parseInt(cl));
                 } catch (NumberFormatException e) {
                     log.debug("Invalid value '" + cl + "' for init-param 'concurrency-level'. Using default instead.");
-                    server = new JCRWebdavServer(repository, sessionProvider);
+                    server = new JCRWebdavServer(repositoryProvider, sessionProvider);
                 }
             } else {
-                server = new JCRWebdavServer(repository, sessionProvider);
+                server = new JCRWebdavServer(repositoryProvider, sessionProvider);
             }
         }
         return server;

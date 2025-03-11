@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.server.rest.fileserver.prop;
 
 import de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.type.DirectoryType;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.UriBuilder;
@@ -13,17 +12,12 @@ import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import static de.servicehealth.epa4all.server.entitlement.EntitlementFile.ENTITLEMENT_FILE;
-import static de.servicehealth.epa4all.server.filetracker.ChecksumFile.CHECKSUM_FILE_NAME;
-import static java.util.stream.Collectors.toMap;
+import static de.servicehealth.epa4all.server.propsource.PropBuilder.SKIPPED_FILES;
+import static de.servicehealth.utils.ServerUtils.getPathParts;
 
 @ApplicationScoped
 public class DirectoryProp extends AbstractProp {
-
-    public static final Set<String> SKIPPED_FILES = Set.of(ENTITLEMENT_FILE, CHECKSUM_FILE_NAME, ".DS_Store");
 
     @Inject
     FileProp fileProp;
@@ -50,22 +44,13 @@ public class DirectoryProp extends AbstractProp {
         }
     }
 
-    @Override
-    public List<String> resolveLevelProps(File resource, URI requestUri) {
-        Map<String, List<String>> availableProps = webdavConfig.getAvailableProps(true);
-        Map<DirectoryType, List<String>> directoryTypeMap = availableProps.entrySet().stream().collect(toMap(
-            e -> DirectoryType.valueOf(e.getKey()), e -> e.getValue().stream().filter(s -> !s.isEmpty()).toList()
-        ));
-        List<String> props = new ArrayList<>(directoryTypeMap.get(DirectoryType.Mandatory));
-        directoryTypeMap.entrySet().stream()
-            .filter(e -> e.getKey().getLevel() == getLevel(requestUri))
-            .findFirst()
-            .map(e -> e.getValue().stream().filter(s -> !s.isEmpty()).toList()).ifPresent(props::addAll);
-        return props;
+    private int getLevel(URI requestUri) {
+        return getPathParts(requestUri.getPath()).size() - 1;
     }
 
-    private int getLevel(URI requestUri) {
-        return getPathParts(requestUri).size() - 1;
+    @Override
+    public List<String> resolveLevelProps(File resource, URI requestUri) {
+        return propBuilder.resolveDirectoryProps(getLevel(requestUri));
     }
 
     private void collectNestedResources(
@@ -89,7 +74,7 @@ public class DirectoryProp extends AbstractProp {
                     multiStatus = propfind(nestedBuilder, propFind, nestedBuilder.build(), file, initialDepth, currentDepth, sortBy);
                 }
             } else {
-                if (SKIPPED_FILES.stream().noneMatch(s -> s.equals(file.getName()))) {
+                if (SKIPPED_FILES.test(file)) {
                     multiStatus = fileProp.propfind(nestedBuilder, propFind, nestedBuilder.build(), file, initialDepth, -1, sortBy);
                 }
             }

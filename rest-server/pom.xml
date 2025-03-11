@@ -81,11 +81,6 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
-		<dependency>
-            <groupId>org.jugs.webdav</groupId>
-            <artifactId>webdav-jaxrs</artifactId>
-            <version>3.1</version>
-        </dependency>
         <dependency>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
@@ -163,6 +158,19 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit5-mockito</artifactId>
+            <version>3.17.2</version>
+            <scope>test</scope>
+            <!-- Go for Mockito inline mode which allows mocking final classes like java.net.NetworkInterface in our code -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.mockito</groupId>
+                    <artifactId>mockito-subclass</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>common-test</artifactId>

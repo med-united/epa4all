@@ -4,8 +4,13 @@ import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import javax.jcr.SimpleCredentials;
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.server.jcr.webdav.JCRParams.DEFAULT_AUTHENTICATE_HEADER;
 
@@ -32,7 +37,28 @@ public class JcrConfig {
     @ConfigProperty(name = "jcr.create.absolute.uri", defaultValue = "true")
     boolean createAbsoluteURI;
 
+    @ConfigProperty(name = "jcr.mixin.config")
+    Map<String, String> mixinMap;
+
+    private volatile Map<String, List<String>> mixinConfigMap;
+
     public String getWorkspacesHome() {
         return repositoryHome.getAbsolutePath() + "/workspaces";
+    }
+
+    public SimpleCredentials getCredentials() {
+        String[] parts = getMissingAuthMapping().split(":");
+        String user = parts[0];
+        String pass = parts[1];
+        return new SimpleCredentials(user, pass.toCharArray());
+    }
+
+    public Map<String, List<String>> getMixinMap() {
+        if (mixinConfigMap == null) {
+            mixinConfigMap = mixinMap.entrySet().stream().collect(Collectors.toMap(
+                Map.Entry::getKey, e -> Arrays.stream(e.getValue().split(",")).filter(s -> !s.isEmpty()).toList()
+            ));
+        }
+        return mixinConfigMap;
     }
 }

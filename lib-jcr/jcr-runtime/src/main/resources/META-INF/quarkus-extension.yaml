@@ -1,11 +1,15 @@
-name: lib jcr extension
-description: jackrabbit jakarta port
+---
+name: "JCR Library Extension"
+description: "Provides JCR functionality for Quarkus applications"
 metadata:
   keywords:
-    - jcr
-    - webdav
-    - servlet
-  guide: https://github.com/med-united/epa4all/tree/main
+    - "jcr"
+    - "repository"
+    - "content"
+  guide: "https://github.com/med-united/epa4all/tree/main"
   categories:
-    - "backend"
+    - "persistence"
   status: "experimental"
+groupId: "de.servicehealth.epa4all"
+artifactId: "jcr-runtime"
+artifact: "de.servicehealth.epa4all:jcr-runtime"

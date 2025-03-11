@@ -32,10 +32,8 @@ import org.jugs.webdav.jaxrs.xml.properties.LockDiscovery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -45,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_TOTAL_COUNT;
+import static de.servicehealth.utils.ServerUtils.writeStreamToFile;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static org.jugs.webdav.jaxrs.Headers.DAV;
@@ -163,13 +162,7 @@ public class AbstractResource implements WebDavResource {
         if (contentLength == 0) {
             return Response.ok().build();
         }
-        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(resource));
-        int b;
-        while ((b = entityStream.read()) != -1) {
-            out.write(b);
-        }
-        out.flush();
-        out.close();
+        writeStreamToFile(entityStream, resource);
 
         log.debug(String.format("STORED: %s", resource.getName()));
         return logResponse("PUT", uriInfo, Response.created(uriInfo.getRequestUriBuilder().path(url).build()).build());

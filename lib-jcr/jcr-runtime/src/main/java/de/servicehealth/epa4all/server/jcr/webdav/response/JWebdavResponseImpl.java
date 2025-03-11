@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,8 +34,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
-
-import static de.servicehealth.utils.XmlUtils.createDocument;
 
 /**
  * WebdavResponseImpl implements the <code>WebdavResponse</code> interface.
@@ -115,7 +114,7 @@ public class JWebdavResponseImpl implements JWebdavResponse {
         if (serializable != null) {
             try {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
-                Document doc = createDocument();
+                Document doc = DomUtil.createDocument();
                 doc.appendChild(serializable.toXml(doc));
                 DomUtil.transformDocument(doc, out);
                 out.close();
@@ -132,7 +131,7 @@ public class JWebdavResponseImpl implements JWebdavResponse {
                         out.writeTo(os);
                     }
                 }
-            } catch (TransformerException | SAXException e) {
+            } catch (TransformerException | SAXException | ParserConfigurationException e) {
                 log.error(e.getMessage());
                 throw new IOException(e.getMessage());
             }

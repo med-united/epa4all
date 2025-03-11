@@ -10,14 +10,14 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.createUCEntity;
-import static de.servicehealth.utils.ServerUtils.unzipAndSaveDataToFile;
+import static de.servicehealth.utils.ServerUtils.writeBytesToFile;
 import static de.servicehealth.utils.XmlUtils.createDocument;
 
 public class VsdResponseFile {
@@ -48,6 +48,8 @@ public class VsdResponseFile {
     private final File persoenlicheVersichertendatenFile;
     private final File geschuetzteVersichertendatenFile;
 
+    private final List<File> internalFiles;
+
     public VsdResponseFile(File localMedFolder) {
         if (localMedFolder == null || !localMedFolder.isDirectory()) {
             throw new IllegalArgumentException("Local med folder is corrupted");
@@ -59,27 +61,17 @@ public class VsdResponseFile {
         persoenlicheVersichertendatenFile = new File(localMedFolder, PERSOENLICHE_VERSICHERTENDATEN_XML);
         geschuetzteVersichertendatenFile = new File(localMedFolder, GESCHUETZTE_VERSICHERTENDATEN_XML);
 
-        initFiles(
-            List.of(
-                readVSDResponseFile,
-                pruefungsnachweisFile,
-                allgemeineVersicherungsdatenFile,
-                persoenlicheVersichertendatenFile,
-                geschuetzteVersichertendatenFile
-            )
+        internalFiles = List.of(
+            readVSDResponseFile,
+            pruefungsnachweisFile,
+            allgemeineVersicherungsdatenFile,
+            persoenlicheVersichertendatenFile,
+            geschuetzteVersichertendatenFile
         );
     }
 
-    private void initFiles(List<File> files) {
-        files.forEach(f -> {
-            if (!f.exists()) {
-                try {
-                    f.createNewFile();
-                } catch (Exception e) {
-                    log.error("Can't create a file: " + f.getAbsolutePath());
-                }
-            }
-        });
+    public List<File> getFiles() {
+        return readVSDResponseFile.exists() ? internalFiles : List.of();
     }
 
     public static String extractPz(byte[] pruefungsnachweis) throws Exception {
@@ -126,6 +118,9 @@ public class VsdResponseFile {
         try {
             byte[] persoenlicheVersichertendaten = readVSDResponse.getPersoenlicheVersichertendaten();
             UCPersoenlicheVersichertendatenXML patient = createUCEntity(persoenlicheVersichertendaten);
+            if (patient == null) {
+                return fallbackKvnr;
+            }
             String versichertenID = patient.getVersicherter().getVersichertenID();
             if (versichertenID == null || versichertenID.trim().isEmpty()) {
                 return fallbackKvnr;
@@ -133,7 +128,7 @@ public class VsdResponseFile {
                 return versichertenID;
             }
         } catch (Exception e) {
-            log.error("Error while createUCEntity(persoenlicheVersichertendaten)", e);
+            log.error("Error while VsdResponseFile.extractInsurantId", e);
             return fallbackKvnr;
         }
     }
@@ -155,15 +150,17 @@ public class VsdResponseFile {
         return new PruefungsnachweisNodes(eNode, pzNode);
     }
 
-    public void store(ReadVSDResponse readVSDResponse) throws Exception {
+    public void store(ReadVSDResponse readVSDResponse) {
         lock.writeLock().lock();
         try {
-            readVSDJaxbContext.createMarshaller().marshal(readVSDResponse, new FileOutputStream(readVSDResponseFile));
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            readVSDJaxbContext.createMarshaller().marshal(readVSDResponse, os);
 
-            unzipAndSaveDataToFile(readVSDResponse.getAllgemeineVersicherungsdaten(), allgemeineVersicherungsdatenFile);
-            unzipAndSaveDataToFile(readVSDResponse.getPersoenlicheVersichertendaten(), persoenlicheVersichertendatenFile);
-            unzipAndSaveDataToFile(readVSDResponse.getGeschuetzteVersichertendaten(), geschuetzteVersichertendatenFile);
-            unzipAndSaveDataToFile(readVSDResponse.getPruefungsnachweis(), pruefungsnachweisFile);
+            writeBytesToFile(os.toByteArray(), readVSDResponseFile);
+            writeBytesToFile(readVSDResponse.getAllgemeineVersicherungsdaten(), allgemeineVersicherungsdatenFile);
+            writeBytesToFile(readVSDResponse.getPersoenlicheVersichertendaten(), persoenlicheVersichertendatenFile);
+            writeBytesToFile(readVSDResponse.getGeschuetzteVersichertendaten(), geschuetzteVersichertendatenFile);
+            writeBytesToFile(readVSDResponse.getPruefungsnachweis(), pruefungsnachweisFile);
         } catch (Exception e) {
             log.warn("Could not save ReadVSDResponse", e);
         } finally {
@@ -172,16 +169,9 @@ public class VsdResponseFile {
     }
 
     public void cleanUp() {
-        List<File> files = List.of(
-            readVSDResponseFile,
-            pruefungsnachweisFile,
-            allgemeineVersicherungsdatenFile,
-            persoenlicheVersichertendatenFile,
-            geschuetzteVersichertendatenFile
-        );
         lock.writeLock().lock();
         try {
-            files.forEach(f -> {
+            internalFiles.forEach(f -> {
                 if (f.exists()) {
                     f.delete();
                 }

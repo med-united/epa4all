@@ -19,6 +19,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -36,9 +37,15 @@ public class ServerUtils {
     public static final String APPLICATION_PDF = "application/pdf";
     public static final String APPLICATION_CBOR = "application/cbor";
 
+    public static final int BUFFER_SIZE = 8192;
+
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private ServerUtils() {
+    }
+
+    public static List<String> getPathParts(String path) {
+        return Arrays.stream(path.split("/")).filter(s -> !s.isEmpty()).toList();
     }
 
     public static String getBaseUrl(String url) {
@@ -53,12 +60,43 @@ public class ServerUtils {
         return serviceUrl.replace("[epa-backend]", backend);
     }
 
-    public static void unzipAndSaveDataToFile(byte[] bytes, File outputFile) throws IOException {
-        if (!outputFile.exists()) {
-            outputFile.createNewFile();
+    public static void writeStreamToFile(InputStream is, File outFile) throws IOException {
+        if (!outFile.exists()) {
+            outFile.createNewFile();
         }
-        try (FileOutputStream os = new FileOutputStream(outputFile)) {
+        InputStream inputStream;
+        try {
+            inputStream = new GZIPInputStream(is);
+        } catch (IOException e) {
+            inputStream = is;
+        }
+        byte[] buff = new byte[BUFFER_SIZE];
+        try (FileOutputStream os = new FileOutputStream(outFile)) {
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buff)) != -1) {
+                os.write(buff, 0, bytesRead);
+            }
+        }
+        inputStream.close();
+    }
+
+    public static void writeBytesToFile(byte[] bytes, File outFile) throws IOException {
+        if (!outFile.exists()) {
+            outFile.createNewFile();
+        }
+        try (FileOutputStream os = new FileOutputStream(outFile)) {
             os.write(decompress(bytes));
+        }
+    }
+
+    public static byte[] decompress(final byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            return new byte[0];
+        }
+        try (GZIPInputStream gzipIn = new GZIPInputStream(new ByteArrayInputStream(bytes))) {
+            return gzipIn.readAllBytes();
+        } catch (Exception e) {
+            return bytes;
         }
     }
 
@@ -81,17 +119,6 @@ public class ServerUtils {
 
     public static boolean isAuthError(String error) {
         return AUTH_ERRORS.stream().anyMatch(error::contains);
-    }
-
-    public static byte[] decompress(final byte[] bytes) {
-        if (bytes == null || bytes.length == 0) {
-            return new byte[0];
-        }
-        try (GZIPInputStream gzipIn = new GZIPInputStream(new ByteArrayInputStream(bytes))) {
-            return gzipIn.readAllBytes();
-        } catch (Exception e) {
-            return bytes;
-        }
     }
 
     public static Date asDate(LocalDate localDate) {

@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.jcr.webdav.server;
 
+import de.servicehealth.epa4all.server.jcr.webdav.RepositoryProvider;
 import de.servicehealth.epa4all.server.jcr.webdav.request.JWebdavRequest;
 import de.servicehealth.epa4all.server.jcr.webdav.request.header.IfHeader;
 import de.servicehealth.epa4all.server.jcr.webdav.session.JSessionProvider;
@@ -35,7 +36,6 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * <code>JCRWebdavServer</code>...
  */
-@SuppressWarnings("JavadocDeclaration")
 public class JCRWebdavServer implements JDavSessionProvider {
 
     /** the default logger */
@@ -45,7 +45,7 @@ public class JCRWebdavServer implements JDavSessionProvider {
     private final SessionCache cache;
 
     /** the jcr repository */
-    private final Repository repository;
+    private final RepositoryProvider repositoryProvider;
 
     /** the provider for the credentials */
     private final JSessionProvider sessionProvider;
@@ -53,22 +53,18 @@ public class JCRWebdavServer implements JDavSessionProvider {
     /**
      * Creates a new JCRWebdavServer that operates on the given repository.
      *
-     * @param repository
      */
-    public JCRWebdavServer(Repository repository, JSessionProvider sessionProvider) {
-        this.repository = repository;
+    public JCRWebdavServer(RepositoryProvider repositoryProvider, JSessionProvider sessionProvider) {
+        this.repositoryProvider = repositoryProvider;
         this.sessionProvider = sessionProvider;
         cache = new SessionCache();
     }
 
     /**
      * Creates a new JCRWebdavServer that operates on the given repository.
-     *
-     * @param repository
-     * @param concurrencyLevel
      */
-    public JCRWebdavServer(Repository repository, JSessionProvider sessionProvider, int concurrencyLevel) {
-        this.repository = repository;
+    public JCRWebdavServer(RepositoryProvider repositoryProvider, JSessionProvider sessionProvider, int concurrencyLevel) {
+        this.repositoryProvider = repositoryProvider;
         this.sessionProvider = sessionProvider;
         cache = new SessionCache(concurrencyLevel);
     }
@@ -79,7 +75,6 @@ public class JCRWebdavServer implements JDavSessionProvider {
      * one by login to the repository.
      * Upon success, the WebdavRequest will reference that session.
      *
-     * @param request
      * @throws DavException if no session could be obtained.
      * @see DavSessionProvider#attachSession(org.apache.jackrabbit.webdav.WebdavRequest)
      */
@@ -95,7 +90,6 @@ public class JCRWebdavServer implements JDavSessionProvider {
      * references to the session exist, the session will be removed from the
      * cache.
      *
-     * @param request
      * @see DavSessionProvider#releaseSession(org.apache.jackrabbit.webdav.WebdavRequest)
      */
     public void releaseSession(JWebdavRequest request) {
@@ -113,11 +107,6 @@ public class JCRWebdavServer implements JDavSessionProvider {
      */
     private class DavSessionImpl extends JcrDavSession {
 
-        /**
-         * Private constructor.
-         *
-         * @param session
-         */
         private DavSessionImpl(Session session) {
             super(session);
         }
@@ -321,6 +310,7 @@ public class JCRWebdavServer implements JDavSessionProvider {
                     workspaceName = request.getRequestLocator().getWorkspaceName();
                 }
 
+                Repository repository = repositoryProvider.getRepository();
                 Session session = sessionProvider.getSession(request, repository, workspaceName);
 
                 // extract information from Link header fields

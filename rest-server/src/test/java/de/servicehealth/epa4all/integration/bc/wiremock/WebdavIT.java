@@ -6,10 +6,12 @@ import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.vsd.VsdService;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
@@ -34,13 +36,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.LOCALDATE_YYYYMMDD;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.LOCALDATE_YYYY_MM_DD;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_LIMIT;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_OFFSET;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_SORT_BY;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_TOTAL_COUNT;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy.Latest;
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYYMMDD;
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYY_MM_DD;
 import static de.servicehealth.utils.XmlUtils.createDocument;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
@@ -50,12 +52,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("unused")
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
 public class WebdavIT extends AbstractWiremockTest {
 
-    @Inject
-    VsdService vsdService;
+    @InjectMock
+    FileEventSender fileEventSender;
 
     @Inject
     FolderService folderService;
@@ -68,6 +71,9 @@ public class WebdavIT extends AbstractWiremockTest {
 
     @Inject
     protected KonnektorDefaultConfig konnektorDefaultConfig;
+
+    @Inject
+    VsdService vsdService;
 
     private UCPersoenlicheVersichertendatenXML.Versicherter.Person prepareInsurantFiles(
         String telematikId,
@@ -141,7 +147,7 @@ public class WebdavIT extends AbstractWiremockTest {
 
     private void printFilesInfo(String telematikId, String kvnr) {
         System.out.println("---------");
-        List<File> leafFiles = folderService.getLeafFiles(new File(tempDir.toFile(), telematikId + "/" + kvnr));
+        List<File> leafFiles = folderService.getLeafFiles(new File(tempDir.toFile(), "webdav/" + telematikId + "/" + kvnr));
         for (File file : leafFiles) {
             System.out.println(file.getAbsolutePath() + " -> " + file.lastModified() + "\r\n");
         }
@@ -193,7 +199,7 @@ public class WebdavIT extends AbstractWiremockTest {
 
         TimeUnit.SECONDS.sleep(1);
 
-        File other = new File(tempDir.toFile(), telematikId + "/" + kvnr + "/eab");
+        File other = new File(tempDir.toFile(), "webdav/" + telematikId + "/" + kvnr + "/eab");
         File someFile = new File(other, "some.txt");
         boolean created = someFile.createNewFile();
         assertTrue(created);

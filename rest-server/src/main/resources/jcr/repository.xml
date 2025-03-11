@@ -3,13 +3,31 @@
         "http://jackrabbit.apache.org/dtd/repository-2.6.dtd">
 <Repository>
 
-    <DataStore class="org.apache.jackrabbit.core.data.FileDataStore"/>
-    
     <FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
         <param name="path" value="${repository.home}"/>
     </FileSystem>
 
-    <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.BundleFsPersistenceManager"/>
+    <Security appName="epa4all">
+        <SecurityManager class="org.apache.jackrabbit.core.DefaultSecurityManager" workspaceName="default"/>
+        <AccessManager class="org.apache.jackrabbit.core.security.DefaultAccessManager"/>
+        <LoginModule class="org.apache.jackrabbit.core.security.authentication.DefaultLoginModule">
+            <param name="anonymousId" value="anonymous"/>
+            <param name="adminId" value="admin"/>
+        </LoginModule>
+    </Security>
+
+    <Workspaces rootPath="${workspaces.home}" defaultWorkspace="default" maxIdleTime="2"/>
+
+    <Workspace name="${wsp.name}">
+        <FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
+            <param name="path" value="${wsp.home}"/>
+        </FileSystem>
+        <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.BundleFsPersistenceManager"/>
+        <SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
+            <param name="path" value="${wsp.home}/index"/>
+            <param name="supportHighlighting" value="true"/>
+        </SearchIndex>
+    </Workspace>
 
     <Versioning rootPath="${repository.home}/version">
         <FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
@@ -23,26 +41,6 @@
         <param name="useSimpleFSDirectory" value="true"/>
     </SearchIndex>
 
-    <Security appName="epa4all">
-        <SecurityManager class="org.apache.jackrabbit.core.DefaultSecurityManager" workspaceName="security"/>
-        <AccessManager class="org.apache.jackrabbit.core.security.DefaultAccessManager"/>
-        <LoginModule class="org.apache.jackrabbit.core.security.authentication.DefaultLoginModule">
-            <param name="anonymousId" value="anonymous"/>
-            <param name="adminId" value="admin"/>
-        </LoginModule>
-    </Security>
-
-    <Workspaces rootPath="${workspaces.home}" defaultWorkspace="default" maxIdleTime="2"/>
-
-    <Workspace name="default">
-        <FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
-            <param name="path" value="${workspaces.home}/default"/>
-        </FileSystem>
-        <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.BundleFsPersistenceManager"/>
-        <SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
-            <param name="path" value="${workspaces.home}/default/index"/>
-            <param name="supportHighlighting" value="true"/>
-        </SearchIndex>
-    </Workspace>
+    <DataStore class="org.apache.jackrabbit.core.data.FileDataStore"/>
 
 </Repository>

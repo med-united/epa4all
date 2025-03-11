@@ -12,9 +12,12 @@ import static java.io.File.separator;
 
 public interface IFolderService {
 
+    String DS_STORE = ".DS_Store";
     String LOCAL_FOLDER = "local";
 
     File getRootFolder();
+
+    void writeBytesToFile(String telematikId, byte[] bytes, File outFile);
 
     Supplier<File> getTelematikFolderSupplier(String telematikId);
 
@@ -29,19 +32,18 @@ public interface IFolderService {
     }
 
     default File getOrCreateFolder(String path) {
-        if (!path.contains(".DS_Store")) {
-            File folder = new File(path);
-            if (!folder.exists()) {
-                boolean created = folder.mkdirs();
-                if (!created) {
-                    String msg = String.format("Directory [%s] was not created", path);
-                    throw new IllegalStateException(msg);
-                }
-            }
-            return folder;
-        } else {
+        if (path.contains(DS_STORE)) {
             return new File("");
         }
+        File folder = new File(path);
+        if (!folder.exists()) {
+            boolean created = folder.mkdirs();
+            if (!created) {
+                String msg = String.format("Directory [%s] was not created", path);
+                throw new IllegalStateException(msg);
+            }
+        }
+        return folder;
     }
 
     default File[] getTelematikFolders() {
