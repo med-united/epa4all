@@ -7,6 +7,7 @@ import de.servicehealth.epa4all.server.jcr.webdav.request.JWebdavRequestImpl;
 import de.servicehealth.epa4all.server.jcr.webdav.request.context.JWebdavRequestContextHolder;
 import de.servicehealth.epa4all.server.jcr.webdav.request.context.JWebdavRequestContextImpl;
 import de.servicehealth.epa4all.server.jcr.webdav.request.util.CSRFUtil;
+import de.servicehealth.epa4all.server.jcr.webdav.resource.JDavResourceFactory;
 import de.servicehealth.epa4all.server.jcr.webdav.response.JWebdavResponse;
 import de.servicehealth.epa4all.server.jcr.webdav.response.JWebdavResponseImpl;
 import de.servicehealth.epa4all.server.jcr.webdav.server.JCRWebdavServer;
@@ -26,7 +27,6 @@ import org.apache.jackrabbit.webdav.DavLocatorFactory;
 import org.apache.jackrabbit.webdav.DavMethods;
 import org.apache.jackrabbit.webdav.DavResource;
 import org.apache.jackrabbit.webdav.jcr.DavLocatorFactoryImpl;
-import de.servicehealth.epa4all.server.jcr.webdav.resource.JDavResourceFactory;
 import org.apache.jackrabbit.webdav.jcr.JcrDavSession;
 import org.apache.jackrabbit.webdav.jcr.observation.SubscriptionManagerImpl;
 import org.apache.jackrabbit.webdav.jcr.transaction.TxLockManagerImpl;
@@ -51,14 +51,7 @@ import static jakarta.servlet.http.HttpServletResponse.SC_PRECONDITION_FAILED;
 
 // check VertxHttpServletRequest
 
-@WebServlet(
-    urlPatterns = "/webdav2/*",
-    initParams = {
-        // @WebInitParam(name = "resource-path-prefix", value = "/webdav2"),
-        // @WebInitParam(name = "missing-auth-mapping", value = "admin:admin"),
-        // @WebInitParam(name = "repository-prefix", value = "repository")
-    }
-)
+@WebServlet(urlPatterns = "/webdav2/*")
 @ApplicationScoped
 public class WebdavServlet extends AbstractJCRServlet {
 
@@ -127,7 +120,8 @@ public class WebdavServlet extends AbstractJCRServlet {
         // DeltaV requires 'Cache-Control' header for all methods except 'VERSION-CONTROL' and 'REPORT'.
         int methodCode = DavMethods.getMethodCode(request.getMethod());
         boolean deltaVMethod = JDavMethods.isDeltaVMethod(webdavRequest);
-        boolean noCache = deltaVMethod && !(DavMethods.DAV_VERSION_CONTROL == methodCode || DavMethods.DAV_REPORT == methodCode);
+        boolean versionControlOrReport = DavMethods.DAV_VERSION_CONTROL == methodCode || DavMethods.DAV_REPORT == methodCode;
+        boolean noCache = deltaVMethod && !versionControlOrReport;
         JWebdavResponse webdavResponse = new JWebdavResponseImpl(response, noCache);
 
         try {

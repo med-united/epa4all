@@ -47,17 +47,17 @@ public class WorkspaceService {
         try {
             Workspace workspace = adminSession.getWorkspace();
             boolean exists = Arrays.asList(workspace.getAccessibleWorkspaceNames()).contains(telematikId);
-            if (!exists) {
+            if (exists) {
+                log.info("Workspace '" + telematikId + "' already exists");
+            } else {
                 if (workspace instanceof JackrabbitWorkspace jackrabbitWorkspace) {
                     InputSource inputSource = getInputSource(telematikId);
                     jackrabbitWorkspace.createWorkspace(telematikId, inputSource);
                     log.info("Workspace '" + telematikId + "' created successfully!");
                 }
-            } else {
-                log.info("Workspace '" + telematikId + "' already exists");
             }
         } catch (Exception e) {
-            log.error("Error while creating workspace", e);
+            log.error("Error while creating workspace [" + telematikId + "]", e);
         } 
     }
 

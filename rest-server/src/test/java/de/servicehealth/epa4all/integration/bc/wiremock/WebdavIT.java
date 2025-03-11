@@ -6,9 +6,12 @@ import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
+import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.jcr.WorkspaceService;
+import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -49,13 +52,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
 public class WebdavIT extends AbstractWiremockTest {
-
-    @Inject
-    VsdService vsdService;
 
     @Inject
     FolderService folderService;
@@ -69,6 +70,12 @@ public class WebdavIT extends AbstractWiremockTest {
     @Inject
     protected KonnektorDefaultConfig konnektorDefaultConfig;
 
+    @Inject
+    MultiKonnektorService multiKonnektorService;
+
+    @Inject
+    EpaCallGuard epaCallGuard;
+
     private UCPersoenlicheVersichertendatenXML.Versicherter.Person prepareInsurantFiles(
         String telematikId,
         String kvnr
@@ -79,6 +86,9 @@ public class WebdavIT extends AbstractWiremockTest {
         String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
         String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
 
+        VsdService vsdService = new VsdService(
+            multiKonnektorService, mock(WorkspaceService.class), folderService, epaCallGuard
+        );
         String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, null);
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
         UCPersoenlicheVersichertendatenXML versichertendaten = insuranceData.getPersoenlicheVersichertendaten();

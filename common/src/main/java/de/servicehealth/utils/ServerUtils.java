@@ -19,6 +19,7 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -39,6 +40,10 @@ public class ServerUtils {
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private ServerUtils() {
+    }
+
+    public static List<String> getPathParts(String path) {
+        return Arrays.stream(path.split("/")).filter(s -> !s.isEmpty()).toList();
     }
 
     public static String getBaseUrl(String url) {
