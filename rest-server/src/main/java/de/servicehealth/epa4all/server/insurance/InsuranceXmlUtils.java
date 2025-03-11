@@ -4,6 +4,8 @@ import de.gematik.ws.fa.vsdm.vsd.v5.UCAllgemeineVersicherungsdatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCGeschuetzteVersichertendatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -14,8 +16,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 
 import static de.servicehealth.utils.ServerUtils.decompress;
+import static jakarta.xml.bind.Marshaller.JAXB_FORMATTED_OUTPUT;
 
 public class InsuranceXmlUtils {
 
@@ -41,6 +45,19 @@ public class InsuranceXmlUtils {
             UCAllgemeineVersicherungsdatenXML.class,
             UCGeschuetzteVersichertendatenXML.class
         );
+    }
+
+    public static String print(Object object, boolean formatted) {
+        try {
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty(JAXB_FORMATTED_OUTPUT, formatted);
+            StringWriter sw = new StringWriter();
+            marshaller.marshal(object, sw);
+            return sw.toString();
+        } catch (JAXBException e) {
+            log.error("Error converting object to XML", e);
+            return e.getMessage();
+        }
     }
 
     public static synchronized Document createDocument(byte[] bytes) throws IOException, SAXException {

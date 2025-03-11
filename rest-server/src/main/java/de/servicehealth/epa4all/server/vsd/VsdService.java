@@ -4,6 +4,7 @@ import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSD;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.conn.vsds.vsdservice.v5.VSDStatusType;
+import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
@@ -17,11 +18,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.DatatypeFactory;
 import java.io.File;
+import java.util.Base64;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.UUID;
 
 import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
+import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.print;
 import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.extractInsurantId;
 import static de.servicehealth.utils.ServerUtils.compress;
 
@@ -46,18 +49,44 @@ public class VsdService {
     }
 
     public static ReadVSDResponse buildSyntheticVSDResponse() throws Exception {
-    	return buildSyntheticVSDResponse(null, null);
+        return buildSyntheticVSDResponse(null, null, null, null, 0);
     }
-    
-    public static ReadVSDResponse buildSyntheticVSDResponse(String xml, byte[] bytes) throws Exception {
-        ReadVSDResponse readVSDResponse = new ReadVSDResponse();
-        readVSDResponse.setAllgemeineVersicherungsdaten(new byte[0]);
-        readVSDResponse.setGeschuetzteVersichertendaten(new byte[0]);
-        readVSDResponse.setPersoenlicheVersichertendaten(new byte[0]);
 
-        if(bytes != null) {
-	        byte[] gzipBytes = xml != null ? compress(xml.getBytes()) : compress(bytes);
-	        readVSDResponse.setPruefungsnachweis(gzipBytes);
+    public static ReadVSDResponse buildSyntheticVSDResponse(
+        String street,
+        String versicherungsdatenXml,
+        String pruefungsnachweisXml,
+        byte[] pnwBodyBase64Bytes,
+        int len
+    ) throws Exception {
+        ReadVSDResponse readVSDResponse = new ReadVSDResponse();
+        readVSDResponse.setGeschuetzteVersichertendaten(new byte[0]);
+
+        if (street != null) {
+            UCPersoenlicheVersichertendatenXML persoenlicheVersichertendatenXML = new UCPersoenlicheVersichertendatenXML();
+            UCPersoenlicheVersichertendatenXML.Versicherter versicherter = new UCPersoenlicheVersichertendatenXML.Versicherter();
+            UCPersoenlicheVersichertendatenXML.Versicherter.Person person = new UCPersoenlicheVersichertendatenXML.Versicherter.Person();
+            UCPersoenlicheVersichertendatenXML.Versicherter.Person.StrassenAdresse strassenAdresse = new UCPersoenlicheVersichertendatenXML.Versicherter.Person.StrassenAdresse();
+            strassenAdresse.setStrasse(street);
+            person.setStrassenAdresse(strassenAdresse);
+            versicherter.setPerson(person);
+            persoenlicheVersichertendatenXML.setVersicherter(versicherter);
+
+            readVSDResponse.setPersoenlicheVersichertendaten(gzip(print(persoenlicheVersichertendatenXML, false), null));
+        }
+
+        if (pnwBodyBase64Bytes != null) {
+            byte[] versicherungsdatenBase64 = new byte[len];
+            byte[] pruefungsnachweisBase64 = new byte[pnwBodyBase64Bytes.length - len];
+
+            System.arraycopy(pnwBodyBase64Bytes, 0, versicherungsdatenBase64, 0, len);
+            System.arraycopy(pnwBodyBase64Bytes, len, pruefungsnachweisBase64, 0, pnwBodyBase64Bytes.length - len);
+
+            byte[] versicherungsdaten = Base64.getDecoder().decode(versicherungsdatenBase64);
+            byte[] pruefungsnachweis = Base64.getDecoder().decode(pruefungsnachweisBase64);
+
+            readVSDResponse.setAllgemeineVersicherungsdaten(gzip(versicherungsdatenXml, versicherungsdaten));
+            readVSDResponse.setPruefungsnachweis(gzip(pruefungsnachweisXml, pruefungsnachweis));
         }
 
         VSDStatusType vsdStatus = new VSDStatusType();
@@ -69,6 +98,10 @@ public class VsdService {
         readVSDResponse.setVSDStatus(vsdStatus);
 
         return readVSDResponse;
+    }
+
+    private static byte[] gzip(String xml, byte[] bytes) {
+        return xml != null ? compress(xml.getBytes()) : compress(bytes);
     }
 
     public synchronized String read(

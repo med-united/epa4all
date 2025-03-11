@@ -106,7 +106,7 @@ public class EntitlementService {
         return instant;
     }
 
-    static synchronized String extractHCV(InsuranceData insuranceData) {
+    public static synchronized String extractHCV(InsuranceData insuranceData) {
         try {
             UCAllgemeineVersicherungsdatenXML allgemeineVersicherungsdatenXML = insuranceData.getAllgemeineVersicherungsdaten();
             String vb = allgemeineVersicherungsdatenXML.getVersicherter().getVersicherungsschutz().getBeginn().replaceAll(" ", "");

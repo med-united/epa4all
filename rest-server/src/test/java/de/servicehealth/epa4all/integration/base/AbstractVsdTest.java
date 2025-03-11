@@ -121,8 +121,10 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
     }
 
     protected ReadVSDResponse prepareReadVSDResponse() throws Exception {
-        String xml = "<PN CDM_VERSION=\"1.0.0\" xmlns=\"http://ws.gematik.de/fa/vsdm/pnw/v1.0\"><TS>20241121115318</TS><E>2</E><PZ>WDExMDQ4NTI5MTE3MzIxODk5OTdVWDFjxzDPSFvdIrRmmmOWFP/aP5rakVUqQj8=</PZ></PN>";
-        return VsdService.buildSyntheticVSDResponse(xml, null);
+        String versicherungsdatenXml = "<?xml version=\"1.0\" encoding=\"ISO-8859-15\"?><UC_AllgemeineVersicherungsdatenXML xmlns=\"http://ws.gematik.de/fa/vsdm/vsd/v5.2\" CDM_VERSION=\"5.2.0\"><Versicherter><Versicherungsschutz><Beginn>20241023</Beginn><Kostentraeger><Kostentraegerkennung>109500969</Kostentraegerkennung><Kostentraegerlaendercode>D</Kostentraegerlaendercode><Name>Test GKV-SV</Name><AbrechnenderKostentraeger><Kostentraegerkennung>109500969</Kostentraegerkennung><Kostentraegerlaendercode>D</Kostentraegerlaendercode><Name>Test GKV-SV</Name></AbrechnenderKostentraeger></Kostentraeger></Versicherungsschutz><Zusatzinfos><ZusatzinfosGKV><Versichertenart>3</Versichertenart><Zusatzinfos_Abrechnung_GKV><WOP>78</WOP></Zusatzinfos_Abrechnung_GKV></ZusatzinfosGKV></Zusatzinfos></Versicherter></UC_AllgemeineVersicherungsdatenXML>";
+        String pruefungsnachweisXml = "<PN CDM_VERSION=\"1.0.0\" xmlns=\"http://ws.gematik.de/fa/vsdm/pnw/v1.0\"><TS>20241121115318</TS><E>2</E><PZ>WDExMDQ4NTI5MTE3MzIxODk5OTdVWDFjxzDPSFvdIrRmmmOWFP/aP5rakVUqQj8=</PZ></PN>";
+
+        return VsdService.buildSyntheticVSDResponse("Achenseeweg 150", versicherungsdatenXml, pruefungsnachweisXml, null, 0);
     }
 
     protected KonnektorClient mockKonnectorClient(
