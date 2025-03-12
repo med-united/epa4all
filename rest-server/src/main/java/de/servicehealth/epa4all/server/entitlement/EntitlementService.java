@@ -114,6 +114,7 @@ public class EntitlementService {
             UCPersoenlicheVersichertendatenXML.Versicherter.Person person = patient.getVersicherter().getPerson();
             UCPersoenlicheVersichertendatenXML.Versicherter.Person.StrassenAdresse strassenAdresse = person.getStrassenAdresse();
             String sas = strassenAdresse.getStrasse() == null ? "" : strassenAdresse.getStrasse().trim();
+            log.info(String.format("extractHCV vb=%s, sas=%s", vb, sas);
             return calculateHCV(vb, sas);
         } catch (Exception e) {
             String msg = String.format("Could generate HCV message for KVNR=%s", insuranceData.getInsurantId());

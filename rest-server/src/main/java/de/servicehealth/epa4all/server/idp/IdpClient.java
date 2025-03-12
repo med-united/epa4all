@@ -256,7 +256,10 @@ public class IdpClient extends StartableService {
         claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
         claims.setClaim("auditEvidence", auditEvidence);
         if (idpConfig.hcvEnabled) {
+            log.info("idpConfig.hcvEnabled=true, hcv=" + hcv);
             claims.setClaim("hcv", hcv);
+        } else {
+            log.info("idpConfig.hcvEnabled=false");
         }
         CertificateInfo certificateInfo = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
         return getSignedJwt(
