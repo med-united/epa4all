@@ -1,12 +1,12 @@
-package de.servicehealth.epa4all.server.propsource;
+package de.servicehealth.epa4all.server.jcr.prop;
 
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.BirthDay;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.Entries;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.EntryUUID;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.FirstName;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.LastName;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.Smcb;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.ValidTo;
+import de.servicehealth.epa4all.server.jcr.prop.custom.BirthDay;
+import de.servicehealth.epa4all.server.jcr.prop.custom.Entries;
+import de.servicehealth.epa4all.server.jcr.prop.custom.EntryUUID;
+import de.servicehealth.epa4all.server.jcr.prop.custom.FirstName;
+import de.servicehealth.epa4all.server.jcr.prop.custom.LastName;
+import de.servicehealth.epa4all.server.jcr.prop.custom.Smcb;
+import de.servicehealth.epa4all.server.jcr.prop.custom.ValidTo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.jackrabbit.value.DateValue;
@@ -19,11 +19,12 @@ import org.jugs.webdav.jaxrs.xml.properties.GetContentType;
 import org.jugs.webdav.jaxrs.xml.properties.GetLastModified;
 
 import javax.jcr.Value;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.function.Function;
 
-import static de.servicehealth.epa4all.server.jcr.RepositoryService.EPA_NAMESPACE_PREFIX;
 import static javax.jcr.PropertyType.DATE;
 import static javax.jcr.PropertyType.LONG;
 import static javax.jcr.PropertyType.STRING;
@@ -45,6 +46,17 @@ public enum JcrProp {
     firstname(STRING, true, firstname -> new StringValue(((FirstName) firstname).getName())),
     lastname(STRING, true, lastname -> new StringValue(((LastName) lastname).getName())),
     birthday(DATE, true, birthday -> new DateValue(toCalendar(((BirthDay) birthday).getDateTime())));
+
+    public static final String EPA_FLEX_FOLDER = "epa:flexFolder";
+
+    public static final String EPA_MIXIN_NAME = "epa:custom";
+    public static final String EPA_NAMESPACE_PREFIX = "epa";
+    public static final String EPA_NAMESPACE_URI = "https://www.service-health.de/epa";
+
+    public static final DateTimeFormatter LOCALDATE_YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
+    public static final DateTimeFormatter LOCALDATE_YYYY_MM_DD = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    public static final SimpleDateFormat DATE_YYYY_MM_DD = new SimpleDateFormat("yyyy-MM-dd");
+
 
     private final int type;
     private final boolean searchable;

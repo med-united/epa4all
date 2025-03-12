@@ -46,6 +46,11 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>org.jugs.webdav</groupId>
+            <artifactId>webdav-jaxrs</artifactId>
+            <version>3.1</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>

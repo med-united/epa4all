@@ -9,8 +9,6 @@
         <param name="path" value="${repository.home}"/>
     </FileSystem>
 
-    <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.BundleFsPersistenceManager"/>
-
     <Versioning rootPath="${repository.home}/version">
         <FileSystem class="org.apache.jackrabbit.core.fs.local.LocalFileSystem">
             <param name="path" value="${repository.home}/version" />
@@ -31,6 +29,13 @@
             <param name="adminId" value="admin"/>
         </LoginModule>
     </Security>
+
+    <Cluster id="node1">
+        <Journal class="org.apache.jackrabbit.core.journal.FileJournal">
+            <param name="revision" value="${repository.home}/revision.log"/>
+            <param name="directory" value="${repository.home}/journal"/>
+        </Journal>
+    </Cluster>
 
     <Workspaces rootPath="${workspaces.home}" defaultWorkspace="default" maxIdleTime="2"/>
 

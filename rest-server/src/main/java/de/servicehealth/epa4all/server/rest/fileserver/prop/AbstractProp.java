@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.server.rest.fileserver.prop;
 
 import de.servicehealth.epa4all.server.filetracker.FolderService;
-import de.servicehealth.epa4all.server.propsource.JcrProp;
+import de.servicehealth.epa4all.server.jcr.prop.JcrProp;
 import de.servicehealth.epa4all.server.propsource.PropBuilder;
 import de.servicehealth.epa4all.server.propsource.PropSource;
 import de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy;

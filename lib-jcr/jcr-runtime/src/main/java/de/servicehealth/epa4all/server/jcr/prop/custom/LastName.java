@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.rest.fileserver.prop.custom;
+package de.servicehealth.epa4all.server.jcr.prop.custom;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlValue;

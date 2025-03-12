@@ -37,13 +37,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.LOCALDATE_YYYYMMDD;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.LOCALDATE_YYYY_MM_DD;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_LIMIT;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_OFFSET;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_SORT_BY;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_TOTAL_COUNT;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy.Latest;
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYYMMDD;
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYY_MM_DD;
 import static de.servicehealth.utils.XmlUtils.createDocument;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;

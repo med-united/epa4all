@@ -81,11 +81,6 @@
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
-		<dependency>
-            <groupId>org.jugs.webdav</groupId>
-            <artifactId>webdav-jaxrs</artifactId>
-            <version>3.1</version>
-        </dependency>
         <dependency>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>

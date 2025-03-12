@@ -1,6 +1,11 @@
 package org.apache.jackrabbit.webdav.jcr;
 
+import de.servicehealth.epa4all.server.jcr.prop.JcrProp;
+import org.apache.jackrabbit.webdav.DavException;
+import org.apache.jackrabbit.webdav.DavResource;
 import org.apache.jackrabbit.webdav.DavResourceFactory;
+import org.apache.jackrabbit.webdav.DavResourceIterator;
+import org.apache.jackrabbit.webdav.DavResourceIteratorImpl;
 import org.apache.jackrabbit.webdav.DavResourceLocator;
 import org.apache.jackrabbit.webdav.property.DavProperty;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
@@ -12,9 +17,16 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.Item;
 import javax.jcr.Node;
+import javax.jcr.NodeIterator;
 import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
+import javax.jcr.RepositoryException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_NAMESPACE_PREFIX;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_NAMESPACE_URI;
 
 public class JVersionControlledItemCollection extends VersionControlledItemCollection {
 
@@ -31,21 +43,28 @@ public class JVersionControlledItemCollection extends VersionControlledItemColle
 
     @Override
     public DavPropertyName[] getPropertyNames() {
-        return super.getPropertyNames();
-        
-        //List<DavPropertyName> davPropertyNames = Arrays.asList(super.getPropertyNames());
-        // 
+        List<DavPropertyName> davPropertyNames = Arrays.asList(super.getPropertyNames());
+
+        Namespace namespace = Namespace.getNamespace(EPA_NAMESPACE_PREFIX, EPA_NAMESPACE_URI);
+        davPropertyNames.addAll(Arrays.stream(JcrProp.values()).map(p -> DavPropertyName.create(p.name(), namespace)).toList());
+        return davPropertyNames.toArray(DavPropertyName[]::new);
     }
 
     @Override
     protected void initProperties() {
         super.initProperties();
-        Node n = (Node) item;
-        try {
-            properties.add(new DefaultDavProperty<String>(AUTO_VERSION, null, false));
-        } catch (Exception e) {
+        Node node = (Node) item;
+        Namespace namespace = Namespace.getNamespace(EPA_NAMESPACE_PREFIX, EPA_NAMESPACE_URI);
+        Arrays.stream(JcrProp.values()).forEach(p -> {
+            try {
+                Property property = node.getProperty(p.epaName());
 
-        }
+                // TODO get precise value
+
+                properties.add(new DefaultDavProperty<>(p.name(), property.getValue().getString(), namespace, false));
+            } catch (Exception ignored) {
+            }
+        });
     }
 
     @Override
@@ -60,13 +79,37 @@ public class JVersionControlledItemCollection extends VersionControlledItemColle
                 }
                 String relPath = prefix + name.getName();
                 Property property = ((Node) item).getProperty(relPath);
-                return new DefaultDavProperty<>(
-                    name.getName(), property.getValue().getString(), namespace, false
-                );
-            } catch (Exception e) {
-                log.error("Error while getting property, name = " + name.getName(), e);
+
+                // TODO get precise value
+
+                return new DefaultDavProperty<>(name.getName(), property.getValue().getString(), namespace, false);
+            } catch (Exception ignored) {
             }
         }
         return prop;
+    }
+
+    @Override
+    public DavResourceIterator getMembers() {
+        ArrayList<DavResource> memberList = new ArrayList<DavResource>();
+        if (exists()) {
+            try {
+                Node n = (Node)item;
+                // add all node members
+                NodeIterator it = n.getNodes();
+                while (it.hasNext()) {
+                    Node node = it.nextNode();
+                    DavResourceLocator loc = getLocatorFromItem(node);
+                    memberList.add(createResourceFromLocator(loc));
+                }
+            } catch (RepositoryException e) {
+                // ignore
+                log.error(e.getMessage());
+            } catch (DavException e) {
+                // should never occur.
+                log.error(e.getMessage());
+            }
+        }
+        return new DavResourceIteratorImpl(memberList);
     }
 }

@@ -5,14 +5,15 @@ import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.jcr.prop.JcrProp;
+import de.servicehealth.epa4all.server.jcr.prop.custom.BirthDay;
+import de.servicehealth.epa4all.server.jcr.prop.custom.Entries;
+import de.servicehealth.epa4all.server.jcr.prop.custom.EntryUUID;
+import de.servicehealth.epa4all.server.jcr.prop.custom.FirstName;
+import de.servicehealth.epa4all.server.jcr.prop.custom.LastName;
+import de.servicehealth.epa4all.server.jcr.prop.custom.Smcb;
+import de.servicehealth.epa4all.server.jcr.prop.custom.ValidTo;
 import de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.BirthDay;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.Entries;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.EntryUUID;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.FirstName;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.LastName;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.Smcb;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.ValidTo;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.type.DirectoryType;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.type.FileType;
 import de.servicehealth.folder.WebdavConfig;
@@ -39,20 +40,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-import static de.servicehealth.epa4all.server.propsource.JcrProp.birthday;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.creationdate;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.displayname;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.entries;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.entryuuid;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.firstname;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.getcontentlength;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.getcontenttype;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.getlastmodified;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.lastname;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.resourcetype;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.smcb;
-import static de.servicehealth.epa4all.server.propsource.JcrProp.validto;
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYYMMDD;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.LOCALDATE_YYYYMMDD;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.birthday;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.creationdate;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.displayname;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.entries;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.entryuuid;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.firstname;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.getcontentlength;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.getcontenttype;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.getlastmodified;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.lastname;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.resourcetype;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.smcb;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.validto;
 import static de.servicehealth.utils.MimeHelper.resolveMimeType;
 import static de.servicehealth.utils.ServerUtils.asDate;
 import static de.servicehealth.utils.ServerUtils.getPathParts;
@@ -203,8 +204,11 @@ public class PropBuilder {
                         long lastModified = getLastModified(file, SortBy.Latest);
                         node.setProperty(getlastmodified.epaName(), new LongValue(lastModified));
                     } else {
-                        Value value = valueFunc.apply(propFunc.apply(propSource));
-                        node.setProperty(jcrProp.epaName(), value);
+                        Object propResult = propFunc.apply(propSource);
+                        if (propResult != null) {
+                            Value value = valueFunc.apply(propResult);
+                            node.setProperty(jcrProp.epaName(), value);
+                        }
                     }
                 } catch (Exception ex) {
                     String msg = String.format(

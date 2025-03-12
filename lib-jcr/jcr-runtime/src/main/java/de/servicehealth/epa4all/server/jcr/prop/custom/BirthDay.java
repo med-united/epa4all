@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.rest.fileserver.prop.custom;
+package de.servicehealth.epa4all.server.jcr.prop.custom;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlValue;
@@ -12,8 +12,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Objects;
 
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.DATE_YYYY_MM_DD;
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.WebDavProp.LOCALDATE_YYYY_MM_DD;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.DATE_YYYY_MM_DD;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.LOCALDATE_YYYY_MM_DD;
 import static de.servicehealth.utils.ServerUtils.asDate;
 import static java.util.Collections.singleton;
 import static org.jugs.webdav.util.Utilities.notNull;
