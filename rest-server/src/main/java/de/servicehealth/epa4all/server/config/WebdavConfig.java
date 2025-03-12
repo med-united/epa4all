@@ -34,7 +34,7 @@ public class WebdavConfig {
     Set<String> smcbFolders;
 
     public Map<String, List<String>> getAvailableProps(boolean directory) {
-        Map<String, String> propsMap = directory ? directoryPropsMap : filePropsMap;
+        Map<String, String> propsMap = directory ? getDirectoryPropsMap() : getFilePropsMap();
         return propsMap.entrySet().stream().collect(Collectors.toMap(
             Map.Entry::getKey, e -> Arrays.stream(e.getValue().split(",")).filter(s -> !s.isEmpty()).toList()
         ));

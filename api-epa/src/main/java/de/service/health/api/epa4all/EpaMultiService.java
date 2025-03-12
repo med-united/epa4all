@@ -147,8 +147,8 @@ public class EpaMultiService extends StartableService {
                         EntitlementsApi.class, backend, entitlementServiceUrl, vauFacade
                     );
 
-                    Set<String> maskedHeaders = servicehealthConfig.getMaskedHeaders();
-                    Set<String> maskedAttributes = servicehealthConfig.getMaskedAttributes();
+                    Set<String> maskedHeaders = servicehealthConfig.getSafeMaskedHeaders();
+                    Set<String> maskedAttributes = servicehealthConfig.getSafeMaskedAttributes();
                     IFhirProxy fhirProxy = new FhirProxyService(
                         backend, epaConfig, vauConfig, vauFacade, maskedHeaders, maskedAttributes, epaRestFeatures
                     );
@@ -219,8 +219,8 @@ public class EpaMultiService extends StartableService {
         VauFacade vauFacade
     ) throws Exception {
         String backendUrl = getBackendUrl(backend, serviceUrl);
-        Set<String> maskedHeaders = servicehealthConfig.getMaskedHeaders();
-        Set<String> maskedAttributes = servicehealthConfig.getMaskedAttributes();
+        Set<String> maskedHeaders = servicehealthConfig.getSafeMaskedHeaders();
+        Set<String> maskedAttributes = servicehealthConfig.getSafeMaskedAttributes();
         return clientFactory.createRestProxyClient(
             vauFacade, clazz, backendUrl, maskedHeaders, maskedAttributes, epaRestFeatures
         );
@@ -277,8 +277,8 @@ public class EpaMultiService extends StartableService {
         soapProxyFactory.setProperties(props);
         soapProxyFactory.setBindingId(SOAP12HTTP_BINDING);
 
-        Set<String> maskedHeaders = servicehealthConfig.getMaskedHeaders();
-        Set<String> maskedAttributes = servicehealthConfig.getMaskedAttributes();
+        Set<String> maskedHeaders = servicehealthConfig.getSafeMaskedHeaders();
+        Set<String> maskedAttributes = servicehealthConfig.getSafeMaskedAttributes();
 
         soapProxyFactory.getOutInterceptors().addAll(
             List.of(
