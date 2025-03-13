@@ -22,20 +22,13 @@
     </SearchIndex>
 
     <Security appName="epa4all">
-        <SecurityManager class="org.apache.jackrabbit.core.DefaultSecurityManager" workspaceName="security"/>
+        <SecurityManager class="org.apache.jackrabbit.core.DefaultSecurityManager" workspaceName="default"/>
         <AccessManager class="org.apache.jackrabbit.core.security.DefaultAccessManager"/>
         <LoginModule class="org.apache.jackrabbit.core.security.authentication.DefaultLoginModule">
             <param name="anonymousId" value="anonymous"/>
             <param name="adminId" value="admin"/>
         </LoginModule>
     </Security>
-
-    <Cluster id="node1">
-        <Journal class="org.apache.jackrabbit.core.journal.FileJournal">
-            <param name="revision" value="${repository.home}/revision.log"/>
-            <param name="directory" value="${repository.home}/journal"/>
-        </Journal>
-    </Cluster>
 
     <Workspaces rootPath="${workspaces.home}" defaultWorkspace="default" maxIdleTime="2"/>
 

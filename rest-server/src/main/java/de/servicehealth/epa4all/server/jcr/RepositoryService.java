@@ -10,8 +10,6 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 import org.apache.jackrabbit.core.RepositoryImpl;
 import org.apache.jackrabbit.core.config.RepositoryConfig;
-import org.apache.jackrabbit.core.journal.FileJournal;
-import org.apache.jackrabbit.core.journal.RecordIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
