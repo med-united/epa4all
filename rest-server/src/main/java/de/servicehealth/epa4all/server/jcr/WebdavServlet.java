@@ -49,8 +49,6 @@ import static de.servicehealth.epa4all.server.jcr.webdav.JCRParams.INIT_PARAM_RE
 import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static jakarta.servlet.http.HttpServletResponse.SC_PRECONDITION_FAILED;
 
-// check VertxHttpServletRequest
-
 @WebServlet(urlPatterns = "/webdav2/*")
 @ApplicationScoped
 public class WebdavServlet extends AbstractJCRServlet {
@@ -66,12 +64,14 @@ public class WebdavServlet extends AbstractJCRServlet {
     private JDavResourceFactory resourceFactory;
     private TxLockManagerImpl transactionManager;
 
-    @Inject
-    RepositoryService repositoryService;
+    private final RepositoryService repositoryService;
+    private final JcrConfig jcrConfig;
 
     @Inject
-    JcrConfig jcrConfig;
-
+    public WebdavServlet(RepositoryService repositoryService, JcrConfig jcrConfig) {
+        this.repositoryService = repositoryService;
+        this.jcrConfig = jcrConfig;
+    }
 
     @Override
     public void init() throws ServletException {

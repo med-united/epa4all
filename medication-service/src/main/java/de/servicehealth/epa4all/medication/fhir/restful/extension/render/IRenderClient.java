@@ -5,7 +5,7 @@ import java.util.Map;
 
 public interface IRenderClient {
 
-    File getPdfFile(Map<String, String> xHeaders) throws Exception;
+    File getPdfFile(String telematikId, Map<String, String> xHeaders) throws Exception;
 
     byte[] getPdfBytes(Map<String, String> xHeaders) throws Exception;
 

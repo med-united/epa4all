@@ -8,7 +8,7 @@ import java.util.Map;
 public class VauRenderStubClient implements IRenderClient {
 
     @Override
-    public File getPdfFile(Map<String, String> xHeaders) {
+    public File getPdfFile(String telematikId, Map<String, String> xHeaders) {
         throw new NotImplementedException("[Stub] IRenderClient getPdfFile");
     }
 

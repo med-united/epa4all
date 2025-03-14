@@ -7,6 +7,8 @@ import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationCli
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
+import de.servicehealth.folder.IFolderService;
+import de.servicehealth.utils.ServerUtils;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.http.client.fluent.Executor;
@@ -23,8 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static de.servicehealth.epa4all.common.TestUtils.isDockerContainerRunning;
 import static de.servicehealth.utils.ServerUtils.getBaseUrl;
@@ -100,12 +104,33 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
             VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(ctx);
             apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationServiceRenderUrl));
 
+            IFolderService folderService = new IFolderService() {
+                @Override
+                public File getRootFolder() {
+                    return null;
+                }
+
+                @Override
+                public void writeBytesToFile(String telematikId, byte[] bytes, File outFile) {
+                    try {
+                        ServerUtils.writeBytesToFile(bytes, outFile);
+                    } catch (IOException e) {
+                        log.error("Error while saving file: " + outFile.getAbsolutePath(), e);
+                    }
+                }
+
+                @Override
+                public Supplier<File> getTelematikFolderSupplier(String telematikId) {
+                    return null;
+                }
+            };
+
             Executor executor = Executor.newInstance(apiClientFactory.getVauHttpClient());
-            IRenderClient renderClient = new VauRenderClient(executor, epaUserAgent, medicationServiceRenderUrl);
+            IRenderClient renderClient = new VauRenderClient(executor, epaUserAgent, medicationServiceRenderUrl, folderService);
 
             Map<String, String> xHeaders = Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45");
 
-            File file = renderClient.getPdfFile(xHeaders);
+            File file = renderClient.getPdfFile(null, xHeaders);
             assertTrue(file.exists());
 
             byte[] xhtmlDocument = renderClient.getXhtmlDocument(xHeaders);

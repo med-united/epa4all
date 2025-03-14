@@ -1,11 +1,13 @@
 package de.servicehealth.epa4all.server.jcr;
 
+import de.servicehealth.epa4all.server.filetracker.FileEvent;
 import de.servicehealth.epa4all.server.propsource.PropBuilder;
 import de.servicehealth.folder.IFolderService;
 import de.servicehealth.folder.WebdavConfig;
 import de.servicehealth.startup.StartableService;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import org.apache.jackrabbit.core.RepositoryImpl;
@@ -15,33 +17,29 @@ import org.slf4j.LoggerFactory;
 
 import javax.jcr.Binary;
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.SimpleCredentials;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
-import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_MIXIN_NAME;
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp.SKIPPED_FILES;
-import static de.servicehealth.utils.MimeHelper.resolveMimeType;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_NAMESPACE_PREFIX;
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_NAMESPACE_URI;
+import static de.servicehealth.utils.ServerUtils.getPathParts;
 
 @Getter
 @ApplicationScoped
 public class RepositoryService extends StartableService {
 
-    public static final String ROOT_FOLDER_NODE = "rootFolder";
-
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class.getName());
 
-    private final WorkspaceService workspaceService;
     private final IFolderService folderService;
     private final WebdavConfig webdavConfig;
+    private final TypesService typesService;
     private final PropBuilder propBuilder;
     private final JcrConfig jcrConfig;
 
@@ -51,22 +49,27 @@ public class RepositoryService extends StartableService {
 
     @Inject
     public RepositoryService(
-        WorkspaceService workspaceService,
         IFolderService folderService,
         WebdavConfig webdavConfig,
+        TypesService typesService,
         PropBuilder propBuilder,
         JcrConfig jcrConfig
     ) {
-        this.workspaceService = workspaceService;
         this.folderService = folderService;
         this.webdavConfig = webdavConfig;
+        this.typesService = typesService;
         this.propBuilder = propBuilder;
         this.jcrConfig = jcrConfig;
 
-        String[] parts = jcrConfig.getMissingAuthMapping().split(":");
-        String user = parts[0];
-        String pass = parts[1];
-        credentials = new SimpleCredentials(user, pass.toCharArray());
+        credentials = jcrConfig.getCredentials();
+    }
+
+    private void registerTypes() throws Exception {
+        Session session = repository.login(credentials);
+        typesService.registerNamespace(session, EPA_NAMESPACE_PREFIX, EPA_NAMESPACE_URI);
+        typesService.registerEpaMixin(session);
+        session.save();
+        session.logout();
     }
 
     @Override
@@ -83,11 +86,11 @@ public class RepositoryService extends StartableService {
             RepositoryConfig config = RepositoryConfig.create(is, repositoryHome.getAbsolutePath());
             repository = RepositoryImpl.create(config);
 
-            Arrays.stream(folderService.getTelematikFolders()).forEach(telematikFolder -> {
-                String telematikId = telematikFolder.getName();
-                workspaceService.createWorkspace(telematikId);
-                importFilesIntoWorkspace(telematikFolder, telematikId);
-            });
+            registerTypes();
+
+            Arrays.stream(folderService.getTelematikFolders()).forEach(f ->
+                new Workspace(repository, jcrConfig, propBuilder).createOrUpdate(f)
+            );
 
             log.info("Jackrabbit repository initialized in: " + repositoryHome);
         } catch (Exception e) {
@@ -95,12 +98,22 @@ public class RepositoryService extends StartableService {
         }
     }
 
-    public void importFilesIntoWorkspace(File telematikFolder, String workspaceName) {
+    public void createOrUpdateWorkspace(File telematikFolder) {
+        new Workspace(repository, jcrConfig, propBuilder).createOrUpdate(telematikFolder);
+    }
+
+    public void handleFileEvent(@Observes FileEvent fileEvent) {
         try {
-            Session session = repository.login(credentials, workspaceName);
+            Session session = repository.login(credentials, fileEvent.getTelematikId());
+            Node rootNode = session.getRootNode();
             try {
-                Node rootNode = session.getRootNode();
-                importDirectory(telematikFolder, rootNode.getNode(ROOT_FOLDER_NODE), session);
+                File file = fileEvent.getFile();
+                List<String> pathParts = getPathParts(file.getPath());
+                String relPath = String.join("/", pathParts.subList(pathParts.indexOf("webdav") + 2, pathParts.size() - 1));
+                Node parentNode = rootNode.getNode("rootFolder/" + relPath);
+                Node contentNode = propBuilder.handleFile(session, parentNode, file);
+
+                check(contentNode);
             } catch (Exception e) {
                 session.refresh(false);
                 throw e;
@@ -108,61 +121,30 @@ public class RepositoryService extends StartableService {
                 session.logout();
             }
         } catch (Exception e) {
-            log.error("Error while importing files into workspace, name = " + workspaceName, e);
+            log.error("Error while handling fileEvent for " + fileEvent.getFile().getAbsolutePath(), e);
         }
     }
 
-    private void importDirectory(File dir, Node parentNode, Session session) throws RepositoryException {
-        List<File> files = getFiles(dir);
-        for (File file : files) {
-            if (file.isDirectory()) {
-                Node dirNode;
-                try {
-                    dirNode = parentNode.getNode(file.getName());
-                } catch (PathNotFoundException e) {
-                    dirNode = parentNode.addNode(file.getName(), "nt:folder");
-                    if (dirNode.canAddMixin(EPA_MIXIN_NAME)) {
-                        dirNode.addMixin(EPA_MIXIN_NAME);
-                    }
-                    try {
-                        propBuilder.setEpaProps(file, dirNode);
-                        session.save();
-                    } catch (Exception ex) {
-                        log.error("Error while setEpaProps", ex);
-                    }
-                }
-                importDirectory(file, dirNode, session);
-            } else {
-                try {
-                    parentNode.getNode(file.getName());
+    private void check(Node contentNode) throws Exception {
+        Binary binary = contentNode.getProperty("jcr:data").getBinary();
 
-                    //todo update lastModified ?
-                    
-                } catch (PathNotFoundException e) {
-                    Node fileNode = parentNode.addNode(file.getName(), "nt:file");
-                    Node contentNode = fileNode.addNode("jcr:content", "nt:resource");
-                    if (fileNode.canAddMixin(EPA_MIXIN_NAME)) {
-                        fileNode.addMixin(EPA_MIXIN_NAME);
-                    }
-                    try (FileInputStream fis = new FileInputStream(file)) {
-                        Binary binary = session.getValueFactory().createBinary(fis);
-                        contentNode.setProperty("jcr:data", binary);
-                        contentNode.setProperty("jcr:mimeType", resolveMimeType(file.getName()));
-                        propBuilder.setEpaProps(file, fileNode);
-                        session.save();
-                    } catch (Exception io) {
-                        throw new RepositoryException("Failed to import file: " + file, io);
-                    }
+        try (InputStream is = binary.getStream();
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
+
+            String line;
+            boolean found = false;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("PersoenlicheVersichertendaten")) {
+                    found = true;
+                    System.out.println("Text found in binary content");
+                    break;
                 }
             }
-        }
-    }
 
-    private List<File> getFiles(File dir) {
-        File[] files = dir.listFiles();
-        return files == null
-            ? List.of()
-            : Stream.of(files).filter(f -> SKIPPED_FILES.stream().noneMatch(s -> s.equals(f.getName()))).toList();
+            if (!found) {
+                System.out.println("Text NOT found in binary content");
+            }
+        }
     }
 
     @PreDestroy

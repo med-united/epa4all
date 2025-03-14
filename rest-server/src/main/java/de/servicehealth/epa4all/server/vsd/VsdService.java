@@ -7,11 +7,13 @@ import de.gematik.ws.conn.vsds.vsdservice.v5.VSDStatusType;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
+import de.servicehealth.epa4all.server.filetracker.FileEvent;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
-import de.servicehealth.epa4all.server.jcr.WorkspaceService;
+import de.servicehealth.epa4all.server.jcr.RepositoryService;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,21 +34,24 @@ public class VsdService {
     private static final Logger log = LoggerFactory.getLogger(VsdService.class.getName());
 
     private final MultiKonnektorService multiKonnektorService;
-    private final WorkspaceService workspaceService;
+    private final RepositoryService repositoryService;
     private final FolderService folderService;
     private final EpaCallGuard epaCallGuard;
+    private final Event<FileEvent> fileEvent;
 
     @Inject
     public VsdService(
         MultiKonnektorService multiKonnektorService,
-        WorkspaceService workspaceService,
+        RepositoryService repositoryService,
         FolderService folderService,
+        Event<FileEvent> fileEvent,
         EpaCallGuard epaCallGuard
     ) {
         this.multiKonnektorService = multiKonnektorService;
-        this.workspaceService = workspaceService;
+        this.repositoryService = repositoryService;
         this.folderService = folderService;
         this.epaCallGuard = epaCallGuard;
+        this.fileEvent = fileEvent;
     }
 
     public static ReadVSDResponse buildSyntheticVSDResponse() throws Exception {
@@ -102,13 +107,15 @@ public class VsdService {
     public void saveVsdFile(String telematikId, String insurantId, ReadVSDResponse readVSDResponse) {
         try {
             // 1. Make sure all med folders are created
-            folderService.initInsurantFolders(telematikId, insurantId);
-
-            workspaceService.createWorkspace(telematikId);
+            File telematikFolder = folderService.initInsurantFolders(telematikId, insurantId);
+            repositoryService.createOrUpdateWorkspace(telematikFolder);
 
             // 2. Store VDS response into "local" folder
             File localFolder = folderService.getMedFolder(telematikId, insurantId, LOCAL_FOLDER);
-            new VsdResponseFile(localFolder).store(readVSDResponse);
+            VsdResponseFile vsdResponseFile = new VsdResponseFile(localFolder);
+            vsdResponseFile.store(readVSDResponse);
+            // vsdResponseFile.getFiles().forEach(file -> fileEvent.fire(new FileEvent(telematikId, file)));
+            vsdResponseFile.getFiles().forEach(file -> repositoryService.handleFileEvent(new FileEvent(telematikId, file)));
         } catch (Exception e) {
             log.warn("Could not save ReadVSDResponse", e);
         }

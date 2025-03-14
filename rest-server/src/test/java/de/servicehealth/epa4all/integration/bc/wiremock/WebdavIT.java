@@ -7,10 +7,11 @@ import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
+import de.servicehealth.epa4all.server.filetracker.FileEvent;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.jcr.WorkspaceService;
+import de.servicehealth.epa4all.server.jcr.RepositoryService;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.junit.QuarkusTest;
@@ -21,6 +22,7 @@ import io.restassured.path.xml.XmlPath;
 import io.restassured.response.ResponseBodyExtractionOptions;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
@@ -76,6 +78,9 @@ public class WebdavIT extends AbstractWiremockTest {
     @Inject
     EpaCallGuard epaCallGuard;
 
+    @Inject
+    Event<FileEvent> fileEvent;
+
     private UCPersoenlicheVersichertendatenXML.Versicherter.Person prepareInsurantFiles(
         String telematikId,
         String kvnr
@@ -87,7 +92,7 @@ public class WebdavIT extends AbstractWiremockTest {
         String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
 
         VsdService vsdService = new VsdService(
-            multiKonnektorService, mock(WorkspaceService.class), folderService, epaCallGuard
+            multiKonnektorService, mock(RepositoryService.class), folderService, fileEvent, epaCallGuard
         );
         String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, null);
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);

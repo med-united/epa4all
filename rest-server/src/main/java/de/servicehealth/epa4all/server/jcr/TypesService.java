@@ -23,8 +23,6 @@ import java.util.Set;
 
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_FLEX_FOLDER;
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_MIXIN_NAME;
-import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_NAMESPACE_PREFIX;
-import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_NAMESPACE_URI;
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.getlastmodified;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -33,13 +31,14 @@ public class TypesService {
 
     private static final Logger log = LoggerFactory.getLogger(TypesService.class.getName());
 
+    private final WebdavConfig webdavConfig;
+    private final PropBuilder propBuilder;
 
     @Inject
-    WebdavConfig webdavConfig;
-
-    @Inject
-    PropBuilder propBuilder;
-
+    public TypesService(WebdavConfig webdavConfig, PropBuilder propBuilder) {
+        this.webdavConfig = webdavConfig;
+        this.propBuilder = propBuilder;
+    }
 
     public void registerFlexFolderType(Session session) {
         try {
@@ -81,12 +80,6 @@ public class TypesService {
     public void registerEpaMixin(Session session) {
         try {
             // printNodeInfo(session, "nt:folder");
-            // printNodeInfo(session, "nt:file");
-            // printNodeInfo(session, "nt:resource");
-
-            registerNamespace(session, EPA_NAMESPACE_PREFIX, EPA_NAMESPACE_URI);
-
-            // registerFlexFolderType(session);
 
             NodeTypeManager typeManager = session.getWorkspace().getNodeTypeManager();
             NodeType mixinNodeType = getMixinNodeType(typeManager);
@@ -104,7 +97,7 @@ public class TypesService {
                 .map(obj -> ((PropertyDefinitionTemplate) obj).getName())
                 .toList()
             );
-            List<String> mandatory = Arrays.asList(webdavConfig.getFilePropsMap().get("Mandatory").split(","));
+            List<String> mandatory = webdavConfig.getAvailableProps(false).get("Mandatory");
             propBuilder.getPropSupplierMap().keySet().forEach(p -> {
                 if (!existing.contains(p.epaName())) {
                     try {

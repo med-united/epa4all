@@ -31,6 +31,7 @@ import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.jcr.RepositoryService;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import de.servicehealth.folder.WebdavConfig;
@@ -101,6 +102,9 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     @Inject
     protected WebdavConfig webdavConfig;
+
+    @Inject
+    RepositoryService repositoryService;
 
     @Inject
     protected FeatureConfig featureConfig;
@@ -189,6 +193,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         deleteFiles(tempDir.toFile().listFiles());
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
         QuarkusMock.installMockForType(folderService, FolderService.class);
+        QuarkusMock.installMockForType(repositoryService, RepositoryService.class);
     }
 
     protected void prepareVauStubs(List<Pair<String, CallInfo>> responseFuncs) {

@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.medication.fhir.restful.extension.render;
 
+import de.servicehealth.folder.IFolderService;
 import io.quarkus.logging.Log;
 import org.apache.http.Header;
 import org.apache.http.client.fluent.Executor;
@@ -8,7 +9,6 @@ import org.apache.http.client.fluent.Response;
 import org.apache.http.message.BasicHeader;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +29,8 @@ public abstract class AbstractRenderClient implements IRenderClient {
     public static final String PDF_EXT = "pdf";
     public static final String XHTML_EXT = "xhtml";
 
+    private final IFolderService folderService;
+
     private final Executor executor;
     private final String epaUserAgent;
     private final String medicationRenderUrl;
@@ -36,14 +38,15 @@ public abstract class AbstractRenderClient implements IRenderClient {
     public AbstractRenderClient(
         Executor executor,
         String epaUserAgent,
-        String medicationRenderUrl
+        String medicationRenderUrl,
+        IFolderService folderService
     ) {
         this.executor = executor;
         this.epaUserAgent = epaUserAgent;
         this.medicationRenderUrl = medicationRenderUrl;
+        this.folderService = folderService;
     }
     
-
     @Override
     public byte[] getPdfBytes(Map<String, String> xHeaders) throws Exception {
         try (InputStream content = execute(PDF_EXT, xHeaders)) {
@@ -52,11 +55,9 @@ public abstract class AbstractRenderClient implements IRenderClient {
     }
 
     @Override
-    public File getPdfFile(Map<String, String> xHeaders) throws Exception {
+    public File getPdfFile(String telematikId, Map<String, String> xHeaders) throws Exception {
         File tempFile = File.createTempFile(UUID.randomUUID().toString(), "." + PDF_EXT, new File("."));
-        try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
-            outputStream.write(getPdfBytes(xHeaders));
-        }
+        folderService.writeBytesToFile(telematikId, getPdfBytes(xHeaders), tempFile);
         return tempFile;
     }
 

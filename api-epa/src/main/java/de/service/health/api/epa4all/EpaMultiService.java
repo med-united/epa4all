@@ -23,6 +23,7 @@ import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRend
 import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderStubClient;
 import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
 import de.servicehealth.feature.EpaFeatureConfig;
+import de.servicehealth.folder.IFolderService;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
@@ -82,6 +83,7 @@ public class EpaMultiService extends StartableService {
 
     @Getter
     private final EpaConfig epaConfig;
+    private final IFolderService folderService;
     private final EpaFeatureConfig featureConfig;
     private final ClientFactory clientFactory;
     private final Instance<VauFacade> vauFacadeInstance;
@@ -99,6 +101,7 @@ public class EpaMultiService extends StartableService {
         VauConfig vauConfig,
         EpaConfig epaConfig,
         ClientFactory clientFactory,
+        IFolderService folderService,
         EpaFeatureConfig featureConfig,
         Instance<VauFacade> vauFacadeInstance,
         ServicehealthConfig servicehealthConfig,
@@ -109,6 +112,7 @@ public class EpaMultiService extends StartableService {
         this.servicehealthConfig = servicehealthConfig;
         this.clientFactory = clientFactory;
         this.featureConfig = featureConfig;
+        this.folderService = folderService;
         this.epaConfig = epaConfig;
         this.vauConfig = vauConfig;
         this.epaRestFeatures = epaRestFeatures;
@@ -172,7 +176,7 @@ public class EpaMultiService extends StartableService {
                         renderClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationRenderUrl));
                         Executor renderExecutor = Executor.newInstance(renderClientFactory.getVauHttpClient());
                         renderClient = new VauRenderClient(
-                            renderExecutor, epaUserAgent, medicationRenderUrl.replace("+vau", "")
+                            renderExecutor, epaUserAgent, medicationRenderUrl.replace("+vau", ""), folderService
                         );
                     } else {
                         medicationClient = new StubMedicationClient();

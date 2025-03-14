@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.propsource;
 
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
+import de.servicehealth.epa4all.server.filetracker.FileEvent;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
@@ -18,6 +19,7 @@ import de.servicehealth.epa4all.server.rest.fileserver.prop.type.DirectoryType;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.type.FileType;
 import de.servicehealth.folder.WebdavConfig;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import org.apache.jackrabbit.value.LongValue;
 import org.jugs.webdav.jaxrs.xml.properties.CreationDate;
@@ -28,11 +30,19 @@ import org.jugs.webdav.jaxrs.xml.properties.GetLastModified;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 import javax.jcr.Value;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +50,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_MIXIN_NAME;
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.LOCALDATE_YYYYMMDD;
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.birthday;
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.creationdate;
@@ -181,7 +192,52 @@ public class PropBuilder {
         }
     }
 
-    public void setEpaProps(File file, Node node) {
+    public Node handleFolder(Session session, Node parentNode, File file, String fileName) throws RepositoryException {
+        try {
+            return parentNode.getNode(fileName);
+
+            // todo apply updates
+
+        } catch (PathNotFoundException e) {
+            Node dirNode = parentNode.addNode(fileName, "nt:folder");
+            if (dirNode.canAddMixin(EPA_MIXIN_NAME)) {
+                dirNode.addMixin(EPA_MIXIN_NAME);
+            }
+            setEpaProps(file, dirNode);
+            session.save();
+            return dirNode;
+        }
+    }
+
+    public Node handleFile(Session session, Node parentNode, File file) throws RepositoryException {
+        try {
+            Node fileNode = parentNode.getNode(file.getName());
+            return fileNode.getNode("jcr:content");
+
+            // todo apply updates
+            
+        } catch (PathNotFoundException e) {
+            Node fileNode = parentNode.addNode(file.getName(), "nt:file");
+            if (fileNode.canAddMixin(EPA_MIXIN_NAME)) {
+                fileNode.addMixin(EPA_MIXIN_NAME);
+            }
+            setEpaProps(file, fileNode);
+
+            Node contentNode = fileNode.addNode("jcr:content", "nt:resource");
+            try (FileInputStream fis = new FileInputStream(file)) {
+                Binary binary = session.getValueFactory().createBinary(fis);
+                contentNode.setProperty("jcr:data", binary);
+                contentNode.setProperty("jcr:mimeType", resolveMimeType(file.getName()));
+                contentNode.setProperty("jcr:encoding", "UTF-8");
+            } catch (IOException io) {
+                throw new RepositoryException("Failed to import file: " + file, io);
+            }
+            session.save();
+            return contentNode;
+        }
+    }
+
+    private void setEpaProps(File file, Node node) {
         boolean directory = file.isDirectory();
 
         List<String> pathParts = getPathParts(file.getPath());

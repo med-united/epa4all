@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import javax.jcr.SimpleCredentials;
 import java.io.File;
 import java.util.Optional;
 
@@ -34,5 +35,12 @@ public class JcrConfig {
 
     public String getWorkspacesHome() {
         return repositoryHome.getAbsolutePath() + "/workspaces";
+    }
+
+    public SimpleCredentials getCredentials() {
+        String[] parts = getMissingAuthMapping().split(":");
+        String user = parts[0];
+        String pass = parts[1];
+        return new SimpleCredentials(user, pass.toCharArray());
     }
 }
