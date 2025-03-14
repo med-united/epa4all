@@ -13,6 +13,7 @@
                     <items>
                         <SegmentedButtonItem key="KonnektorOptions" text="{i18n>konnektorOptions}"/>
                         <SegmentedButtonItem key="CardOptions" text="{i18n>cardOptions}"/>
+                        <SegmentedButtonItem key="CardTerminalOptions" text="{i18n>cardTerminalOptions}"/>
                     </items>
                 </SegmentedButton>
 
@@ -34,6 +35,15 @@
                             <core:Item key="{comboBoxModel>key}"
                                        text="{comboBoxModel>text} {comboBoxModel>key}"/>
                         </ComboBox>
+                    </VBox>
+
+                    <VBox id="cardTerminalOptionsContent" visible="false" class="sapUiSmallMargin">
+                        <Label text="{i18n>selectCardTerminals}"/>
+                        <MultiComboBox id="cardTerminalMultiComboBox"
+                                       selectedKeys="{cardTerminalMultiComboBoxModel>/selectedKeys}"
+                                       items="{cardTerminalMultiComboBoxModel>/options}">
+                            <core:Item key="{cardTerminalMultiComboBoxModel>key}" text="{cardTerminalMultiComboBoxModel>text}"/>
+                        </MultiComboBox>
                     </VBox>
                 </VBox>
             </VBox>
