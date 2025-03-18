@@ -1,10 +1,12 @@
 package de.service.health.api.epa4all;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import lombok.Getter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.Set;
 
+@Getter
 @ApplicationScoped
 public class ServicehealthConfig {
 
@@ -20,11 +22,11 @@ public class ServicehealthConfig {
     @ConfigProperty(name = "servicehealth.client.id")
     String servicehealthClientId;
 
-    public Set<String> getMaskedAttributes() {
-        return maskSensitive ? maskedAttributes : Set.of();
+    public Set<String> getSafeMaskedAttributes() {
+        return isMaskSensitive() ? getMaskedAttributes() : Set.of();
     }
 
-    public Set<String> getMaskedHeaders() {
-        return maskSensitive ? maskedHeaders : Set.of();
+    public Set<String> getSafeMaskedHeaders() {
+        return isMaskSensitive() ? getMaskedHeaders() : Set.of();
     }
 }

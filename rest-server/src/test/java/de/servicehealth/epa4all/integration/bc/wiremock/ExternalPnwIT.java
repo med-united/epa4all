@@ -1,11 +1,14 @@
 package de.servicehealth.epa4all.integration.bc.wiremock;
 
+import de.gematik.ws.fa.vsdm.vsd.v5.UCAllgemeineVersicherungsdatenXML;
+import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.server.FeatureConfig;
+import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
@@ -23,11 +26,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.print;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasXPath;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -90,11 +95,14 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
         String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204);
 
-        String pnw = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
+        String versicherungsdaten = "H4sIAAAAAAAA/81S30+DMBD+Vwjv44CJDlO6zM2YZc4Zp2h8IRVuQAaHod00++sty2JgWearL23uu/t+pFc2/C4LY4u1zCsKTMeyTQMprpKc0sCcLhe9wcDze45nDjl7GUejokixxJwwbDhxhvWGUpkIhfQ2vze0GsnAzJT6vAb4kpaeFipfWwnCSsBWJmVzwNazXNMYT+ZRePu0nC4eAlMj2p2zX2GFdatqbGScbdSOsxtMcyLu2u6FY7t9BgeAzSqpg6haYNqQO+UaibQId2zfs23/0mdwst9lFQIpwVq/CPLJEaPdYw+iRP6MUhl3s7C3DBnsETb6qDHOaD/5D+PBmXxwXJ9cxvtGCrXLaVXJTqF9OsskUSveb4kcoDYnOqTR+tGe/7p45FcDBs3N4NwkHFtDJxh0vxX8/Zf5DyMao4EcAwAA";
+        String pruefungsnachweis = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
+        String pnw = versicherungsdaten + pruefungsnachweis;
 
         ValidatableResponse response = given()
             .body(pnw.getBytes())
             .queryParams(Map.of(
+                "versicherungsdatenLength", versicherungsdaten.length(),
                 "startDate", startDate,
                 "street", street,
                 X_KONNEKTOR, "localhost",
@@ -117,6 +125,22 @@ public class ExternalPnwIT extends AbstractWiremockTest {
 
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
         assertNotNull(insuranceData.getPz());
+
+        UCAllgemeineVersicherungsdatenXML allgemeineVersicherungsdatenXML = insuranceData.getAllgemeineVersicherungsdaten();
+        String vb = allgemeineVersicherungsdatenXML.getVersicherter().getVersicherungsschutz().getBeginn();
+        assertFalse(vb.isEmpty());
+
+        System.out.println(print(allgemeineVersicherungsdatenXML, true));
+
+        UCPersoenlicheVersichertendatenXML patient = insuranceData.getPersoenlicheVersichertendaten();
+        UCPersoenlicheVersichertendatenXML.Versicherter.Person person = patient.getVersicherter().getPerson();
+        UCPersoenlicheVersichertendatenXML.Versicherter.Person.StrassenAdresse strassenAdresse = person.getStrassenAdresse();
+        assertNotNull(strassenAdresse.getStrasse());
+
+        System.out.println(print(patient, true));
+
+        String hcv = EntitlementService.extractHCV(insuranceData);
+        assertFalse(hcv.isEmpty());
     }
 
     @Test

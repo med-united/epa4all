@@ -106,7 +106,7 @@ public class EntitlementService {
         return instant;
     }
 
-    static synchronized String extractHCV(InsuranceData insuranceData) {
+    public static synchronized String extractHCV(InsuranceData insuranceData) {
         try {
             UCAllgemeineVersicherungsdatenXML allgemeineVersicherungsdatenXML = insuranceData.getAllgemeineVersicherungsdaten();
             String vb = allgemeineVersicherungsdatenXML.getVersicherter().getVersicherungsschutz().getBeginn().replaceAll(" ", "");
@@ -114,6 +114,7 @@ public class EntitlementService {
             UCPersoenlicheVersichertendatenXML.Versicherter.Person person = patient.getVersicherter().getPerson();
             UCPersoenlicheVersichertendatenXML.Versicherter.Person.StrassenAdresse strassenAdresse = person.getStrassenAdresse();
             String sas = strassenAdresse.getStrasse() == null ? "" : strassenAdresse.getStrasse().trim();
+            log.info(String.format("extractHCV vb=%s, sas=%s", vb, sas));
             return calculateHCV(vb, sas);
         } catch (Exception e) {
             String msg = String.format("Could generate HCV message for KVNR=%s", insuranceData.getInsurantId());
@@ -132,6 +133,6 @@ public class EntitlementService {
         byte[] first5 = new byte[5];
         System.arraycopy(sha256, 0, first5, 0, 5);
         first5[0] = (byte) (first5[0] & 127);
-        return Base64.getUrlEncoder().encodeToString(first5);
+        return Base64.getEncoder().encodeToString(first5);
     }
 }

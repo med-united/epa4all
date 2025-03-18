@@ -30,7 +30,6 @@ sap.ui.define([
                 return;
             }
 
-
             if (this._previousSMCBKey !== sSelectedSmcb) {
                 var sQueryUrl = "/telematik/id?iccsn=" + encodeURIComponent(sSelectedSmcb);
 
@@ -224,6 +223,73 @@ sap.ui.define([
 
             return aCards;
         },
+        _loadGetCardTerminalsResponse: function () {
+            var oCardTerminalModel = new JSONModel();
+            var sUrl = "/event/cardterminals";
+
+            jQuery.ajax({
+                url: sUrl,
+                method: "GET",
+                headers: {
+                    "Accept": "application/xml"
+                },
+                success: function (oData) {
+                    var sXml = typeof oData === "string" ? oData : new XMLSerializer().serializeToString(oData);
+
+                    var aTerminals = this._parseGetCardTerminalsResponseXmlToJson(sXml);
+
+                    if (aTerminals.length === 0) {
+                        console.warn("No card terminals were found in the response.");
+                    }
+
+                    var selectedKeys = aTerminals.map(function (item) {
+                        return item.key;
+                    });
+
+                    oCardTerminalModel.setData({
+                        options: aTerminals,
+                        selectedKeys: selectedKeys
+                    });
+
+                    this.getView().setModel(oCardTerminalModel, "cardTerminalMultiComboBoxModel");
+
+                }.bind(this),
+                error: function (oError) {
+                    console.error("Error fetching card terminals:", oError);
+                }
+            });
+        },
+        _parseGetCardTerminalsResponseXmlToJson: function (sXml) {
+            var oParser = new DOMParser();
+            var oXmlDoc = oParser.parseFromString(sXml, "application/xml");
+            var aTerminals = [];
+
+            var oXPathResult = oXmlDoc.evaluate(
+                "//ns8:CardTerminal",
+                oXmlDoc,
+                function (prefix) {
+                    if (prefix === "ns8") return "http://ws.gematik.de/conn/CardTerminalInfo/v8.0";
+                    if (prefix === "ns4") return "http://ws.gematik.de/conn/CardServiceCommon/v2.0";
+                    return null;
+                },
+                XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+                null
+            );
+
+            for (var i = 0; i < oXPathResult.snapshotLength; i++) {
+                var oTerminal = oXPathResult.snapshotItem(i);
+                var sCtId = oTerminal.getElementsByTagNameNS("http://ws.gematik.de/conn/CardServiceCommon/v2.0", "CtId")[0]?.textContent || "Unbekannt";
+                var sName = oTerminal.getElementsByTagNameNS("http://ws.gematik.de/conn/CardTerminalInfo/v8.0", "Name")[0]?.textContent || "Unbekannt";
+                var sIpAddress = oTerminal.getElementsByTagNameNS("http://ws.gematik.de/conn/CardTerminalInfo/v8.0", "IPV4Address")[0]?.textContent || "Unbekannt";
+
+                aTerminals.push({
+                    key: sCtId,
+                    text: `${sName} (${sIpAddress})`
+                });
+            }
+
+            return aTerminals;
+        },
         formatKeyAndText: function (sKey, sText) {
             return sKey + " - " + sText;
         },
@@ -232,18 +298,28 @@ sap.ui.define([
 
             var oKonnektorOptionsContent = this.byId("konnektorOptionsContent");
             var oCardOptionsContent = this.byId("cardOptionsContent");
+            var oCardTerminalOptionsContent = this.byId("cardTerminalOptionsContent")
 
             if (sSelectedKey === "KonnektorOptions") {
                 oKonnektorOptionsContent.setVisible(true);
                 oCardOptionsContent.setVisible(false);
+                oCardTerminalOptionsContent.setVisible(false);
 
                 this._loadKonnektorConfigs();
 
             } else if (sSelectedKey === "CardOptions") {
                 oKonnektorOptionsContent.setVisible(false);
                 oCardOptionsContent.setVisible(true);
+                oCardTerminalOptionsContent.setVisible(false);
 
                 this._loadGetCardsResponse();
+
+            } else if (sSelectedKey === "CardTerminalOptions") {
+                oKonnektorOptionsContent.setVisible(false);
+                oCardOptionsContent.setVisible(false);
+                oCardTerminalOptionsContent.setVisible(true);
+
+                this._loadGetCardTerminalsResponse();
             }
         }
     });

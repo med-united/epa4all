@@ -24,6 +24,6 @@ public class IdpConfig {
     boolean hcvEnabled;
 
     public String getDiscoveryDocumentUrl() {
-        return serviceUrl + "/.well-known/openid-configuration";
+        return getServiceUrl() + "/.well-known/openid-configuration";
     }
 }

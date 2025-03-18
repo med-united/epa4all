@@ -1,46 +1,51 @@
-<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
+          core:require="{ Formatter: 'medunited/care/utils/Formatter' }">
     <form:SimpleForm id="biologicalFormRead"
-        editable="false"
-        layout="ResponsiveGridLayout"
-        labelSpanXL="3"
-        labelSpanL="3"
-        labelSpanM="3"
-        labelSpanS="12"
-        emptySpanXL="4"
-        emptySpanL="4"
-        emptySpanM="4"
-        emptySpanS="0"
-        columnsXL="2"
-        columnsL="2"
-        columnsM="2"
-        visible="{= !${appState>/editMode}}">
+                     editable="false"
+                     layout="ResponsiveGridLayout"
+                     labelSpanXL="3"
+                     labelSpanL="3"
+                     labelSpanM="3"
+                     labelSpanS="12"
+                     emptySpanXL="4"
+                     emptySpanL="4"
+                     emptySpanM="4"
+                     emptySpanS="0"
+                     columnsXL="2"
+                     columnsL="2"
+                     columnsM="2"
+                     visible="{= !${appState>/editMode}}">
         <form:content>
             <Label text="{i18n>labelPatientBirthDate}" labelFor="patientBirthdateText"/>
-            <Text id="patientBirthDateText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum'}" />
+            <Text id="patientBirthDateText"
+                  text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum', formatter: 'Formatter.formatSimpleBirthDate'}"/>
             <Label text="{i18n>labelPatientGender}" labelFor="patientGenderText"/>
-            <Text id="patientGenderText" text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geschlecht'}" />
+            <Text id="patientGenderText"
+                  text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geschlecht', formatter: 'Formatter.formatGender'}"/>
         </form:content>
     </form:SimpleForm>
     <form:SimpleForm id="biologicalFormEdit"
-        editable="true"
-        layout="ResponsiveGridLayout"
-        labelSpanXL="3"
-        labelSpanL="3"
-        labelSpanM="3"
-        labelSpanS="12"
-        emptySpanXL="4"
-        emptySpanL="4"
-        emptySpanM="4"
-        emptySpanS="0"
-        columnsXL="2"
-        columnsL="2"
-        columnsM="2"
-        visible="{appState>/editMode}">
+                     editable="true"
+                     layout="ResponsiveGridLayout"
+                     labelSpanXL="3"
+                     labelSpanL="3"
+                     labelSpanM="3"
+                     labelSpanS="12"
+                     emptySpanXL="4"
+                     emptySpanL="4"
+                     emptySpanM="4"
+                     emptySpanS="0"
+                     columnsXL="2"
+                     columnsL="2"
+                     columnsM="2"
+                     visible="{appState>/editMode}">
         <form:content>
             <Label text="{i18n>labelPatientBirthDate}" labelFor="patientBirthdateInput"/>
-            <DatePicker id="patientBirthdateInput" valueFormat="YYYY-MM-dd" value="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum'}"/>
+            <DatePicker id="patientBirthdateInput" valueFormat="yyyy-MM-dd" displayFormat="yyyy-MM-dd"
+                        value="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geburtsdatum'}"/>
             <Label text="{i18n>labelPatientGender}" labelFor="patientGenderSelect"/>
-            <Select id="patientGenderSelect" forceSelection="false" selectedKey="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geschlecht'}">
+            <Select id="patientGenderSelect" forceSelection="false"
+                    selectedKey="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Geschlecht'}">
                 <core:Item key="male" text="{i18n>Male}"/>
                 <core:Item key="female" text="{i18n>Female}"/>
             </Select>

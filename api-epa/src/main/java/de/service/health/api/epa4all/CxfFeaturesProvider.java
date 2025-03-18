@@ -48,8 +48,8 @@ public class CxfFeaturesProvider {
         loggingFeature.setLogMultipart(true);
         loggingFeature.setLogBinary(false);
 
-        loggingFeature.setSensitiveElementNames(servicehealthConfig.getMaskedAttributes());
-        loggingFeature.setSensitiveProtocolHeaderNames(servicehealthConfig.getMaskedHeaders());
+        loggingFeature.setSensitiveElementNames(servicehealthConfig.getSafeMaskedAttributes());
+        loggingFeature.setSensitiveProtocolHeaderNames(servicehealthConfig.getSafeMaskedHeaders());
         return loggingFeature;
     }
 }

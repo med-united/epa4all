@@ -70,10 +70,12 @@ public class Vsd extends AbstractResource {
         @QueryParam("startDate") String startDate,
         @Parameter(name = "street", description = "Patient street", required = true)
         @QueryParam("street") String street,
-        byte[] base64EncodedBody
+        @Parameter(name = "versicherungsdatenLength", description = "Length of the versicherungsdaten", required = true)
+        @QueryParam("versicherungsdatenLength") Integer versicherungsdatenLength,
+        byte[] pnwBodyBase64
     ) throws Exception {
-        byte[] pruefungsnachweis = Base64.getDecoder().decode(base64EncodedBody);
-        ReadVSDResponse readVSDResponse = buildSyntheticVSDResponse(null, pruefungsnachweis);
+        int len = versicherungsdatenLength == null ? 0 : versicherungsdatenLength;
+        ReadVSDResponse readVSDResponse = buildSyntheticVSDResponse(street, null, null, pnwBodyBase64, len);
         String insurantId = extractInsurantId(readVSDResponse, xInsurantId);
         if (insurantId == null) {
             return Response.status(BAD_REQUEST)
