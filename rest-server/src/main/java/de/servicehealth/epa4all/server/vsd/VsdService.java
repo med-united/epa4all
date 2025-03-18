@@ -8,7 +8,10 @@ import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
+import de.servicehealth.epa4all.server.filetracker.FileEvent;
+import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
+import de.servicehealth.epa4all.server.filetracker.WorkspaceEvent;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -23,9 +26,9 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.UUID;
 
-import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
-import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.print;
+import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
 import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.extractInsurantId;
+import static de.servicehealth.folder.IFolderService.LOCAL_FOLDER;
 import static de.servicehealth.utils.ServerUtils.compress;
 
 @ApplicationScoped
@@ -34,16 +37,19 @@ public class VsdService {
     private static final Logger log = LoggerFactory.getLogger(VsdService.class.getName());
 
     private final MultiKonnektorService multiKonnektorService;
+    private final FileEventSender fileEventSender;
     private final FolderService folderService;
     private final EpaCallGuard epaCallGuard;
 
     @Inject
     public VsdService(
         MultiKonnektorService multiKonnektorService,
+        FileEventSender fileEventSender,
         FolderService folderService,
         EpaCallGuard epaCallGuard
     ) {
         this.multiKonnektorService = multiKonnektorService;
+        this.fileEventSender = fileEventSender;
         this.folderService = folderService;
         this.epaCallGuard = epaCallGuard;
     }
@@ -131,11 +137,15 @@ public class VsdService {
     public void saveVsdFile(String telematikId, String insurantId, ReadVSDResponse readVSDResponse) {
         try {
             // 1. Make sure all med folders are created
-            folderService.initInsurantFolders(telematikId, insurantId);
+            File telematikFolder = folderService.initInsurantFolders(telematikId, insurantId);
+            fileEventSender.send(new WorkspaceEvent(telematikFolder));
 
             // 2. Store VDS response into "local" folder
             File localFolder = folderService.getMedFolder(telematikId, insurantId, LOCAL_FOLDER);
-            new VsdResponseFile(localFolder).store(readVSDResponse);
+            VsdResponseFile vsdResponseFile = new VsdResponseFile(localFolder);
+            vsdResponseFile.store(readVSDResponse);
+
+            fileEventSender.sendAsync(new FileEvent(telematikId, vsdResponseFile.getFiles()));
         } catch (Exception e) {
             log.warn("Could not save ReadVSDResponse", e);
         }

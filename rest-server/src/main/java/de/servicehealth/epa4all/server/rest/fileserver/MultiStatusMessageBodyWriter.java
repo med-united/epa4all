@@ -1,12 +1,12 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.BirthDay;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.Entries;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.EntryUUID;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.FirstName;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.LastName;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.Smcb;
-import de.servicehealth.epa4all.server.rest.fileserver.prop.custom.ValidTo;
+import de.servicehealth.epa4all.server.jcr.prop.custom.BirthDay;
+import de.servicehealth.epa4all.server.jcr.prop.custom.Entries;
+import de.servicehealth.epa4all.server.jcr.prop.custom.EntryUUID;
+import de.servicehealth.epa4all.server.jcr.prop.custom.FirstName;
+import de.servicehealth.epa4all.server.jcr.prop.custom.LastName;
+import de.servicehealth.epa4all.server.jcr.prop.custom.Smcb;
+import de.servicehealth.epa4all.server.jcr.prop.custom.ValidTo;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;

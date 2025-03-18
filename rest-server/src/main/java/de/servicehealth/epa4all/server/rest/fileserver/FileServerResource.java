@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
-import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp;
+import de.servicehealth.folder.WebdavConfig;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.InputStream;
 
-import static de.servicehealth.epa4all.server.config.WebdavConfig.RESOURCE_NAME;
+import static de.servicehealth.folder.WebdavConfig.RESOURCE_NAME;
 
 @SuppressWarnings("unused")
 @Path(RESOURCE_NAME)

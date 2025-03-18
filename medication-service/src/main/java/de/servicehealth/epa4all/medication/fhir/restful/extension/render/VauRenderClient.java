@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.medication.fhir.restful.extension.render;
 
+import de.servicehealth.folder.IFolderService;
 import org.apache.http.Header;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
@@ -8,8 +9,13 @@ import java.net.URI;
 
 public class VauRenderClient extends AbstractRenderClient {
 
-    public VauRenderClient(Executor executor, String epaUserAgent, String medicationRenderUrl) {
-        super(executor, epaUserAgent, medicationRenderUrl);
+    public VauRenderClient(
+        Executor executor,
+        String epaUserAgent,
+        String medicationRenderUrl,
+        IFolderService folderService
+    ) {
+        super(executor, epaUserAgent, medicationRenderUrl, folderService);
     }
 
     @Override

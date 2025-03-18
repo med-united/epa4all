@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +15,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static de.servicehealth.utils.ServerUtils.writeBytesToFile;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.util.stream.Collectors.toMap;
 
@@ -106,9 +106,8 @@ public abstract class MapDumpFile<K, V> {
                 .map(this::serialize)
                 .filter(Objects::nonNull)
                 .collect(Collectors.joining("\n"));
-            try (FileOutputStream os = new FileOutputStream(file)) {
-                os.write(content.getBytes());
-            }
+
+            writeBytesToFile(content.getBytes(), file);
         } catch (Exception e) {
             log.error(String.format("Unable to store '%s' file", getFileName()));
         }

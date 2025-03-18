@@ -244,7 +244,8 @@ public class VauNpProvider extends StartableService {
                     applyVauNp(smcBApi, vauClient, clientId, userAgent, backend, authCode);
                 }
             });
-        } catch (Throwable ignored) {
+        } catch (Throwable e) {
+            log.error("Error while reloadVauClient", e);
             vauClient.setVauInfo(null);
             vauClient.setVauNp(null);
         }

@@ -1,6 +1,5 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
-import de.servicehealth.epa4all.server.config.WebdavConfig;
 import jakarta.enterprise.context.Dependent;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
@@ -15,6 +14,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+
+import static de.servicehealth.folder.WebdavConfig.RESOURCE_NAME;
 
 @Dependent
 public class DirectoryResource extends AbstractResource {
@@ -32,7 +33,7 @@ public class DirectoryResource extends AbstractResource {
     public Response move(final UriInfo uriInfo, String overwriteStr, String destination) throws URISyntaxException {
         logRequest("MOVE", uriInfo);
         URI uri = uriInfo.getBaseUri();
-        String host = uri.getScheme() + "://" + uri.getHost() + "/" + WebdavConfig.RESOURCE_NAME + "/";
+        String host = uri.getScheme() + "://" + uri.getHost() + "/" + RESOURCE_NAME + "/";
         String originalDestination = destination;
         destination = URLDecoder.decode(destination, StandardCharsets.UTF_8);
         destination = destination.replace(host, "");

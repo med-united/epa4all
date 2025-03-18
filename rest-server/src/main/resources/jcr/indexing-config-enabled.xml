@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE configuration SYSTEM "http://jackrabbit.apache.org/dtd/indexing-configuration-1.2.dtd">
+<configuration xmlns:jcr="http://www.jcp.org/jcr/1.0"
+               xmlns:nt="http://www.jcp.org/jcr/nt/1.0"
+               xmlns:epa="https://www.service-health.de/epa">
+
+    <index-rule nodeType="nt:resource" condition="@jcr:mimeType='application/xml'">
+        <property boost="5.0">jcr:data</property>
+    </index-rule>
+
+    <index-rule nodeType="nt:resource" condition="@jcr:mimeType='application/pdf'">
+        <property boost="5.0">jcr:data</property>
+    </index-rule>
+
+    <index-rule nodeType="nt:folder">
+        <property nodeScopeIndex="false" boost="3.0">epa:firstname</property>
+        <property nodeScopeIndex="false" boost="3.0">epa:lastname</property>
+    </index-rule>
+
+    <index-rule nodeType="nt:file">
+        <property nodeScopeIndex="false" boost="3.0">epa:firstname</property>
+        <property nodeScopeIndex="false" boost="3.0">epa:lastname</property>
+    </index-rule>
+
+</configuration>

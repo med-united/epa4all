@@ -4,11 +4,11 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.servicehealth.epa4all.common.profile.ProxyLocalTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
-import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.vsd.VsdService;
+import de.servicehealth.folder.WebdavConfig;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -47,7 +47,7 @@ public class CardInsertedDockerIT extends AbstractVsdTest {
             String kvnr = "X110485291";
             String smcbHandle = "SMC-B-123";
 
-            mockWebdavConfig(TEST_FOLDER);
+            mockWebdavConfig(TEST_FOLDER, null);
             mockVsdService(kvnr);
             mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
 

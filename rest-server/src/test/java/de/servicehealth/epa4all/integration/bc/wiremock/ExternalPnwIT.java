@@ -9,8 +9,10 @@ import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
+import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -24,7 +26,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.print;
+import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
@@ -38,9 +40,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+@SuppressWarnings("unused")
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
 public class ExternalPnwIT extends AbstractWiremockTest {
+
+    @InjectMock
+    FileEventSender fileEventSender;
 
     private String initStubsAndHandleCardInsertedEvent(
         String kvnr,

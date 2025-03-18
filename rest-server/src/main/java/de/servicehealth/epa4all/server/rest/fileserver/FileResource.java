@@ -1,7 +1,5 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
-import de.servicehealth.epa4all.server.config.WebdavConfig;
-import de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy;
 import jakarta.enterprise.context.Dependent;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -28,7 +26,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy.Earliest;
-import static de.servicehealth.epa4all.server.rest.fileserver.prop.MimeHelper.resolveMimeType;
+import static de.servicehealth.folder.WebdavConfig.RESOURCE_NAME;
+import static de.servicehealth.utils.MimeHelper.resolveMimeType;
 
 @Dependent
 public class FileResource extends AbstractResource {
@@ -76,7 +75,7 @@ public class FileResource extends AbstractResource {
     public Response move(final UriInfo uriInfo, String overwriteStr, String destination) throws URISyntaxException {
         logRequest("MOVE", uriInfo);
         URI uri = uriInfo.getBaseUri();
-        String host = uri.getScheme() + "://" + uri.getHost() + "/" + WebdavConfig.RESOURCE_NAME + "/";
+        String host = uri.getScheme() + "://" + uri.getHost() + "/" + RESOURCE_NAME + "/";
         String originalDestination = destination;
         destination = URLDecoder.decode(destination, StandardCharsets.UTF_8);
         destination = destination.replace(host, "");

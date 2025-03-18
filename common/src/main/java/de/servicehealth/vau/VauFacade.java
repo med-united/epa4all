@@ -78,6 +78,7 @@ public class VauFacade {
 
     private final ScheduledExecutorService executorService;
     private final BeanRegistry registry;
+    private final VauConfig vauConfig;
 
     @Inject
     public VauFacade(
@@ -86,6 +87,7 @@ public class VauFacade {
         @Konnektors Set<String> konnektors
     ) {
         this.registry = registry;
+        this.vauConfig = vauConfig;
         this.registry.register(this);
         tracingEnabled = vauConfig.isTracingEnabled();
 
@@ -148,9 +150,14 @@ public class VauFacade {
                 // todo uncomment when KonnektorDefaultConfig is gone
                 // .filter(vc -> workplace == null || vc.getKonnektorWorkplace().contains(workplace))
                 .filter(VauClient::acquire).findFirst();
+
+            long start = System.currentTimeMillis();
             if (vauClientOpt.isEmpty()) {
-                log.warn("WAITING FOR VAU CLIENT ********");
                 TimeUnit.MILLISECONDS.sleep(300);
+                long delta = System.currentTimeMillis() - start;
+                if (delta > vauConfig.getVauReadTimeoutMs()) {
+                    throw new IllegalStateException(String.format("No active VauClient found within %d ms", delta));
+                }
             } else {
                 break;
             }

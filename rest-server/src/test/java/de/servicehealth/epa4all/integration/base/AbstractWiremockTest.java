@@ -24,7 +24,6 @@ import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
-import de.servicehealth.epa4all.server.config.WebdavConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
@@ -32,8 +31,10 @@ import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.jcr.JcrService;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
+import de.servicehealth.folder.WebdavConfig;
 import de.servicehealth.registry.BeanRegistry;
 import de.servicehealth.vau.VauFacade;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -101,6 +102,9 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     @Inject
     protected WebdavConfig webdavConfig;
+
+    @Inject
+    JcrService jcrService;
 
     @Inject
     protected FeatureConfig featureConfig;
@@ -180,7 +184,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     @BeforeEach
     public void beforeEach() {
         clientFactory.onStart();
-        mockWebdavConfig(tempDir.toFile());
+        mockWebdavConfig(tempDir.toFile(), null);
     }
 
     @AfterEach
@@ -189,6 +193,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         deleteFiles(tempDir.toFile().listFiles());
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
         QuarkusMock.installMockForType(folderService, FolderService.class);
+        QuarkusMock.installMockForType(jcrService, JcrService.class);
     }
 
     protected void prepareVauStubs(List<Pair<String, CallInfo>> responseFuncs) {

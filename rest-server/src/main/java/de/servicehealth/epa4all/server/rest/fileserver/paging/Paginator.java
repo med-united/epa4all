@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.server.rest.fileserver.paging;
 
-import de.servicehealth.epa4all.server.config.WebdavConfig;
+import de.servicehealth.folder.WebdavConfig;
 import jakarta.ws.rs.core.MultivaluedMap;
 import lombok.Getter;
 import lombok.Setter;
