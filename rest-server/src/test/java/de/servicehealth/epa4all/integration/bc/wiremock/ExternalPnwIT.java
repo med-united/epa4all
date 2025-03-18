@@ -26,7 +26,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.print;
+import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;

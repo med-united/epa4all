@@ -26,8 +26,7 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.UUID;
 
-import static de.servicehealth.epa4all.server.filetracker.IFolderService.LOCAL_FOLDER;
-import static de.servicehealth.epa4all.server.insurance.InsuranceXmlUtils.print;
+import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
 import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.extractInsurantId;
 import static de.servicehealth.folder.IFolderService.LOCAL_FOLDER;
 import static de.servicehealth.utils.ServerUtils.compress;
