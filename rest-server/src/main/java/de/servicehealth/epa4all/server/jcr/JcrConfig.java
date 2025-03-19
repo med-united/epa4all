@@ -27,6 +27,9 @@ public class JcrConfig {
     @ConfigProperty(name = "jcr.missing-auth-mapping")
     String missingAuthMapping;
 
+    @ConfigProperty(name = "jcr.repository.reinit.attempts", defaultValue = "1")
+    int reInitAttempts;
+
     // see JCRParams.INIT_PARAM_CSRF_PROTECTION
     @ConfigProperty(name = "jcr.csrf-protection")
     Optional<String> csrfProtection;

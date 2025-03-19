@@ -1,6 +1,5 @@
 package de.servicehealth.epa4all.integration.base;
 
-import de.servicehealth.epa4all.server.filetracker.FileEvent;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.jcr.JcrConfig;
@@ -10,7 +9,6 @@ import de.servicehealth.epa4all.server.jcr.TypesService;
 import de.servicehealth.epa4all.server.propsource.PropBuilder;
 import de.servicehealth.folder.WebdavConfig;
 import io.quarkus.test.junit.QuarkusMock;
-import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 
 import javax.jcr.SimpleCredentials;
@@ -52,6 +50,7 @@ public class AbstractWebdavIT {
         when(jcrConfig.isCreateAbsoluteURI()).thenReturn(true);
         when(jcrConfig.getCredentials()).thenReturn(new SimpleCredentials("admin", "admin".toCharArray()));
         when(jcrConfig.getMixinMap()).thenReturn(mixinMap);
+        when(jcrConfig.getReInitAttempts()).thenReturn(1);
         return jcrConfig;
     }
 

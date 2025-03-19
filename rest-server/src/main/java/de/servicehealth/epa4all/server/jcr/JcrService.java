@@ -47,6 +47,8 @@ public class JcrService extends StartableService {
 
     private final SimpleCredentials credentials;
 
+    private int reInitAttempts;
+
     @Inject
     public JcrService(
         JcrRepositoryProvider repositoryProvider,
@@ -99,13 +101,20 @@ public class JcrService extends StartableService {
 
             log.info("Jackrabbit repository initialized in: " + repositoryHome);
         } catch (Throwable e) {
-            log.error("Failed to initialize Jackrabbit repository", e);
+            if (reInitAttempts++ >= jcrConfig.getReInitAttempts()) {
+                String msg = String.format(
+                    "Unable to init JCR repository after %d re-init attempts: %s", jcrConfig.getReInitAttempts(), e.getMessage()
+                );
+                throw new IllegalStateException(msg, e);
+            }
+            log.error("Failed to initialize Jackrabbit repository, home folder will be recreated", e);
             try {
                 shutdown();
                 deleteDirectory(repositoryHome);
             } catch (Throwable io) {
                 log.error("Error while deleting JCR repository.home: " + repositoryPath, io);
             }
+            onStart();
         }
     }
 
