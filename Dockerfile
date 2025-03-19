@@ -11,6 +11,7 @@ RUN apk add --no-cache curl bash tini ca-certificates libc6-compat tcpdump less 
     && mkdir /opt/epa4all/lib/main \
     && mkdir /opt/epa4all/certs \
     && mkdir /opt/epa4all/webdav \
+    && mkdir /opt/epa4all/frontend \
     && mkdir /opt/epa4all/config \
     && mkdir /opt/epa4all/quarkus \
     && mkdir /opt/epa4all/secret \
@@ -38,6 +39,7 @@ RUN case "${TARGETPLATFORM}" in \
     && chmod a+x /usr/local/bin/promtail
 
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
+COPY --chown=1001 rest-server/frontend/ /opt/epa4all/frontend/
 COPY --chown=1001 tls/epa-certs/*.pem /opt/epa4all/certs
 COPY --chown=1001 linux-service/run.sh /opt/epa4all
 COPY --chown=1001 tls/server/key-store/keystore.p12 /opt/epa4all/tls

@@ -211,10 +211,7 @@ public class ServicePortProvider extends StartableService {
         Invocation invocation = builder.buildGet();
 
         try (InputStream inputStream = invocation.invoke(InputStream.class)) {
-            Document document = DocumentBuilderFactory.newDefaultInstance()
-                .newDocumentBuilder()
-                .parse(inputStream);
-
+            Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
             Node serviceInformationNode = getNodeWithTag(document.getDocumentElement(), "ServiceInformation");
 
             if (serviceInformationNode == null) {
