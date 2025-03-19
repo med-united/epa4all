@@ -110,3 +110,47 @@ If you want to learn more about building native executables, please consult <htt
 - Quarkus CXF WS-Security ([guide](https://quarkiverse.github.io/quarkiverse-docs/quarkus-cxf/dev/reference/extensions/quarkus-cxf-rt-ws-security.html)): Consume and produce web services with Web Services Security (WS-Security, WSS)
 - Citrus ([guide](https://github.com/christophd/citrus-demo-quarkus)): Add Citrus support to your Quarkus tests. Citrus is an Open Source Java integration testing framework supporting a wide range of message protocols and data formats (Kafka, Http REST, JMS, TCP/IP, SOAP, FTP/SFTP, XML, Json, and more)
 - Quarkus CXF Transports HTTP Async ([guide](https://quarkiverse.github.io/quarkiverse-docs/quarkus-cxf/dev/reference/extensions/quarkus-cxf-rt-transports-http-hc5.html)): Implement async SOAP Clients using Apache HttpComponents HttpClient 5
+
+## JCR support
+
+- JCR repository operates with nodes, their types and properties. There are standard node types related to webdav - **nt:folder** and **nt:file**. JCR repository supports multiple workspaces. We map telematikId to separate workspace. Every workspace has a root node, so we map `/webdav/<telematikId>` folder to root node of that workspace. Root node JCR access path has built in JCR identifier: **jcr:root**. Thus, the JCR workspace root node `/3-SMC-B-Testkarte--883110000147807/jcr:root` contains many system properties and nested system nodes, making it inconvenient to skip them while responding to WebDAV requests. To solve this, an additional top level **nt:folder** `rootFolder` node was added to workspace root. Therefore, to reach the root node that contains all KVNR nodes, the following JCR path should be used:
+`/3-SMC-B-Testkarte--883110000147807/jcr:root/rootFolder`
+
+    Same approach is used for **nt:file** nodes. They have built in child node **jcr:content** with type **nt:resource**. Standard type **nt:resource** has fixed properties set which includes:
+
+  * **jcr:data** - binary content of any file
+  * **jcr:mimeType** - file mime type
+  * **jcr:encoding** - file content encoding
+    When a file is added to the repository, these properties are populated, content of the **jcr:data** is extracted according to MIME type and indexed using `node scope` that’s why we perform a fulltext search widely, e.g r.*:
+```SQL
+SELECT * FROM [nt:resource] as r WHERE CONTAINS(r.*, '%s')
+```  
+> Note: `CONTAINS(r.[jcr:data], '%s')` won’t work
+
+- epa4all has its own properties set: firstname, lastname, birthday, displayname, validto, getlastmodified, smcb, entryuuid. They are included into JCR mixin. The concept of a mixin is similar to interface, so you can add additional mixin types into JCR standard type and therefore extend that JCR type with additional properties. Another way to have additional properties is no create child node with custom type but mixin looks more convenient. In addition, epa4all introduces its own namespace to not interfere with system properties:
+
+```java
+String EPA_NAMESPACE_PREFIX = "epa";
+String EPA_NAMESPACE_URI = "https://www.service-health.de/epa";
+```
+
+Thus, epa mixin names must be always prefixed with namespace prefix, at moment only one epa mixin is added with name **epa:custom**. Its properties are firstname, lastname, birthday, displayname, validto, getlastmodified, smcb, entryuuid. The behaviour of epa properties is defined in the interface MixinProp (custom indexing behaviour can be added in rest-server/resources/jcr/indexing-config.xml). Property  **isFulltext()** defines if particular property will be fulltext indexed. The fulltext search through nt:folder nodes by lastname will look like:
+```sql
+SELECT f.* FROM [nt:folder] as f
+WHERE CONTAINS(f.[epa:lastname], '%s')
+```
+> epa:lastname property was indexed with nodeScope=false
+
+- The actual configuration of epa4all mixins is supported on runtime and based on implementations of the Mixin interface found on classpath. When service is starting, it checks current JCR repository mixins and then compare with actual epa mixins from runtime. Unused mixins (with their properties) and modified mixins will be removed from JCR repository, new mixins will be added and applied to nodes defined in the application.properties:
+```properties
+jcr.mixin.config."nt\:folder"=epa:custom
+jcr.mixin.config."nt\:file"=epa:custom
+```
+
+- JCR repository is file based for epa4all, property **jcr.repository.home** defines where in filesystem the root folder will be located. At moment is is `config/repository`. This means that for docker deployment we need to keep repository home in the volume. 
+>Note: if some issue with existing repository is detected at startup then home folder will be removed and recreated from scratch. The property jcr.repository.reinit.attempts is introduced.
+
+- At the moment there are two content management systems in the epa4all: legacy one is webdav folder where actual medication files are stored and `webdav-jaxrs` library provides WEBDAV access to that folder and Java Content Repository (Jackrabbit implementation) which behaves as downstream read-only system at the moment. So, when we write new file into webdav folder, we notify jcr repository about that file. Jcr repository creates a new node, indexes its properties, and so on.
+  legacy cms has `/webdav` path and jcr repository has `/webdav2` path.
+
+- Since the Undertow servlet container was added to the project, It has no longer been able to support the WebJars approach for the frontend module. Its import was removed from the REST server, and the frontend module with UI5-related JavaScript sources was extracted to the static folder. Thus, Quarkus now handles it using the Vert.x StaticHandler. Please check frontend/pom.xml; everything is now extracted to the `/rest-server/frontend` folder. We need to adapt this approach for Docker deployment.
