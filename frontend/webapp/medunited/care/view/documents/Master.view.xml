@@ -1,0 +1,52 @@
+<mvc:View controllerName="medunited.care.controller.documents.Master"
+          xmlns="sap.m"
+          xmlns:f="sap.f"
+          xmlns:mvc="sap.ui.core.mvc">
+
+    <f:DynamicPage id="documentPageId" toggleHeaderOnTitleClick="false">
+        <f:title>
+            <f:DynamicPageTitle>
+                <f:heading>
+                    <Title text="{i18n>pageTitleDocuments}" />
+                </f:heading>
+            </f:DynamicPageTitle>
+        </f:title>
+
+        <f:content>
+            <VBox fitContainer="true">
+                <OverflowToolbar>
+                    <ToolbarSpacer />
+                    <SearchField id="documentSearch"
+                                 search="onSearchDocuments"
+                                 width="17.5rem"
+                                 placeholder="Search Documents"/>
+                </OverflowToolbar>
+
+                <Table id="documentTable"
+                       items="{documents>/results}"
+                       growing="true"
+                       growingScrollToLoad="true"
+                       noDataText="No matching documents found.">
+                    <columns>
+                        <Column><Text text="{i18n>documentPath}"/></Column>
+                        <Column><Text text="{i18n>encoding}"/></Column>
+                        <Column><Text text="{i18n>lastModified}"/></Column>
+                        <Column><Text text="{i18n>MIMEType}"/></Column>
+                        <Column><Text text=""/></Column>
+                    </columns>
+                    <items>
+                        <ColumnListItem>
+                            <cells>
+                                <Text text="{documents>path}" />
+                                <Text text="{documents>encoding}" />
+                                <Text text="{documents>lastModified}" />
+                                <Text text="{documents>mimeType}" />
+                                <Link text="{i18n>open}" target="_blank" href="{documents>url}" />
+                            </cells>
+                        </ColumnListItem>
+                    </items>
+                </Table>
+            </VBox>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

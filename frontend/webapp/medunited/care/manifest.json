@@ -137,6 +137,13 @@
 						"patient-master",
 						"patient-detail"
 					]
+				},
+				{
+					"pattern": "documents/:layout:",
+					"name": "documents-master",
+					"target": [
+						"documents-master"
+					]
 				}
 			],
 			"targets": {
@@ -148,6 +155,11 @@
 				"patient-detail": {
 					"viewName": "patient/Detail",
 					"controlAggregation": "midColumnPages",
+					"clearControlAggregation": true
+				},
+				"documents-master": {
+					"viewName": "documents/Master",
+					"controlAggregation": "beginColumnPages",
 					"clearControlAggregation": true
 				}
 			}

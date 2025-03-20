@@ -31,6 +31,7 @@
 						<IconTabHeader id="iconTabHeader" mode="Inline" select=".changeTab">
 							<items>
 								<IconTabFilter key="patient-master" text="{i18n>patientsTabFilter}" />
+								<IconTabFilter key="documents-master" text="{i18n>documentsTabFilter}" />
 							</items>
 						</IconTabHeader>
 					</tnt:ToolHeader>
