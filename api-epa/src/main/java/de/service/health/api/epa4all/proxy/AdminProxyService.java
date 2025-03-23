@@ -12,8 +12,6 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -25,13 +23,11 @@ import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.vau.VauClient.VAU_CLIENT;
 import static de.servicehealth.vau.VauClient.VAU_CLIENT_UUID;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT_ENCODING;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
-import static org.apache.http.HttpHeaders.ACCEPT;
-import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
 
 public class AdminProxyService extends BaseProxyService implements IAdminProxy {
-
-    private static final Logger log = LoggerFactory.getLogger(AdminProxyService.class.getName());
 
     private final WebClient adminClient;
 

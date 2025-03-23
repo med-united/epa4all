@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.bc.docker;
+package de.servicehealth.epa4all.integration.fhir;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.MethodOutcome;
@@ -50,7 +50,7 @@ public class FhirForwardIT {
             IMedicationClient forwardingClient = forwardingClientFactory.newGenericClient(forwardUrl);
 
             String kvnr = "X110485291";
-            
+
             MethodOutcome methodOutcome = forwardingClient.withKvnr(kvnr).createResource(preparePatient(kvnr));
             assertInstanceOf(Patient.class, methodOutcome.getResource());
 

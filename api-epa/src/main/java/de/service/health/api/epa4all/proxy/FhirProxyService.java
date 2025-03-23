@@ -20,22 +20,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.google.common.net.HttpHeaders.UPGRADE;
 import static de.servicehealth.utils.ServerUtils.APPLICATION_PDF;
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static de.servicehealth.vau.VauClient.X_SUBJECT;
 import static de.servicehealth.vau.VauClient.X_WORKPLACE;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT_ENCODING;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_PATCH_JSON_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static jakarta.ws.rs.core.MediaType.TEXT_HTML;
 import static jakarta.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static org.apache.http.HttpHeaders.ACCEPT;
-import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
-import static org.apache.http.HttpHeaders.CONNECTION;
-import static org.apache.http.HttpHeaders.UPGRADE;
+import static org.apache.cxf.helpers.HttpHeaderHelper.CONNECTION;
 
 public class FhirProxyService extends BaseProxyService implements IFhirProxy {
 

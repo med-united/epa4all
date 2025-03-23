@@ -1,6 +1,5 @@
 package de.service.health.api.epa4all;
 
-import ca.uhn.fhir.context.FhirContext;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.service.health.api.epa4all.annotation.EpaRestFeatures;
@@ -16,14 +15,6 @@ import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadSoapInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteSoapInterceptor;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRenderClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.render.StubMedicationClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.render.VauRenderStubClient;
-import de.servicehealth.epa4all.medication.fhir.restful.factory.VauRestfulClientFactory;
-import de.servicehealth.feature.EpaFeatureConfig;
-import de.servicehealth.folder.IFolderService;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
@@ -42,7 +33,6 @@ import org.apache.cxf.feature.Feature;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.http.client.fluent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,12 +50,10 @@ import static de.servicehealth.logging.LogContext.resultMdc;
 import static de.servicehealth.logging.LogField.BACKEND;
 import static de.servicehealth.logging.LogField.INSURANT;
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
-import static de.servicehealth.utils.ServerUtils.getBaseUrl;
 import static jakarta.xml.ws.soap.SOAPBinding.SOAP12HTTP_BINDING;
 import static java.lang.Boolean.TRUE;
 import static org.apache.cxf.message.Message.MTOM_ENABLED;
 
-@SuppressWarnings("CdiInjectionPointsInspection")
 @ApplicationScoped
 @Startup
 public class EpaMultiService extends StartableService {
@@ -83,8 +71,6 @@ public class EpaMultiService extends StartableService {
 
     @Getter
     private final EpaConfig epaConfig;
-    private final IFolderService folderService;
-    private final EpaFeatureConfig featureConfig;
     private final ClientFactory clientFactory;
     private final Instance<VauFacade> vauFacadeInstance;
     private final ServicehealthConfig servicehealthConfig;
@@ -101,8 +87,6 @@ public class EpaMultiService extends StartableService {
         VauConfig vauConfig,
         EpaConfig epaConfig,
         ClientFactory clientFactory,
-        IFolderService folderService,
-        EpaFeatureConfig featureConfig,
         Instance<VauFacade> vauFacadeInstance,
         ServicehealthConfig servicehealthConfig,
         @EpaRestFeatures List<Feature> epaRestFeatures,
@@ -111,8 +95,6 @@ public class EpaMultiService extends StartableService {
         this.vauFacadeInstance = vauFacadeInstance;
         this.servicehealthConfig = servicehealthConfig;
         this.clientFactory = clientFactory;
-        this.featureConfig = featureConfig;
-        this.folderService = folderService;
         this.epaConfig = epaConfig;
         this.vauConfig = vauConfig;
         this.epaRestFeatures = epaRestFeatures;
@@ -160,34 +142,9 @@ public class EpaMultiService extends StartableService {
                         backend, epaConfig, vauConfig, vauFacade, maskedHeaders, maskedAttributes
                     );
 
-                    IMedicationClient medicationClient;
-                    IRenderClient renderClient;
-                    if (featureConfig.isNativeFhirEnabled()) {
-                        FhirContext fhirContext = FhirContext.forR4();
-                        String epaUserAgent = epaConfig.getEpaUserAgent();
-                        
-                        VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(fhirContext);
-                        String medicationApiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
-                        apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationApiUrl));
-                        medicationClient = apiClientFactory.newGenericClient(medicationApiUrl.replace("+vau", ""));
-
-                        String medicationRenderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
-                        VauRestfulClientFactory renderClientFactory = new VauRestfulClientFactory(fhirContext);
-                        renderClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationRenderUrl));
-                        Executor renderExecutor = Executor.newInstance(renderClientFactory.getVauHttpClient());
-                        renderClient = new VauRenderClient(
-                            renderExecutor, epaUserAgent, medicationRenderUrl.replace("+vau", ""), folderService
-                        );
-                    } else {
-                        medicationClient = new StubMedicationClient();
-                        renderClient = new VauRenderStubClient();
-                    }
-
                     return new EpaAPIAggregator(
                         backend,
                         vauFacade,
-                        renderClient,
-                        medicationClient,
                         () -> buildIDocumentManagementPortType(backend, vauFacade),
                         documentManagementInsurantPortType,
                         accountInformationApi,

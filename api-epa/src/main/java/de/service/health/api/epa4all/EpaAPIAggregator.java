@@ -5,8 +5,6 @@ import de.service.health.api.epa4all.entitlement.EntitlementsApi;
 import de.service.health.api.epa4all.proxy.IAdminProxy;
 import de.service.health.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.IMedicationClient;
-import de.servicehealth.epa4all.medication.fhir.restful.extension.render.IRenderClient;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
@@ -21,8 +19,6 @@ public class EpaAPIAggregator implements EpaAPI {
 
     private final String backend;
     private final VauFacade vauFacade;
-    private final IRenderClient renderClient;
-    private final IMedicationClient medicationClient;
     private final Supplier<IDocumentManagementPortType> documentManagementPortType;
     private final IDocumentManagementInsurantPortType documentManagementInsurantPortType;
     private final AccountInformationApi accountInformationApi;
@@ -34,8 +30,6 @@ public class EpaAPIAggregator implements EpaAPI {
     public EpaAPIAggregator(
         String backend,
         VauFacade vauFacade,
-        IRenderClient renderClient,
-        IMedicationClient medicationClient,
         Supplier<IDocumentManagementPortType> documentManagementPortType,
         IDocumentManagementInsurantPortType documentManagementInsurantPortType,
         AccountInformationApi accountInformationApi,
@@ -46,8 +40,6 @@ public class EpaAPIAggregator implements EpaAPI {
     ) {
         this.backend = backend;
         this.vauFacade = vauFacade;
-        this.renderClient = renderClient;
-        this.medicationClient = medicationClient;
         this.documentManagementPortType = documentManagementPortType;
         this.documentManagementInsurantPortType = documentManagementInsurantPortType;
         this.accountInformationApi = accountInformationApi;
@@ -108,15 +100,5 @@ public class EpaAPIAggregator implements EpaAPI {
     @Override
     public IFhirProxy getFhirProxy() {
         return fhirProxy;
-    }
-
-    @Override
-    public IMedicationClient getMedicationClient() {
-        return medicationClient;
-    }
-
-    @Override
-    public IRenderClient getRenderClient() {
-        return renderClient;
     }
 }
