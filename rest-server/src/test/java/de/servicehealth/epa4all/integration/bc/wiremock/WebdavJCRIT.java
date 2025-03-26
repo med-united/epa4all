@@ -26,7 +26,7 @@ public class WebdavJCRIT extends AbstractJCRTest {
         String kvnr = "X110485291";
         prepareInsurantFiles(telematikId, kvnr);
 
-        jcrService.onStart();
+        jcrService.doStart();
 
         String resource = "/webdav2/" + telematikId + "/jcr:root/rootFolder/" + kvnr + "/local";
 

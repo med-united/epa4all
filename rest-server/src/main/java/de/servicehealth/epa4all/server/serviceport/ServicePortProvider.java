@@ -67,7 +67,7 @@ public class ServicePortProvider extends StartableService {
     List<WebServiceFeature> konnektorSoapFeatures;
 
     // this must be started after MultiEpaService
-    public void onStart() throws Exception {
+    public void doStart() throws Exception {
         konnektorsEndpoints.putAll(new ServicePortFile(configDirectory).get());
     }
 

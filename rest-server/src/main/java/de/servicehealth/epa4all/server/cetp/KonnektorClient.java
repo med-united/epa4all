@@ -126,10 +126,15 @@ public class KonnektorClient extends StartableService implements IKonnektorClien
     }
 
     @Override
-    protected void onStart() throws Exception {
+    protected void doStart() throws Exception {
         SmcbCertificateFile certificateFile = new SmcbCertificateFile(configDirectory);
         Predicate<Map.Entry<String, CertificateInfo>> notAfter = e -> new Date().before(e.getValue().getCertificate().getNotAfter());
         smcbCertificateMap.putAll(certificateFile.overwrite(notAfter));
+    }
+
+    @Override
+    public boolean isReady() {
+        return multiKonnektorService.isReady();
     }
 
     @Override

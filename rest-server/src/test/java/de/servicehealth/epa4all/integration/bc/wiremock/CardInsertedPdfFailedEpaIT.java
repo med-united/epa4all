@@ -46,7 +46,7 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
         prepareKonnektorStubs();
         prepareInformationStubs(204);
 
-        vauNpProvider.onStart();
+        vauNpProvider.doStart();
 
         String kvnr = "X110587452";
         String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);

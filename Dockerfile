@@ -17,6 +17,7 @@ RUN apk add --no-cache curl bash tini ca-certificates libc6-compat tcpdump less 
     && mkdir /opt/epa4all/secret \
     && mkdir /opt/epa4all/tls \
     && mkdir /opt/epa4all/ig-schema \
+    && mkdir /opt/epa4all/config/jcr \
     && mkdir /opt/epa4all/config/konnektoren \
     && mkdir /opt/epa4all/config/konnektoren/8588 \
     && chown -R 1001:root /opt/epa4all \
@@ -50,6 +51,7 @@ COPY --chown=1001 rest-server/target/quarkus-app/lib/main/* /opt/epa4all/lib/mai
 COPY --chown=1001 rest-server/target/quarkus-app/quarkus/* /opt/epa4all/quarkus/
 COPY --chown=1001 rest-server/target/quarkus-app/quarkus-run.jar /opt/epa4all/
 COPY --chown=1001 rest-server/src/main/resources/application.properties /opt/epa4all/config/application.properties
+COPY --chown=1001 rest-server/src/main/resources/jcr/ /opt/epa4all/config/jcr/
 COPY --chown=1001 rest-server/config/konnektoren/8588/user.properties /opt/epa4all/config/konnektoren/8588/user.properties
 COPY --chown=1001 production_deployment/promtail.yaml /opt/epa4all/promtail
 

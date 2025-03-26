@@ -49,6 +49,10 @@ public class MultiKonnektorService {
         });
     }
 
+    public boolean isReady() {
+        return servicePortProvider.getConfigDirectory() != null;
+    }
+
     private ContextType buildContextType(UserRuntimeConfig userRuntimeConfig) {
         ContextType contextType = new ContextType();
         contextType.setMandantId(userRuntimeConfig.getMandantId());

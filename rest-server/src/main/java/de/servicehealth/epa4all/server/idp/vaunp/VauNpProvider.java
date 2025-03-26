@@ -119,7 +119,7 @@ public class VauNpProvider extends StartableService {
     }
 
     @Override
-    public void onStart() throws Exception {
+    public void doStart() throws Exception {
         reload(Set.of());
     }
 

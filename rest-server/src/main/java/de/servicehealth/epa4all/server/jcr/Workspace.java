@@ -37,15 +37,30 @@ public class Workspace {
         this.propBuilder = propBuilder;
     }
 
-    private String getConfigurationParam(URL configUrl, String configElement) {
-        return configUrl == null ? "" : String.format(configElement, configUrl.getPath());
+    private String getConfigurationParam(String configElement, File configFile, URL configUrl) {
+        String path = configFile.exists() ? configFile.getAbsolutePath() : configUrl == null ? null : configUrl.getPath();
+        return path == null ? "" : String.format(configElement, path);
+    }
+
+    private String getConfigElement(String name, String configName, String elementTemplate) {
+        File configFile = new File(jcrConfig.getConfigPath(), configName);
+        URL configUrl = Workspace.class.getResource("/jcr/" + configName);
+        String configElement = getConfigurationParam(elementTemplate, configFile, configUrl);
+        log.info(String.format("%s config = '%s'", name, configElement));
+        return configElement;
     }
 
     private InputSource getInputSource(String telematikId) {
-        URL tikaConfig = Workspace.class.getResource("/jcr/tika-config-enabled.xml");
-        URL indexingConfig = Workspace.class.getResource("/jcr/indexing-config-enabled.xml");
-        String tikaConfigElement = getConfigurationParam(tikaConfig, "\n<param name=\"tikaConfigPath\" value=\"%s\"/>");
-        String indexingConfigElement = getConfigurationParam(indexingConfig, "\n<param name=\"indexingConfiguration\" value=\"%s\"/>");
+        String tikaConfigElement = getConfigElement(
+            "Tika",
+            "tika-config-enabled.xml",
+            "\n<param name=\"tikaConfigPath\" value=\"%s\"/>"
+        );
+        String indexingConfigElement = getConfigElement(
+            "Indexing",
+            "indexing-config-enabled.xml",
+            "\n<param name=\"indexingConfiguration\" value=\"%s\"/>"
+        );
 
         String path = jcrConfig.getWorkspacesHome() + "/" + telematikId;
         String configXml = """

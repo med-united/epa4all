@@ -73,7 +73,7 @@ public class VauSessionsJob extends StartableService {
     }
 
     @Override
-    public void onStart() throws Exception {
+    public void doStart() throws Exception {
         telematikIds = getTelematikIds();
     }
 

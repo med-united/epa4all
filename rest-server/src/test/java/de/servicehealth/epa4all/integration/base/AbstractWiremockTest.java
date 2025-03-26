@@ -183,7 +183,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     @BeforeEach
     public void beforeEach() {
-        clientFactory.onStart();
+        clientFactory.doStart();
         mockWebdavConfig(tempDir.toFile(), null);
     }
 
@@ -197,7 +197,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     }
 
     protected void prepareVauStubs(List<Pair<String, CallInfo>> responseFuncs) {
-        epaMultiService.onStart();
+        epaMultiService.doStart();
         epaMultiService.getEpaBackendMap().forEach((backend, epaApi) -> {
             epaApi.getVauFacade().getEmptyClients().forEach(vc -> {
                 try {
@@ -238,7 +238,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     }
 
     protected void prepareKonnektorStubs() throws Exception {
-        servicePortProvider.onStart();
+        servicePortProvider.doStart();
         
         String soapGetSmcbCardsEnvelop = getFixture("GetSmcbCards.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("SMC-B"))
@@ -266,7 +266,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         // wiremock.addStubMapping(WireMock.get(urlEqualTo("/idp"))
         //     .willReturn(WireMock.aResponse().withStatus(200).withBody(discoveryDocument)).build());
 
-        idpClient.onStart();
+        idpClient.doStart();
 
         String jsonAuthenticationResponse = getFixture("AuthenticationResponse.json");
         wiremock.addStubMapping(post(urlEqualTo("/idp/auth"))

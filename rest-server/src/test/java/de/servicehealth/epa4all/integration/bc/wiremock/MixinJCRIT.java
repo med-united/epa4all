@@ -52,7 +52,7 @@ public class MixinJCRIT extends AbstractJCRTest {
         prepareInsurantFiles(telematikId, kvnr);
 
         // 2. start jcr repository and import them
-        jcrService.onStart();
+        jcrService.doStart();
 
         String resource = "/webdav2/" + telematikId + "/jcr:root/rootFolder/" + kvnr + "/local";
 
@@ -100,7 +100,7 @@ public class MixinJCRIT extends AbstractJCRTest {
         );
         mockWebdavConfig(tempDir.toFile(), map);
 
-        jcrService.onStart();
+        jcrService.doStart();
 
         search = """
             <d:searchrequest xmlns:d="DAV:" >

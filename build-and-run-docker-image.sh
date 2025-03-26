@@ -14,8 +14,9 @@ docker build --progress=plain --no-cache -t epa4all .
 
 docker run -d --name epa4all \
   --add-host=host.docker.internal:host-gateway \
-  -e SERVICEHEALTH_CLIENT_ID=f0 \
+  -e SERVICEHEALTH_CLIENT_ID=cardlink_service_health \
   -e SHARE_PERSONAL_DATA=true \
+  -e QUARKUS_PROFILE=RU \
   -e MASK_SENSITIVE=false \
   -e VSD_TEST_MODE=false \
   -e HCV_ENABLED=true \

@@ -66,20 +66,48 @@ public class JcrService extends StartableService {
         credentials = jcrConfig.getCredentials();
     }
 
-    @Override
-    public void onStart() throws Exception {
-        System.setProperty("disableCheckForReferencesInContentException", "true");
-        File repositoryHome = jcrConfig.getRepositoryHome();
-        if (!repositoryHome.exists()) {
+    private void repositoryMaintenance(File repositoryHome) {
+        if (repositoryHome.exists()) {
+            String servicehealthClientId = System.getenv("SERVICEHEALTH_CLIENT_ID");
+            if (servicehealthClientId != null) {
+                Boolean recreate = jcrConfig.getRecreateMap().get(servicehealthClientId);
+                if (recreate != null && recreate) {
+                    String repositoryPath = repositoryHome.getAbsolutePath();
+                    try {
+                        deleteDirectory(repositoryHome);
+                        if (new File(repositoryPath).exists()) {
+                            log.error(String.format("['%s'] JCR repository home was not re-created: %s", servicehealthClientId, repositoryPath));
+                        } else {
+                            log.info(String.format("['%s'] JCR repository was re-created: %s", servicehealthClientId, repositoryPath));
+                        }
+                    } catch (Exception e) {
+                        log.error("Error while recreating JCR repository home: " + repositoryPath, e);
+                    }
+                }
+            }
+        } else {
             repositoryHome.mkdirs();
         }
+    }
+
+    @Override
+    public void doStart() throws Exception {
+        System.setProperty("disableCheckForReferencesInContentException", "true");
+        File repositoryHome = jcrConfig.getRepositoryHome();
+        repositoryMaintenance(repositoryHome);
         String repositoryPath = repositoryHome.getAbsolutePath();
         try {
             System.setProperty("workspaces.home", jcrConfig.getWorkspacesHome());
             System.setProperty("repository.home", repositoryPath);
 
-            InputStream is = JcrService.class.getResourceAsStream("/jcr/repository.xml");
-            RepositoryConfig config = RepositoryConfig.create(is, repositoryPath);
+            File repositoryConfig = new File(jcrConfig.getConfigPath(), "repository.xml");
+            RepositoryConfig config;
+            if (repositoryConfig.exists()) {
+                config = RepositoryConfig.create(repositoryConfig.toURI(), repositoryPath);
+            } else {
+                InputStream is = JcrService.class.getResourceAsStream("/jcr/repository.xml");
+                config = RepositoryConfig.create(is, repositoryPath);
+            }
             Repository repository = RepositoryImpl.create(config);
             repositoryProvider.setRepository(repository);
 
@@ -114,7 +142,7 @@ public class JcrService extends StartableService {
             } catch (Throwable io) {
                 log.error("Error while deleting JCR repository.home: " + repositoryPath, io);
             }
-            onStart();
+            doStart();
         }
     }
 

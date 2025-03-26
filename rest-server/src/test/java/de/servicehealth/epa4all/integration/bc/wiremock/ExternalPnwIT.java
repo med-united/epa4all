@@ -67,7 +67,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         prepareKonnektorStubs();
         prepareInformationStubs(informationStatus);
 
-        vauNpProvider.onStart();
+        vauNpProvider.doStart();
 
         String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
         String telematikId = konnektorClient.getTelematikId(defaultUserConfig, smcbHandle);

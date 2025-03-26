@@ -77,7 +77,7 @@ public class IdpClient extends StartableService {
         this.multiKonnektorService = multiKonnektorService;
     }
 
-    public void onStart() throws Exception {
+    public void doStart() throws Exception {
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
         BrainpoolCurves.init();
         retrieveDiscoveryDocument();
