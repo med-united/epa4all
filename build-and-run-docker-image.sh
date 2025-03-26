@@ -17,6 +17,8 @@ docker run -d --name epa4all \
   -e SERVICEHEALTH_CLIENT_ID=f0 \
   -e SHARE_PERSONAL_DATA=true \
   -e MASK_SENSITIVE=false \
+  -e VSD_TEST_MODE=false \
+  -e HCV_ENABLED=true \
   -p 8090:8090 -p 5005:5005 -p 8588:8588 -p 3102:3102 \
   -v "$1":/opt/epa4all/secret \
   -v epa4all-webdav:/opt/epa4all/webdav \

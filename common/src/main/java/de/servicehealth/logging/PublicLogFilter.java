@@ -99,7 +99,6 @@ public class PublicLogFilter implements Filter {
 
     @Override
     public boolean isLoggable(LogRecord record) {
-        boolean nonPersonalData = PERSONAL_DATA_KEYS.parallelStream().noneMatch(record.getMessage()::contains);
-        return sharePersonalData || nonPersonalData;
+        return sharePersonalData || PERSONAL_DATA_KEYS.parallelStream().noneMatch(record.getMessage()::contains);
     }
 }
