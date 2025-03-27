@@ -199,7 +199,12 @@ public class PropBuilder {
         directoryTypeMap.entrySet().stream()
             .filter(e -> e.getKey().getLevel() == level)
             .findFirst()
-            .map(e -> e.getValue().stream().filter(s -> !s.isEmpty()).toList()).ifPresent(props::addAll);
+            .map(e -> e.getValue()
+                .stream()
+                .filter(s -> !s.isEmpty())
+                .filter(s -> !s.equals("root"))
+                .toList()
+            ).ifPresent(props::addAll);
         return props;
     }
 
