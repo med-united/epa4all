@@ -73,7 +73,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
     @Test
     public void medicationPdfUploadedForExternalPnw() throws Exception {
         runWithDockerContainers(containers, () -> {
-            mockWebdavConfig(TEST_FOLDER, null);
+            mockWebdavConfig(TEST_FOLDER, null, null);
             mockVsdService(kvnr);
             mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
 

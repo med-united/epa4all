@@ -31,8 +31,6 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
 
     @Test
     public void medicationPdfWasNotSentToCardlinkBecauseOfNotAuthorizedError() throws Exception {
-        String ctId = "cardTerminal-124";
-
         String pdfError = "{\"errorCode\":\"internalError\",\"errorDetail\":\"Requestor not authorized\"}";
         prepareVauStubs(List.of(
             Pair.of("/epa/medication/render/v1/eml/pdf", new CallInfo().withErrorHeader(pdfError))
@@ -43,7 +41,7 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
 
         String kvnr = "X110587452";
         EpaFileDownloader mockDownloader = mock(EpaFileDownloader.class);
-        receiveCardInsertedEvent(mockDownloader, kvnr, ctId);
+        receiveCardInsertedEvent(mockDownloader, null, kvnr);
         verify(mockDownloader, never()).handleDownloadResponse(any(), any());
     }
 

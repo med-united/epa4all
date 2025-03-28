@@ -9,10 +9,10 @@ import jakarta.inject.Inject;
 
 import javax.jcr.SimpleCredentials;
 import java.io.File;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static de.servicehealth.epa4all.server.jcr.webdav.JCRParams.DEFAULT_AUTHENTICATE_HEADER;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,7 +42,11 @@ public class AbstractWebdavIT {
         return jcrConfig;
     }
 
-    protected WebdavConfig mockWebdavConfig(File tempDir, Map<String, List<String>> mixinMap) {
+    protected WebdavConfig mockWebdavConfig(
+        File tempDir,
+        Map<String, List<String>> mixinMap,
+        Duration patientDataExpiration
+    ) {
         Map<String, List<String>> map = Map.of(
             "nt:folder", List.of("epa:custom"),
             "nt:file", List.of("epa:custom")
@@ -54,6 +58,9 @@ public class AbstractWebdavIT {
         webdav.mkdirs();
         when(webdavConfig.getRootFolder()).thenReturn(webdav.getAbsolutePath());
         when(webdavConfig.getDefaultLimit()).thenReturn(20);
+
+        Duration duration = patientDataExpiration != null ? patientDataExpiration : Duration.ofDays(90);
+        when(webdavConfig.getPatientDataExpiration()).thenReturn(duration);
         when(webdavConfig.getAvailableProps(eq(true))).thenReturn(Map.of(
             "Mandatory", Arrays.asList("creationdate,getlastmodified,displayname,resourcetype".split(",")),
             "Root", Arrays.asList("".split("root")),
@@ -68,10 +75,10 @@ public class AbstractWebdavIT {
             "Other", Arrays.asList("firstname,lastname,birthday,getcontenttype,getcontentlength".split(","))
         ));
         when(webdavConfig.getSmcbFolders()).thenReturn(
-            Set.of(
-                "eab_2ed345b1-35a3-49e1-a4af-d71ca4f23e57",
-                "other_605a9f3c-bfe8-4830-a3e3-25a4ec6612cb",
-                "local_00000000-0000-0000-0000-000000000000"
+            Map.of(
+                "eab", "2ed345b1-35a3-49e1-a4af-d71ca4f23e57",
+                "other", "605a9f3c-bfe8-4830-a3e3-25a4ec6612cb",
+                "local", "00000000-0000-0000-0000-000000000000"
             )
         );
 

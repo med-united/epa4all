@@ -31,7 +31,7 @@ public abstract class AbstractJCRTest extends AbstractWiremockTest {
     protected KonnektorDefaultConfig konnektorDefaultConfig;
     
 
-    protected XmlPath searchCall(String resource, String query) {
+    protected XmlPath searchCall(String resource, String query, int statusCode) {
         String request = """
             <d:searchrequest xmlns:d="DAV:" >
                 <d:JCR-SQL2><![CDATA[
@@ -39,20 +39,20 @@ public abstract class AbstractJCRTest extends AbstractWiremockTest {
                 ]]></d:JCR-SQL2>
             </d:searchrequest>
             """.formatted(query);
-        return call("SEARCH", resource, request);
+        return call("SEARCH", resource, request, statusCode);
     }
 
     protected XmlPath propfindCall(String resource, String request) {
-        return call("PROPFIND", resource, request);
+        return call("PROPFIND", resource, request, 207);
     }
 
-    private XmlPath call(String method, String resource, String request) {
+    private XmlPath call(String method, String resource, String request, int statusCode) {
         RequestSpecification requestSpec = given().contentType("text/xml").body(request);
         ValidatableResponse response = requestSpec
             .when()
             .request(method, resource)
             .then()
-            .statusCode(207);
+            .statusCode(statusCode);
 
         XmlPath xmlPath = response.extract().body().xmlPath();
         System.out.println(xmlPath.prettify());
@@ -63,8 +63,6 @@ public abstract class AbstractJCRTest extends AbstractWiremockTest {
         String telematikId,
         String kvnr
     ) throws Exception {
-        prepareKonnektorStubs();
-
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
         String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
         String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);

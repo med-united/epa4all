@@ -42,7 +42,7 @@ public class WebdavJCRIT extends AbstractJCRTest {
         resource = "/webdav2/" + telematikId + "/jcr:root/rootFolder";
 
         String query = "SELECT * FROM [nt:resource] as r WHERE CONTAINS(r.*, '%s')".formatted("Johann Alfons Simon Heider");
-        xmlPath = searchCall(resource, query);
+        xmlPath = searchCall(resource, query, 207);
 
         hrefs = xmlPath.getList("multistatus.response.href").stream().map(String::valueOf).toList();
         assertEquals(1, hrefs.size());
@@ -51,7 +51,7 @@ public class WebdavJCRIT extends AbstractJCRTest {
             SELECT f.[epa:firstname], f.[epa:lastname] FROM [nt:file] as f
              WHERE CONTAINS(f.[epa:firstname], '%s')
             """.formatted("Simon");
-        xmlPath = searchCall(resource, query);
+        xmlPath = searchCall(resource, query, 207);
 
         List<String> firstnames = xmlPath.get("**.findAll { it.name == 'f.epa:firstname'}.value");
         assertEquals(5, firstnames.size());

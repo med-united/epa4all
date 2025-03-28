@@ -10,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 public class FileEvent {
 
+    private final FileOp fileOp;
     private final String telematikId;
     private final List<File> files;
 }

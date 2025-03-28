@@ -43,7 +43,7 @@ public class InsuranceDataEpaIT extends AbstractVsdTest {
 
     @Test
     public void fireReadVsdResponseCreatesLocalInsuranceFiles() throws Exception {
-        mockWebdavConfig(TEST_FOLDER, null);
+        mockWebdavConfig(TEST_FOLDER, null, null);
 
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
         String insurantId = vsdService.read(telematikId, egkHandle, runtimeConfig, smcbHandle, null);

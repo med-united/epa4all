@@ -51,12 +51,17 @@ public class CETPEventHandlerProvider {
     protected EpaCallGuard epaCallGuard;
 
 
-    public CETPEventHandler get(EpaFileDownloader mockDownloader, CardlinkClient cardlinkClient) {
+    public CETPEventHandler get(
+        EpaFileDownloader mockDownloader,
+        CardlinkClient mockCardlinkClient,
+        FeatureConfig mockFeatureConfig
+    ) {
         EpaFileDownloader downloader = epaFileDownloader != null ? mockDownloader : epaFileDownloader;
+        FeatureConfig featureCfg = mockFeatureConfig != null ? mockFeatureConfig : featureConfig;
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
         return new CETPEventHandler(
             webSocketPayloadEvent, insuranceDataService, entitlementService, downloader, konnektorClient,
-            epaMultiService, cardlinkClient, runtimeConfig, featureConfig, epaCallGuard
+            epaMultiService, mockCardlinkClient, runtimeConfig, featureCfg, epaCallGuard
         );
     }
 }

@@ -19,6 +19,7 @@ import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.VauMessage1Transformer;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.VauMessage3Transformer;
+import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
@@ -158,7 +159,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         clientFactory.doStart();
         prepareIdpStubs();
         prepareKonnektorStubs();
-        mockWebdavConfig(tempDir.toFile(), null);
+        mockWebdavConfig(tempDir.toFile(), null, null);
     }
 
     @AfterEach
@@ -279,12 +280,17 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         return new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
     }
 
-    protected CardlinkClient receiveCardInsertedEvent(EpaFileDownloader fileDownloader, String kvnr, String ctIdValue) throws CetpFault {
+    protected CardlinkClient receiveCardInsertedEvent(
+        EpaFileDownloader mockFileDownloader,
+        FeatureConfig mockFeatureConfig,
+        String kvnr
+    ) throws CetpFault {
         CardlinkClient cardlinkClient = mock(CardlinkClient.class);
-        CETPEventHandler cetpServerHandler = eventHandlerProvider.get(fileDownloader, cardlinkClient);
+        CETPEventHandler cetpServerHandler = eventHandlerProvider.get(mockFileDownloader, cardlinkClient, mockFeatureConfig);
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 
         String slotIdValue = "3";
+        String ctIdValue = "cardTerminal-124";
 
         KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
         String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);

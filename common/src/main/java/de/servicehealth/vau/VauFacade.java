@@ -122,6 +122,7 @@ public class VauFacade {
     @PreDestroy
     void cleanup() {
         registry.unregister(this);
+        vauClients.clear();
     }
 
     public List<VauClient> getSessionClients() {
@@ -184,7 +185,7 @@ public class VauFacade {
         return vauClients.stream()
             .filter(vc -> vc.getUuid().equals(vauUuid))
             .findFirst()
-            .orElse(null);
+            .orElse(null); // todo throw exception
     }
 
     public VauClient find(String vauCid) {

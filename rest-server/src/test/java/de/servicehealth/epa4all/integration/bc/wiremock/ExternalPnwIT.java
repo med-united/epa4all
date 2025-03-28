@@ -59,25 +59,14 @@ public class ExternalPnwIT extends AbstractWiremockTest {
     protected InsuranceDataService insuranceDataService;
 
 
-    private void mockFeatureConfig(boolean externalPnw) {
-        FeatureConfig featureConfigMock = mock(FeatureConfig.class);
-        when(featureConfigMock.isExternalPnwEnabled()).thenReturn(externalPnw);
-        QuarkusMock.installMockForType(featureConfigMock, FeatureConfig.class);
-    }
-
     private String initStubsAndHandleCardInsertedEvent(
         String kvnr,
         String validToPayload,
         String errorHeader,
         int informationStatus
     ) throws Exception {
-        String ctId = "cardTerminal-124";
-
-        mockFeatureConfig(true);
-
-        CallInfo callInfo = new CallInfo()
-            .withJsonPayload(validToPayload == null ? null : validToPayload.getBytes(UTF_8))
-            .withErrorHeader(errorHeader);
+        byte[] payload = validToPayload == null ? null : validToPayload.getBytes(UTF_8);
+        CallInfo callInfo = new CallInfo().withJsonPayload(payload).withErrorHeader(errorHeader);
         prepareVauStubs(List.of(
             Pair.of("/epa/basic/api/v1/ps/entitlements", callInfo)
         ));
@@ -89,7 +78,9 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         String telematikId = konnektorClient.getTelematikId(defaultUserConfig, smcbHandle);
 
         EpaFileDownloader mockDownloader = mock(EpaFileDownloader.class);
-        CardlinkClient cardlinkClient = receiveCardInsertedEvent(mockDownloader, kvnr, ctId);
+        FeatureConfig mockFeatureConfig = mock(FeatureConfig.class);
+        when(mockFeatureConfig.isExternalPnwEnabled()).thenReturn(true);
+        CardlinkClient cardlinkClient = receiveCardInsertedEvent(mockDownloader, mockFeatureConfig, kvnr);
         verify(cardlinkClient, never()).sendJson(any(), any(), any(), any());
 
         return telematikId;

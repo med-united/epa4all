@@ -61,7 +61,7 @@ public class MixinJCRIT extends AbstractJCRTest {
             WHERE CONTAINS(f.[epa:firstname], '%s')
             """.formatted("Simon");
 
-        XmlPath xmlPath = searchCall(resource, query);
+        XmlPath xmlPath = searchCall(resource, query, 207);
 
         List<String> firstnames = xmlPath.get("**.findAll { it.name == 'f.epa:firstname'}.value");
         assertEquals(6, firstnames.size());
@@ -94,12 +94,12 @@ public class MixinJCRIT extends AbstractJCRTest {
             "nt:folder", List.of(epaSpecial),
             "nt:file", List.of(epaSpecial)
         );
-        mockWebdavConfig(tempDir.toFile(), map);
+        mockWebdavConfig(tempDir.toFile(), map, null);
 
         jcrService.doStart();
 
         query = "SELECT f.[epa:creationdate], f.[epa:firstname] FROM [nt:file] as f";
-        xmlPath = searchCall(resource, query);
+        xmlPath = searchCall(resource, query, 207);
 
         List<String> creationDates = xmlPath.get("**.findAll { it.name == 'f.epa:creationdate'}.value");
         assertEquals(6, creationDates.size());
