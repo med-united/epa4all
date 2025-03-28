@@ -1,8 +1,6 @@
 package de.servicehealth.epa4all.integration.bc.wiremock;
 
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.cardlink.CardlinkClient;
-import de.health.service.cetp.config.KonnektorConfig;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
@@ -23,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+@SuppressWarnings("unused")
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
 public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
@@ -34,36 +33,22 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
     public void medicationPdfWasNotSentToCardlinkBecauseOfNotAuthorizedError() throws Exception {
         String ctId = "cardTerminal-124";
 
-        CardlinkClient cardlinkClient = mock(CardlinkClient.class);
-        EpaFileDownloader epaFileDownloader = mock(EpaFileDownloader.class);
-        KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
-
-        prepareIdpStubs();
         String pdfError = "{\"errorCode\":\"internalError\",\"errorDetail\":\"Requestor not authorized\"}";
         prepareVauStubs(List.of(
             Pair.of("/epa/medication/render/v1/eml/pdf", new CallInfo().withErrorHeader(pdfError))
         ));
-        prepareKonnektorStubs();
         prepareInformationStubs(204);
 
         vauNpProvider.doStart();
 
         String kvnr = "X110587452";
-        String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
-
-        receiveCardInsertedEvent(
-            konnektorConfig,
-            epaFileDownloader,
-            cardlinkClient,
-            egkHandle,
-            ctId
-        );
-        verify(epaFileDownloader, never()).handleDownloadResponse(any(), any());
+        EpaFileDownloader mockDownloader = mock(EpaFileDownloader.class);
+        receiveCardInsertedEvent(mockDownloader, kvnr, ctId);
+        verify(mockDownloader, never()).handleDownloadResponse(any(), any());
     }
 
     @AfterEach
     public void afterEachEx() {
-        QuarkusMock.installMockForType(epaFileDownloader, EpaFileDownloader.class);
         QuarkusMock.installMockForType(konnektorClient, IKonnektorClient.class);
     }
 }

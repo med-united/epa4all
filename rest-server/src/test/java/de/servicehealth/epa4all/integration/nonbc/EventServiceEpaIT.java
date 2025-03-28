@@ -18,9 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 
-import static de.servicehealth.epa4all.common.TestUtils.getFixture;
+import static de.servicehealth.epa4all.common.TestUtils.getTextFixture;
 import static io.restassured.RestAssured.when;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,8 +51,8 @@ public class EventServiceEpaIT {
 
     @Test
     public void getCardsResponseIsExposed() throws Exception {
-        String fixture = getFixture("GetAllCardsResponse.xml");
-        ByteArrayInputStream is = new ByteArrayInputStream(fixture.getBytes(UTF_8));
+        byte[] fixture = getTextFixture("GetAllCardsResponse.xml");
+        ByteArrayInputStream is = new ByteArrayInputStream(fixture);
         GetCardsResponse getCardsResponse = (GetCardsResponse) getCardsJaxbContext.createUnmarshaller().unmarshal(is);
         
         KonnektorClient konnektorClientMock = mock(KonnektorClient.class);

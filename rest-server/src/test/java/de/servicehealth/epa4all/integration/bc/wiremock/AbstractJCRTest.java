@@ -1,9 +1,12 @@
 package de.servicehealth.epa4all.integration.bc.wiremock;
 
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
+import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
+import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.jcr.JcrService;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.restassured.path.xml.XmlPath;
 import io.restassured.response.ValidatableResponse;
@@ -18,7 +21,24 @@ public abstract class AbstractJCRTest extends AbstractWiremockTest {
     @Inject
     VsdService vsdService;
 
-    protected XmlPath searchCall(String resource, String request) {
+    @Inject
+    JcrService jcrService;
+
+    @Inject
+    protected InsuranceDataService insuranceDataService;
+
+    @Inject
+    protected KonnektorDefaultConfig konnektorDefaultConfig;
+    
+
+    protected XmlPath searchCall(String resource, String query) {
+        String request = """
+            <d:searchrequest xmlns:d="DAV:" >
+                <d:JCR-SQL2><![CDATA[
+                    %s
+                ]]></d:JCR-SQL2>
+            </d:searchrequest>
+            """.formatted(query);
         return call("SEARCH", resource, request);
     }
 

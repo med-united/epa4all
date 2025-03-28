@@ -56,16 +56,12 @@ public class MixinJCRIT extends AbstractJCRTest {
 
         String resource = "/webdav2/" + telematikId + "/jcr:root/rootFolder/" + kvnr + "/local";
 
-        String search = """
-            <d:searchrequest xmlns:d="DAV:" >
-                <d:JCR-SQL2><![CDATA[
-                    SELECT f.[epa:firstname], f.[epa:lastname] FROM [nt:file] as f
-                    WHERE CONTAINS(f.[epa:firstname], '%s')
-                ]]></d:JCR-SQL2>
-            </d:searchrequest>
+        String query = """
+            SELECT f.[epa:firstname], f.[epa:lastname] FROM [nt:file] as f
+            WHERE CONTAINS(f.[epa:firstname], '%s')
             """.formatted("Simon");
 
-        XmlPath xmlPath = searchCall(resource, search);
+        XmlPath xmlPath = searchCall(resource, query);
 
         List<String> firstnames = xmlPath.get("**.findAll { it.name == 'f.epa:firstname'}.value");
         assertEquals(6, firstnames.size());
@@ -102,15 +98,8 @@ public class MixinJCRIT extends AbstractJCRTest {
 
         jcrService.doStart();
 
-        search = """
-            <d:searchrequest xmlns:d="DAV:" >
-                <d:JCR-SQL2><![CDATA[
-                    SELECT f.[epa:creationdate], f.[epa:firstname] FROM [nt:file] as f
-                ]]></d:JCR-SQL2>
-            </d:searchrequest>
-            """;
-
-        xmlPath = searchCall(resource, search);
+        query = "SELECT f.[epa:creationdate], f.[epa:firstname] FROM [nt:file] as f";
+        xmlPath = searchCall(resource, query);
 
         List<String> creationDates = xmlPath.get("**.findAll { it.name == 'f.epa:creationdate'}.value");
         assertEquals(6, creationDates.size());

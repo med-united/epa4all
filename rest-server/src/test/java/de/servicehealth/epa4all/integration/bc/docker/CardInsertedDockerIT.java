@@ -24,7 +24,6 @@ import static de.servicehealth.epa4all.common.TestUtils.runWithDockerContainers;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -51,10 +50,8 @@ public class CardInsertedDockerIT extends AbstractVsdTest {
             mockVsdService(kvnr);
             mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
 
-            CardlinkClient cardlinkClient = mock(CardlinkClient.class);
-            receiveCardInsertedEvent(
+            CardlinkClient cardlinkClient = receiveCardInsertedEvent(
                 mockKonnektorConfig(),
-                cardlinkClient,
                 egkHandle,
                 "ctId-222"
             );

@@ -3,10 +3,6 @@ package de.servicehealth.epa4all.integration.base;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.jcr.JcrConfig;
-import de.servicehealth.epa4all.server.jcr.JcrRepositoryProvider;
-import de.servicehealth.epa4all.server.jcr.JcrService;
-import de.servicehealth.epa4all.server.jcr.TypesService;
-import de.servicehealth.epa4all.server.propsource.PropBuilder;
 import de.servicehealth.folder.WebdavConfig;
 import io.quarkus.test.junit.QuarkusMock;
 import jakarta.inject.Inject;
@@ -27,16 +23,8 @@ import static org.mockito.Mockito.when;
 public class AbstractWebdavIT {
 
     @Inject
-    PropBuilder propBuilder;
-
-    @Inject
     FileEventSender fileEventSender;
 
-    @Inject
-    TypesService typesService;
-
-    @Inject
-    JcrRepositoryProvider repositoryProvider;
 
     protected JcrConfig mockJcrConfig(File tempDir, Map<String, List<String>> mixinMap) {
         JcrConfig jcrConfig = mock(JcrConfig.class);
@@ -88,15 +76,7 @@ public class AbstractWebdavIT {
         );
 
         FolderService folderService = new FolderService(webdavConfig, fileEventSender);
-        JcrService jcrService = new JcrService(
-            repositoryProvider,
-            folderService,
-            typesService,
-            propBuilder,
-            jcrConfig
-        );
 
-        QuarkusMock.installMockForType(jcrService, JcrService.class);
         QuarkusMock.installMockForType(folderService, FolderService.class);
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
         QuarkusMock.installMockForType(jcrConfig, JcrConfig.class);
