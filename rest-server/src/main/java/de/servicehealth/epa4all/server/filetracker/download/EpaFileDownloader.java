@@ -50,7 +50,7 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
         StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(mimeType, documentBytes);
         String folderCode = "other";
         if(structureDefinition == null) {
-        	log.warn(String.format("No structureDefinition for %s setting folderCode to %s", mimeType, folderCode));
+        	log.warn(String.format("No structureDefinition for MIME-Type:%s was found; falling back to folderCode='%s'", mimeType, folderCode));
         } else {
         	folderCode = getFolderCode(structureDefinition);
         }

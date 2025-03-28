@@ -12,12 +12,14 @@ import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
+import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.path.xml.XmlPath;
 import io.restassured.response.ValidatableResponse;
+import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,7 @@ import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasXPath;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,8 +42,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "SameParameterValue"})
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
 public class ExternalPnwIT extends AbstractWiremockTest {
@@ -48,39 +52,35 @@ public class ExternalPnwIT extends AbstractWiremockTest {
     @InjectMock
     FileEventSender fileEventSender;
 
+    @Inject
+    protected FeatureConfig featureConfig;
+
+    @Inject
+    protected InsuranceDataService insuranceDataService;
+
+
     private String initStubsAndHandleCardInsertedEvent(
         String kvnr,
         String validToPayload,
         String errorHeader,
         int informationStatus
     ) throws Exception {
-        String ctId = "cardTerminal-124";
-
-        CardlinkClient cardlinkClient = mock(CardlinkClient.class);
-        mockFeatureConfig(true);
-        prepareIdpStubs();
-
-        CallInfo callInfo = new CallInfo().withPayload(validToPayload).withErrorHeader(errorHeader);
+        byte[] payload = validToPayload == null ? null : validToPayload.getBytes(UTF_8);
+        CallInfo callInfo = new CallInfo().withJsonPayload(payload).withErrorHeader(errorHeader);
         prepareVauStubs(List.of(
             Pair.of("/epa/basic/api/v1/ps/entitlements", callInfo)
         ));
-        prepareKonnektorStubs();
         prepareInformationStubs(informationStatus);
 
         vauNpProvider.doStart();
 
         String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
         String telematikId = konnektorClient.getTelematikId(defaultUserConfig, smcbHandle);
-        String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
 
-        receiveCardInsertedEvent(
-            konnektorConfigs.values().iterator().next(),
-            mock(EpaFileDownloader.class),
-            cardlinkClient,
-            egkHandle,
-            ctId
-        );
-
+        EpaFileDownloader mockDownloader = mock(EpaFileDownloader.class);
+        FeatureConfig mockFeatureConfig = mock(FeatureConfig.class);
+        when(mockFeatureConfig.isExternalPnwEnabled()).thenReturn(true);
+        CardlinkClient cardlinkClient = receiveCardInsertedEvent(mockDownloader, mockFeatureConfig, kvnr);
         verify(cardlinkClient, never()).sendJson(any(), any(), any(), any());
 
         return telematikId;
@@ -98,6 +98,8 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         String versicherungsdaten = "H4sIAAAAAAAA/81S30+DMBD+Vwjv44CJDlO6zM2YZc4Zp2h8IRVuQAaHod00++sty2JgWearL23uu/t+pFc2/C4LY4u1zCsKTMeyTQMprpKc0sCcLhe9wcDze45nDjl7GUejokixxJwwbDhxhvWGUpkIhfQ2vze0GsnAzJT6vAb4kpaeFipfWwnCSsBWJmVzwNazXNMYT+ZRePu0nC4eAlMj2p2zX2GFdatqbGScbdSOsxtMcyLu2u6FY7t9BgeAzSqpg6haYNqQO+UaibQId2zfs23/0mdwst9lFQIpwVq/CPLJEaPdYw+iRP6MUhl3s7C3DBnsETb6qDHOaD/5D+PBmXxwXJ9cxvtGCrXLaVXJTqF9OsskUSveb4kcoDYnOqTR+tGe/7p45FcDBs3N4NwkHFtDJxh0vxX8/Zf5DyMao4EcAwAA";
         String pruefungsnachweis = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
         String pnw = versicherungsdaten + pruefungsnachweis;
+
+        vauNpProvider.doStart();
 
         ValidatableResponse response = given()
             .body(pnw.getBytes())
@@ -152,6 +154,8 @@ public class ExternalPnwIT extends AbstractWiremockTest {
 
         String pnw = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
 
+        vauNpProvider.doStart();
+
         ValidatableResponse response = given()
             .body(pnw.getBytes())
             .queryParams(Map.of(
@@ -181,6 +185,8 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, null, errorHeader, 204);
 
         String pnw = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
+
+        vauNpProvider.doStart();
 
         ValidatableResponse response = given()
             .body(pnw.getBytes())

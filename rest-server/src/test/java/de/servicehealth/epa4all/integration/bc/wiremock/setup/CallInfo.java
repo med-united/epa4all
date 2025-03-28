@@ -8,7 +8,8 @@ import java.util.List;
 public class CallInfo {
     List<Pair<String, String>> innerHeaders = new ArrayList<>();
     String errorHeader;
-    String payload;
+    String contentType;
+    byte[] payload;
     int status = 200;
 
     public CallInfo withInnerHeaders(List<Pair<String, String>> innerHeaders) {
@@ -21,8 +22,15 @@ public class CallInfo {
         return this;
     }
 
-    public CallInfo withPayload(String payload) {
+    public CallInfo withJsonPayload(byte[] payload) {
         this.payload = payload;
+        contentType = "application/json";
+        return this;
+    }
+
+    public CallInfo withPdfPayload(byte[] payload) {
+        this.payload = payload;
+        contentType = "application/pdf";
         return this;
     }
 

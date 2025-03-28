@@ -70,19 +70,21 @@ public class JcrService extends StartableService {
         if (repositoryHome.exists()) {
             String servicehealthClientId = System.getenv("SERVICEHEALTH_CLIENT_ID");
             if (servicehealthClientId != null) {
+                String repositoryPath = repositoryHome.getAbsolutePath();
                 Boolean recreate = jcrConfig.getRecreateMap().get(servicehealthClientId);
                 if (recreate != null && recreate) {
-                    String repositoryPath = repositoryHome.getAbsolutePath();
                     try {
                         deleteDirectory(repositoryHome);
                         if (new File(repositoryPath).exists()) {
-                            log.error(String.format("['%s'] JCR repository home was not re-created: %s", servicehealthClientId, repositoryPath));
+                            log.error(String.format("['%s'] Failed to recreate the JCR repository home: %s", servicehealthClientId, repositoryPath));
                         } else {
-                            log.info(String.format("['%s'] JCR repository was re-created: %s", servicehealthClientId, repositoryPath));
+                            log.info(String.format("['%s'] JCR repository was recreated: %s", servicehealthClientId, repositoryPath));
                         }
                     } catch (Exception e) {
                         log.error("Error while recreating JCR repository home: " + repositoryPath, e);
                     }
+                } else {
+                    log.info(String.format("['%s'] JCR repository is unchanged: %s", servicehealthClientId, repositoryPath));
                 }
             }
         } else {
@@ -183,7 +185,6 @@ public class JcrService extends StartableService {
         }
     }
 
-    // todo FileEvent.action [ CREATE | DELETE ]
     void handleFileEvent(@ObservesAsync FileEvent fileEvent) {
         String telematikId = fileEvent.getTelematikId();
         try {
@@ -196,10 +197,13 @@ public class JcrService extends StartableService {
                         String relPath = String.join("/", pathParts.subList(pathParts.indexOf("webdav") + 2, pathParts.size() - 1));
                         Node parentNode = rootNode.getNode("rootFolder/" + relPath);
 
-                        // At moment only new file is handling here
-                        // todo: сover cases for existing file modifications if any appear
-                        propBuilder.handleFile(session, parentNode, file, false);
-                        propBuilder.adjustParentFolders(session, parentNode, file);
+                        switch (fileEvent.getFileOp()) {
+                            case Create -> {
+                                propBuilder.handleFileCreation(session, parentNode, file, false);
+                                propBuilder.adjustParentFolders(session, parentNode, file);
+                            }
+                            case Delete -> propBuilder.handleFileDeletion(session, parentNode, file);
+                        }
                     } catch (RepositoryException e) {
                         session.refresh(false);
                         log.error("Error while handling fileEvent for " + file.getAbsolutePath(), e);

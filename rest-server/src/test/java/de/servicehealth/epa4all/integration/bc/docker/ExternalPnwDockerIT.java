@@ -73,18 +73,12 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
     @Test
     public void medicationPdfUploadedForExternalPnw() throws Exception {
         runWithDockerContainers(containers, () -> {
-            mockWebdavConfig(TEST_FOLDER, null);
+            mockWebdavConfig(TEST_FOLDER, null, null);
             mockVsdService(kvnr);
             mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
 
-            CardlinkClient cardlinkClient = mock(CardlinkClient.class);
             KonnektorConfig konnektorConfig = mockKonnektorConfig();
-            receiveCardInsertedEvent(
-                konnektorConfig,
-                cardlinkClient,
-                egkHandle,
-                "ctId-244"
-            );
+            CardlinkClient cardlinkClient = receiveCardInsertedEvent(konnektorConfig, egkHandle, "ctId-244");
 
             verify(cardlinkClient, never()).sendJson(any(), any(), any(), any());
 
@@ -114,13 +108,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
             InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
             assertEquals("WDExMDQ4NTI5MTE3MzIxODk5OTdVWDFjxzDPSFvdIrRmmmOWFP/aP5rakVUqQj8=", insuranceData.getPz());
 
-            receiveCardInsertedEvent(
-                konnektorConfig,
-                cardlinkClient,
-                egkHandle,
-                "ctId-244"
-            );
-
+            receiveCardInsertedEvent(konnektorConfig, egkHandle, "ctId-244");
             verify(cardlinkClient, times(1)).sendJson(any(), any(), eq("eRezeptBundlesFromAVS"), any());
         });
     }

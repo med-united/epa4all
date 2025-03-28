@@ -33,8 +33,6 @@ import io.quarkus.test.junit.QuarkusMock;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Map;
@@ -47,8 +45,6 @@ import static org.mockito.Mockito.when;
 
 @SuppressWarnings("UnusedReturnValue")
 public abstract class AbstractVsdTest extends AbstractWebdavIT {
-
-    private static final Logger log = LoggerFactory.getLogger(AbstractVsdTest.class.getName());
 
     public static final String INFORMATION_SERVICE = "information-service";
     public static final String VAU_PROXY_SERVER = "vau-proxy-server";
@@ -161,12 +157,12 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
         return konnektorConfig;
     }
 
-    protected void receiveCardInsertedEvent(
+    protected CardlinkClient receiveCardInsertedEvent(
         KonnektorConfig konnektorConfig,
-        CardlinkClient cardlinkClient,
         String egkHandle,
         String ctIdValue
     ) {
+        CardlinkClient cardlinkClient = mock(CardlinkClient.class);
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
@@ -179,6 +175,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
 
         channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue, egkHandle));
         channel.pipeline().fireChannelReadComplete();
+        return cardlinkClient;
     }
 
     protected DecodeResult decode(
