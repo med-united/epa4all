@@ -1,28 +1,69 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns="sap.m" xmlns:dnd="sap.ui.core.dnd" controllerName="medunited.care.SharedBlocks.document.DocumentBlockController">
-    <Table id="documentTableExpanded" items="{
-            path: 'multistatus/response'
-        }" autoPopinMode="true">
-        <columns>
-            <Column width="60%" importance="High">
-                <Text text="{i18n>columnLabelDocumentName}" />
-            </Column>
-            <Column width="20%" importance="Medium">
-                <Text text="{i18n>columnLabelDocumentCreationDate}" />
-            </Column>
-            <Column width="20%" importance="Medium">
-                <Text text="{i18n>columnLabelDocumentLastModifiedDate}" />
-            </Column>
-        </columns>
-        <items>
-            <ColumnListItem type="Navigation" press="onDocumentItemPress">
-                <cells>
-                	<Text text="{propstat/prop/displayname}" />
-                    <Text text="{propstat/prop/creationdate}" />
-                    <Text text="{propstat/prop/getlastmodified}" />
-                </cells>
-            </ColumnListItem>
-        </items>
-    </Table>
+    <VBox>
+        <HBox justifyContent="Center" class="sapUiSmallMarginBottom">
+            <SearchField id="documentSearch"
+                         search="onSearchDocuments"
+                         width="17.5rem"
+                         placeholder="{i18n>searchDocuments}" />
+        </HBox>
+
+        <!-- Search Results -->
+        <VBox>
+            <Title text="{i18n>searchResults}" visible="{= ${documents>/results}.length > 0 }" />
+            <Table id="documentTable"
+                   visible="{= ${documents>/results}.length > 0 }"
+                   items="{documents>/results}"
+                   growing="true"
+                   growingScrollToLoad="true"
+                   noDataText="{i18n>noSearchResults}">
+                <columns>
+                    <Column><Text text="{i18n>documentPath}"/></Column>
+                    <Column><Text text="{i18n>encoding}"/></Column>
+                    <Column><Text text="{i18n>lastModified}"/></Column>
+                    <Column><Text text="{i18n>MIMEType}"/></Column>
+                </columns>
+                <items>
+                    <ColumnListItem type="Navigation" press="onSearchDocumentItemPress">
+                        <cells>
+                            <Text text="{documents>path}" />
+                            <Text text="{documents>encoding}" />
+                            <Text text="{documents>lastModified}" />
+                            <Text text="{documents>mimeType}" />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </VBox>
+
+        <!-- All Patient Documents -->
+        <VBox class="sapUiSmallMarginTop">
+            <Title text="{i18n>patientDocuments}" />
+            <Table id="documentTableExpanded"
+                   items="{ path: 'multistatus/response' }"
+                   autoPopinMode="true">
+                <columns>
+                    <Column width="60%" importance="High">
+                        <Text text="{i18n>columnLabelDocumentName}" />
+                    </Column>
+                    <Column width="20%" importance="Medium">
+                        <Text text="{i18n>columnLabelDocumentCreationDate}" />
+                    </Column>
+                    <Column width="20%" importance="Medium">
+                        <Text text="{i18n>columnLabelDocumentLastModifiedDate}" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem type="Navigation" press="onDocumentItemPress">
+                        <cells>
+                            <Text text="{propstat/prop/displayname}" />
+                            <Text text="{propstat/prop/creationdate}" />
+                            <Text text="{propstat/prop/getlastmodified}" />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </VBox>
+    </VBox>
     <VBox class="sapUiSmallMarginBottom" visible="{appState>/editMode}">
         <OverflowToolbar>
             <Button icon="sap-icon://delete" tooltip="Selektiertes Dokument löschen" press="deleteDocument" />
