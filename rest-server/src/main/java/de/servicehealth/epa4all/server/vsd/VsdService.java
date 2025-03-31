@@ -10,6 +10,7 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FileEvent;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
+import de.servicehealth.epa4all.server.filetracker.FileOp;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.WorkspaceEvent;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
@@ -26,6 +27,7 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import static de.servicehealth.epa4all.server.filetracker.FileOp.Create;
 import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
 import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.extractInsurantId;
 import static de.servicehealth.folder.IFolderService.LOCAL_FOLDER;
@@ -127,7 +129,7 @@ public class VsdService {
             servicePorts.getVSDServicePortType().readVSD(readVSD)
         );
         String insurantId = extractInsurantId(readVSDResponse, fallbackKvnr);
-        if (insurantId == null) {
+        if (insurantId == null || insurantId.isEmpty()) {
             throw new CetpFault("Unable to get insurantId");
         }
         saveVsdFile(telematikId, insurantId, readVSDResponse);
@@ -145,7 +147,7 @@ public class VsdService {
             VsdResponseFile vsdResponseFile = new VsdResponseFile(localFolder);
             vsdResponseFile.store(readVSDResponse);
 
-            fileEventSender.sendAsync(new FileEvent(telematikId, vsdResponseFile.getFiles()));
+            fileEventSender.sendAsync(new FileEvent(Create, telematikId, vsdResponseFile.getFiles()));
         } catch (Exception e) {
             log.warn("Could not save ReadVSDResponse", e);
         }

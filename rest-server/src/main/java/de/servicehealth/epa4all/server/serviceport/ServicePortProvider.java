@@ -89,7 +89,7 @@ public class ServicePortProvider extends StartableService {
                 SSLResult sslResult = initSSLContext(certInputStream, certPass);
                 defaultSSLContext = sslResult.getSslContext();
             } catch (Exception e) {
-                log.error("There was a problem when creating the SSLContext", e);
+                log.warn("There was a problem when creating the SSLContext: " + e.getMessage());
                 defaultSSLContext = createFakeDefaultSSLContext();
             }
         } else {

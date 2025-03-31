@@ -26,7 +26,7 @@ public class GitCheck implements Check {
         try (InputStream inputStream = GitCheck.class.getResourceAsStream("/git.properties")) {
             properties.load(inputStream);
         } catch (Exception e) {
-            log.error("Error while loading git.properties", e);
+            log.warn("Error while loading git.properties:" + e.getMessage());
         }
     }
 

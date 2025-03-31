@@ -6,6 +6,7 @@ import lombok.Getter;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -13,7 +14,7 @@ import java.util.Set;
 public class PropSource {
     
     private final File file;
-    private final Set<String> smcbFolders;
+    private final Map<String, String> smcbFolders;
     private final UCPersoenlicheVersichertendatenXML.Versicherter.Person person;
     private final int checksumsCount;
     private final Date expiry;

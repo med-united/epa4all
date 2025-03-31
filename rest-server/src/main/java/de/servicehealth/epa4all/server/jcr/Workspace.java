@@ -144,7 +144,7 @@ public class Workspace {
                 Node folderNode = propBuilder.handleFolder(session, parentNode, file, file.getName(), staleMixins);
                 importFiles(file, folderNode, session, staleMixins);
             } else {
-                propBuilder.handleFile(session, parentNode, file, staleMixins);
+                propBuilder.handleFileCreation(session, parentNode, file, staleMixins);
             }
         }
     }

@@ -44,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -105,8 +104,6 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
                 assertEquals("[" + telematikId + "] SESSION is created", MESSAGES.poll(10, TimeUnit.SECONDS));
 
                 String ctId = "cardTerminal-124";
-                CardlinkClient cardlinkClient = mock(CardlinkClient.class);
-
                 String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
                 KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
                 String konnektorHost = konnektorConfig.getHost();
@@ -116,12 +113,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
                 // epa-deployment doesn't work for some reason:
                 // {"MessageType":"Error","ErrorMessage":"Transcript Error: 500 : [no body]","ErrorCode":5}
                 // but epa-as-2.dev.epa4all.de:443 works
-                receiveCardInsertedEvent(
-                    konnektorConfig,
-                    cardlinkClient,
-                    egkHandle,
-                    ctId
-                );
+                CardlinkClient cardlinkClient = receiveCardInsertedEvent(konnektorConfig, egkHandle, ctId);
 
                 Instant entitlement = insuranceDataService.getEntitlementExpiry(telematikId, kvnr);
                 assertNotNull(entitlement);

@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 public class TestUtils {
@@ -129,8 +130,12 @@ public class TestUtils {
         return Path.of("src/test/resources", paths);
     }
 
-    public static String getFixture(String fileName) throws Exception {
-        return Files.readString(getResourcePath(FIXTURES, fileName));
+    public static byte[] getTextFixture(String fileName) throws Exception {
+        return Files.readString(getResourcePath(FIXTURES, fileName)).getBytes(UTF_8);
+    }
+
+    public static byte[] getBinaryFixture(String fileName) throws Exception {
+        return Files.readAllBytes(getResourcePath(FIXTURES, fileName));
     }
 
     public static void deleteFiles(File[] files) {

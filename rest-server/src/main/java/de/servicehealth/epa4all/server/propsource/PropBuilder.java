@@ -106,9 +106,11 @@ public class PropBuilder {
         propSupplierMap.put(getcontentlength, propSource -> new GetContentLength(propSource.getFile().length()));
         propSupplierMap.put(resourcetype, propSource -> COLLECTION);
 
-        propSupplierMap.put(entryuuid, propSource -> propSource.getSmcbFolders().stream()
-            .filter(s -> s.split("_")[0].equals(propSource.getFile().getName()))
-            .findFirst().map(s -> new EntryUUID(s.split("_")[1])).orElse(null));
+        propSupplierMap.put(entryuuid, propSource -> propSource.getSmcbFolders().entrySet().stream()
+            .filter(e -> e.getKey().equals(propSource.getFile().getName()))
+            .findFirst()
+            .map(e -> new EntryUUID(e.getValue()))
+            .orElse(null));
 
         propSupplierMap.put(firstname, propSource -> propSource.getPerson() != null ? new FirstName(propSource.getPerson().getVorname()) : null);
         propSupplierMap.put(lastname, propSource -> propSource.getPerson() != null ? new LastName(propSource.getPerson().getNachname()) : null);
@@ -157,7 +159,7 @@ public class PropBuilder {
         UCPersoenlicheVersichertendatenXML.Versicherter.Person person = null;
         String telematikId = pathParts.size() > 1 ? pathParts.get(1).trim() : null;
         String insurantId = pathParts.size() > 2 ? pathParts.get(2).trim() : null;
-        Set<String> smcbFolders = webdavConfig.getSmcbFolders();
+        Map<String, String> smcbFolders = webdavConfig.getSmcbFolders();
         if (telematikId != null && insurantId != null) {
             InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
             if (insuranceData != null && insuranceData.getPersoenlicheVersichertendaten() != null) {
@@ -246,7 +248,18 @@ public class PropBuilder {
         }
     }
 
-    public void handleFile(Session session, Node parentNode, File file, boolean staleMixins) throws RepositoryException {
+    public void handleFileDeletion(Session session, Node parentNode, File file) throws RepositoryException {
+        try {
+            Node node = parentNode.getNode(file.getName());
+            node.remove();
+            session.save();
+        } catch (PathNotFoundException e) {
+            log.warn("JCR node for file '%s' is not found", e);
+            session.refresh(false);
+        }
+    }
+
+    public void handleFileCreation(Session session, Node parentNode, File file, boolean staleMixins) throws RepositoryException {
         try {
             Node fileNode = parentNode.getNode(file.getName());
             // it is implied that all orphan mixin properties are already removed in TypeService

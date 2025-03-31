@@ -12,8 +12,8 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
-import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
+import de.health.service.cetp.domain.fault.CetpFault;
 import de.service.health.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
@@ -23,17 +23,11 @@ import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.config.RuntimeConfig;
-import de.servicehealth.epa4all.server.entitlement.EntitlementService;
-import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
-import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.jcr.JcrService;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
-import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import de.servicehealth.folder.WebdavConfig;
 import de.servicehealth.registry.BeanRegistry;
 import de.servicehealth.vau.VauFacade;
@@ -65,11 +59,10 @@ import static com.github.tomakehurst.wiremock.common.ResourceUtil.getResource;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static de.servicehealth.epa4all.common.TestUtils.WIREMOCK;
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
-import static de.servicehealth.epa4all.common.TestUtils.getFixture;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
+import static de.servicehealth.epa4all.common.TestUtils.getTextFixture;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
@@ -98,16 +91,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     protected EventMapper eventMapper;
 
     @Inject
-    protected EpaCallGuard epaCallGuard;
-
-    @Inject
     protected WebdavConfig webdavConfig;
-
-    @Inject
-    JcrService jcrService;
-
-    @Inject
-    protected FeatureConfig featureConfig;
 
     @Inject
     protected FolderService folderService;
@@ -119,32 +103,21 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     ServicePortProvider servicePortProvider;
 
     @Inject
+    protected EpaMultiService epaMultiService;
+
+    @Inject
     protected IKonnektorClient konnektorClient;
 
     @Inject
     protected DefaultUserConfig defaultUserConfig;
 
     @Inject
-    protected EpaFileDownloader epaFileDownloader;
-
-    @Inject
-    protected EntitlementService entitlementService;
+    CETPEventHandlerProvider eventHandlerProvider;
 
     @Inject
     @KonnektorsConfigs
-    protected Map<String, KonnektorConfig> konnektorConfigs;
+    Map<String, KonnektorConfig> konnektorConfigs;
 
-    @Inject
-    protected jakarta.enterprise.event.Event<WebSocketPayload> webSocketPayloadEvent;
-
-    @Inject
-    protected InsuranceDataService insuranceDataService;
-
-    @Inject
-    protected KonnektorDefaultConfig konnektorDefaultConfig;
-
-    @Inject
-    protected EpaMultiService epaMultiService;
 
     protected static Path tempDir;
 
@@ -182,9 +155,11 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     }
 
     @BeforeEach
-    public void beforeEach() {
+    public void beforeEach() throws Exception {
         clientFactory.doStart();
-        mockWebdavConfig(tempDir.toFile(), null);
+        prepareIdpStubs();
+        prepareKonnektorStubs();
+        mockWebdavConfig(tempDir.toFile(), null, null);
     }
 
     @AfterEach
@@ -193,7 +168,6 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         deleteFiles(tempDir.toFile().listFiles());
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
         QuarkusMock.installMockForType(folderService, FolderService.class);
-        QuarkusMock.installMockForType(jcrService, JcrService.class);
     }
 
     protected void prepareVauStubs(List<Pair<String, CallInfo>> responseFuncs) {
@@ -240,23 +214,23 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     protected void prepareKonnektorStubs() throws Exception {
         servicePortProvider.doStart();
         
-        String soapGetSmcbCardsEnvelop = getFixture("GetSmcbCards.xml");
+        byte[] soapGetSmcbCardsEnvelop = getTextFixture("GetSmcbCards.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("SMC-B"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetSmcbCardsEnvelop)).build());
 
-        String soapGetEgkCardsEnvelop = getFixture("GetEgkCards.xml");
+        byte[] soapGetEgkCardsEnvelop = getTextFixture("GetEgkCards.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("EGK"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetEgkCardsEnvelop)).build());
 
-        String soapSmcbCertificateEnvelop = getFixture("SmcbCertificate.xml");
+        byte[] soapSmcbCertificateEnvelop = getTextFixture("SmcbCertificate.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapSmcbCertificateEnvelop)).build());
 
-        String soapExternalAuthenticateEnvelop = getFixture("ExternalAuthenticateResponse.xml");
+        byte[] soapExternalAuthenticateEnvelop = getTextFixture("ExternalAuthenticateResponse.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/AuthSignatureService"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapExternalAuthenticateEnvelop)).build());
 
-        String soapReadVSDResponseEnvelop = getFixture("ReadVSDResponseSample.xml");
+        byte[] soapReadVSDResponseEnvelop = getTextFixture("ReadVSDResponseSample.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/VSDService"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapReadVSDResponseEnvelop)).build());
     }
@@ -268,13 +242,13 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
         idpClient.doStart();
 
-        String jsonAuthenticationResponse = getFixture("AuthenticationResponse.json");
+        byte[] jsonAuthenticationResponse = getTextFixture("AuthenticationResponse.json");
         wiremock.addStubMapping(post(urlEqualTo("/idp/auth"))
             .willReturn(WireMock.aResponse()
                 .withHeader(LOCATION, "https://e4a-rt.deine-epa.de/?code\u003deyJlbmMiOiJBMjU2R0NNIiwiY3R5IjoiTkpXVCIsImV4cCI6MTczNTAwOTU5MiwiYWxnIjoiZGlyIiwia2lkIjoiMDAwMSJ9..jQOcvkSkNe_2svy6.yswP6uELSRQSBvJrewOOXjmLWwTccmhWKXXrsDPfBo6vZButt0rvkV0cosOyksnbCfQqLscWaJCF3UQZ06jDiIqB_A1OlBY6tfgVLnLfe2QRtXbmcQOl-aQSyu3QDMZ_Qc0fxrGfK4PhMrYOHwWniaptNXStr59EzeXGHVbkfasxu2ALhuS94SP0PsxMyicWiOWEZT34Tc1rS2g6YZQzrH0spsPDUES9nMnH-m-y7ZX8VDs7iVMbJ-0njR9KdvKMPjoZGicPYt54jDPiAy_5Ge_e9PxY3vpfiq2Ey7tdg4alhYhkVzPR6L6kqE3uunYSamkwuMo2VIj60S8rYol3sHmYR6ywaiZ-b9TjT_XI7LuPLeMgBlGBP7SOoCikpR0QuX6NBTPmvN1TCOpmuyrdyBHGAEhqCbqtB0Y6l5Y247DHU6ccKZi9n1L3WQ795GLBaayntvhlsNQSr667xlj0aNLe4wWjxEHDUI8o8XQRkTdXg457adL5ETFAR7_RcjVYjZW9Dk2fAo39pmOQhI8lYKdm2-epO8GLSz-T6AJrNqb2nI7dSDq2waY0NBLezQxZKXHXEoMGMsLp8NS7gtQT_zaoGYGZzlmxfZyFg-a8S6F_KIpTPYzvkzntr671Wz_EuPskyY7eDf4ziDDiN8tuo6lgEzKpwDgJDn8-6lD-8vb9gU52O9YhgsrFpbmWL8aMUOTaLE1sKIYCFZOoFfkW_zZ-gY8mjHtCZ3QUDGaVBb5a1lmdr-6k4XG4qk7IBrOjKTHVHH1sbgw76VHTFHH9v6r4ylFpB1LSY4Ce13nghSUDE_f15Xa2BfEUgFPPZhqyGVnSE_ITa1BNQ0ivQs7uacE2xKZaUxKTz-np2RIAgqERWdqAxChcoSvKAKOHipqGKyR8VVZbo5rHlN4Pt9Ng1UU651fLMaEW0Zh8R5bBBIAX-oH37VKn-m8b-7IVmlvcYfQkfT12pr1BpPConY1qLGZfsoptKfwhVDGioKz0VaGy--ksuaABNMi0DQG4BchJDORWR89TYRI-tFhA8oHVgEsq4ftdh-Awc1SNMjcGxeXAPvrudMzcy7VrPyMBacQyJ894XwZCJiWEjRfLJCRVQeUJrSuwDbnQ0VyNpwrAgEA65f8dEH_7UBvvXeCey5JgnJFkEmnfhVoh8i5cqcM9FwauzybHMHUwjxFlMbkmJTSLLKqX14tG7nMmYoThr4GxbscfDcPdvmvlTKIROaLeXhtekQR1rU_y2PMMBOwcSkbwa1N-_KxzcAjgxZr15tA65S-_w4RqP_1hUbsRc3cPoZ6WYuGqyQCoJp2jxqRdjl1TTlCut_vy8nLaJlWtfsu5Y3sBgN2qObegmTD6iodKuY6Rdbs0cMNYIXKQVmHvavfYtYwy8HOb3gXaZdCBxr9xHiUA5p1AMJoX9qdt31DQK1djOlwX-tICnShsw9_gEMhR2O3b9hRs7emCxmTh0ca2P15BMMZoNxgnpSk8MehX_eRK2ZT_zkYI8pRc74bvgMAfkH1NDm04gIutX8auk8a5SMZQy-hm7xtdwAfB6hPVVlMJ8Piv3Lcs2m2AicGTSynvw0cdAVlcCUU5pwcd-h69xIOef8yXApMp1hvzr2lQ-ZcNEoQcEGyNFefQ4nLmqjh2izO-G8SSVi-z99Jys35IqtHUMCE.SJLonvjMnBK6X9nxtOLo_Q\u0026state\u003dnRGsqMXISWqr6oaTcdGMcs6Oxt2vIOebYvUwd85BtLLk8d0vAgiy88kP3gBsr6xL")
                 .withStatus(302).withBody(jsonAuthenticationResponse)).build());
 
-        String jsonAuthenticationChallenge = getFixture("AuthenticationChallenge.json");
+        byte[] jsonAuthenticationChallenge = getTextFixture("AuthenticationChallenge.json");
         wiremock.addStubMapping(get(urlPathMatching("/idp/auth.*"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(jsonAuthenticationChallenge)).build());
     }
@@ -306,32 +280,23 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         return new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
     }
 
-    protected void receiveCardInsertedEvent(
-        KonnektorConfig konnektorConfig,
-        EpaFileDownloader epaFileDownloader,
-        CardlinkClient cardlinkClient,
-        String egkHandle,
-        String ctIdValue
-    ) {
-        RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
-
-        CETPEventHandler cetpServerHandler = new CETPEventHandler(
-            webSocketPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader, konnektorClient,
-            epaMultiService, cardlinkClient, runtimeConfig, featureConfig, epaCallGuard
-        );
+    protected CardlinkClient receiveCardInsertedEvent(
+        EpaFileDownloader mockFileDownloader,
+        FeatureConfig mockFeatureConfig,
+        String kvnr
+    ) throws CetpFault {
+        CardlinkClient cardlinkClient = mock(CardlinkClient.class);
+        CETPEventHandler cetpServerHandler = eventHandlerProvider.get(mockFileDownloader, cardlinkClient, mockFeatureConfig);
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 
         String slotIdValue = "3";
+        String ctIdValue = "cardTerminal-124";
 
+        KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
+        String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
         channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue, egkHandle));
         channel.pipeline().fireChannelReadComplete();
-    }
-
-    protected static FeatureConfig mockFeatureConfig(boolean externalPnw) {
-        FeatureConfig featureConfigMock = mock(FeatureConfig.class);
-        when(featureConfigMock.isExternalPnwEnabled()).thenReturn(externalPnw);
-        QuarkusMock.installMockForType(featureConfigMock, FeatureConfig.class);
-        return featureConfigMock;
+        return cardlinkClient;
     }
 
     protected DecodeResult decode(

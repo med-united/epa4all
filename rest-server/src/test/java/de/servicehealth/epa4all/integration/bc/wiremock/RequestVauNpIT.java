@@ -2,13 +2,11 @@ package de.servicehealth.epa4all.integration.bc.wiremock;
 
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
-import de.servicehealth.registry.BeanRegistry;
 import de.servicehealth.vau.VauFacade;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
@@ -23,14 +21,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RequestVauNpIT extends AbstractWiremockTest {
 
     @Test
-    void vauNpProvisioningReloaded() throws Exception {
+    void vauNpProvisioningReloaded() {
         RestAssured.config = RestAssured.config()
             .httpClient(HttpClientConfig.httpClientConfig()
                 .setParam("http.socket.timeout", 600000));
 
-        prepareIdpStubs();
         prepareVauStubs(List.of());
-        prepareKonnektorStubs();
 
         given()
             .queryParams(Map.of("backends", "localhost"))
