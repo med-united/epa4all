@@ -54,15 +54,17 @@ public class FolderService implements IFolderService {
 
     public File initInsurantFolders(String telematikId, String insurantId) {
         File telematikFolder = getTelematikFolder(telematikId);
-        String telematikFolderPath = telematikFolder.getAbsolutePath();
-        webdavConfig.getSmcbFolders().keySet().forEach(folder -> {
-                try {
-                    getOrCreateFolder(String.join(separator, telematikFolderPath, insurantId, folder));
-                } catch (Exception e) {
-                    log.error(String.format("Error while creating folder '%s'", folder), e);
+        if (insurantId != null && !insurantId.trim().isEmpty()) {
+            String telematikFolderPath = telematikFolder.getAbsolutePath();
+            webdavConfig.getSmcbFolders().keySet().forEach(folder -> {
+                    try {
+                        getOrCreateFolder(String.join(separator, telematikFolderPath, insurantId, folder));
+                    } catch (Exception e) {
+                        log.error(String.format("Error while creating folder '%s'", folder), e);
+                    }
                 }
-            }
-        );
+            );
+        }
         return telematikFolder;
     }
 

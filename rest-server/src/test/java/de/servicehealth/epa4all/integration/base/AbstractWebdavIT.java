@@ -45,7 +45,7 @@ public class AbstractWebdavIT {
     protected WebdavConfig mockWebdavConfig(
         File tempDir,
         Map<String, List<String>> mixinMap,
-        Duration patientDataExpiration
+        Duration additionalRetainPeriod
     ) {
         Map<String, List<String>> map = Map.of(
             "nt:folder", List.of("epa:custom"),
@@ -59,8 +59,8 @@ public class AbstractWebdavIT {
         when(webdavConfig.getRootFolder()).thenReturn(webdav.getAbsolutePath());
         when(webdavConfig.getDefaultLimit()).thenReturn(20);
 
-        Duration duration = patientDataExpiration != null ? patientDataExpiration : Duration.ofDays(90);
-        when(webdavConfig.getPatientDataExpiration()).thenReturn(duration);
+        Duration duration = additionalRetainPeriod != null ? additionalRetainPeriod : Duration.ofDays(0);
+        when(webdavConfig.getAdditionalRetainPeriod()).thenReturn(duration);
         when(webdavConfig.getAvailableProps(eq(true))).thenReturn(Map.of(
             "Mandatory", Arrays.asList("creationdate,getlastmodified,displayname,resourcetype".split(",")),
             "Root", Arrays.asList("".split("root")),

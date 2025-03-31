@@ -129,7 +129,7 @@ public class VsdService {
             servicePorts.getVSDServicePortType().readVSD(readVSD)
         );
         String insurantId = extractInsurantId(readVSDResponse, fallbackKvnr);
-        if (insurantId == null) {
+        if (insurantId == null || insurantId.isEmpty()) {
             throw new CetpFault("Unable to get insurantId");
         }
         saveVsdFile(telematikId, insurantId, readVSDResponse);

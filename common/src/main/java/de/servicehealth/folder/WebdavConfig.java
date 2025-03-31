@@ -9,7 +9,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
@@ -25,8 +24,8 @@ public class WebdavConfig {
     @ConfigProperty(name = "webdav.paging.default.limit", defaultValue = "20")
     int defaultLimit;
 
-    @ConfigProperty(name = "webdav.patient.data.expiration", defaultValue = "90d")
-    Duration patientDataExpiration;
+    @ConfigProperty(name = "webdav.patient.data.additional.retain.period", defaultValue = "0d")
+    Duration additionalRetainPeriod;
 
     @ConfigProperty(name = "webdav.prop.directory")
     Map<String, String> directoryPropsMap;

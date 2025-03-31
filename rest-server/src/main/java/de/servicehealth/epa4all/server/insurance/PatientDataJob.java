@@ -46,27 +46,30 @@ public class PatientDataJob {
     )
     public void expirationMaintenance() {
         try {
-            Duration dataExpiration = webdavConfig.getPatientDataExpiration();
+            log.info("Patient data job started");
+            Duration additionalRetainPeriod = webdavConfig.getAdditionalRetainPeriod();
             Arrays.stream(folderService.getTelematikFolders()).forEach(telematikFolder ->
                 Arrays.stream(folderService.getNestedFolders(telematikFolder)).forEach(kvnrFolder ->
-                    processKvnr(telematikFolder, kvnrFolder, dataExpiration)
+                    processKvnr(telematikFolder, kvnrFolder, additionalRetainPeriod)
                 ));
         } catch (Throwable t) {
             log.error("Error while patient data expirationMaintenance", t);
         }
     }
 
-    private void processKvnr(File telematikFolder, File kvnrFolder, Duration dataExpiration) {
+    private void processKvnr(File telematikFolder, File kvnrFolder, Duration additionalRetainPeriod) {
         if (kvnrFolder.exists() && kvnrFolder.isDirectory()) {
             String telematikId = telematikFolder.getName();
             String kvnr = kvnrFolder.getName();
             Instant expiry = insuranceDataService.getEntitlementExpiry(telematikId, kvnr);
-            boolean expired = expiry != null && expiry.plusSeconds(dataExpiration.toSeconds()).isBefore(Instant.now());
+            boolean expired = expiry != null && expiry.plusSeconds(additionalRetainPeriod.toSeconds()).isBefore(Instant.now());
             if (expired) {
                 try {
                     deleteDirectory(kvnrFolder);
                     fileEventSender.sendAsync(new FileEvent(Delete, telematikId, List.of(kvnrFolder)));
-                    log.info("[%s] Patient data was successfully deleted, expiry = %s, period = %s".formatted(kvnr, expiry, dataExpiration));
+                    log.info("[%s] Patient data was successfully deleted, expiry = %s, additionalRetainPeriod = %s".formatted(
+                        kvnr, expiry, additionalRetainPeriod)
+                    );
                 } catch (Exception e) {
                     log.error("[%s] Error while deleting expired patient data, expiry = %s".formatted(kvnr, expiry), e);
                 }
