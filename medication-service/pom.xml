@@ -15,7 +15,7 @@
     <name>medication-service</name>
 
     <properties>
-        <fhir-version>7.6.0</fhir-version>
+        <fhir-version>7.6.1</fhir-version>
     </properties>
 
     <dependencies>
