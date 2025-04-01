@@ -539,14 +539,63 @@ sap.ui.define([
 				"document": encodeURIComponent("/fhir/pdf?x-insurantid="+sPatientId)
 			});
 		},
-		onUploadDocuments: function(oEvent) {
-			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
-			fetch("../xds-document/uploadAll/?kvnr="+sPatientId)
-				.then(o => o.text())
-				.then((text) => {
-					MessageToast.show(text);
-				});
-		},
+		onUploadDocuments: function () {
+        	const sPatientId = this.getView().getBindingContext()?.getProperty("propstat/prop/displayname");
+        	if (!sPatientId) {
+        		sap.m.MessageBox.error("Keine Patienten-ID gefunden.");
+        		return;
+        	}
+
+        	const fileInput = document.createElement("input");
+        	fileInput.type = "file";
+        	fileInput.accept = "*/*";
+        	fileInput.multiple = false;
+
+        	fileInput.onchange = function (event) {
+        		const file = event.target.files[0];
+        		if (!file) {
+        			return;
+        		}
+
+        		const formData = new FormData();
+        		formData.append("file", file);
+
+        		const controller = new AbortController();
+                const timeout = setTimeout(() => {
+                    controller.abort();
+                }, 10000);
+
+        		sap.ui.core.BusyIndicator.show(0);
+
+        		fetch(`../xds-document/upload?kvnr=${encodeURIComponent(sPatientId)}`, {
+        			method: "POST",
+        			body: formData,
+        			signal: controller.signal
+        		})
+        			.then(response => {
+        				if (!response.ok) {
+        					throw new Error(`Fehler beim Hochladen (${response.status})`);
+        				}
+        				return response.text();
+        			})
+        			.then(resultText => {
+        				sap.m.MessageToast.show(`Datei erfolgreich hochgeladen: ${file.name}`);
+        			})
+        			.catch(error => {
+                        if (error.name === "AbortError") {
+                            sap.m.MessageBox.error("Die Verbindung zum Server hat zu lange gedauert (Timeout nach 10 Sekunden).");
+                        } else {
+                            sap.m.MessageBox.error(`Fehler beim Hochladen: ${error.message}`);
+                        }
+                    })
+        			.finally(() => {
+        			    clearTimeout(timeout);
+        				sap.ui.core.BusyIndicator.hide();
+        			});
+        	};
+
+        	fileInput.click();
+        },
 		onDownloadDocuments: function(oEvent) {
 			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
 			fetch("../xds-document/downloadAll/?kvnr="+sPatientId)
