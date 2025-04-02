@@ -47,7 +47,7 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
 
         String telematikId = fileDownload.getTelematikId();
         String insurantId = fileDownload.getKvnr();
-        StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(mimeType, documentBytes);
+        StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(null, mimeType, documentBytes);
         String folderCode = "other";
         if(structureDefinition == null) {
         	log.warn(String.format("No structureDefinition for MIME-Type:%s was found; falling back to folderCode='%s'", mimeType, folderCode));

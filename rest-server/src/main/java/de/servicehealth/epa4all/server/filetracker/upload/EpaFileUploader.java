@@ -22,7 +22,9 @@ public class EpaFileUploader extends EpaFileTracker<FileUpload> {
         String contentType = fileUpload.getContentType();
         EpaContext epaContext = fileUpload.getEpaContext();
         byte[] documentBytes = fileUpload.getDocumentBytes();
-        StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(contentType, documentBytes);
+        StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(
+            fileUpload.getIg(), contentType, documentBytes
+        );
         ProvideAndRegisterDocumentSetRequestType request = prepareProvideAndRegisterDocumentSetRequest(
             fileUpload, epaContext, structureDefinition
         );

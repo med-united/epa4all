@@ -7,11 +7,10 @@ import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.Document;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.ResponseOptionType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.AdhocQueryType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -21,13 +20,8 @@ import static de.servicehealth.epa4all.xds.XDSUtils.generateUrnUuid;
 @Dependent
 public class XDSDocumentService {
 
-    private static final Logger log = LoggerFactory.getLogger(XDSDocumentService.class.getName());
-
-    private final ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder;
-
-    public XDSDocumentService(ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder) {
-        this.provideAndRegisterDocumentBuilder = provideAndRegisterDocumentBuilder;
-    }
+    @Inject
+    ProvideAndRegisterSingleDocumentTypeBuilder provideAndRegisterDocumentBuilder;
 
     public RetrieveDocumentSetRequestType prepareRetrieveDocumentSetRequestType(String uniqueId, String repositoryUniqueId) {
         RetrieveDocumentSetRequestType retrieveDocumentSetRequestType = new RetrieveDocumentSetRequestType();

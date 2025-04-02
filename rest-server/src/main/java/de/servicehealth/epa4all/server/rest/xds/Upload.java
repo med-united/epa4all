@@ -51,6 +51,8 @@ public class Upload extends XdsResource {
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = KVNR, description = "Patient KVNR", required = true)
         @QueryParam(KVNR) String kvnr,
+        @Parameter(name = "ig", description = "IG schema name")
+        @QueryParam("ig") String ig,
         @Parameter(description = "Document to submit to the XDS registry", example = "xml/pdf")
         InputStream is
     ) throws Exception {
@@ -61,6 +63,7 @@ public class Upload extends XdsResource {
         String taskId = UUID.randomUUID().toString();
         FileUpload fileUpload = new FileUpload(
             epaContext,
+            ig,
             taskId,
             contentType,
             languageCode,

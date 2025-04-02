@@ -12,6 +12,7 @@ import lombok.ToString;
 public class FileUpload implements FileAction {
 
     private EpaContext epaContext;
+    private String ig;
     private String taskId;
     private String contentType;
     private String languageCode;

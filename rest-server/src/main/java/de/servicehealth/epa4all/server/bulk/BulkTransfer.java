@@ -93,7 +93,8 @@ public class BulkTransfer {
                     byte[] documentBytes = Files.readAllBytes(f.toPath());
                     String taskId = UUID.randomUUID().toString();
                     eventFileUpload.fireAsync(new FileUpload(
-                        epaContext, taskId, contentType, languageCode, telematikId, kvnr, fileName, folderName, documentBytes
+                        epaContext, null, taskId, contentType, languageCode,
+                        telematikId, kvnr, fileName, folderName, documentBytes
                     ));
                     return taskId;
                 } catch (Exception e) {

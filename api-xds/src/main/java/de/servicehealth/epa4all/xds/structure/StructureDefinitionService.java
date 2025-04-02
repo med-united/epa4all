@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.servicehealth.epa4all.xds.ebrim.DocumentDefinition;
 import de.servicehealth.epa4all.xds.ebrim.FolderDefinition;
 import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
+import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import lombok.Setter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.w3c.dom.Document;
@@ -18,6 +20,8 @@ import java.io.File;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -28,7 +32,7 @@ import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 @ApplicationScoped
 public class StructureDefinitionService {
 	
-	private static Logger log = Logger.getLogger(StructureDefinitionService.class.getName());
+	private static final Logger log = Logger.getLogger(StructureDefinitionService.class.getName());
 
     private static final DocumentBuilderFactory DOCUMENT_BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
 
@@ -47,9 +51,11 @@ public class StructureDefinitionService {
     Map<String, String> pdfSchemasMap;
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final StructureDefinition emptyStructureDefinition;
+    private StructureDefinition emptyStructureDefinition;
 
-    public StructureDefinitionService() {
+    private List<File> igSchemaFiles = new ArrayList<>();
+
+    public void onStart(@Observes StartupEvent ev) {
         emptyStructureDefinition = new StructureDefinition();
 
         FolderDefinition rootMetadata = new FolderDefinition();
@@ -64,30 +70,33 @@ public class StructureDefinitionService {
         documentDefinition.setMetadata(metadata);
         elements.add(documentDefinition);
         emptyStructureDefinition.setElements(elements);
-    }
-
-    public StructureDefinition getStructureDefinition(String contentType, byte[] documentBytes) throws Exception {
-        String schemaFileName = extractSchemaFileName(contentType, documentBytes);
-        if (schemaFileName == null) {
-            return emptyStructureDefinition;
-        }
 
         File schemaFolder = new File(schemasFolderPath);
-        if (!schemaFolder.exists()) {
-            log.warning("IG-Schema files are not found");
-            return null;
+        if (schemaFolder.exists()) {
+            File[] files = schemaFolder.listFiles();
+            if (files == null || files.length == 0) {
+                throw new IllegalStateException("IG-Schema files not found");
+            }
+            igSchemaFiles = Arrays.asList(files);
         }
-        File[] files = schemaFolder.listFiles(f ->
-            f.exists() && f.getName().equalsIgnoreCase(schemaFileName)
-        );
-        if (files == null || files.length == 0) {
-            log.warning(String.format("IG Schema file [%s] is not found", schemaFileName));
-            return null;
-        }
-        return mapper.readValue(Files.readString(files[0].toPath()), StructureDefinition.class);
     }
 
-    private String extractSchemaFileName(String contentType, byte[] documentBytes) throws Exception {
+    public StructureDefinition getStructureDefinition(String ig, String contentType, byte[] documentBytes) throws Exception {
+        String schemaFileName = extractSchemaFileName(ig, contentType, documentBytes);
+        Optional<File> igSchemaFile = igSchemaFiles.stream().filter(f -> f.getName().equalsIgnoreCase(schemaFileName)).findFirst();
+        if (igSchemaFile.isPresent()) {
+            log.info("%s IG schema was selected".formatted(igSchemaFile.get().getName()));
+            return mapper.readValue(Files.readString(igSchemaFile.get().toPath()), StructureDefinition.class);
+        } else {
+            log.warning("Empty structure definition was selected");
+            return emptyStructureDefinition;
+        }
+    }
+
+    private String extractSchemaFileName(String ig, String contentType, byte[] documentBytes) throws Exception {
+        if (ig != null && !ig.isEmpty()) {
+            return "ig-" + ig + ".json";
+        }
         if (isXmlCompliant(contentType)) {
             String xmlSource = new String(documentBytes);
             Optional<Map.Entry<String, String>> entryOpt = xmlSchemasMap.entrySet().stream()
