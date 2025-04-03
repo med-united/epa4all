@@ -36,8 +36,12 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
     @Inject
     PracticeSettingCodeClassificationBuilder practiceSettingCodeClassificationBuilder;
 
-    @SuppressWarnings({"rawtypes"})
-    public StableDocumentEntryBuilder finalize(AuthorPerson authorPerson, List<FolderDefinition> folderDefinitions) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public StableDocumentEntryBuilder finalize(
+        String contentType,
+        AuthorPerson authorPerson,
+        List<FolderDefinition> folderDefinitions
+    ) {
         List<ClassificationType> classificationTypes = new ArrayList<>();
 
         ClassificationType classificationType = authorClassificationBuilder
@@ -69,10 +73,8 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
             .findFirst()
             .ifPresent(fd -> {
                 if (fd.getName().equals("documentEntry.mimeType")) {
-                    List list = (List) fd.getValue();
-                    if (!list.isEmpty()) {
-                        mimeType = (String) list.getFirst();
-                    }
+                    List<String> list = (List<String>) fd.getValue();
+                    mimeType = list.stream().filter(m -> m.equals(contentType)).findFirst().orElse(list.getFirst());
                 }
             });
 

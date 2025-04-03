@@ -116,7 +116,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
                 new DEPatientIdExternalIdentifierBuilder(dePatientId).withRegistryObject(documentId).withValue(patientExternalIdValue).build(),
                 new DEUniqueIdExternalIdentifierBuilder(deUniqueId).withValue(uniqueIdValue).withRegistryObject(documentId).build()
             )
-            .finalize(authorPerson, folderDefinitions) // calls withClassifications() internally
+            .finalize(contentType, authorPerson, folderDefinitions) // calls withClassifications() internally
             .build();
 
         AssociationType1 associationType1 = ssdeAssociationBuilder
