@@ -615,25 +615,38 @@ sap.ui.define([
         		return;
         	}
 
-        	const formData = new FormData();
-        	formData.append("file", file);
+            const oBusyDialog = new sap.m.BusyDialog({ text: "Datei wird hochgeladen..." });
+            oBusyDialog.open();
 
-        	const oBusyDialog = new sap.m.BusyDialog({ text: "Datei wird hochgeladen..." });
-        	oBusyDialog.open();
+            const headers = new Headers();
+            headers.append("Content-Type", file.type || "application/octet-stream");
+            headers.append("Lang-Code", "de");
+            headers.append("File-Name", file.name);
 
-        	fetch(`../xds-document/upload?kvnr=${encodeURIComponent(sPatientId)}&ig=${encodeURIComponent(igValue)}`, {
-        		method: "POST",
-        		body: formData
-        	})
-        		.then(response => {
-        			if (!response.ok) throw new Error(`Fehler beim Hochladen (${response.status})`);
-        			return response.text(); // UUID
-        		})
-        		.then(taskId => this._pollUploadTask(taskId, file.name, oBusyDialog))
-        		.catch(error => {
-        			oBusyDialog.close();
-        			sap.m.MessageBox.error(`Fehler beim Hochladen: ${error.message}`);
-        		});
+            const reader = new FileReader();
+            reader.onload = () => {
+                fetch(`../xds-document/upload?kvnr=${encodeURIComponent(sPatientId)}&ig=${encodeURIComponent(igValue)}`, {
+                    method: "POST",
+                    headers: headers,
+                    body: reader.result
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`Fehler beim Hochladen (${response.status})`);
+                        return response.text();
+                    })
+                    .then(taskId => this._pollUploadTask(taskId, file.name, oBusyDialog))
+                    .catch(error => {
+                        oBusyDialog.close();
+                        sap.m.MessageBox.error(`Fehler beim Hochladen: ${error.message}`);
+                    });
+            };
+
+            reader.onerror = () => {
+                oBusyDialog.close();
+                sap.m.MessageBox.error("Fehler beim Lesen der Datei.");
+            };
+
+            reader.readAsArrayBuffer(file);
         },
         _pollUploadTask: function (taskId, fileName, oBusyDialog, retry = 0) {
         	const maxRetries = 60;
