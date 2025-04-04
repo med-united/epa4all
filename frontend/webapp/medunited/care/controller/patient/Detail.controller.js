@@ -540,61 +540,165 @@ sap.ui.define([
 			});
 		},
 		onUploadDocuments: function () {
-        	const sPatientId = this.getView().getBindingContext()?.getProperty("propstat/prop/displayname");
-        	if (!sPatientId) {
-        		sap.m.MessageBox.error("Keine Patienten-ID gefunden.");
-        		return;
-        	}
+        	const oView = this.getView();
 
+        	const resetUploadDialogState = () => {
+        		this._selectedUploadFile = null;
+
+        		const oFileNameText = this.byId("selectedFileName");
+        		if (oFileNameText) {
+        			oFileNameText.setText("Keine Datei ausgewählt");
+        		}
+
+        		const oUploadButton = this.byId("uploadConfirmButton");
+        		if (oUploadButton) {
+        			oUploadButton.setEnabled(false);
+        		}
+        	};
+
+        	if (!this.byId("uploadDialog")) {
+        		Fragment.load({
+        			id: oView.getId(),
+        			name: "medunited.base.control.fragments.uploadDialog",
+        			controller: this
+        		}).then((oDialog) => {
+        			oView.addDependent(oDialog);
+        			resetUploadDialogState();
+        			oDialog.open();
+        		});
+        	} else {
+        		resetUploadDialogState();
+        		this.byId("uploadDialog").open();
+        	}
+        },
+        onCloseUploadDialog: function () {
+        	this.byId("uploadDialog").close();
+        },
+        onSelectIGValue: function (oEvent) {
+            const sSelectedKey = oEvent.getSource().getSelectedKey();
+            this._selectedIGValue = sSelectedKey;
+        },
+        onSelectUploadFile: function () {
         	const fileInput = document.createElement("input");
         	fileInput.type = "file";
         	fileInput.accept = "*/*";
-        	fileInput.multiple = false;
 
-        	fileInput.onchange = function (event) {
+        	fileInput.onchange = (event) => {
         		const file = event.target.files[0];
-        		if (!file) {
-        			return;
+        		if (!file) return;
+
+        		this._selectedUploadFile = file;
+
+        		const oFileNameText = this.byId("selectedFileName");
+        		if (oFileNameText) {
+        			oFileNameText.setText(`Ausgewählt: ${file.name}`);
         		}
 
-        		const formData = new FormData();
-        		formData.append("file", file);
-
-        		const controller = new AbortController();
-                const timeout = setTimeout(() => {
-                    controller.abort();
-                }, 10000);
-
-        		sap.ui.core.BusyIndicator.show(0);
-
-        		fetch(`../xds-document/upload?kvnr=${encodeURIComponent(sPatientId)}`, {
-        			method: "POST",
-        			body: formData,
-        			signal: controller.signal
-        		})
-        			.then(response => {
-        				if (!response.ok) {
-        					throw new Error(`Fehler beim Hochladen (${response.status})`);
-        				}
-        				return response.text();
-        			})
-        			.then(resultText => {
-        				sap.m.MessageToast.show(`Datei erfolgreich hochgeladen: ${file.name}`);
-        			})
-        			.catch(error => {
-                        if (error.name === "AbortError") {
-                            sap.m.MessageBox.error("Die Verbindung zum Server hat zu lange gedauert (Timeout nach 10 Sekunden).");
-                        } else {
-                            sap.m.MessageBox.error(`Fehler beim Hochladen: ${error.message}`);
-                        }
-                    })
-        			.finally(() => {
-        			    clearTimeout(timeout);
-        				sap.ui.core.BusyIndicator.hide();
-        			});
+        		const oUploadButton = this.byId("uploadConfirmButton");
+        		if (oUploadButton) {
+        			oUploadButton.setEnabled(true);
+        		}
         	};
 
         	fileInput.click();
+        },
+        onConfirmUpload: function () {
+        	const file = this._selectedUploadFile;
+        	let igValue = this._selectedIGValue;
+            if (!igValue && this.byId("igSelect")) {
+                igValue = this.byId("igSelect").getSelectedKey();
+            }
+        	const sPatientId = this.getView().getBindingContext()?.getProperty("propstat/prop/displayname");
+
+        	if (!file || !sPatientId) {
+        		sap.m.MessageBox.error("Keine Datei oder Patienten-ID vorhanden.");
+        		return;
+        	}
+
+        	const formData = new FormData();
+        	formData.append("file", file);
+
+        	const oBusyDialog = new sap.m.BusyDialog({ text: "Datei wird hochgeladen..." });
+        	oBusyDialog.open();
+
+        	fetch(`../xds-document/upload?kvnr=${encodeURIComponent(sPatientId)}&ig=${encodeURIComponent(igValue)}`, {
+        		method: "POST",
+        		body: formData
+        	})
+        		.then(response => {
+        			if (!response.ok) throw new Error(`Fehler beim Hochladen (${response.status})`);
+        			return response.text(); // UUID
+        		})
+        		.then(taskId => this._pollUploadTask(taskId, file.name, oBusyDialog))
+        		.catch(error => {
+        			oBusyDialog.close();
+        			sap.m.MessageBox.error(`Fehler beim Hochladen: ${error.message}`);
+        		});
+        },
+        _pollUploadTask: function (taskId, fileName, oBusyDialog, retry = 0) {
+        	const maxRetries = 60;
+        	const delay = 1000;
+
+        	fetch(`../xds-document/task/${taskId}`)
+        		.then(response => response.text())
+        		.then(xmlText => {
+        			const parser = new DOMParser();
+        			const xml = parser.parseFromString(xmlText, "application/xml");
+
+        			const statusAttr = xml.documentElement.getAttribute("status") || "";
+
+        			let normalizedStatus = "";
+        			if (statusAttr.includes("InProgress")) {
+        				normalizedStatus = "InProgress";
+        			} else if (statusAttr.includes("Success")) {
+        				normalizedStatus = "Success";
+        			} else if (statusAttr.includes("Failure")) {
+        				normalizedStatus = "Failure";
+        			}
+
+        			if (normalizedStatus === "InProgress") {
+        				if (retry < maxRetries) {
+        					setTimeout(() => {
+        						this._pollUploadTask(taskId, fileName, oBusyDialog, retry + 1);
+        					}, delay);
+        				} else {
+        					oBusyDialog.close();
+        					sap.m.MessageBox.error("Der Upload dauert zu lange oder ist fehlgeschlagen.");
+        				}
+        			} else if (normalizedStatus === "Success") {
+                        oBusyDialog.close();
+                        sap.m.MessageToast.show(`Datei erfolgreich hochgeladen: ${fileName}`);
+
+                        const oWebdavModel = this.getView().getModel();
+                        oWebdavModel.loadFolderForContext(this.sModelPath, this.sWebDavPath);
+
+                        const oDocumentBlockExpandedView = this.byId("documentBlock")?.getAggregation("_expandedView");
+                        if (oDocumentBlockExpandedView) {
+                            const oTableBinding = oDocumentBlockExpandedView.byId("documentTableExpanded")?.getBinding("items");
+                            if (oTableBinding) {
+                                oTableBinding.checkUpdate(true);
+                            }
+                        }
+        			} else if (normalizedStatus === "Failure") {
+        				const errorNode = xml.querySelector("RegistryError");
+        				const errorMessage = errorNode?.getAttribute("codeContext") || "Ein technischer Fehler ist aufgetreten.";
+        				oBusyDialog.close();
+        				sap.m.MessageBox.error(`Upload fehlgeschlagen:\n${errorMessage}`);
+        			} else {
+        				oBusyDialog.close();
+        				sap.m.MessageBox.error(`Unbekannter Status: ${statusAttr}`);
+        			}
+        		})
+        		.catch(error => {
+        			oBusyDialog.close();
+        			sap.m.MessageBox.error(`Fehler beim Prüfen des Upload-Status: ${error.message}`);
+        		});
+        },
+        onCancelUpload: function () {
+            const oDialog = this.byId("uploadDialog");
+            if (oDialog) {
+                oDialog.close();
+            }
         },
 		onDownloadDocuments: function(oEvent) {
 			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
@@ -603,6 +707,12 @@ sap.ui.define([
 				.then((text) => {
 					MessageToast.show(text);
 				});
-		}
+		},
+		onIgInfoPressed: function () {
+        	sap.m.MessageBox.information(
+        		"Wählen Sie die medizinische Struktur dieses Dokuments aus (IG = Implementation Guide). " +
+        		"Dies hilft dem System, die Datei korrekt einzuordnen und zu validieren."
+        	);
+        }
 	});
 }, true);

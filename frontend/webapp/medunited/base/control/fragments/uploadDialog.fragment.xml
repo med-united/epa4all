@@ -1,0 +1,89 @@
+<core:FragmentDefinition xmlns="sap.m"
+                         xmlns:core="sap.ui.core"
+                         xmlns:l="sap.ui.layout"
+                         xmlns:form="sap.ui.layout.form">
+    <Dialog
+            id="uploadDialog"
+            title="Dokument hochladen"
+            stretchOnPhone="true"
+            horizontalScrolling="false"
+            class="sapUiContentPadding">
+        <content>
+            <form:SimpleForm
+                    layout="ResponsiveGridLayout"
+                    editable="true"
+                    labelSpanL="4"
+                    labelSpanM="4"
+                    emptySpanL="0"
+                    emptySpanM="0"
+                    columnsL="1"
+                    columnsM="1">
+                <Label text="Dokumentenstruktur (IG)" />
+                <HBox>
+                    <VBox width="100%">
+                        <Select
+                                id="igSelect"
+                                width="100%"
+                                selectedKey=""
+                                change="onSelectIGValue">
+                            <items>
+                                <core:Item key="" text="Keine Auswahl" />
+                                <core:Item key="childsrecord_V1_0_1" text="childsrecord_V1_0_1" />
+                                <core:Item key="childsrecord" text="childsrecord" />
+                                <core:Item key="dentalrecord" text="dentalrecord" />
+                                <core:Item key="diga_V_1_1" text="diga_V_1_1" />
+                                <core:Item key="dmp_asthma_V_4" text="dmp_asthma_V_4" />
+                                <core:Item key="dmp_brk_V_4" text="dmp_brk_V_4" />
+                                <core:Item key="dmp_copd_V_4" text="dmp_copd_V_4" />
+                                <core:Item key="dmp_cr_V_1" text="dmp_cr_V_1" />
+                                <core:Item key="dmp_depression_V_1" text="dmp_depression_V_1" />
+                                <core:Item key="dmp_dm1_V_5" text="dmp_dm1_V_5" />
+                                <core:Item key="dmp_dm2_V_6" text="dmp_dm2_V_6" />
+                                <core:Item key="dmp_hi_V_1" text="dmp_hi_V_1" />
+                                <core:Item key="dmp_khk_V_4" text="dmp_khk_V_4" />
+                                <core:Item key="dmp_ost_V_1" text="dmp_ost_V_1" />
+                                <core:Item key="dmp_rheuma_V_1" text="dmp_rheuma_V_1" />
+                                <core:Item key="dpe" text="dpe" />
+                                <core:Item key="eab" text="eab" />
+                                <core:Item key="eau_V_1_1" text="eau_V_1_1" />
+                                <core:Item key="eau" text="eau" />
+                                <core:Item key="emp" text="emp" />
+                                <core:Item key="epka_V_1_0" text="epka_V_1_0" />
+                                <core:Item key="medical-image" text="medical-image" />
+                                <core:Item key="mothersrecord_V_1_1" text="mothersrecord_V_1_1" />
+                                <core:Item key="mothersrecord" text="mothersrecord" />
+                                <core:Item key="nfd" text="nfd" />
+                                <core:Item key="vaccination" text="vaccination" />
+                            </items>
+                        </Select>
+                    </VBox>
+                    <core:Icon
+                            src="sap-icon://message-information"
+                            class="sapUiTinyMarginBegin"
+                            tooltip="Mehr Informationen"
+                            press="onIgInfoPressed" />
+                </HBox>
+                <Label text="" />
+                <Button
+                        id="fileSelectButton"
+                        text="Dokument auswählen"
+                        icon="sap-icon://upload"
+                        type="Default"
+                        width="100%"
+                        press="onSelectUploadFile" />
+                <Text id="selectedFileName" text="Keine Datei ausgewählt" class="sapUiTinyMarginTop" />
+            </form:SimpleForm>
+        </content>
+        <beginButton>
+            <Button
+                    id="uploadConfirmButton"
+                    text="Hochladen"
+                    type="Emphasized"
+                    enabled="false"
+                    press="onConfirmUpload" />
+        </beginButton>
+        <endButton>
+            <Button text="Abbrechen" press="onCancelUpload" />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>
