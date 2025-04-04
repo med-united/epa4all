@@ -18,6 +18,13 @@
                     emptySpanM="0"
                     columnsL="1"
                     columnsM="1">
+                <Button
+                        id="fileSelectButton"
+                        text="Dokument auswählen"
+                        icon="sap-icon://upload"
+                        type="Default"
+                        width="100%"
+                        press="onSelectUploadFile" />
                 <Label id="igSelectLabel" text="Dokumentenstruktur (IG)" visible="false" />
                 <HBox>
                     <VBox width="100%">
@@ -67,13 +74,6 @@
                             visible="false" />
                 </HBox>
                 <Label text="" />
-                <Button
-                        id="fileSelectButton"
-                        text="Dokument auswählen"
-                        icon="sap-icon://upload"
-                        type="Default"
-                        width="100%"
-                        press="onSelectUploadFile" />
                 <Text id="selectedFileName" text="Keine Datei ausgewählt" class="sapUiTinyMarginTop" />
             </form:SimpleForm>
         </content>
