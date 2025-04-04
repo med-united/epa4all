@@ -620,7 +620,7 @@ sap.ui.define([
 
             const headers = new Headers();
             headers.append("Content-Type", file.type || "application/octet-stream");
-            headers.append("Lang-Code", "de");
+            headers.append("Lang-Code", "de-DE");
             headers.append("File-Name", file.name);
 
             const reader = new FileReader();
