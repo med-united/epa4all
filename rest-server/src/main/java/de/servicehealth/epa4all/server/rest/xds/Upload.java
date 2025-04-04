@@ -70,7 +70,7 @@ public class Upload extends XdsResource {
             telematikId,
             kvnr,
             fileName,
-            null,
+            "other",
             is.readAllBytes()
         );
         eventFileUpload.fireAsync(fileUpload);

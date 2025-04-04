@@ -21,7 +21,7 @@ public class FormatCodeClassificationBuilder extends AbstractDEClassificationBui
         if (mimeType == null || isXmlCompliant(mimeType)) {
             return super.withNodeRepresentation(nodeRepresentation);
         } else {
-            super.withNodeRepresentation("urn:ihe:iti:xds-sd:pdf:2008");
+            super.withNodeRepresentation(MIME_TYPE_SUFFICIENT_REPRESENTATION);
         }
         return this;
     }

@@ -45,17 +45,17 @@ public class EpaFileUploader extends EpaFileTracker<FileUpload> {
             // NEW FILE: calculate checksum   | EXISTING FILE: check record in file and proceed if no record is present
             // NEW FILE: save                 | EXISTING FILE: no action
             // sync checksum file
-
-            String fileName = fileUpload.getFileName();
-            String folderName = fileUpload.getFolderName();
-            String telematikId = fileUpload.getTelematikId();
-            String insurantId = fileUpload.getKvnr();
-            byte[] documentBytes = fileUpload.getDocumentBytes();
-
-            String folderCode = folderName == null ? getFolderCode(structureDefinition) : folderName;
-            folderService.storeNewFile(fileName, folderCode, telematikId, insurantId, documentBytes);
-            log.info(String.format("[%s/%s] uploaded successfully", folderCode, fileName));
         }
+
+        String fileName = fileUpload.getFileName();
+        String folderName = fileUpload.getFolderName();
+        String telematikId = fileUpload.getTelematikId();
+        String insurantId = fileUpload.getKvnr();
+        byte[] documentBytes = fileUpload.getDocumentBytes();
+
+        String folderCode = folderName == null ? getFolderCode(structureDefinition) : folderName;
+        folderService.storeNewFile(fileName, folderCode, telematikId, insurantId, documentBytes);
+        log.info(String.format("[%s/%s] uploaded successfully", folderCode, fileName));
     }
 
     private ProvideAndRegisterDocumentSetRequestType prepareProvideAndRegisterDocumentSetRequest(
