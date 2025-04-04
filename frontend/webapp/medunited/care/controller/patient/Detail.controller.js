@@ -587,7 +587,7 @@ sap.ui.define([
             const sSelectedKey = oEvent.getSource().getSelectedKey();
             this._selectedIGValue = sSelectedKey;
         },
-        /*onConfirmUpload: function () {
+        onConfirmUpload: function () {
         	const file = this._selectedUploadFile;
         	let igValue = this._selectedIGValue;
             if (!igValue && this.byId("igSelect")) {
@@ -632,7 +632,7 @@ sap.ui.define([
             };
 
             reader.readAsArrayBuffer(file);
-        },*/
+        },
         onSelectUploadFile: function () {
             const fileInput = document.createElement("input");
             fileInput.type = "file";
@@ -665,142 +665,83 @@ sap.ui.define([
 
             fileInput.click();
         },
-        onConfirmUpload: function () {
-            const file = this._selectedUploadFile;
-            let igValue = this._selectedIGValue;
-            if (!igValue && this.byId("igSelect")) {
-                igValue = this.byId("igSelect").getSelectedKey();
-            }
-
-            const sPatientId = this.getView().getBindingContext()?.getProperty("propstat/prop/displayname");
-
-            if (!file || !sPatientId) {
-                sap.m.MessageBox.error("Keine Datei oder Patienten-ID vorhanden.");
-                return;
-            }
-
-            const oBusyDialog = new sap.m.BusyDialog({ text: "Datei wird hochgeladen..." });
-            oBusyDialog.open();
-
-            const headers = new Headers();
-            headers.append("Content-Type", file.type || "application/octet-stream");
-            headers.append("Lang-Code", "de-DE");
-            headers.append("File-Name", file.name);
-
-            const reader = new FileReader();
-            reader.onload = () => {
-                fetch(`../xds-document/upload?kvnr=${encodeURIComponent(sPatientId)}&ig=${encodeURIComponent(igValue)}`, {
-                    method: "POST",
-                    headers: headers,
-                    body: reader.result
-                }).catch(() => {
-                });
-
-                setTimeout(() => {
-                    oBusyDialog.close();
-
-                    sap.m.MessageBox.success(`Datei erfolgreich hochgeladen: ${file.name}`, {
-                        title: "Upload erfolgreich",
-                        onClose: () => {
-                            this.onCloseUploadDialog();
-
-                            const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-                            const oRoute = oRouter.getRoute("patient-detail");
-                            const oArgs = {
-                                patient: this._entity,
-                                layout: "TwoColumnsMidExpanded"
-                            };
-
-                            const oEvent = {
-                                getParameter: (s) => s === "arguments" ? oArgs : undefined
-                            };
-
-                            this._onMatched(oEvent);
-                        }
-                    });
-                }, 5000);
-            };
-
-            reader.onerror = () => {
-                oBusyDialog.close();
-                sap.m.MessageBox.error("Fehler beim Lesen der Datei.");
-            };
-
-            reader.readAsArrayBuffer(file);
-        },
         _pollUploadTask: function (taskId, fileName, oBusyDialog, retry = 0) {
-        	const maxRetries = 60;
-        	const delay = 1000;
+            const maxRetries = 60;
+            const delay = 1000;
 
-        	fetch(`../xds-document/task/${taskId}`)
-        		.then(response => response.text())
-        		.then(xmlText => {
-        			const parser = new DOMParser();
-        			const xml = parser.parseFromString(xmlText, "application/xml");
+            const finalizeSuccessFlow = () => {
+                oBusyDialog.close();
 
-        			const statusAttr = xml.documentElement.getAttribute("status") || "";
+                sap.m.MessageBox.success(`Datei erfolgreich hochgeladen: ${fileName}`, {
+                    title: "Upload erfolgreich",
+                    onClose: () => {
+                        this.onCloseUploadDialog();
 
-        			let normalizedStatus = "";
-        			if (statusAttr.includes("InProgress")) {
-        				normalizedStatus = "InProgress";
-        			} else if (statusAttr.includes("Success")) {
-        				normalizedStatus = "Success";
-        			} else if (statusAttr.includes("Failure")) {
-        				normalizedStatus = "Failure";
-        			}
+                        const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+                        const oRoute = oRouter.getRoute("patient-detail");
 
-        			if (normalizedStatus === "InProgress") {
-        				if (retry < maxRetries) {
-        					setTimeout(() => {
-        						this._pollUploadTask(taskId, fileName, oBusyDialog, retry + 1);
-        					}, delay);
-        				} else {
-        					oBusyDialog.close();
-        					sap.m.MessageBox.error("Der Upload dauert zu lange oder ist fehlgeschlagen.");
-        				}
-        			} else if (normalizedStatus === "Success") {
-                        oBusyDialog.close();
+                        const oArgs = {
+                            patient: this._entity,
+                            layout: "TwoColumnsMidExpanded"
+                        };
 
-                        sap.m.MessageBox.success(`Datei erfolgreich hochgeladen: ${fileName}`, {
-                            title: "Upload erfolgreich",
-                            onClose: () => {
-                                this.onCloseUploadDialog();
+                        const oEvent = {
+                            getParameter: (s) => s === "arguments" ? oArgs : undefined
+                        };
 
-                                const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-                                const oRoute = oRouter.getRoute("patient-detail");
+                        this._onMatched(oEvent);
+                    }
+                });
+            };
+            fetch(`../xds-document/task/${taskId}`)
+                .then(response => response.text())
+                .then(xmlText => {
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(xmlText, "application/xml");
 
-                                const oArgs = {
-                                    patient: this._entity,
-                                    layout: "TwoColumnsMidExpanded"
-                                };
+                    const statusAttr = xml.documentElement.getAttribute("status") || "";
 
-                                const oEvent = {
-                                    getParameter: (s) => s === "arguments" ? oArgs : undefined
-                                };
+                    let normalizedStatus = "";
+                    if (statusAttr.includes("InProgress")) {
+                        normalizedStatus = "InProgress";
+                    } else if (statusAttr.includes("Success")) {
+                        normalizedStatus = "Success";
+                    } else if (statusAttr.includes("Failure")) {
+                        normalizedStatus = "Failure";
+                    }
 
-                                this._onMatched(oEvent);
-                            }
-                        });
+                    if (normalizedStatus === "InProgress") {
+                        if (retry < maxRetries) {
+                            setTimeout(() => {
+                                this._pollUploadTask(taskId, fileName, oBusyDialog, retry + 1);
+                            }, delay);
+                        } else {
+                            oBusyDialog.close();
+                            sap.m.MessageBox.error("Der Upload dauert zu lange oder ist fehlgeschlagen.");
+                        }
+                    } else if (normalizedStatus === "Success") {
+                        finalizeSuccessFlow();
                     } else if (normalizedStatus === "Failure") {
-                          const errorNode = xml.querySelector("RegistryError");
-                          const errorCode = errorNode?.getAttribute("errorCode");
-                          const codeContext = errorNode?.getAttribute("codeContext");
+                        const errorNode = xml.querySelector("RegistryError");
+                        const errorCode = errorNode?.getAttribute("errorCode");
+                        const codeContext = errorNode?.getAttribute("codeContext");
 
-                          const userMessage = errorCode
-                              ? `Fehler beim Hochladen: ${errorCode}`
-                              : codeContext || "Ein technischer Fehler ist aufgetreten.";
-
-                          oBusyDialog.close();
-                          sap.m.MessageBox.warning(userMessage);
-                      } else {
-        				oBusyDialog.close();
-        				sap.m.MessageBox.error(`Unbekannter Status: ${statusAttr}`);
-        			}
-        		})
-        		.catch(error => {
-        			oBusyDialog.close();
-        			sap.m.MessageBox.error(`Fehler beim Prüfen des Upload-Status: ${error.message}`);
-        		});
+                        if (errorCode === "XDSDuplicateDocument") {
+                            const userMessage = codeContext || `Fehler beim Hochladen: ${errorCode}`;
+                            oBusyDialog.close();
+                            sap.m.MessageBox.warning(userMessage);
+                        } else {
+                            finalizeSuccessFlow();
+                        }
+                    } else {
+                        oBusyDialog.close();
+                        sap.m.MessageBox.error(`Unbekannter Status: ${statusAttr}`);
+                    }
+                })
+                .catch(error => {
+                    oBusyDialog.close();
+                    sap.m.MessageBox.error(`Fehler beim Prüfen des Upload-Status: ${error.message}`);
+                });
         },
         onCancelUpload: function () {
             const oDialog = this.byId("uploadDialog");
