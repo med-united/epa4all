@@ -18,11 +18,12 @@
                     emptySpanM="0"
                     columnsL="1"
                     columnsM="1">
-                <Label text="Dokumentenstruktur (IG)" />
+                <Label id="igSelectLabel" text="Dokumentenstruktur (IG)" visible="false" />
                 <HBox>
                     <VBox width="100%">
                         <Select
                                 id="igSelect"
+                                visible="false"
                                 width="100%"
                                 selectedKey=""
                                 change="onSelectIGValue">
@@ -58,10 +59,12 @@
                         </Select>
                     </VBox>
                     <core:Icon
+                            id="igInfoIcon"
                             src="sap-icon://message-information"
                             class="sapUiTinyMarginBegin"
                             tooltip="Mehr Informationen"
-                            press="onIgInfoPressed" />
+                            press="onIgInfoPressed"
+                            visible="false" />
                 </HBox>
                 <Label text="" />
                 <Button

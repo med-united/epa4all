@@ -544,6 +544,7 @@ sap.ui.define([
 
         	const resetUploadDialogState = () => {
         		this._selectedUploadFile = null;
+        		this._selectedIGValue = null;
 
         		const oFileNameText = this.byId("selectedFileName");
         		if (oFileNameText) {
@@ -554,6 +555,14 @@ sap.ui.define([
         		if (oUploadButton) {
         			oUploadButton.setEnabled(false);
         		}
+
+        		const oIGSelect = this.byId("igSelect");
+                const oIGLabel = this.byId("igSelectLabel");
+                const oIGInfoIcon = this.byId("igInfoIcon");
+
+                if (oIGSelect) oIGSelect.setVisible(false);
+                if (oIGLabel) oIGLabel.setVisible(false);
+                if (oIGInfoIcon) oIGInfoIcon.setVisible(false);
         	};
 
         	if (!this.byId("uploadDialog")) {
@@ -578,10 +587,10 @@ sap.ui.define([
             const sSelectedKey = oEvent.getSource().getSelectedKey();
             this._selectedIGValue = sSelectedKey;
         },
-        onSelectUploadFile: function () {
+        /*onSelectUploadFile: function () {
         	const fileInput = document.createElement("input");
         	fileInput.type = "file";
-        	fileInput.accept = "*/*";
+        	fileInput.accept = "*"; // UPDATE
 
         	fileInput.onchange = (event) => {
         		const file = event.target.files[0];
@@ -639,6 +648,101 @@ sap.ui.define([
                         oBusyDialog.close();
                         sap.m.MessageBox.error(`Fehler beim Hochladen: ${error.message}`);
                     });
+            };
+
+            reader.onerror = () => {
+                oBusyDialog.close();
+                sap.m.MessageBox.error("Fehler beim Lesen der Datei.");
+            };
+
+            reader.readAsArrayBuffer(file);
+        },*/
+        onSelectUploadFile: function () {
+            const fileInput = document.createElement("input");
+            fileInput.type = "file";
+            fileInput.accept = "*/*";
+
+            fileInput.onchange = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                this._selectedUploadFile = file;
+
+                const oFileNameText = this.byId("selectedFileName");
+                if (oFileNameText) {
+                    oFileNameText.setText(`Ausgewählt: ${file.name}`);
+                }
+
+                const oUploadButton = this.byId("uploadConfirmButton");
+                if (oUploadButton) {
+                    oUploadButton.setEnabled(true);
+                }
+
+                const isXML = file.name.toLowerCase().endsWith(".xml");
+                ["igSelect", "igLabel", "igInfoIcon"].forEach(id => {
+                    const ctrl = this.byId(id);
+                    if (ctrl) {
+                        ctrl.setVisible(isXML);
+                    }
+                });
+            };
+
+            fileInput.click();
+        },
+        onConfirmUpload: function () {
+            const file = this._selectedUploadFile;
+            let igValue = this._selectedIGValue;
+            if (!igValue && this.byId("igSelect")) {
+                igValue = this.byId("igSelect").getSelectedKey();
+            }
+
+            const sPatientId = this.getView().getBindingContext()?.getProperty("propstat/prop/displayname");
+
+            if (!file || !sPatientId) {
+                sap.m.MessageBox.error("Keine Datei oder Patienten-ID vorhanden.");
+                return;
+            }
+
+            const oBusyDialog = new sap.m.BusyDialog({ text: "Datei wird hochgeladen..." });
+            oBusyDialog.open();
+
+            const headers = new Headers();
+            headers.append("Content-Type", file.type || "application/octet-stream");
+            headers.append("Lang-Code", "de-DE");
+            headers.append("File-Name", file.name);
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                fetch(`../xds-document/upload?kvnr=${encodeURIComponent(sPatientId)}&ig=${encodeURIComponent(igValue)}`, {
+                    method: "POST",
+                    headers: headers,
+                    body: reader.result
+                }).catch(() => {
+                });
+
+                setTimeout(() => {
+                    oBusyDialog.close();
+
+                    sap.m.MessageBox.success(`Datei erfolgreich hochgeladen: ${file.name}`, {
+                        title: "Upload erfolgreich",
+                        onClose: () => {
+                            this.onCloseUploadDialog();
+
+                            const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+                            const oRoute = oRouter.getRoute("patient-detail");
+                            const oArgs = {
+                                patient: this._entity,
+                                layout: "TwoColumnsMidExpanded"
+                            };
+
+                            const oEvent = {
+                                getParameter: (s) => s === "arguments" ? oArgs : undefined
+                            };
+
+                            this._onMatched(oEvent);
+                        }
+                    });
+                }, 5000);
             };
 
             reader.onerror = () => {
