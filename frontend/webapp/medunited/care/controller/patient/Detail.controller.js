@@ -587,31 +587,7 @@ sap.ui.define([
             const sSelectedKey = oEvent.getSource().getSelectedKey();
             this._selectedIGValue = sSelectedKey;
         },
-        /*onSelectUploadFile: function () {
-        	const fileInput = document.createElement("input");
-        	fileInput.type = "file";
-        	fileInput.accept = "*"; // UPDATE
-
-        	fileInput.onchange = (event) => {
-        		const file = event.target.files[0];
-        		if (!file) return;
-
-        		this._selectedUploadFile = file;
-
-        		const oFileNameText = this.byId("selectedFileName");
-        		if (oFileNameText) {
-        			oFileNameText.setText(`Ausgewählt: ${file.name}`);
-        		}
-
-        		const oUploadButton = this.byId("uploadConfirmButton");
-        		if (oUploadButton) {
-        			oUploadButton.setEnabled(true);
-        		}
-        	};
-
-        	fileInput.click();
-        },
-        onConfirmUpload: function () {
+        /*onConfirmUpload: function () {
         	const file = this._selectedUploadFile;
         	let igValue = this._selectedIGValue;
             if (!igValue && this.byId("igSelect")) {
@@ -784,24 +760,39 @@ sap.ui.define([
         				}
         			} else if (normalizedStatus === "Success") {
                         oBusyDialog.close();
-                        sap.m.MessageToast.show(`Datei erfolgreich hochgeladen: ${fileName}`);
 
-                        const oWebdavModel = this.getView().getModel();
-                        oWebdavModel.loadFolderForContext(this.sModelPath, this.sWebDavPath);
+                        sap.m.MessageBox.success(`Datei erfolgreich hochgeladen: ${fileName}`, {
+                            title: "Upload erfolgreich",
+                            onClose: () => {
+                                this.onCloseUploadDialog();
 
-                        const oDocumentBlockExpandedView = this.byId("documentBlock")?.getAggregation("_expandedView");
-                        if (oDocumentBlockExpandedView) {
-                            const oTableBinding = oDocumentBlockExpandedView.byId("documentTableExpanded")?.getBinding("items");
-                            if (oTableBinding) {
-                                oTableBinding.checkUpdate(true);
+                                const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+                                const oRoute = oRouter.getRoute("patient-detail");
+
+                                const oArgs = {
+                                    patient: this._entity,
+                                    layout: "TwoColumnsMidExpanded"
+                                };
+
+                                const oEvent = {
+                                    getParameter: (s) => s === "arguments" ? oArgs : undefined
+                                };
+
+                                this._onMatched(oEvent);
                             }
-                        }
-        			} else if (normalizedStatus === "Failure") {
-        				const errorNode = xml.querySelector("RegistryError");
-        				const errorMessage = errorNode?.getAttribute("codeContext") || "Ein technischer Fehler ist aufgetreten.";
-        				oBusyDialog.close();
-        				sap.m.MessageBox.error(`Upload fehlgeschlagen:\n${errorMessage}`);
-        			} else {
+                        });
+                    } else if (normalizedStatus === "Failure") {
+                          const errorNode = xml.querySelector("RegistryError");
+                          const errorCode = errorNode?.getAttribute("errorCode");
+                          const codeContext = errorNode?.getAttribute("codeContext");
+
+                          const userMessage = errorCode
+                              ? `Fehler beim Hochladen: ${errorCode}`
+                              : codeContext || "Ein technischer Fehler ist aufgetreten.";
+
+                          oBusyDialog.close();
+                          sap.m.MessageBox.warning(userMessage);
+                      } else {
         				oBusyDialog.close();
         				sap.m.MessageBox.error(`Unbekannter Status: ${statusAttr}`);
         			}
