@@ -1,6 +1,7 @@
 package de.service.health.api.epa4all.proxy;
 
 import de.service.health.api.epa4all.EpaConfig;
+import de.service.health.api.epa4all.jmx.EpaMXBeanRegistry;
 import de.servicehealth.epa4all.cxf.model.FhirResponse;
 import de.servicehealth.epa4all.cxf.model.ForwardRequest;
 import de.servicehealth.vau.VauConfig;
@@ -41,20 +42,26 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
 
     private static final Logger log = LoggerFactory.getLogger(FhirProxyService.class.getName());
 
+    private final String backend;
     private final WebClient apiClient;
     private final WebClient renderClient;
+    private final EpaMXBeanRegistry epaMXBeanRegistry;
 
     public FhirProxyService(
         String backend,
         EpaConfig epaConfig,
         VauConfig vauConfig,
         VauFacade vauFacade,
+        EpaMXBeanRegistry epaMXBeanRegistry,
         Set<String> maskedHeaders,
         Set<String> maskedAttributes,
         List<Feature> features
     ) throws Exception {
         String apiUrl = getBackendUrl(backend, epaConfig.getMedicationServiceApiUrl());
         String renderUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderUrl());
+
+        this.backend = backend;
+        this.epaMXBeanRegistry = epaMXBeanRegistry;
 
         apiClient = setup(apiUrl, vauConfig, vauFacade, maskedHeaders, maskedAttributes, true, features);
         renderClient = setup(renderUrl, vauConfig, vauFacade, maskedHeaders, maskedAttributes, true, features);
@@ -100,6 +107,7 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
         }
         List<Pair<String, String>> contentHeaders = buildContentHeaders(body);
         ForwardRequest forwardRequest = new ForwardRequest(isGet, acceptHeaders, contentHeaders, body);
+        epaMXBeanRegistry.registerRequest(backend);
         FhirResponse response = webClient
             .headers(map)
             .replacePath(fhirPath.replace("fhir", ""))

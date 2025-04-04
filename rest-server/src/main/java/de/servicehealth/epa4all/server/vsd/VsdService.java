@@ -10,7 +10,6 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FileEvent;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
-import de.servicehealth.epa4all.server.filetracker.FileOp;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.WorkspaceEvent;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;

@@ -6,6 +6,7 @@ import de.service.health.api.epa4all.annotation.EpaRestFeatures;
 import de.service.health.api.epa4all.annotation.EpaSoapFeatures;
 import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.service.health.api.epa4all.entitlement.EntitlementsApi;
+import de.service.health.api.epa4all.jmx.EpaMXBeanRegistry;
 import de.service.health.api.epa4all.proxy.AdminProxyService;
 import de.service.health.api.epa4all.proxy.FhirProxyService;
 import de.service.health.api.epa4all.proxy.IAdminProxy;
@@ -71,6 +72,7 @@ public class EpaMultiService extends StartableService {
 
     @Getter
     private final EpaConfig epaConfig;
+    private final EpaMXBeanRegistry epaMXBeanRegistry;
     private final ClientFactory clientFactory;
     private final Instance<VauFacade> vauFacadeInstance;
     private final ServicehealthConfig servicehealthConfig;
@@ -86,6 +88,7 @@ public class EpaMultiService extends StartableService {
     public EpaMultiService(
         VauConfig vauConfig,
         EpaConfig epaConfig,
+        EpaMXBeanRegistry epaMXBeanRegistry,
         ClientFactory clientFactory,
         Instance<VauFacade> vauFacadeInstance,
         ServicehealthConfig servicehealthConfig,
@@ -95,6 +98,7 @@ public class EpaMultiService extends StartableService {
         this.vauFacadeInstance = vauFacadeInstance;
         this.servicehealthConfig = servicehealthConfig;
         this.clientFactory = clientFactory;
+        this.epaMXBeanRegistry = epaMXBeanRegistry;
         this.epaConfig = epaConfig;
         this.vauConfig = vauConfig;
         this.epaRestFeatures = epaRestFeatures;
@@ -136,7 +140,7 @@ public class EpaMultiService extends StartableService {
                     Set<String> maskedHeaders = servicehealthConfig.getSafeMaskedHeaders();
                     Set<String> maskedAttributes = servicehealthConfig.getSafeMaskedAttributes();
                     IFhirProxy fhirProxy = new FhirProxyService(
-                        backend, epaConfig, vauConfig, vauFacade, maskedHeaders, maskedAttributes, epaRestFeatures
+                        backend, epaConfig, vauConfig, vauFacade, epaMXBeanRegistry, maskedHeaders, maskedAttributes, epaRestFeatures
                     );
                     IAdminProxy adminProxy = new AdminProxyService(
                         backend, epaConfig, vauConfig, vauFacade, maskedHeaders, maskedAttributes
