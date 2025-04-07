@@ -79,6 +79,30 @@ sap.ui.define(["sap/ui/core/format/DateFormat"], function(DateFormat) {
                 default:
                     return sGender;
             }
+        },
+
+        formatLastModifiedInSearch: function(sDate) {
+            if (sDate) {
+                const cleanedDateString = sDate.replace(/^admin/, "");
+                const date = new Date(cleanedDateString);
+
+                if (isNaN(date.getTime())) {
+                    return "Ungültiges Datum";
+                }
+
+                return date.toLocaleString("de-DE", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    timeZone: "Europe/Berlin",
+                    timeZoneName: "short"
+                });
+            }
+            return "";
         }
     };
 });

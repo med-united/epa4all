@@ -27,7 +27,7 @@
                         <cells>
                             <Text text="{documents>path}" />
                             <Text text="{documents>encoding}" />
-                            <Text text="{documents>lastModified}" />
+                            <Text text="{ path: 'documents>lastModified', formatter: '.formatter.formatLastModifiedInSearch' }" />
                             <Text text="{documents>mimeType}" />
                         </cells>
                     </ColumnListItem>
