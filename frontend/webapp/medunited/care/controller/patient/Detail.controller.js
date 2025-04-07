@@ -596,7 +596,7 @@ sap.ui.define([
         	const sPatientId = this.getView().getBindingContext()?.getProperty("propstat/prop/displayname");
 
         	if (!file || !sPatientId) {
-        		sap.m.MessageBox.error("Keine Datei oder Patienten-ID vorhanden.");
+        		MessageBox.error("Keine Datei oder Patienten-ID vorhanden.");
         		return;
         	}
 
@@ -622,13 +622,13 @@ sap.ui.define([
                     .then(taskId => this._pollUploadTask(taskId, file.name, oBusyDialog))
                     .catch(error => {
                         oBusyDialog.close();
-                        sap.m.MessageBox.error(`Fehler beim Hochladen: ${error.message}`);
+                        MessageBox.error(`Fehler beim Hochladen: ${error.message}`);
                     });
             };
 
             reader.onerror = () => {
                 oBusyDialog.close();
-                sap.m.MessageBox.error("Fehler beim Lesen der Datei.");
+                MessageBox.error("Fehler beim Lesen der Datei.");
             };
 
             reader.readAsArrayBuffer(file);
@@ -672,27 +672,27 @@ sap.ui.define([
             const finalizeSuccessFlow = () => {
                 oBusyDialog.close();
 
-                sap.m.MessageBox.success(`Datei erfolgreich hochgeladen: ${fileName}`, {
-                    title: "Upload erfolgreich",
-                    onClose: () => {
-                        this.onCloseUploadDialog();
-
-                        const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
-                        const oRoute = oRouter.getRoute("patient-detail");
-
-                        const oArgs = {
-                            patient: this._entity,
-                            layout: "TwoColumnsMidExpanded"
-                        };
-
-                        const oEvent = {
-                            getParameter: (s) => s === "arguments" ? oArgs : undefined
-                        };
-
-                        this._onMatched(oEvent);
-                    }
+                MessageToast.show(`Datei erfolgreich hochgeladen: ${fileName}`, {
+                    duration: 5000,
                 });
+
+                this.onCloseUploadDialog();
+
+                const oRouter = sap.ui.core.UIComponent.getRouterFor(this);
+                const oRoute = oRouter.getRoute("patient-detail");
+
+                const oArgs = {
+                    patient: this._entity,
+                    layout: "TwoColumnsMidExpanded"
+                };
+
+                const oEvent = {
+                    getParameter: (s) => s === "arguments" ? oArgs : undefined
+                };
+
+                this._onMatched(oEvent);
             };
+
             fetch(`../xds-document/task/${taskId}`)
                 .then(response => response.text())
                 .then(xmlText => {
@@ -717,30 +717,44 @@ sap.ui.define([
                             }, delay);
                         } else {
                             oBusyDialog.close();
-                            sap.m.MessageBox.error("Der Upload dauert zu lange oder ist fehlgeschlagen.");
+                            MessageBox.error("Der Upload dauert zu lange oder ist fehlgeschlagen.");
                         }
                     } else if (normalizedStatus === "Success") {
                         finalizeSuccessFlow();
                     } else if (normalizedStatus === "Failure") {
-                        const errorNode = xml.querySelector("RegistryError");
-                        const errorCode = errorNode?.getAttribute("errorCode");
-                        const codeContext = errorNode?.getAttribute("codeContext");
+                        const nsResolver = (prefix) => {
+                            const ns = {
+                                "rs": "urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0"
+                            };
+                            return ns[prefix] || null;
+                        };
 
-                        if (errorCode === "XDSDuplicateDocument") {
-                            const userMessage = codeContext || `Fehler beim Hochladen: ${errorCode}`;
-                            oBusyDialog.close();
-                            sap.m.MessageBox.warning(userMessage);
+                        const xpathResult = xml.evaluate("//rs:RegistryError", xml, nsResolver, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                        const errorNode = xpathResult.singleNodeValue;
+
+                        if (errorNode) {
+                            const errorCode = errorNode.getAttribute("errorCode");
+                            const codeContext = errorNode.getAttribute("codeContext");
+
+                            if (errorCode === "XDSDuplicateDocument") {
+                                const userMessage = errorCode || codeContext || "Unbekannter Fehler beim Hochladen.";
+                                oBusyDialog.close();
+                                MessageBox.warning(userMessage);
+                            } else {
+                                finalizeSuccessFlow();
+                            }
                         } else {
-                            finalizeSuccessFlow();
+                            oBusyDialog.close();
+                            MessageBox.error("Unbekannter Fehler: Keine RegistryError-Details gefunden.");
                         }
                     } else {
                         oBusyDialog.close();
-                        sap.m.MessageBox.error(`Unbekannter Status: ${statusAttr}`);
+                        MessageBox.error(`Unbekannter Status: ${statusAttr}`);
                     }
                 })
                 .catch(error => {
                     oBusyDialog.close();
-                    sap.m.MessageBox.error(`Fehler beim Prüfen des Upload-Status: ${error.message}`);
+                    MessageBox.error(`Fehler beim Prüfen des Upload-Status: ${error.message}`);
                 });
         },
         onCancelUpload: function () {
@@ -758,7 +772,7 @@ sap.ui.define([
 				});
 		},
 		onIgInfoPressed: function () {
-        	sap.m.MessageBox.information(
+        	MessageBox.information(
         		"Wählen Sie die medizinische Struktur dieses Dokuments aus (IG = Implementation Guide). " +
         		"Dies hilft dem System, die Datei korrekt einzuordnen und zu validieren."
         	);
