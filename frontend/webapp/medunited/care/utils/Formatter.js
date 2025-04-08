@@ -103,6 +103,14 @@ sap.ui.define(["sap/ui/core/format/DateFormat"], function(DateFormat) {
                 });
             }
             return "";
+        },
+
+        formatPathInSearch: function(sPath) {
+            if (sPath) {
+                const cleanPath = sPath.replace(/^.*?X\d+\//, "").replace(/\/jcr:content$/, "");
+                return cleanPath;
+            }
+            return "";
         }
     };
 });
