@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import static de.service.health.api.epa4all.EpaMultiService.EPA_RECORD_IS_NOT_FOUND;
+import static de.servicehealth.api.epa4all.EpaMultiService.EPA_RECORD_IS_NOT_FOUND;
 import static de.servicehealth.vau.VauClient.VAU_NO_SESSION;
 import static de.servicehealth.vau.VauFacade.SOAP_INVAL_AUTH;
 

@@ -59,6 +59,7 @@ public class CxfVauSetupInterceptor extends AbstractPhaseInterceptor<Message> {
 
                 VauInfo vauInfo = vauClient.getVauInfo();
                 if (vauInfo == null) {
+                    vauClient.forceRelease(null);
                     throw new IllegalStateException("Empty VAU client is acquired, uuid = " + vauClientUuid);
                 }
                 message.put(VAU_CID, vauInfo.getVauCid());

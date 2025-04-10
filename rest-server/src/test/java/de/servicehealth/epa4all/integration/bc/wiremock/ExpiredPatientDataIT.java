@@ -1,9 +1,11 @@
 package de.servicehealth.epa4all.integration.bc.wiremock;
 
+import de.servicehealth.api.epa4all.jmx.EpaMXBeanManager;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.insurance.PatientDataJob;
+import de.servicehealth.epa4all.server.jmx.TelematikMXBean;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.path.xml.XmlPath;
@@ -52,19 +54,25 @@ public class ExpiredPatientDataIT extends AbstractJCRTest {
         vauNpProvider.doStart();
         jcrService.doStart();
 
+        String telematikId = "3-SMC-B-Testkarte--883110000147807";
         String kvnr = "X110485291";
         receiveCardInsertedEvent(fileDownloader, null, kvnr);
-        assertFileSearch(kvnr, "Ibuprofen", true);
+        assertFileSearch(telematikId, kvnr, "Ibuprofen", true);
+
+        String objectName = TelematikMXBean.OBJECT_NAME.formatted(telematikId);
+        TelematikMXBean telematikMXBean = EpaMXBeanManager.getMXBean(objectName, TelematikMXBean.class);
+        assertNotNull(telematikMXBean);
+        assertEquals(1, telematikMXBean.getPatientsCount());
 
         mockWebdavConfig(tempDir.toFile(), null, Duration.ofSeconds(1));
         patientDataJob.expirationMaintenance();
 
-        assertFileSearch(kvnr, "Ibuprofen", false);
+        assertFileSearch(telematikId, kvnr, "Ibuprofen", false);
+        assertEquals(0, telematikMXBean.getPatientsCount());
     }
 
-    private void assertFileSearch(String kvnr, String searchFor, boolean exists) throws Exception {
+    private void assertFileSearch(String telematikId, String kvnr, String searchFor, boolean exists) throws Exception {
         TimeUnit.SECONDS.sleep(2);
-        String telematikId = "3-SMC-B-Testkarte--883110000147807";
         String resource = "/webdav2/" + telematikId + "/jcr:root/rootFolder/";
         String search = "SELECT * FROM [nt:resource] as r WHERE CONTAINS(r.*, '%s')".formatted(searchFor);
         XmlPath xmlPath = searchCall(resource, search, 207);

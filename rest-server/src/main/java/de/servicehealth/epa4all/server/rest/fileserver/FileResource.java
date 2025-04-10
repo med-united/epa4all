@@ -43,6 +43,7 @@ public class FileResource extends AbstractResource {
 
     @GET
     public Response get() {
+        webdavMXBean.countRequest();
         logRequest("GET", url);
         if (!resource.exists()) {
             return Response.status(404).build();
@@ -63,6 +64,7 @@ public class FileResource extends AbstractResource {
 
     @Override
     public Response delete() {
+        webdavMXBean.countRequest();
         logRequest("DELETE", url);
         boolean deleted = resource.delete();
         if (deleted) {
@@ -73,6 +75,7 @@ public class FileResource extends AbstractResource {
 
     @Override
     public Response move(final UriInfo uriInfo, String overwriteStr, String destination) throws URISyntaxException {
+        webdavMXBean.countRequest();
         logRequest("MOVE", uriInfo);
         URI uri = uriInfo.getBaseUri();
         String host = uri.getScheme() + "://" + uri.getHost() + "/" + RESOURCE_NAME + "/";
@@ -118,6 +121,7 @@ public class FileResource extends AbstractResource {
         final HttpHeaders httpHeaders,
         final InputStream entityStream
     ) throws Exception {
+        webdavMXBean.countRequest();
         logRequest("PROPFIND", uriInfo);
         PropFind propFind = getPropFind(contentLength, providers, httpHeaders, entityStream);
         URI requestUri = uriInfo.getRequestUri();
@@ -131,11 +135,13 @@ public class FileResource extends AbstractResource {
 
     @Override
     public Response put(final UriInfo uriInfo, final InputStream entityStream, final long contentLength) throws IOException {
+        webdavMXBean.countRequest();
         return putFileOrUnknown(uriInfo, entityStream, contentLength);
     }
 
     @Override
     public Response options() {
+        webdavMXBean.countRequest();
         log.debug("File - options(..)");
         Response.ResponseBuilder builder = withDavHeader(Response.ok());// noContent();
         /*

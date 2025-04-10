@@ -6,9 +6,9 @@ import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.UserRuntimeConfig;
-import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.EpaMultiService;
-import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.api.epa4all.EpaAPI;
+import de.servicehealth.api.epa4all.EpaMultiService;
+import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.idp.IdpClient;
@@ -235,17 +235,19 @@ public class VauNpProvider extends StartableService {
                 CLIENT_UUID, uuid
             );
             voidMdc(mdcMap, () -> {
-                vauHandshake.get().apply(uri, vauClient);
-                // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
-                String nonce = smcBApi.getNonce(clientId, userAgent, backend, uuid).getNonce();
-                try (Response response = smcBApi.sendAuthRequest(clientId, userAgent, backend, uuid)) {
-                    URI location = response.getLocation();
-                    SendAuthCodeSCtype authCode = getAuthCode(runtimeConfig, smcbHandle, nonce, location);
-                    applyVauNp(smcBApi, vauClient, clientId, userAgent, backend, authCode);
+                boolean vauInfoSet = vauHandshake.get().apply(uri, vauClient);
+                if (vauInfoSet) {
+                    // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
+                    String nonce = smcBApi.getNonce(clientId, userAgent, backend, uuid).getNonce();
+                    try (Response response = smcBApi.sendAuthRequest(clientId, userAgent, backend, uuid)) {
+                        URI location = response.getLocation();
+                        SendAuthCodeSCtype authCode = getAuthCode(runtimeConfig, smcbHandle, nonce, location);
+                        applyVauNp(smcBApi, vauClient, clientId, userAgent, backend, authCode);
+                    }
                 }
             });
         } catch (Throwable e) {
-            log.error("Error while reloadVauClient", e);
+            log.error("Error while reloadVauClient, vauClient=%s".formatted(vauClient.getUuid()), e);
             vauClient.setVauInfo(null);
             vauClient.setVauNp(null);
         }

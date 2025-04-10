@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.server.idp.vaunp;
 
 import de.gematik.vau.lib.data.KdfKey2;
-import de.service.health.api.epa4all.EpaConfig;
+import de.servicehealth.api.epa4all.EpaConfig;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.provider.CborWriterProvider;
 import de.servicehealth.vau.VauClient;
@@ -11,7 +11,6 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
-import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
@@ -59,15 +58,16 @@ public class VauHandshake {
         epaUserAgent = epaConfig.getEpaUserAgent();
     }
 
-    public void apply(String uri, VauClient vauClient) {
+    public boolean apply(String uri, VauClient vauClient) {
         try {
             TimeUnit.SECONDS.sleep(1);
             String mock = vauClient.isMock() ? "/" + Math.abs(vauClient.hashCode()) : "";
             M2Result m2Result = receiveM2(vauClient, uri, mock);
             receiveM4(vauClient, uri, mock, m2Result);
+            return true;
         } catch (Exception e) {
-            log.error("Error while VAU handshake", e);
-            throw new Fault(e);
+            log.error("Error while VAU handshake, vauClient=%s".formatted(vauClient.getUuid()), e);
+            return false;
         }
     }
 

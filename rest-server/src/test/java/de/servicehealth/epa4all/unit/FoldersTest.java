@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.unit;
 
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
+import de.servicehealth.epa4all.server.jmx.TelematikMXBeanRegistry;
 import de.servicehealth.folder.WebdavConfig;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +36,8 @@ public class FoldersTest {
                 )
             );
             FileEventSender fileEventSender = mock(FileEventSender.class);
-            FolderService folderService = new FolderService(webdavConfig, fileEventSender);
+            TelematikMXBeanRegistry telematikMXBeanRegistry = mock(TelematikMXBeanRegistry.class);
+            FolderService folderService = new FolderService(webdavConfig, fileEventSender, telematikMXBeanRegistry);
             File telematikFolder = folderService.initInsurantFolders("telematikId", " ");
             File[] files = telematikFolder.listFiles();
             assertNotNull(files);

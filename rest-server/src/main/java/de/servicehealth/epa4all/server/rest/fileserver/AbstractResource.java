@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.rest.fileserver;
 
+import de.servicehealth.epa4all.server.jmx.WebdavMXBeanImpl;
 import de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.DirectoryProp;
 import de.servicehealth.epa4all.server.rest.fileserver.prop.FileProp;
@@ -70,6 +71,9 @@ public class AbstractResource implements WebDavResource {
     @Inject
     WebdavConfig webdavConfig;
 
+    @Inject
+    protected WebdavMXBeanImpl webdavMXBean;
+
     protected String url;
     protected File resource;
     protected String rootFolder;
@@ -85,6 +89,7 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Response get(UriInfo uriInfo) {
+        webdavMXBean.countRequest();
         logRequest("GET", uriInfo);
         Response.ResponseBuilder builder = Response.ok();
         builder.header(CONTENT_TYPE, MediaType.TEXT_HTML);
@@ -145,6 +150,7 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Response put(UriInfo uriInfo, final InputStream entityStream, final long contentLength) throws IOException {
+        webdavMXBean.countRequest();
         logRequest("PUT", uriInfo);
         return logResponse("PUT", uriInfo, Response.status(501).build());
     }
@@ -170,6 +176,7 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Response mkcol() {
+        webdavMXBean.countRequest();
         log.debug("Abstract - mkcol(..)");
         return logResponse("MKCOL", Response.status(404).build());
     }

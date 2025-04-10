@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.insurance;
 import de.servicehealth.epa4all.server.filetracker.FileEvent;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
+import de.servicehealth.epa4all.server.jmx.TelematikMXBeanRegistry;
 import de.servicehealth.folder.WebdavConfig;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -38,6 +39,10 @@ public class PatientDataJob {
     @Inject
     InsuranceDataService insuranceDataService;
 
+    @Inject
+    TelematikMXBeanRegistry telematikMXBeanRegistry;
+
+
     @Scheduled(
         every = "${webdav.patient.data.job.interval:1h}",
         delay = 1,
@@ -66,6 +71,7 @@ public class PatientDataJob {
             if (expired) {
                 try {
                     deleteDirectory(kvnrFolder);
+                    telematikMXBeanRegistry.unregisterPatient(telematikId);
                     fileEventSender.sendAsync(new FileEvent(Delete, telematikId, List.of(kvnrFolder)));
                     log.info("[%s] Patient data was successfully deleted, expiry = %s, additionalRetainPeriod = %s".formatted(
                         kvnr, expiry, additionalRetainPeriod)

@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.server.filetracker;
 
-import de.service.health.api.epa4all.EpaMultiService;
+import de.servicehealth.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import de.servicehealth.epa4all.server.xdsdocument.XDSDocumentService;

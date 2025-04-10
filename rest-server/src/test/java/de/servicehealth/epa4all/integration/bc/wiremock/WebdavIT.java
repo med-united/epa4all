@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.integration.bc.wiremock;
 
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.servicehealth.api.epa4all.jmx.EpaMXBeanManager;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
@@ -10,6 +11,7 @@ import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.jmx.WebdavMXBean;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -74,7 +76,6 @@ public class WebdavIT extends AbstractWiremockTest {
 
     @Inject
     VsdService vsdService;
-    
 
     private UCPersoenlicheVersichertendatenXML.Versicherter.Person prepareInsurantFiles(
         String telematikId,
@@ -121,6 +122,9 @@ public class WebdavIT extends AbstractWiremockTest {
         List<Long> timestamps = xmlPath.getList("multistatus.response.responsedescription").stream()
             .map(o -> Long.parseLong(String.valueOf(o))).toList();
         assertTrue(timestamps.getFirst() >= timestamps.get(1) && timestamps.get(1) >= timestamps.getLast());
+        WebdavMXBean webdavMXBean = WebdavMXBean.getInstance();
+        assertNotNull(webdavMXBean);
+        assertEquals(1, webdavMXBean.getRequestsCount());
     }
 
     @Test

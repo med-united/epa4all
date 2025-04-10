@@ -5,7 +5,7 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
-import de.service.health.api.epa4all.EpaMultiService;
+import de.servicehealth.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cetp.cardlink.CardlinkClientWSFactory;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
