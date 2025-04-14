@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.filetracker;
 
+import de.servicehealth.epa4all.server.jmx.TelematikMXBeanRegistry;
 import de.servicehealth.folder.IFolderService;
 import de.servicehealth.folder.WebdavConfig;
 import de.servicehealth.utils.ServerUtils;
@@ -25,11 +26,17 @@ public class FolderService implements IFolderService {
     private final File rootFolder;
     private final WebdavConfig webdavConfig;
     private final FileEventSender fileEventSender;
+    private final TelematikMXBeanRegistry telematikMXBeanRegistry;
 
     @Inject
-    public FolderService(WebdavConfig webdavConfig, FileEventSender fileEventSender) {
+    public FolderService(
+        WebdavConfig webdavConfig,
+        FileEventSender fileEventSender,
+        TelematikMXBeanRegistry telematikMXBeanRegistry
+    ) {
         this.webdavConfig = webdavConfig;
         this.fileEventSender = fileEventSender;
+        this.telematikMXBeanRegistry = telematikMXBeanRegistry;
 
         rootFolder = new File(webdavConfig.getRootFolder());
         if (!rootFolder.exists()) {
@@ -48,14 +55,24 @@ public class FolderService implements IFolderService {
 
     @Override
     public Supplier<File> getTelematikFolderSupplier(String telematikId) {
+        var exists = new File(rootFolder, telematikId).exists();
         String path = String.join(separator, rootFolder.getAbsolutePath(), telematikId);
-        return () -> getOrCreateFolder(path);
+        return () -> {
+            File folder = getOrCreateFolder(path);
+            if (!exists) {
+                telematikMXBeanRegistry.registerTelematikId(telematikId);
+            }
+            return folder;
+        };
     }
 
     public File initInsurantFolders(String telematikId, String insurantId) {
         File telematikFolder = getTelematikFolder(telematikId);
         if (insurantId != null && !insurantId.trim().isEmpty()) {
             String telematikFolderPath = telematikFolder.getAbsolutePath();
+            if (!new File(telematikFolder, insurantId).exists()) {
+                telematikMXBeanRegistry.registerNewPatient(telematikId);
+            }
             webdavConfig.getSmcbFolders().keySet().forEach(folder -> {
                     try {
                         getOrCreateFolder(String.join(separator, telematikFolderPath, insurantId, folder));

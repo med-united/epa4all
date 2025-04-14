@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.service.health.api.epa4all.EpaAPI;
+import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;

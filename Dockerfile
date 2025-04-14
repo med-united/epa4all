@@ -14,6 +14,7 @@ RUN apk add --no-cache curl bash tini ca-certificates libc6-compat tcpdump less 
     && mkdir /opt/epa4all/frontend \
     && mkdir /opt/epa4all/config \
     && mkdir /opt/epa4all/quarkus \
+    && mkdir /opt/epa4all/prometheus \
     && mkdir /opt/epa4all/secret \
     && mkdir /opt/epa4all/tls \
     && mkdir /opt/epa4all/ig-schema \
@@ -41,6 +42,8 @@ RUN case "${TARGETPLATFORM}" in \
 
 COPY --chown=1001 api-xds/src/main/resources/ig-schema/* /opt/epa4all/ig-schema/
 COPY --chown=1001 rest-server/frontend/ /opt/epa4all/frontend/
+COPY --chown=1001 rest-server/prometheus/prometheus.jks /opt/epa4all/prometheus/prometheus.jks
+COPY --chown=1001 rest-server/prometheus/jmx_prometheus_javaagent-1.0.1.jar /opt/epa4all/jmx_prometheus_javaagent-1.0.1.jar
 COPY --chown=1001 tls/epa-certs/*.pem /opt/epa4all/certs
 COPY --chown=1001 linux-service/run.sh /opt/epa4all
 COPY --chown=1001 tls/server/key-store/keystore.p12 /opt/epa4all/tls
@@ -51,6 +54,7 @@ COPY --chown=1001 rest-server/target/quarkus-app/lib/main/* /opt/epa4all/lib/mai
 COPY --chown=1001 rest-server/target/quarkus-app/quarkus/* /opt/epa4all/quarkus/
 COPY --chown=1001 rest-server/target/quarkus-app/quarkus-run.jar /opt/epa4all/
 COPY --chown=1001 rest-server/src/main/resources/application.properties /opt/epa4all/config/application.properties
+COPY --chown=1001 rest-server/src/main/resources/prometheus.yaml /opt/epa4all/prometheus.yaml
 COPY --chown=1001 rest-server/src/main/resources/jcr/ /opt/epa4all/jcr/
 COPY --chown=1001 rest-server/config/konnektoren/8588/user.properties /opt/epa4all/config/konnektoren/8588/user.properties
 COPY --chown=1001 production_deployment/promtail.yaml /opt/epa4all/promtail

@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.server.rest;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import de.service.health.api.epa4all.EpaAPI;
+import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.vau.VauFacade;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.Consumes;

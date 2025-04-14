@@ -1,4 +1,4 @@
-package de.service.health.api.epa4all.authorization;
+package de.servicehealth.api.epa4all.authorization;
 
 import de.servicehealth.model.ErrorType;
 import de.servicehealth.model.GetNonce200Response;

@@ -14,7 +14,7 @@ import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.cetp.domain.fault.CetpFault;
-import de.service.health.api.epa4all.EpaMultiService;
+import de.servicehealth.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.VauMessage1Transformer;

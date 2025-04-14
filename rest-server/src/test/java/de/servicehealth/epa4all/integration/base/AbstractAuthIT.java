@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.integration.base;
 
-import de.service.health.api.epa4all.EpaConfig;
-import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.api.epa4all.EpaConfig;
+import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.common.ITAction;
 import de.servicehealth.epa4all.common.TestUtils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;

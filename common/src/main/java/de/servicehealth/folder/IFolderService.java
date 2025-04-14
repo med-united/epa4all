@@ -22,12 +22,14 @@ public interface IFolderService {
     Supplier<File> getTelematikFolderSupplier(String telematikId);
 
     default Supplier<File> getInsurantFolderSupplier(String telematikId, String insurantId) {
-        String path = String.join(separator, getTelematikFolderSupplier(telematikId).get().getAbsolutePath(), insurantId);
+        File telematikFolder = getTelematikFolderSupplier(telematikId).get();
+        String path = String.join(separator, telematikFolder.getAbsolutePath(), insurantId);
         return () -> getOrCreateFolder(path);
     }
 
     default Supplier<File> getFolderSupplier(String telematikId, String insurantId, String medFolder) {
-        String path = String.join(separator, getInsurantFolderSupplier(telematikId, insurantId).get().getAbsolutePath(), medFolder);
+        File insurantFolder = getInsurantFolderSupplier(telematikId, insurantId).get();
+        String path = String.join(separator, insurantFolder.getAbsolutePath(), medFolder);
         return () -> getOrCreateFolder(path);
     }
 

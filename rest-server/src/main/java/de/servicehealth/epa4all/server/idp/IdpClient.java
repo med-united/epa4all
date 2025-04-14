@@ -83,6 +83,13 @@ public class IdpClient extends StartableService {
         retrieveDiscoveryDocument();
     }
 
+    public DiscoveryDocumentResponse retrieveDocument()  {
+        log.info("Downloading: " + idpConfig.getDiscoveryDocumentUrl());
+        return authenticatorClient.retrieveDiscoveryDocument(
+            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
+        );
+    }
+
     private void retrieveDiscoveryDocument() throws Exception {
         DiscoveryDocumentFile<DiscoveryDocumentWrapper> documentFile = new DiscoveryDocumentFile<>(configDirectory);
         DiscoveryDocumentWrapper documentWrapper = documentFile.load();
@@ -94,10 +101,7 @@ public class IdpClient extends StartableService {
         boolean worked = false;
         while (!worked) {
             try {
-                log.info("Downloading: " + idpConfig.getDiscoveryDocumentUrl());
-                discoveryDocumentResponse = authenticatorClient.retrieveDiscoveryDocument(
-                    idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-                );
+                discoveryDocumentResponse = retrieveDocument();
                 DiscoveryDocumentWrapper wrapper = new DiscoveryDocumentWrapper(discoveryDocumentResponse);
                 new DiscoveryDocumentFile<>(configDirectory).store(wrapper);
                 worked = true;

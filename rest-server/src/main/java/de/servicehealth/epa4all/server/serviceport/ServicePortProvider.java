@@ -13,7 +13,7 @@ import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
-import de.service.health.api.epa4all.annotation.KonnektorSoapFeatures;
+import de.servicehealth.api.epa4all.annotation.KonnektorSoapFeatures;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.utils.SSLResult;
 import jakarta.enterprise.context.ApplicationScoped;

@@ -79,7 +79,7 @@ public class VauClient {
         acquiredAt = new AtomicLong(0L);
     }
 
-    public boolean acquire() {
+    public synchronized boolean acquire() {
         boolean acquired = semaphore.tryAcquire();
         if (acquired) {
             acquiredAt.set(System.currentTimeMillis());
@@ -140,13 +140,13 @@ public class VauClient {
         return decryptedBytes;
     }
 
-    public String forceRelease(Long hangsTime) {
+    public synchronized String forceRelease(Long hangsTime) {
         long acquiredAt = this.acquiredAt.get();
         long delta = System.currentTimeMillis() - acquiredAt;
         if (hangsTime == null || hangsTime <= delta) {
             try {
                 String msg = "[VauClient %s] FORCE RELEASE hangsTime=%d delta=%d acquiredAt=%d";
-                log.debug(String.format(msg, uuid, hangsTime, delta, acquiredAt));
+                log.info(String.format(msg, uuid, hangsTime, delta, acquiredAt));
 
                 String vauCid = vauInfo == null ? "not-defined-yet" : vauInfo.getVauCid();
                 setVauInfo(null);

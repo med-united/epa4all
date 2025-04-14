@@ -1,8 +1,8 @@
-package de.service.health.api.epa4all.proxy;
+package de.servicehealth.api.epa4all.proxy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.service.health.api.epa4all.EpaConfig;
+import de.servicehealth.api.epa4all.EpaConfig;
 import de.servicehealth.epa4all.cxf.model.ForwardRequest;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;

@@ -18,7 +18,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import java.util.List;
 
 import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
-import static de.servicehealth.vau.VauClient.KVNR;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 

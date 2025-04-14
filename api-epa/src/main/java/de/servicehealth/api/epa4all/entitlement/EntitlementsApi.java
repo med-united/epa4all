@@ -1,4 +1,4 @@
-package de.service.health.api.epa4all.entitlement;
+package de.servicehealth.api.epa4all.entitlement;
 
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.ErrorType;

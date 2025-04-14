@@ -1,9 +1,9 @@
-package de.service.health.api.epa4all;
+package de.servicehealth.api.epa4all;
 
-import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
-import de.service.health.api.epa4all.entitlement.EntitlementsApi;
-import de.service.health.api.epa4all.proxy.IAdminProxy;
-import de.service.health.api.epa4all.proxy.IFhirProxy;
+import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.api.epa4all.entitlement.EntitlementsApi;
+import de.servicehealth.api.epa4all.proxy.IAdminProxy;
+import de.servicehealth.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;

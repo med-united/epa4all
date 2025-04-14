@@ -43,6 +43,7 @@ public class FileServerResource extends AbstractResource {
         final InputStream entityStream
     ) throws Exception {
         logRequest("PROPFIND", uriInfo);
+        webdavMXBean.countRequest();
         return getDirectoryPropfindResponse(uriInfo, depthValue, contentLength, providers, httpHeaders, entityStream);
     }
 }

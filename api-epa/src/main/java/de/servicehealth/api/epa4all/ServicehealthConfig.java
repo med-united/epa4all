@@ -1,4 +1,4 @@
-package de.service.health.api.epa4all;
+package de.servicehealth.api.epa4all;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;

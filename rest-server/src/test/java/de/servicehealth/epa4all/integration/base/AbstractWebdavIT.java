@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.integration.base;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.jcr.JcrConfig;
+import de.servicehealth.epa4all.server.jmx.TelematikMXBeanRegistry;
 import de.servicehealth.folder.WebdavConfig;
 import io.quarkus.test.junit.QuarkusMock;
 import jakarta.inject.Inject;
@@ -24,6 +25,9 @@ public class AbstractWebdavIT {
 
     @Inject
     FileEventSender fileEventSender;
+
+    @Inject
+    TelematikMXBeanRegistry telematikMXBeanRegistry;
 
 
     protected JcrConfig mockJcrConfig(File tempDir, Map<String, List<String>> mixinMap) {
@@ -82,7 +86,7 @@ public class AbstractWebdavIT {
             )
         );
 
-        FolderService folderService = new FolderService(webdavConfig, fileEventSender);
+        FolderService folderService = new FolderService(webdavConfig, fileEventSender, telematikMXBeanRegistry);
 
         QuarkusMock.installMockForType(folderService, FolderService.class);
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);

@@ -1,9 +1,9 @@
 package de.servicehealth.epa4all.integration.bc.epa;
 
 import de.health.service.cetp.IKonnektorClient;
-import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.EpaMultiService;
-import de.service.health.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.api.epa4all.EpaAPI;
+import de.servicehealth.api.epa4all.EpaMultiService;
+import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;

@@ -16,10 +16,7 @@ public class DefaultUserConfig implements UserRuntimeConfig {
     private final IUserConfigurations userConfigurations;
     private final IRuntimeConfig runtimeConfig;
 
-    public DefaultUserConfig(
-        KonnektorDefaultConfig konnektorDefaultConfig,
-        IdpConfig idpConfig
-    ) {
+    public DefaultUserConfig(KonnektorDefaultConfig konnektorDefaultConfig, IdpConfig idpConfig) {
         this.konnektorDefaultConfig = konnektorDefaultConfig;
 
         runtimeConfig = new IRuntimeConfig() {

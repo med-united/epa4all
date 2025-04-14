@@ -1,4 +1,4 @@
-package de.service.health.api.epa4all.proxy;
+package de.servicehealth.api.epa4all.proxy;
 
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadInterceptor;

@@ -1,9 +1,9 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.health.service.config.api.UserRuntimeConfig;
-import de.service.health.api.epa4all.EpaAPI;
-import de.service.health.api.epa4all.EpaConfig;
-import de.service.health.api.epa4all.EpaMultiService;
+import de.servicehealth.api.epa4all.EpaAPI;
+import de.servicehealth.api.epa4all.EpaConfig;
+import de.servicehealth.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.cdi.SMCBHandle;
 import de.servicehealth.epa4all.server.cdi.TelematikId;

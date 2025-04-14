@@ -25,6 +25,9 @@ import org.apache.cxf.interceptor.Interceptor;
 import org.apache.cxf.jaxrs.client.ClientConfiguration;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.management.InstrumentationManager;
+import org.apache.cxf.management.counters.CounterRepository;
+import org.apache.cxf.management.jmx.InstrumentationManagerImpl;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.transport.ConduitInitiatorManager;
 import org.apache.cxf.transport.DestinationFactoryManager;
@@ -36,6 +39,7 @@ import java.util.Set;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
+import static java.lang.Boolean.TRUE;
 
 @ApplicationScoped
 public class ClientFactory extends StartableService {
@@ -51,6 +55,20 @@ public class ClientFactory extends StartableService {
     public void doStart() {
         Bus globalBus = BusFactory.getDefaultBus();
         globalBus.setProperty("force.urlconnection.http.conduit", false);
+        globalBus.setProperty("bus.jmx.usePlatformMBeanServer", TRUE);
+        globalBus.setProperty("bus.jmx.enabled", TRUE);
+
+        InstrumentationManagerImpl instrumentationManager = new InstrumentationManagerImpl(globalBus);
+        instrumentationManager.setEnabled(true);
+        instrumentationManager.setUsePlatformMBeanServer(true);
+        globalBus.setExtension(instrumentationManager, InstrumentationManager.class);
+
+        CounterRepository counterRepository = new CounterRepository();
+        counterRepository.setBus(globalBus);
+        globalBus.setExtension(counterRepository, CounterRepository.class);
+
+        instrumentationManager.init();
+
         DestinationFactoryManager dfm = globalBus.getExtension(DestinationFactoryManager.class);
         HTTPVauTransportFactory customTransport = new HTTPVauTransportFactory(vauConfig);
         dfm.registerDestinationFactory(TRANSPORT_IDENTIFIER, customTransport);

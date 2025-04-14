@@ -1,8 +1,8 @@
-package de.service.health.api.epa4all;
+package de.servicehealth.api.epa4all;
 
-import de.service.health.api.epa4all.annotation.EpaRestFeatures;
-import de.service.health.api.epa4all.annotation.EpaSoapFeatures;
-import de.service.health.api.epa4all.annotation.KonnektorSoapFeatures;
+import de.servicehealth.api.epa4all.annotation.EpaRestFeatures;
+import de.servicehealth.api.epa4all.annotation.EpaSoapFeatures;
+import de.servicehealth.api.epa4all.annotation.KonnektorSoapFeatures;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;

@@ -10,7 +10,6 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.FileEvent;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
-import de.servicehealth.epa4all.server.filetracker.FileOp;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.WorkspaceEvent;
 import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
@@ -54,6 +53,61 @@ public class VsdService {
         this.fileEventSender = fileEventSender;
         this.folderService = folderService;
         this.epaCallGuard = epaCallGuard;
+    }
+
+    public synchronized String read(
+        String egkHandle,
+        String smcbHandle,
+        UserRuntimeConfig runtimeConfig,
+        String telematikId,
+        String fallbackKvnr
+    ) throws Exception {
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        ContextType context = servicePorts.getContextType();
+        if (context.getUserId() == null || context.getUserId().isEmpty()) {
+            context.setUserId(UUID.randomUUID().toString());
+        }
+        ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle, smcbHandle);
+        ReadVSDResponse readVSDResponse = epaCallGuard.callAndRetry(() ->
+            servicePorts.getVSDServicePortType().readVSD(readVSD)
+        );
+        String insurantId = extractInsurantId(readVSDResponse, fallbackKvnr);
+        if (insurantId == null || insurantId.isEmpty()) {
+            throw new CetpFault("Unable to get insurantId");
+        }
+        saveVsdFile(telematikId, insurantId, readVSDResponse);
+        return insurantId;
+    }
+
+    public void saveVsdFile(String telematikId, String insurantId, ReadVSDResponse readVSDResponse) {
+        try {
+            // 1. Make sure all med folders are created
+            File telematikFolder = folderService.initInsurantFolders(telematikId, insurantId);
+            fileEventSender.send(new WorkspaceEvent(telematikFolder));
+
+            // 2. Store VDS response into "local" folder
+            File localFolder = folderService.getMedFolder(telematikId, insurantId, LOCAL_FOLDER);
+            VsdResponseFile vsdResponseFile = new VsdResponseFile(localFolder);
+            vsdResponseFile.store(readVSDResponse);
+
+            fileEventSender.sendAsync(new FileEvent(Create, telematikId, vsdResponseFile.getFiles()));
+        } catch (Exception e) {
+            log.warn("Could not save ReadVSDResponse", e);
+        }
+    }
+
+    private ReadVSD prepareReadVSDRequest(
+        ContextType context,
+        String egkHandle,
+        String smcbHandle
+    ) {
+        ReadVSD readVSD = new ReadVSD();
+        readVSD.setContext(context);
+        readVSD.setEhcHandle(egkHandle);
+        readVSD.setHpcHandle(smcbHandle);
+        readVSD.setReadOnlineReceipt(true);
+        readVSD.setPerformOnlineCheck(true);
+        return readVSD;
     }
 
     public static ReadVSDResponse buildSyntheticVSDResponse() throws Exception {
@@ -110,60 +164,5 @@ public class VsdService {
 
     private static byte[] gzip(String xml, byte[] bytes) {
         return xml != null ? compress(xml.getBytes()) : compress(bytes);
-    }
-
-    public synchronized String read(
-        String egkHandle,
-        String smcbHandle,
-        UserRuntimeConfig runtimeConfig,
-        String telematikId,
-        String fallbackKvnr
-    ) throws Exception {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
-        ContextType context = servicePorts.getContextType();
-        if (context.getUserId() == null || context.getUserId().isEmpty()) {
-            context.setUserId(UUID.randomUUID().toString());
-        }
-        ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle, smcbHandle);
-        ReadVSDResponse readVSDResponse = epaCallGuard.callAndRetry(() ->
-            servicePorts.getVSDServicePortType().readVSD(readVSD)
-        );
-        String insurantId = extractInsurantId(readVSDResponse, fallbackKvnr);
-        if (insurantId == null || insurantId.isEmpty()) {
-            throw new CetpFault("Unable to get insurantId");
-        }
-        saveVsdFile(telematikId, insurantId, readVSDResponse);
-        return insurantId;
-    }
-
-    public void saveVsdFile(String telematikId, String insurantId, ReadVSDResponse readVSDResponse) {
-        try {
-            // 1. Make sure all med folders are created
-            File telematikFolder = folderService.initInsurantFolders(telematikId, insurantId);
-            fileEventSender.send(new WorkspaceEvent(telematikFolder));
-
-            // 2. Store VDS response into "local" folder
-            File localFolder = folderService.getMedFolder(telematikId, insurantId, LOCAL_FOLDER);
-            VsdResponseFile vsdResponseFile = new VsdResponseFile(localFolder);
-            vsdResponseFile.store(readVSDResponse);
-
-            fileEventSender.sendAsync(new FileEvent(Create, telematikId, vsdResponseFile.getFiles()));
-        } catch (Exception e) {
-            log.warn("Could not save ReadVSDResponse", e);
-        }
-    }
-
-    private ReadVSD prepareReadVSDRequest(
-        ContextType context,
-        String egkHandle,
-        String smcbHandle
-    ) {
-        ReadVSD readVSD = new ReadVSD();
-        readVSD.setContext(context);
-        readVSD.setEhcHandle(egkHandle);
-        readVSD.setHpcHandle(smcbHandle);
-        readVSD.setReadOnlineReceipt(true);
-        readVSD.setPerformOnlineCheck(true);
-        return readVSD;
     }
 }

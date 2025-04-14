@@ -1,4 +1,4 @@
-package de.service.health.api.epa4all.annotation;
+package de.servicehealth.api.epa4all.annotation;
 
 import jakarta.inject.Qualifier;
 
@@ -13,5 +13,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Qualifier
 @Retention(RUNTIME)
 @Target({PARAMETER, FIELD, METHOD})
-public @interface EpaRestFeatures {
+public @interface EpaSoapFeatures {
 }

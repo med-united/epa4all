@@ -31,6 +31,7 @@ public class DirectoryResource extends AbstractResource {
 
     @Override
     public Response move(final UriInfo uriInfo, String overwriteStr, String destination) throws URISyntaxException {
+        webdavMXBean.countRequest();
         logRequest("MOVE", uriInfo);
         URI uri = uriInfo.getBaseUri();
         String host = uri.getScheme() + "://" + uri.getHost() + "/" + RESOURCE_NAME + "/";
@@ -73,6 +74,7 @@ public class DirectoryResource extends AbstractResource {
         final HttpHeaders httpHeaders,
         final InputStream entityStream
     ) throws Exception {
+        webdavMXBean.countRequest();
         logRequest("PROPFIND", uriInfo);
         if (resource.exists()) {
             return getDirectoryPropfindResponse(uriInfo, depthValue, contentLength, providers, httpHeaders, entityStream);
