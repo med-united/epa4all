@@ -8,7 +8,7 @@ then
  return 1
 fi
 
-mvn -U dependency:copy -Dartifact=io.prometheus.jmx:jmx_prometheus_javaagent:1.0.1:jar -DoutputDirectory=rest-server/prometheus
+#mvn -U dependency:copy -Dartifact=io.prometheus.jmx:jmx_prometheus_javaagent:1.0.1:jar -DoutputDirectory=rest-server/prometheus
 
 docker volume create epa4all-webdav
 docker rm epa4all
