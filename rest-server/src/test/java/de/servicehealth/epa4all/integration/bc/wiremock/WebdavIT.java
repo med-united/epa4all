@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.LOCALDATE_YYYYMMDD;
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.LOCALDATE_YYYY_MM_DD;
+import static de.servicehealth.epa4all.server.jmx.WebdavMXBean.OBJECT_NAME;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_LIMIT;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_OFFSET;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_SORT_BY;
@@ -122,7 +123,7 @@ public class WebdavIT extends AbstractWiremockTest {
         List<Long> timestamps = xmlPath.getList("multistatus.response.responsedescription").stream()
             .map(o -> Long.parseLong(String.valueOf(o))).toList();
         assertTrue(timestamps.getFirst() >= timestamps.get(1) && timestamps.get(1) >= timestamps.getLast());
-        WebdavMXBean webdavMXBean = WebdavMXBean.getInstance();
+        WebdavMXBean webdavMXBean = EpaMXBeanManager.getMXBean(OBJECT_NAME, WebdavMXBean.class);
         assertNotNull(webdavMXBean);
         assertEquals(1, webdavMXBean.getRequestsCount());
     }
