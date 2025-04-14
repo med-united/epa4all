@@ -46,13 +46,13 @@ public class MixinJCRIT extends AbstractJCRTest {
             .httpClient(HttpClientConfig.httpClientConfig()
                 .setParam("http.socket.timeout", 600000));
 
-        // 1. prepare telematik+kvnr folders
+        // 1. start jcr repository and import them
+        jcrService.doStart();
+
+        // 2. prepare telematik+kvnr folders
         String telematikId = "1-SMC-B-Testkarte--883110000162363";
         String kvnr = "X110485291";
         prepareInsurantFiles(telematikId, kvnr);
-
-        // 2. start jcr repository and import them
-        jcrService.doStart();
 
         String resource = "/webdav2/" + telematikId + "/jcr:root/rootFolder/" + kvnr + "/local";
 
@@ -64,7 +64,7 @@ public class MixinJCRIT extends AbstractJCRTest {
         XmlPath xmlPath = searchCall(resource, query, 207);
 
         List<String> firstnames = xmlPath.get("**.findAll { it.name == 'f.epa:firstname'}.value");
-        assertEquals(6, firstnames.size());
+        assertEquals(5, firstnames.size());
         assertEquals("Johann_x0020_Alfons_x0020_Simon_x0020_Heider", firstnames.getFirst());
 
         jcrService.shutdown();

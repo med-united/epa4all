@@ -24,4 +24,8 @@ public class WebdavMXBeanImpl implements WebdavMXBean {
     public void countRequest() {
         counter.increment();
     }
+
+    public void reset() {
+        counter.reset();
+    }
 }

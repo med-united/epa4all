@@ -12,6 +12,7 @@ import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.jmx.WebdavMXBean;
+import de.servicehealth.epa4all.server.jmx.WebdavMXBeanImpl;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -24,6 +25,7 @@ import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -77,6 +79,14 @@ public class WebdavIT extends AbstractWiremockTest {
 
     @Inject
     VsdService vsdService;
+
+    @Inject
+    WebdavMXBeanImpl webdavMXBeanImpl;
+
+    @BeforeEach
+    public void before() {
+        webdavMXBeanImpl.reset();
+    }
 
     private UCPersoenlicheVersichertendatenXML.Versicherter.Person prepareInsurantFiles(
         String telematikId,
