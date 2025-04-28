@@ -12,7 +12,7 @@ public class SmtpConfig {
     String server;
 
     @ConfigProperty(name = "smtp.port")
-    String port;
+    int port;
 
     @ConfigProperty(name = "smtp.user")
     String user;

@@ -14,9 +14,6 @@ public class KimConfig {
     @ConfigProperty(name = "kim.to.address")
     String toAddress;
 
-    @ConfigProperty(name = "kim.pharmacy.note")
-    String noteToPharmacy;
-
     @ConfigProperty(name = "kim.subject")
     String subject;
 

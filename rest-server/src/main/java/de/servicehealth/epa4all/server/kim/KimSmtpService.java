@@ -30,7 +30,7 @@ public class KimSmtpService {
     @Inject
     KimConfig kimConfig;
 
-    public String sendERezeptToKIMAddress(String prescription) {
+    public String sendERezeptToKIMAddress(String prescription, String noteToPharmacy) {
         try {
             Properties props = new Properties();
             props.put("mail.smtp.host", smtpConfig.getServer());
@@ -55,7 +55,7 @@ public class KimSmtpService {
             msg.setSubject(kimConfig.getSubject(), "UTF-8");
 
             MimeBodyPart textPart = new MimeBodyPart();
-            textPart.setText(kimConfig.getNoteToPharmacy() + "\r\n\r\n\r\n", "utf-8");
+            textPart.setText((noteToPharmacy == null ? "Hello" : noteToPharmacy) + "\r\n\r\n\r\n", "utf-8");
 
             MimeBodyPart erezeptTokenPart = new MimeBodyPart();
             erezeptTokenPart.setText(prescription, "utf8");

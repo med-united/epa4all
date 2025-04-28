@@ -70,6 +70,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static de.gematik.ws.conn.certificateservice.v6.CryptType.ECC;
 import static de.gematik.ws.conn.certificateservice.v6.CryptType.RSA;
 import static de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum.C_AUT;
 import static de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum.C_QES;
@@ -353,7 +354,7 @@ public class KonnektorClient extends StartableService implements IKonnektorClien
         readCardCertificateRequest.setCardHandle(cardHandle);
         contextType.setUserId(UUID.randomUUID().toString());
         readCardCertificateRequest.setContext(contextType);
-        readCardCertificateRequest.setCrypt(CryptType.ECC);
+        readCardCertificateRequest.setCrypt(ECC);
         return readCardCertificateRequest;
     }
 

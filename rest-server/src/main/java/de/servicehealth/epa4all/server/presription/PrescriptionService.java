@@ -47,6 +47,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static de.health.service.cetp.domain.eventservice.card.CardType.HBA;
 import static org.hl7.fhir.r4.model.Address.AddressType.BOTH;
 import static org.hl7.fhir.r4.model.ContactPoint.ContactPointSystem.PHONE;
 
@@ -76,16 +77,20 @@ public class PrescriptionService {
         String lanr,
         String namePrefix,
         String bsnr,
-        String phone
+        String phone,
+        String noteToPharmacy
     ) throws Exception {
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
         if (insuranceData == null) {
-            insuranceData = insuranceDataService.loadInsuranceDataEx(userRuntimeConfig, smcbHandle, telematikId, insurantId);
+            insuranceData = insuranceDataService.loadInsuranceData(userRuntimeConfig, smcbHandle, telematikId, insurantId);
+        }
+        if (insuranceData == null) {
+            throw new IllegalStateException("[%s] Insurance data not found".formatted(insurantId));
         }
         Bundle bundle = getBundle(insuranceData, userRuntimeConfig, smcbHandle, selectedEquipment, lanr, namePrefix, bsnr, phone);
         fhirParser.setPrettyPrint(true);
         String prescription = fhirParser.encodeResourceToString(bundle);
-        return kimSmtpService.sendERezeptToKIMAddress(prescription);
+        return kimSmtpService.sendERezeptToKIMAddress(prescription, noteToPharmacy);
     }
 
     private Bundle getBundle(
@@ -98,7 +103,7 @@ public class PrescriptionService {
         String bsnr,
         String phone
     ) throws Exception {
-        String hbaHandle = konnektorClient.getCards(userRuntimeConfig, CardType.HBA).getFirst().getCardHandle();
+        String hbaHandle = konnektorClient.getCards(userRuntimeConfig, HBA).getFirst().getCardHandle();
 
         UCPersoenlicheVersichertendatenXML schaumberg = insuranceData.getPersoenlicheVersichertendaten();
         Patient patient = KBVFHIRUtil.UCPersoenlicheVersichertendatenXML2Patient(schaumberg);
