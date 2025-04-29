@@ -1,0 +1,33 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Header/>
+    <SOAP-ENV:Body>
+        <ns5:ReadCardCertificateResponse xmlns:ns2="http://ws.gematik.de/conn/ConnectorCommon/v5.0"
+                                         xmlns:ns3="http://ws.gematik.de/tel/error/v2.0"
+                                         xmlns:ns4="http://ws.gematik.de/conn/CertificateServiceCommon/v2.0"
+                                         xmlns:ns5="http://ws.gematik.de/conn/CertificateService/v6.0">
+            <ns2:Status>
+                <ns2:Result>OK</ns2:Result>
+            </ns2:Status>
+            <ns4:X509DataInfoList>
+                <ns4:X509DataInfo>
+                    <ns4:CertRef>C.QES</ns4:CertRef>
+                    <ns4:X509Data>
+                        <ns4:X509IssuerSerial>
+                            <ns4:X509IssuerName>CN=GEM.HBA-qCA51 TEST-ONLY,OU=Qualifizierter VDA der
+                                Telematikinfrastruktur,O=gematik GmbH NOT-VALID,C=DE
+                            </ns4:X509IssuerName>
+                            <ns4:X509SerialNumber>977652521974917</ns4:X509SerialNumber>
+                        </ns4:X509IssuerSerial>
+                        <ns4:X509SubjectName>
+                            2.5.4.4=#0c0644c3a5766964+2.5.4.42=#0c0e54616e6a61204672656966726175+2.5.4.5=#13143830323736383833313130303030313631363737+CN=Tanja
+                            DåvidTEST-ONLY,C=DE
+                        </ns4:X509SubjectName>
+                        <ns4:X509Certificate>
+                            MIIDhzCCAy6gAwIBAgIHA3krd0k8hTAKBggqhkjOPQQDAjCBiDELMAkGA1UEBhMCREUxHzAdBgNVBAoMFmdlbWF0aWsgR21iSCBOT1QtVkFMSUQxNjA0BgNVBAsMLVF1YWxpZml6aWVydGVyIFZEQSBkZXIgVGVsZW1hdGlraW5mcmFzdHJ1a3R1cjEgMB4GA1UEAwwXR0VNLkhCQS1xQ0E1MSBURVNULU9OTFkwHhcNMjQwODI5MDAwMDAwWhcNMjkwODI4MjM1OTU5WjBwMQswCQYDVQQGEwJERTFhMA0GA1UEBAwGRMOldmlkMBUGA1UEKgwOVGFuamEgRnJlaWZyYXUwGwYDVQQFExQ4MDI3Njg4MzExMDAwMDE2MTY3NzAcBgNVBAMMFVRhbmphIETDpXZpZFRFU1QtT05MWTBaMBQGByqGSM49AgEGCSskAwMCCAEBBwNCAARSa0r0WU5idpz/S+2ErWp42+mbFQDh/sSl0Y76bwjuuXx/LX3oVr7q/8t/uymA9EIVsza2qigQzrRdq1LaH7Jpo4IBlzCCAZMwDgYDVR0PAQH/BAQDAgZAMB0GA1UdDgQWBBSGSXY9iXsRhB9SyXoW8/kCnW8WgjA8BggrBgEFBQcBAQQwMC4wLAYIKwYBBQUHMAGGIGh0dHA6Ly9laGNhLmdlbWF0aWsuZGUvZWNjLXFvY3NwMDkGA1UdIAQyMDAwCQYHKoIUAEwESDAJBgcEAIvsQAECMAoGCCqCFABMBIERMAwGCisGAQQBgs0zAQEwHwYDVR0jBBgwFoAUXO03lN1aVoGAtylUQRzGuQW+67wwGwYJKwYBBAHAbQMFBA4wDAYKKwYBBAHAbQMFATAMBgNVHRMBAf8EAjAAMCIGCCsGAQUFBwEDBBYwFDAIBgYEAI5GAQEwCAYGBACORgEEMHkGBSskCAMDBHAwbqQoMCYxCzAJBgNVBAYTAkRFMRcwFQYDVQQKDA5nZW1hdGlrIEJlcmxpbjBCMEAwPjA8MA4MDMOEcnp0aW4vQXJ6dDAJBgcqghQATAQeEx8xLUhCQS1UZXN0a2FydGUtODgzMTEwMDAwMTYxNjc3MAoGCCqGSM49BAMCA0cAMEQCIE9WSJ3kezJyPvZin/0D9Kt0E/yJdBeJwtgHFEvNPVd1AiBcdrwXjpQUK3xRb5INy622A/BnYxDoF7/ENnOa58OvYw==
+                        </ns4:X509Certificate>
+                    </ns4:X509Data>
+                </ns4:X509DataInfo>
+            </ns4:X509DataInfoList>
+        </ns5:ReadCardCertificateResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

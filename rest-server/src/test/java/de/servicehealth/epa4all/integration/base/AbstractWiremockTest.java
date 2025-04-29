@@ -213,7 +213,11 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     protected void prepareKonnektorStubs() throws Exception {
         servicePortProvider.doStart();
-        
+
+        byte[] soapGetHbaCardsEnvelop = getTextFixture("GetHbaCards.xml");
+        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("HBA"))
+            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetHbaCardsEnvelop)).build());
+
         byte[] soapGetSmcbCardsEnvelop = getTextFixture("GetSmcbCards.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("SMC-B"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetSmcbCardsEnvelop)).build());
@@ -222,8 +226,12 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("EGK"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetEgkCardsEnvelop)).build());
 
+        byte[] soapHbaCertificateEnvelop = getTextFixture("HbaCertificate.xml");
+        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService")).withRequestBody(containing("C.QES"))
+            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapHbaCertificateEnvelop)).build());
+
         byte[] soapSmcbCertificateEnvelop = getTextFixture("SmcbCertificate.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService"))
+        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService")).withRequestBody(containing("C.AUT"))
             .willReturn(WireMock.aResponse().withStatus(200).withBody(soapSmcbCertificateEnvelop)).build());
 
         byte[] soapExternalAuthenticateEnvelop = getTextFixture("ExternalAuthenticateResponse.xml");

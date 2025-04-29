@@ -65,11 +65,15 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static de.gematik.ws.conn.certificateservice.v6.CryptType.ECC;
 import static de.gematik.ws.conn.certificateservice.v6.CryptType.RSA;
+import static de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum.C_AUT;
+import static de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum.C_QES;
 import static de.health.service.cetp.SubscriptionManager.FAILED;
 import static de.health.service.cetp.domain.eventservice.card.CardType.EGK;
 import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
@@ -321,6 +325,40 @@ public class KonnektorClient extends StartableService implements IKonnektorClien
     }
 
     @Override
+    public X509Certificate getHbaX509Certificate(UserRuntimeConfig runtimeConfig, String hbaHandle) throws CetpFault {
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        ReadCardCertificate readCardCertificateRequest = prepareReadCardCertificateRequest(
+            servicePorts.getContextType(),
+            hbaHandle,
+            C_QES
+        );
+
+        CertificateServicePortType certificateService = servicePorts.getCertificateService();
+        try {
+            ReadCardCertificateResponse certificateResponse = certificateService.readCardCertificate(readCardCertificateRequest);
+            return getCertificateFromAsn1DERCertBytes(certificateResponse);
+        } catch (de.gematik.ws.conn.certificateservice.wsdl.v6_0.FaultMessage e) {
+            throw new CetpFault(e.getMessage());
+        }
+    }
+
+    private ReadCardCertificate prepareReadCardCertificateRequest(
+        ContextType contextType,
+        String cardHandle,
+        CertRefEnum certRef
+    ) {
+        ReadCardCertificate readCardCertificateRequest = new ReadCardCertificate();
+        ReadCardCertificate.CertRefList certRefList = new ReadCardCertificate.CertRefList();
+        certRefList.getCertRef().add(certRef);
+        readCardCertificateRequest.setCertRefList(certRefList);
+        readCardCertificateRequest.setCardHandle(cardHandle);
+        contextType.setUserId(UUID.randomUUID().toString());
+        readCardCertificateRequest.setContext(contextType);
+        readCardCertificateRequest.setCrypt(ECC);
+        return readCardCertificateRequest;
+    }
+
+    @Override
     public CertificateInfo getSmcbX509Certificate(UserRuntimeConfig runtimeConfig, String smcbHandle) {
         return smcbCertificateMap.computeIfAbsent(smcbHandle, (handle) -> {
             IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
@@ -342,14 +380,7 @@ public class KonnektorClient extends StartableService implements IKonnektorClien
         if (pair == null) {
             throw new RuntimeException("Could not read card certificate");
         }
-        byte[] x509Certificate = pair.getKey()
-            .getX509DataInfoList()
-            .getX509DataInfo()
-            .getFirst()
-            .getX509Data()
-            .getX509Certificate();
-
-        X509Certificate certBytes = getCertificateFromAsn1DERCertBytes(x509Certificate);
+        X509Certificate certBytes = getCertificateFromAsn1DERCertBytes(pair.getKey());
         Boolean signatureChanged = pair.getValue();
         return signatureChanged
             ? CertificateInfo.createRfc3447Info(certBytes)
@@ -361,18 +392,14 @@ public class KonnektorClient extends StartableService implements IKonnektorClien
         String smcbHandle
     ) {
         // A_20666-02 - Auslesen des Authentisierungszertifikates
-        ReadCardCertificate readCardCertificateRequest = new ReadCardCertificate();
-        ReadCardCertificate.CertRefList certRefList = new ReadCardCertificate.CertRefList();
-        certRefList.getCertRef().add(CertRefEnum.C_AUT);
-        readCardCertificateRequest.setCertRefList(certRefList);
-        readCardCertificateRequest.setCardHandle(smcbHandle);
-
-        ContextType contextType = servicePorts.getContextType();
-        readCardCertificateRequest.setContext(contextType);
+        ReadCardCertificate readCardCertificateRequest = prepareReadCardCertificateRequest(
+            servicePorts.getContextType(),
+            smcbHandle,
+            C_AUT
+        );
 
         CertificateServicePortType certificateService = servicePorts.getCertificateService();
         try {
-            readCardCertificateRequest.setCrypt(CryptType.ECC);
             return Pair.of(certificateService.readCardCertificate(readCardCertificateRequest), false);
         } catch (de.gematik.ws.conn.certificateservice.wsdl.v6_0.FaultMessage e) {
             // Zugriffsbedingungen nicht erfüllt
@@ -409,8 +436,15 @@ public class KonnektorClient extends StartableService implements IKonnektorClien
         servicePorts.getCardService().verifyPin(verifyPin);
     }
 
-    private static X509Certificate getCertificateFromAsn1DERCertBytes(final byte[] crt) {
-        try (InputStream in = new ByteArrayInputStream(crt)) {
+    private static X509Certificate getCertificateFromAsn1DERCertBytes(ReadCardCertificateResponse certificateResponse) {
+        byte[] x509Certificate = certificateResponse
+            .getX509DataInfoList()
+            .getX509DataInfo()
+            .getFirst()
+            .getX509Data()
+            .getX509Certificate();
+
+        try (InputStream in = new ByteArrayInputStream(x509Certificate)) {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509", BOUNCY_CASTLE_PROVIDER);
             return (X509Certificate) certFactory.generateCertificate(in);
         } catch (IOException | CertificateException e) {
