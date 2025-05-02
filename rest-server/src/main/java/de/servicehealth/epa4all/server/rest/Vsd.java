@@ -33,7 +33,6 @@ import static de.servicehealth.logging.LogField.SMCB_HANDLE;
 import static de.servicehealth.utils.ServerUtils.getOriginalCause;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 import static jakarta.ws.rs.core.MediaType.WILDCARD;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
@@ -54,7 +53,7 @@ public class Vsd extends AbstractResource {
     })
     @POST
     @Consumes(WILDCARD)
-    @Produces(APPLICATION_XML)
+    @Produces(WILDCARD)
     @Path("pnw")
     @Operation(summary = "Set entitlement for KVNR using PNW")
     public Response setEntitlement(

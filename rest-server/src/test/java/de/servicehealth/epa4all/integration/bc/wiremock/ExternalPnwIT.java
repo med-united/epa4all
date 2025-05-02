@@ -18,6 +18,7 @@ import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.path.xml.XmlPath;
+import io.restassured.response.ResponseBodyExtractionOptions;
 import io.restassured.response.ValidatableResponse;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
@@ -208,6 +209,41 @@ public class ExternalPnwIT extends AbstractWiremockTest {
 
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
         assertNotNull(insuranceData.getPz());
+    }
+
+    @Test
+    public void serverInternalErrorReturnedAsJson() throws Exception {
+        String kvnr = "X110624006";
+        String street = "Achenseeweg 150";
+        String startDate = "2025-01-15T22:59:59Z";
+        String validToValue = "2025-02-15T22:59:59";
+        String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204);
+
+        String versicherungsdaten = "H4sIAAAAAAAA/81S30+DMBD+Vwjv44CJDlO6zM2YZc4Zp2h8IRVuQAaHod00++sty2JgWearL23uu/t+pFc2/C4LY4u1zCsKTMeyTQMprpKc0sCcLhe9wcDze45nDjl7GUejokixxJwwbDhxhvWGUpkIhfQ2vze0GsnAzJT6vAb4kpaeFipfWwnCSsBWJmVzwNazXNMYT+ZRePu0nC4eAlMj2p2zX2GFdatqbGScbdSOsxtMcyLu2u6FY7t9BgeAzSqpg6haYNqQO+UaibQId2zfs23/0mdwst9lFQIpwVq/CPLJEaPdYw+iRP6MUhl3s7C3DBnsETb6qDHOaD/5D+PBmXxwXJ9cxvtGCrXLaVXJTqF9OsskUSveb4kcoDYnOqTR+tGe/7p45FcDBs3N4NwkHFtDJxh0vxX8/Zf5DyMao4EcAwAA";
+        String pruefungsnachweis = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
+        String pnw = versicherungsdaten + pruefungsnachweis;
+
+        vauNpProvider.doStart();
+
+        ValidatableResponse response = given()
+            .body(pnw.getBytes())
+            .queryParams(Map.of(
+                "versicherungsdatenLength", -1,
+                "startDate", startDate,
+                "street", street,
+                X_KONNEKTOR, "localhost",
+                X_INSURANT_ID, kvnr
+            ))
+            .when()
+            .post("/vsd/pnw")
+            .then()
+            .statusCode(500)
+            .body(containsString("error"))
+            .body(containsString("-1"));
+
+        ResponseBodyExtractionOptions body = response.extract().body();
+        System.out.println(body.jsonPath().prettify());
     }
 
     @AfterEach

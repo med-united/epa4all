@@ -7,6 +7,38 @@
             </ns2:Status>
             <ns5:Cards>
                 <ns5:Card>
+                    <ns2:CardHandle>SMC-B-3</ns2:CardHandle>
+                    <ns4:CardType>SMC-B</ns4:CardType>
+                    <ns5:CardVersion>
+                        <ns5:COSVersion>
+                            <ns5:Major>4</ns5:Major>
+                            <ns5:Minor>6</ns5:Minor>
+                            <ns5:Revision>0</ns5:Revision>
+                        </ns5:COSVersion>
+                        <ns5:ObjectSystemVersion>
+                            <ns5:Major>4</ns5:Major>
+                            <ns5:Minor>8</ns5:Minor>
+                            <ns5:Revision>0</ns5:Revision>
+                        </ns5:ObjectSystemVersion>
+                        <ns5:ATRVersion>
+                            <ns5:Major>2</ns5:Major>
+                            <ns5:Minor>0</ns5:Minor>
+                            <ns5:Revision>0</ns5:Revision>
+                        </ns5:ATRVersion>
+                        <ns5:GDOVersion>
+                            <ns5:Major>1</ns5:Major>
+                            <ns5:Minor>0</ns5:Minor>
+                            <ns5:Revision>0</ns5:Revision>
+                        </ns5:GDOVersion>
+                    </ns5:CardVersion>
+                    <ns4:Iccsn>80276883110000147805</ns4:Iccsn>
+                    <ns4:CtId>2d38154c-727b-4462-8ae6-6381a5025c23</ns4:CtId>
+                    <ns4:SlotId>2</ns4:SlotId>
+                    <ns5:InsertTime>2025-04-26T16:26:11.473Z</ns5:InsertTime>
+                    <ns5:CardHolderName>Eichen ApothekeTEST-ONLY</ns5:CardHolderName>
+                    <ns5:CertificateExpirationDate>2028-03-27Z</ns5:CertificateExpirationDate>
+                </ns5:Card>
+                <ns5:Card>
                     <ns2:CardHandle>SMC-B-11</ns2:CardHandle>
                     <ns4:CardType>SMC-B</ns4:CardType>
                     <ns5:CardVersion>
