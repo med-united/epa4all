@@ -22,6 +22,7 @@ import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 import static de.servicehealth.vau.VauClient.KVNR;
+import static de.servicehealth.vau.VauClient.UPLOAD_CONTENT_TYPE;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 
@@ -57,6 +58,7 @@ public class Upload extends XdsResource {
         InputStream is
     ) throws Exception {
         EpaContext epaContext = prepareEpaContext(kvnr);
+        epaContext.getXHeaders().put(UPLOAD_CONTENT_TYPE, contentType);
         if (fileName == null) {
             fileName = String.format("%s_%s.%s", kvnr, UUID.randomUUID(), getExtension(contentType));
         }

@@ -39,6 +39,7 @@ public class VauClient {
     public static final String TELEMATIK_ID = "telematikId";
     public static final String TASK_ID = "taskId";
     public static final String VAU_CLIENT = "vauClient";
+    public static final String UPLOAD_CONTENT_TYPE = "uploadContentType";
 
     public static final String CLIENT_ID = "ClientID";
 

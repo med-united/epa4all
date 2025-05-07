@@ -112,10 +112,10 @@ public class PropBuilder {
             .map(e -> new EntryUUID(e.getValue()))
             .orElse(null));
 
-        propSupplierMap.put(firstname, propSource -> propSource.getPerson() != null ? new FirstName(propSource.getPerson().getVorname()) : null);
-        propSupplierMap.put(lastname, propSource -> propSource.getPerson() != null ? new LastName(propSource.getPerson().getNachname()) : null);
+        propSupplierMap.put(firstname, propSource -> hasVorname(propSource) ? new FirstName(propSource.getPerson().getVorname()) : null);
+        propSupplierMap.put(lastname, propSource -> hasNachname(propSource)  ? new LastName(propSource.getPerson().getNachname()) : null);
         propSupplierMap.put(birthday, propSource -> {
-            if (propSource.getPerson() != null) {
+            if (hasGeburtsdatum(propSource)) {
                 try {
                     return new BirthDay(asDate(LocalDate.parse(propSource.getPerson().getGeburtsdatum(), LOCALDATE_YYYYMMDD)));
                 } catch (Exception e) {
@@ -125,6 +125,18 @@ public class PropBuilder {
                 return null;
             }
         });
+    }
+
+    private static boolean hasGeburtsdatum(PropSource propSource) {
+        return propSource.getPerson() != null && propSource.getPerson().getGeburtsdatum() != null;
+    }
+
+    private static boolean hasVorname(PropSource propSource) {
+        return propSource.getPerson() != null && propSource.getPerson().getVorname() != null;
+    }
+
+    private static boolean hasNachname(PropSource propSource) {
+        return propSource.getPerson() != null && propSource.getPerson().getNachname() != null;
     }
 
     private final InsuranceDataService insuranceDataService;

@@ -18,16 +18,19 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.cxf.interceptor.InterceptorUtils.excludeInterceptors;
 import static de.servicehealth.epa4all.cxf.transport.HTTPClientVauConduit.VAU_METHOD_PATH;
 import static de.servicehealth.utils.ServerUtils.isAuthError;
 import static de.servicehealth.vau.VauClient.CLIENT_ID;
 import static de.servicehealth.vau.VauClient.TASK_ID;
+import static de.servicehealth.vau.VauClient.UPLOAD_CONTENT_TYPE;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauClient.VAU_CLIENT_UUID;
 import static de.servicehealth.vau.VauClient.VAU_NP;
@@ -115,8 +118,22 @@ public class CxfVauWriteSoapInterceptor extends AbstractPhaseInterceptor<Message
             CachedStream cs = new CachedStream();
             byte[] payload = getPayload(os, cs, message);
 
-            // ContentType is fully constructed after payload is built
-            innerHeaders.add(Pair.of(CONTENT_TYPE, String.valueOf(message.get(CONTENT_TYPE))));
+            // ContentType is fully constructed after payload is built:
+            // multipart/related; type="application/xop+xml"; boundary="uuid:9bbd7da1-905a-4a28-9f1c-8b8b59878cf7";
+            // start="<root.message@cxf.apache.org>"; start-info="application/octet-stream"
+            String soapContentType = String.valueOf(message.get(CONTENT_TYPE));
+            String uploadContentType = (String) message.get(UPLOAD_CONTENT_TYPE);
+            if (uploadContentType != null && !uploadContentType.isBlank()) {
+                soapContentType = Arrays.stream(soapContentType.split(";")).map(part -> {
+                    if (part.contains("start-info")) {
+                        return "start-info=\"%s\"".formatted(uploadContentType);
+                    } else {
+                        return part.trim();
+                    }
+                }).collect(Collectors.joining("; "));
+            }
+
+            innerHeaders.add(Pair.of(CONTENT_TYPE, soapContentType));
             innerHeaders.add(Pair.of(CONTENT_LENGTH, String.valueOf(payload.length)));
 
             String methodWithPath = String.valueOf(message.get(VAU_METHOD_PATH));

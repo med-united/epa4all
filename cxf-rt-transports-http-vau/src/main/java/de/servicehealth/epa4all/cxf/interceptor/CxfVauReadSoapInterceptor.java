@@ -26,6 +26,7 @@ import static de.servicehealth.utils.ServerUtils.isAuthError;
 import static de.servicehealth.vau.VauClient.VAU_CID;
 import static de.servicehealth.vau.VauFacade.SOAP_INVAL_AUTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static org.apache.cxf.message.Message.PROTOCOL_HEADERS;
 import static org.apache.cxf.message.Message.RESPONSE_CODE;
 import static org.apache.cxf.phase.Phase.RECEIVE;
@@ -60,7 +61,7 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
             byte[] encryptedVauData = readContentFromMessage(message);
             byte[] decryptedBytes = vauClient.decryptVauMessage(encryptedVauData);
             decrypted = true;
-            String fullRequest = new String(decryptedBytes);
+            String fullRequest = new String(decryptedBytes, ISO_8859_1);
 
             message.put("org.apache.cxf.message.Message.ENCODING", Charset.defaultCharset().toString());
 
@@ -73,7 +74,7 @@ public class CxfVauReadSoapInterceptor extends AbstractPhaseInterceptor<Message>
             if (body.contains("RegistryError ") && body.contains(SOAP_INVAL_AUTH)) {
                 throw new AuthenticationException(body);
             }
-            InputStream is = new ByteArrayInputStream(body.getBytes());
+            InputStream is = new ByteArrayInputStream(body.getBytes(ISO_8859_1));
             message.setContent(InputStream.class, is);
         } catch (Exception e) {
             boolean noUserSession = isAuthError(e.getMessage());
