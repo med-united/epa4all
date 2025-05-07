@@ -33,6 +33,8 @@ import static de.servicehealth.logging.LogField.SMCB_HANDLE;
 import static de.servicehealth.utils.ServerUtils.getOriginalCause;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 import static jakarta.ws.rs.core.MediaType.WILDCARD;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
@@ -78,6 +80,7 @@ public class Vsd extends AbstractResource {
         if (insurantId == null) {
             return Response.status(BAD_REQUEST)
                 .entity(new EpaClientError("Unable to resolve 'x-insurantid'"))
+                .type(APPLICATION_JSON)
                 .build();
         } else {
             return resultMdcEx(Map.of(
@@ -94,7 +97,7 @@ public class Vsd extends AbstractResource {
                         userRuntimeConfig, insuranceData, epaApi, telematikId, userAgent, smcbHandle
                     );
                     PnwResponse pnwResponse = new PnwResponse(insurantId, startDate, expiry.toString(), street, null);
-                    return Response.ok().entity(pnwResponse).build();
+                    return Response.ok().entity(pnwResponse).type(APPLICATION_XML).build();
                 } catch (Exception e) {
                     Throwable cause = getOriginalCause(e);
                     if (cause instanceof VauException vauException) {
