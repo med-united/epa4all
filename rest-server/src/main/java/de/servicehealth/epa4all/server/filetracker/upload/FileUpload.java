@@ -19,6 +19,15 @@ public class FileUpload implements FileAction {
     private String telematikId;
     private String kvnr;
     private String fileName;
+    private String title;
+    private String authorLanr;
+    private String authorFirstName;
+    private String authorLastName;
+    private String authorTitle;
+    private String praxis;
+    private String practiceSetting;
+    private String information;
+    private String information2;
     private String folderName;
     private byte[] documentBytes;
 }

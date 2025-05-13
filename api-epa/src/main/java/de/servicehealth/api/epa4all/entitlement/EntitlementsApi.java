@@ -23,10 +23,10 @@ public interface EntitlementsApi extends de.servicehealth.api.EntitlementsApi {
     @ApiOperation(value = "(setEntitlementPs) Set a single entitlement with proof of audit evidence", tags={  })
     @ApiResponses(value = {
         @ApiResponse(code = 201, message = "Created. User is entitled", response = ValidToResponseType.class),
-        @ApiResponse(code = 400, message = "Bad Request.", response = ErrorType.class),
-        @ApiResponse(code = 403, message = "Forbidden.", response = ErrorType.class),
-        @ApiResponse(code = 404, message = "Not found.", response = ErrorType.class),
-        @ApiResponse(code = 409, message = "Conflict.", response = ErrorType.class),
+        @ApiResponse(code = 400, message = "Bad Request", response = ErrorType.class),
+        @ApiResponse(code = 403, message = "Forbidden", response = ErrorType.class),
+        @ApiResponse(code = 404, message = "Not found", response = ErrorType.class),
+        @ApiResponse(code = 409, message = "Conflict", response = ErrorType.class),
         @ApiResponse(code = 500, message = "Internal Server Error", response = ErrorType.class) })
     ValidToResponseType setEntitlementPs(
         @HeaderParam(X_INSURANT_ID)  String xInsurantid,

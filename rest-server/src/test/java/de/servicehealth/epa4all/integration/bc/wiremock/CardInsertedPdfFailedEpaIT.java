@@ -37,8 +37,6 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
         ));
         prepareInformationStubs(204);
 
-        vauNpProvider.doStart();
-
         String kvnr = "X110587452";
         EpaFileDownloader mockDownloader = mock(EpaFileDownloader.class);
         receiveCardInsertedEvent(mockDownloader, null, kvnr);

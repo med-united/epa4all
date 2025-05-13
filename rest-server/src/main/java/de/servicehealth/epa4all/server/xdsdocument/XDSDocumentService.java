@@ -56,18 +56,29 @@ public class XDSDocumentService {
         String telematikId,
         String kvnr,
         String fileName,
+        String title,
+        String authorLanr,
+        String authorFirstName,
+        String authorLastName,
+        String authorTitle,
+        String praxis,
+        String practiceSetting,
+        String information,
+        String information2,
         String contentType,
         String languageCode,
-        String firstName,
-        String lastName,
-        String title
+        String authorVsdFirstName,
+        String authorVsdLastName,
+        String authorVsdTitle
     ) {
         Document document = new Document();
         document.setValue(documentBytes);
         String documentId = generateUrnUuid();
         document.setId(documentId);
 
-        AuthorPerson authorPerson = new AuthorPerson("123456667", firstName, lastName, title, "PRA"); // TODO
+        AuthorPerson authorPerson = authorFirstName == null && authorLastName == null
+            ? new AuthorPerson("123456667", authorVsdFirstName, authorVsdLastName, authorVsdTitle, "PRA")
+            : new AuthorPerson(authorLanr == null ? "123456667" : authorLanr, authorFirstName, authorLastName, authorTitle, "PRA");
 
         provideAndRegisterDocumentBuilder.init(
             document,
@@ -76,6 +87,11 @@ public class XDSDocumentService {
             telematikId,
             documentId,
             fileName,
+            title,
+            praxis,
+            practiceSetting,
+            information,
+            information2, 
             contentType,
             languageCode,
             kvnr

@@ -51,9 +51,6 @@ public class ExpiredPatientDataIT extends AbstractJCRTest {
         ));
         prepareInformationStubs(204);
 
-        vauNpProvider.doStart();
-        jcrService.doStart();
-
         String telematikId = "3-SMC-B-Testkarte--883110000147807";
         String kvnr = "X110485291";
         receiveCardInsertedEvent(fileDownloader, null, kvnr);

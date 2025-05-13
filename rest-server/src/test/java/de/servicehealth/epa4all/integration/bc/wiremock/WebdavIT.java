@@ -6,10 +6,8 @@ import de.servicehealth.api.epa4all.jmx.EpaMXBeanManager;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
-import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.jmx.WebdavMXBean;
 import de.servicehealth.epa4all.server.jmx.WebdavMXBeanImpl;
@@ -86,24 +84,6 @@ public class WebdavIT extends AbstractWiremockTest {
     @BeforeEach
     public void before() {
         webdavMXBeanImpl.reset();
-    }
-
-    private UCPersoenlicheVersichertendatenXML.Versicherter.Person prepareInsurantFiles(
-        String telematikId,
-        String kvnr
-    ) throws Exception {
-        prepareKonnektorStubs();
-
-        RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
-        String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
-        String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-
-        String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, null);
-        InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
-        UCPersoenlicheVersichertendatenXML versichertendaten = insuranceData.getPersoenlicheVersichertendaten();
-        UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
-        assertNotNull(person);
-        return person;
     }
 
     @Test
