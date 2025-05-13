@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RequestVauNpIT extends AbstractWiremockTest {
 
     @Test
-    void vauNpProvisioningReloaded() {
+    void vauNpProvisioningReloaded() throws Exception {
         RestAssured.config = RestAssured.config()
             .httpClient(HttpClientConfig.httpClientConfig()
                 .setParam("http.socket.timeout", 600000));

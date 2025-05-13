@@ -46,6 +46,11 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
     private String telematikId;
     private String documentId;
     private String fileName;
+    private String title;
+    private String praxis;
+    private String practiceSetting;
+    private String information;
+    private String information2;
     private String contentType;
     private String languageCode;
     private String kvnr;
@@ -57,6 +62,11 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         String telematikId,
         String documentId,
         String fileName,
+        String title,
+        String praxis,
+        String practiceSetting,
+        String information,
+        String information2,
         String contentType,
         String languageCode,
         String kvnr
@@ -64,6 +74,11 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         this.document = document;
         this.documentId = documentId;
         this.telematikId = telematikId;
+        this.title = title;
+        this.praxis = praxis;
+        this.practiceSetting = practiceSetting;
+        this.information = information;
+        this.information2 = information2;
         this.fileName = fileName;
         this.contentType = contentType;
         this.languageCode = languageCode;
@@ -111,12 +126,13 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
             .withLanguageCode(languageCode)
             .withMimeType(contentType)
             .withUniqueId(value)
-            .withValue("Dokument " + fileName)
+            .withValue(title == null ? fileName : title)
             .withExternalIdentifiers(
                 new DEPatientIdExternalIdentifierBuilder(dePatientId).withRegistryObject(documentId).withValue(patientExternalIdValue).build(),
                 new DEUniqueIdExternalIdentifierBuilder(deUniqueId).withValue(uniqueIdValue).withRegistryObject(documentId).build()
             )
-            .finalize(contentType, authorPerson, folderDefinitions) // calls withClassifications() internally
+            // calls withClassifications() internally
+            .finalize(contentType, authorPerson, praxis, practiceSetting, information, information2, folderDefinitions)
             .build();
 
         AssociationType1 associationType1 = ssdeAssociationBuilder

@@ -45,6 +45,15 @@ public class Upload extends XdsResource {
         @HeaderParam(CONTENT_TYPE) String contentType,
         @HeaderParam("Lang-Code") String languageCode,
         @HeaderParam("File-Name") String fileName,
+        @HeaderParam("Title") String title,
+        @HeaderParam("Author-Lanr") String authorLanr,
+        @HeaderParam("Author-FirstName") String authorFirstName,
+        @HeaderParam("Author-LastName") String authorLastName,
+        @HeaderParam("Author-Title") String authorTitle,
+        @HeaderParam("Praxis") String praxis,
+        @HeaderParam("Fachrichtung") String practiceSetting,
+        @HeaderParam("Information") String information,
+        @HeaderParam("Information2") String information2,
         @Parameter(
             name = X_KONNEKTOR,
             description = "IP of the target Konnektor (can be skipped for single-tenancy)"
@@ -72,6 +81,15 @@ public class Upload extends XdsResource {
             telematikId,
             kvnr,
             fileName,
+            title,
+            authorLanr,
+            authorFirstName,
+            authorLastName,
+            authorTitle, 
+            praxis,
+            practiceSetting,
+            information,
+            information2,
             "other",
             is.readAllBytes()
         );

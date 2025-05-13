@@ -40,6 +40,10 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
     public StableDocumentEntryBuilder finalize(
         String contentType,
         AuthorPerson authorPerson,
+        String praxis,
+        String practiceSetting,
+        String information,
+        String information2,
         List<FolderDefinition> folderDefinitions
     ) {
         List<ClassificationType> classificationTypes = new ArrayList<>();
@@ -55,7 +59,7 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
             .withClassifiedObject(documentId)
             .withNodeRepresentation(authorPerson.getNodeRepresentation())
             .withCodingScheme("1.3.6.1.4.1.19376.3.276.1.5.2")
-            .withLocalizedString(createLocalizedString(languageCode, "Arztpraxis")) // TODO
+            .withLocalizedString(createLocalizedString(languageCode, praxis == null ? "Arztpraxis" : praxis))
             .build();
         classificationTypes.add(classificationType);
 
@@ -63,7 +67,7 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
             .withClassifiedObject(documentId)
             .withNodeRepresentation("ALLG") // TODO check
             .withCodingScheme("1.3.6.1.4.1.19376.3.276.1.5.4")
-            .withLocalizedString(createLocalizedString(languageCode, "Allgemeinmedizin")) // TODO
+            .withLocalizedString(createLocalizedString(languageCode, practiceSetting == null ? "Allgemeinmedizin" : practiceSetting))
             .build();
         classificationTypes.add(classificationType);
 
@@ -89,11 +93,13 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
                 Object obj = fd.getValue();
                 if (obj instanceof Map map) {
                     String codeSystem;
+
                     if (name.contains("formatCode")) {
                         codeSystem = "1.3.6.1.4.1.19376.1.2.3"; // TODO check
                     } else {
                         codeSystem = (String) map.get("codeSystem");
                     }
+                    
                     String code = (String) map.get("code");
                     List descList = (List) map.get("desc");
                     String text;
@@ -103,6 +109,17 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
                         Map descMap = (Map) descList.getFirst();
                         text = (String) descMap.get("#text");
                     }
+
+                    if (contentType.contains("pdf")) {
+                        if (name.contains("classCode") && information != null) {
+                            text = information;
+                        }
+                        if (name.contains("typeCode") && information2 != null) {
+                            text = information2;
+                        }
+                    }
+                    final String textValue = text;
+
                     classificationBuilders.stream()
                         .filter(cb -> cb.getCodingSchemaType().equals("DE"))
                         .filter(cb -> cb.getName().equals(name))
@@ -112,7 +129,7 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
                                 .withClassifiedObject(documentId)
                                 .withNodeRepresentation(code)
                                 .withCodingScheme(codeSystem)
-                                .withLocalizedString(createLocalizedString(languageCode, text))
+                                .withLocalizedString(createLocalizedString(languageCode, textValue))
                                 .build()
                         ));
                 }

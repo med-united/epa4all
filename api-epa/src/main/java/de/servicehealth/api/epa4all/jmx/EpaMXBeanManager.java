@@ -13,10 +13,12 @@ public class EpaMXBeanManager {
 
     private static final Logger log = LoggerFactory.getLogger(EpaMXBeanManager.class.getName());
 
+    private static final MBeanServer MBEAN_SERVER = ManagementFactory.getPlatformMBeanServer();
+
     public static <T> T getMXBean(String name, Class<T> clazz) {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         try {
-            return JMX.newMBeanProxy(server, new ObjectName(name), clazz);
+            ObjectName objectName = new ObjectName(name);
+            return MBEAN_SERVER.isRegistered(objectName) ? JMX.newMBeanProxy(MBEAN_SERVER, objectName, clazz) : null;
         } catch (Exception e) {
             log.error(String.format("JMX Bean %s is not found", name), e);
             return null;
@@ -31,17 +33,16 @@ public class EpaMXBeanManager {
             .orElseThrow();
         var q = qualifier == null ? "" : qualifier;
         var objectName = "de.servicehealth:type=" + mXBeanInterface.getSimpleName() + q;
-        var server = ManagementFactory.getPlatformMBeanServer();
-        register(server, objectName, mbean);
+        register(objectName, mbean);
     }
 
-    private static void register(MBeanServer server, String name, Object mxbean) {
+    private static void register(String name, Object mxbean) {
         try {
             ObjectName objectName = new ObjectName(name);
-            if (server.isRegistered(objectName)) {
+            if (MBEAN_SERVER.isRegistered(objectName)) {
                 log.warn(String.format("MXBean %s is already registered", name));
             } else {
-                server.registerMBean(mxbean, objectName);
+                MBEAN_SERVER.registerMBean(mxbean, objectName);
             }
         } catch (Exception e) {
             log.error(String.format("JMX Bean for %s was not created", name), e);

@@ -8,10 +8,12 @@ import de.gematik.vau.lib.data.EccKyberKeyPair;
 import de.gematik.vau.lib.data.SignedPublicVauKeys;
 import de.gematik.vau.lib.data.VauPublicKeys;
 import de.gematik.ws.conn.eventservice.v7.Event;
+import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
+import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.servicehealth.api.epa4all.EpaMultiService;
@@ -23,11 +25,16 @@ import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
+import de.servicehealth.epa4all.server.insurance.InsuranceData;
+import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.jcr.JcrService;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
+import de.servicehealth.epa4all.server.vsd.VsdService;
 import de.servicehealth.folder.WebdavConfig;
 import de.servicehealth.registry.BeanRegistry;
 import de.servicehealth.vau.VauFacade;
@@ -62,6 +69,7 @@ import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static de.servicehealth.epa4all.common.TestUtils.getTextFixture;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 public abstract class AbstractWiremockTest extends AbstractWebdavIT {
@@ -80,6 +88,12 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     @Inject
     IdpClient idpClient;
+
+    @Inject
+    JcrService jcrService;
+
+    @Inject
+    VsdService vsdService;
 
     @Inject
     ClientFactory clientFactory;
@@ -109,6 +123,9 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     protected IKonnektorClient konnektorClient;
 
     @Inject
+    InsuranceDataService insuranceDataService;
+
+    @Inject
     protected DefaultUserConfig defaultUserConfig;
 
     @Inject
@@ -118,6 +135,8 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     @KonnektorsConfigs
     Map<String, KonnektorConfig> konnektorConfigs;
 
+    @Inject
+    protected KonnektorDefaultConfig konnektorDefaultConfig;
 
     protected static Path tempDir;
 
@@ -164,15 +183,32 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     @AfterEach
     public void afterEach() {
+        jcrService.shutdown();
         registry.getInstances(VauFacade.class).forEach(registry::unregister);
         deleteFiles(tempDir.toFile().listFiles());
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
         QuarkusMock.installMockForType(folderService, FolderService.class);
     }
 
-    protected void prepareVauStubs(List<Pair<String, CallInfo>> responseFuncs) {
+    protected UCPersoenlicheVersichertendatenXML.Versicherter.Person prepareInsurantFiles(
+        String telematikId,
+        String kvnr
+    ) throws Exception {
+        RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
+        String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
+        String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
+
+        String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, null);
+        InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
+        UCPersoenlicheVersichertendatenXML versichertendaten = insuranceData.getPersoenlicheVersichertendaten();
+        UCPersoenlicheVersichertendatenXML.Versicherter.Person person = versichertendaten.getVersicherter().getPerson();
+        assertNotNull(person);
+        return person;
+    }
+
+    protected void prepareVauStubs(List<Pair<String, CallInfo>> responseFuncs) throws Exception {
         epaMultiService.doStart();
-        epaMultiService.getEpaBackendMap().forEach((backend, epaApi) -> {
+        epaMultiService.getEpaBackendMap().forEach((backend, epaApi) ->
             epaApi.getVauFacade().getEmptyClients().forEach(vc -> {
                 try {
                     // /234234234/VAU
@@ -201,9 +237,11 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-            });
-        });
-        responseFuncs.forEach(p-> vauMessage3Transformer.registerResponseFunc(p.getKey(), p.getValue()));
+            }));
+        responseFuncs.forEach(p -> vauMessage3Transformer.registerResponseFunc(p.getKey(), p.getValue()));
+
+        vauNpProvider.doStart();
+        jcrService.doStart();
     }
 
     protected void prepareInformationStubs(int status) {
