@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.rest.xds;
 import de.servicehealth.epa4all.server.bulk.BulkTransfer;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
+import de.servicehealth.epa4all.server.filetracker.upload.FileRawUpload;
 import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
 import de.servicehealth.epa4all.server.rest.AbstractResource;
 import de.servicehealth.epa4all.server.rest.EpaContext;
@@ -26,6 +27,9 @@ public abstract class XdsResource extends AbstractResource {
 
     @Inject
     EpaFileDownloader epaFileDownloader;
+
+    @Inject
+    Event<FileRawUpload> eventRawFileUpload;
 
     @Inject
     Event<FileUpload> eventFileUpload;
