@@ -130,6 +130,10 @@ public class TestUtils {
         return Path.of("src/test/resources", paths);
     }
 
+    public static String getStringFixture(String fileName) throws Exception {
+        return Files.readString(getResourcePath(FIXTURES, fileName), UTF_8);
+    }
+
     public static byte[] getTextFixture(String fileName) throws Exception {
         return Files.readString(getResourcePath(FIXTURES, fileName)).getBytes(UTF_8);
     }

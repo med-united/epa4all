@@ -124,4 +124,28 @@ public abstract class EpaFileTracker<T extends FileAction> {
         responseType.setRegistryErrorList(registryErrorList);
         return responseType;
     }
+
+    protected void handleUploadResponse(
+        FileAction fileUpload,
+        String folderName,
+        byte[] documentBytes,
+        RegistryResponseType registryResponse,
+        StructureDefinition structureDefinition
+    ) throws Exception {
+        boolean success = registryResponse.getStatus().contains("Success");
+        if (success) {
+            // NEW FILE: get fileName         | EXISTING FILE: existing fileName
+            // NEW FILE: select webdav folder | EXISTING FILE: existing folder
+            // NEW FILE: calculate checksum   | EXISTING FILE: check record in file and proceed if no record is present
+            // NEW FILE: save                 | EXISTING FILE: no action
+            // sync checksum file
+            String fileName = fileUpload.getFileName();
+            String telematikId = fileUpload.getTelematikId();
+            String insurantId = fileUpload.getKvnr();
+
+            String folderCode = folderName == null ? getFolderCode(structureDefinition) : folderName;
+            folderService.storeNewFile(fileName, folderCode, telematikId, insurantId, documentBytes);
+            log.info(String.format("[%s/%s] uploaded successfully", folderCode, fileName));
+        }
+    }
 }
