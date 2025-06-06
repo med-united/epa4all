@@ -54,8 +54,8 @@ echo "EPA4All: STEP 2: Create configuration directory structure"
 if [ -d "epa4all_config" ]; then
     read -p "EPA4All: Directory ./epa4all_config already exists. Override? (y/n): " override
     if [ "$override" == "y" ]; then
-        echo "EPA4All: Removing existing ./epa4all_config: sudo rm -rf epa4all_config"
-        sudo rm -rf "epa4all_config"
+        echo "EPA4All: Removing existing ./epa4all_config: rm -rf epa4all_config"
+        rm -rf "epa4all_config"
         mkdir -p "epa4all_config/secret"
         mkdir -p "epa4all_config/config/konnektoren/8588"
         echo "EPA4All: Created directory structure in ./epa4all_config"
@@ -255,8 +255,8 @@ quarkus_profile=$(grep '^quarkus.profile=' epa4all.properties | cut -d'=' -f2)
 service_health_client_id=$(grep '^service.health.client.id=' epa4all.properties | cut -d'=' -f2)
 grafana_username=$(grep '^grafana.username=' epa4all.properties | cut -d'=' -f2)
 grafana_password=$(grep '^grafana.password=' epa4all.properties | cut -d'=' -f2-)
-echo "EPA4All: Changing permissions for mounted volumes: sudo chown -R 1001 epa4all_config"
-sudo chown -R 1001 epa4all_config
+echo "EPA4All: Changing permissions for mounted volumes: chown -R 1001 epa4all_config"
+chown -R 1001 epa4all_config
 if docker run \
     --detach \
     --user 1001 \
@@ -274,6 +274,9 @@ if docker run \
     --env SERVICEHEALTH_CLIENT_ID=$service_health_client_id \
     --env GRAFANA_USERNAME=$grafana_username \
     --env GRAFANA_PASSWORD=$grafana_password \
+    --env MASK_SENSITIVE=false \
+    --env VSD_TEST_MODE=false \
+    --env HCV_ENABLED=true \
     servicehealtherxgmbh/epa4all:latest >/dev/null; then
     echo "EPA4All: EPA4All container started"
 else
