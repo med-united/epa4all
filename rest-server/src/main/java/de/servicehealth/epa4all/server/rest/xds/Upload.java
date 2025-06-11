@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.util.Optional;
 import java.util.UUID;
 
-import static de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils.deserialize;
+import static de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils.deserializeUploadRequest;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
@@ -37,18 +37,39 @@ import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
+import static org.eclipse.microprofile.openapi.annotations.enums.ParameterIn.HEADER;
+import static org.eclipse.microprofile.openapi.annotations.enums.ParameterIn.QUERY;
 
 @SuppressWarnings("unused")
 @RequestScoped
 @Path(XDS_DOCUMENT_PATH)
 public class Upload extends XdsResource {
 
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Task uuid"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
     @POST
     @Consumes(MULTIPART_FORM_DATA)
     @Produces(APPLICATION_JSON)
     @Path("upload/raw")
+    @Operation(summary = "Upload single document XML/PDF/etc providing SOAP request to the XDS registry")
     public String uploadFiles(
+        @Parameter(
+            name = "Content-Type",
+            description = "MIME type of the uploaded document",
+            example = "application/pdf",
+            in = HEADER,
+            required = true
+        )
         @HeaderParam(CONTENT_TYPE) String contentType,
+        @Parameter(
+            name = "Lang-Code",
+            description = "Language code for the document",
+            example = "de-DE",
+            in = HEADER,
+            required = true
+        )
         @HeaderParam("Lang-Code") String languageCode,
         @Parameter(
             name = X_KONNEKTOR,
@@ -71,7 +92,7 @@ public class Upload extends XdsResource {
 
         InputPart soapPart = input.getFormDataMap().get("raw_soap").getFirst();
         String rawSoapRequest = soapPart.getBody(String.class, null);
-        ProvideAndRegisterDocumentSetRequestType request = deserialize(rawSoapRequest);
+        ProvideAndRegisterDocumentSetRequestType request = deserializeUploadRequest(rawSoapRequest);
         Document document = new Document();
         document.setValue(documentBytes);
         document.setId(getDocumentId(request));
@@ -91,7 +112,7 @@ public class Upload extends XdsResource {
             request,
             documentBytes
         );
-        eventRawFileUpload.fireAsync(fileUpload);
+        fileActionEvent.fireAsync(fileUpload);
         return taskId;
     }
 
@@ -116,26 +137,66 @@ public class Upload extends XdsResource {
     @Path("upload")
     @Operation(summary = "Upload single document XML/PDF/etc to the XDS registry")
     public String upload(
+        @Parameter(
+            name = "Content-Type",
+            description = "MIME type of the uploaded document",
+            example = "application/pdf",
+            in = HEADER,
+            required = true
+        )
         @HeaderParam(CONTENT_TYPE) String contentType,
+        @Parameter(
+            name = "Lang-Code",
+            description = "Language code for the document",
+            example = "de-DE",
+            in = HEADER,
+            required = true
+        )
         @HeaderParam("Lang-Code") String languageCode,
+        @Parameter(
+            name = "File-Name",
+            description = "Original filename of the document",
+            example = "medical-report.pdf",
+            in = HEADER
+        )
         @HeaderParam("File-Name") String fileName,
+        @Parameter(
+            name = "Title",
+            description = "XDS title of the document",
+            example = "PDF-Arztbrief an  kv.digital-eArztbrief",
+            in = HEADER
+        )
         @HeaderParam("Title") String title,
+        @Parameter(
+            name = "Author-Lanr",
+            description = "https://de.wikipedia.org/wiki/Lebenslange_Arztnummer",
+            example = "605095502",
+            in = HEADER
+        )
         @HeaderParam("Author-Lanr") String authorLanr,
+        @Parameter(name = "Author-FirstName", description = "Doctor first name", in = HEADER)
         @HeaderParam("Author-FirstName") String authorFirstName,
+        @Parameter(name = "Author-LastName", description = "Doctor last name", in = HEADER)
         @HeaderParam("Author-LastName") String authorLastName,
+        @Parameter(name = "Author-Title", description = "Doctor title", example = "Dr. med.", in = HEADER)
         @HeaderParam("Author-Title") String authorTitle,
+        @Parameter(name = "Praxis", example = "Arztpraxis", in = HEADER)
         @HeaderParam("Praxis") String praxis,
+        @Parameter(name = "Fachrichtung", example = "Naturheilverfahren", in = HEADER)
         @HeaderParam("Fachrichtung") String practiceSetting,
+        @Parameter(name = "Information", example = "Format aus MIME Type ableitbar", in = HEADER)
         @HeaderParam("Information") String information,
+        @Parameter(name = "Information2", example = "Format aus MIME Type ableitbar", in = HEADER)
         @HeaderParam("Information2") String information2,
         @Parameter(
             name = X_KONNEKTOR,
-            description = "IP of the target Konnektor (can be skipped for single-tenancy)"
+            description = "IP of the target Konnektor (can be skipped for single-tenancy)",
+            in = QUERY
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
-        @Parameter(name = KVNR, description = "Patient KVNR", required = true)
+        @Parameter(name = KVNR, description = "Patient KVNR", in = QUERY, required = true)
         @QueryParam(KVNR) String kvnr,
-        @Parameter(name = "ig", description = "IG schema name")
+        @Parameter(name = "ig", description = "IG schema name", in = QUERY)
         @QueryParam("ig") String ig,
         @Parameter(description = "Document to submit to the XDS registry", example = "xml/pdf")
         InputStream is
@@ -167,7 +228,7 @@ public class Upload extends XdsResource {
             "other",
             is.readAllBytes()
         );
-        eventFileUpload.fireAsync(fileUpload);
+        fileActionEvent.fireAsync(fileUpload);
         return taskId;
     }
 

@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 
 import static com.google.common.io.Files.readLines;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
@@ -43,7 +44,7 @@ public class ChecksumFile {
         }
     }
 
-    public boolean appendChecksumFor(byte[] bytes, String insurantId) {
+    private boolean checksumAction(byte[] bytes, Function<String, Boolean> func) {
         lock.writeLock().lock();
         try {
             if (bytes == null || bytes.length == 0) {
@@ -51,26 +52,57 @@ public class ChecksumFile {
                 return false;
             }
             String checksum = calculateChecksum(bytes);
-            HashSet<String> checksums = new HashSet<>(readLines(file, ISO_8859_1));
-            if (checksums.contains(checksum)) {
-                return false;
-            }
-            try (FileOutputStream os = new FileOutputStream(file, true)) {
-                String newLine = checksums.isEmpty() ? checksum : "\n" + checksum;
-                os.write(newLine.getBytes());
-            }
-            return true;
-        } catch (Exception e) {
-            log.error("Unable to append 'sha256checksums' file for " + insurantId, e);
+            return func.apply(checksum);
         } finally {
             lock.writeLock().unlock();
         }
-        return false;
     }
 
-    String calculateChecksum(byte[] bytes) throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        digest.update(bytes);
-        return DatatypeConverter.printHexBinary(digest.digest());
+    public void removeChecksum(byte[] bytes, String insurantId) {
+        checksumAction(bytes, (checksum) -> {
+            try {
+                HashSet<String> checksums = new HashSet<>(readLines(file, ISO_8859_1));
+                if (checksums.contains(checksum)) {
+                    checksums.remove(checksum);
+                    try (FileOutputStream os = new FileOutputStream(file)) {
+                        String newLine = checksums.isEmpty() ? "" : String.join("\n", checksums);
+                        os.write(newLine.getBytes());
+                    }
+                }
+                return true;
+            } catch (Exception e) {
+                log.error("[%s] Unable to append 'sha256checksums' file".formatted(insurantId), e);
+            }
+            return false;
+        });
+    }
+
+    public boolean appendChecksum(byte[] bytes, String insurantId) {
+        return checksumAction(bytes, (checksum) -> {
+            try {
+                HashSet<String> checksums = new HashSet<>(readLines(file, ISO_8859_1));
+                if (checksums.contains(checksum)) {
+                    return false;
+                }
+                try (FileOutputStream os = new FileOutputStream(file, true)) {
+                    String newLine = checksums.isEmpty() ? checksum : "\n" + checksum;
+                    os.write(newLine.getBytes());
+                }
+                return true;
+            } catch (Exception e) {
+                log.error("[%s] Unable to append 'sha256checksums' file".formatted(insurantId), e);
+            }
+            return false;
+        });
+    }
+
+    public String calculateChecksum(byte[] bytes) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(bytes);
+            return DatatypeConverter.printHexBinary(digest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            return null;
+        }
     }
 }

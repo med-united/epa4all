@@ -6,16 +6,19 @@ import de.servicehealth.folder.WebdavConfig;
 import de.servicehealth.utils.ServerUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
 import static de.servicehealth.epa4all.server.filetracker.FileOp.Create;
+import static de.servicehealth.epa4all.server.filetracker.FileOp.Delete;
 import static java.io.File.separator;
 
 @ApplicationScoped
@@ -85,6 +88,20 @@ public class FolderService implements IFolderService {
         return telematikFolder;
     }
 
+    public void deleteFile(String telematikId, String insurantId, String fileName) throws Exception {
+        File insurantFolder = getInsurantFolder(telematikId, insurantId);
+        ChecksumFile checksumFile = new ChecksumFile(insurantFolder);
+        File file = new File(fileName);
+        if (file.exists()) {
+            byte[] bytes = Files.readAllBytes(file.toPath());
+            FileUtils.forceDelete(file);
+            checksumFile.removeChecksum(bytes, insurantId);
+
+            log.info("File %s is deleted".formatted(file.getAbsolutePath()));
+            fileEventSender.sendAsync(new FileEvent(Delete, telematikId, List.of(file)));
+        }
+    }
+
     public void storeNewFile(
         String fileName,
         String folderCode,
@@ -92,7 +109,8 @@ public class FolderService implements IFolderService {
         String insurantId,
         byte[] documentBytes
     ) throws Exception {
-        if (appendChecksumFor(telematikId, insurantId, documentBytes)) {
+        ChecksumFile checksumFile = new ChecksumFile(getInsurantFolder(telematikId, insurantId));
+        if (checksumFile.appendChecksum(documentBytes, insurantId)) {
             File medFolder = getMedFolder(telematikId, insurantId, folderCode);
             File file = new File(medFolder, fileName);
             if (!file.exists()) {
@@ -110,11 +128,6 @@ public class FolderService implements IFolderService {
         } catch (IOException e) {
             log.error("Error while saving file: " + outFile.getAbsolutePath(), e);
         }
-    }
-
-    public boolean appendChecksumFor(String telematikId, String insurantId, byte[] documentBytes) throws Exception {
-        ChecksumFile checksumFile = new ChecksumFile(getInsurantFolder(telematikId, insurantId));
-        return checksumFile.appendChecksumFor(documentBytes, insurantId);
     }
 
     public Set<String> getChecksums(String telematikId, String insurantId) {

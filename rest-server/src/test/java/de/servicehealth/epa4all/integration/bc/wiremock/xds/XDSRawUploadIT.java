@@ -1,9 +1,11 @@
-package de.servicehealth.epa4all.integration.bc.wiremock;
+package de.servicehealth.epa4all.integration.bc.wiremock.xds;
 
 import de.servicehealth.api.epa4all.IDocumentManagementPortTypeProvider;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
+import de.servicehealth.epa4all.server.filetracker.ChecksumFile;
+import de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import io.quarkus.test.junit.QuarkusMock;
@@ -12,6 +14,8 @@ import io.quarkus.test.junit.TestProfile;
 import io.restassured.response.ValidatableResponse;
 import jakarta.inject.Inject;
 import jakarta.xml.bind.JAXBElement;
+import oasis.names.tc.ebxml_regrep.xsd.lcm._3.RemoveObjectsRequest;
+import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ClassificationType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExtrinsicObjectType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.IdentifiableType;
@@ -21,6 +25,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.io.File;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -40,9 +45,11 @@ import static de.servicehealth.vau.VauClient.KVNR;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
 import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
+import static jakarta.ws.rs.core.MediaType.MEDIA_TYPE_WILDCARD;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -50,7 +57,7 @@ import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
-public class RawUploadIT extends AbstractWiremockTest {
+public class XDSRawUploadIT extends AbstractWiremockTest {
 
     @Inject
     IDocumentManagementPortTypeProvider portTypeProvider;
@@ -67,22 +74,31 @@ public class RawUploadIT extends AbstractWiremockTest {
         IDocumentManagementPortType documentManagement = mock(IDocumentManagementPortType.class);
         RegistryResponseType responseType = new RegistryResponseType();
         responseType.setStatus("Success");
+        
         ArgumentCaptor<ProvideAndRegisterDocumentSetRequestType> documentSetCaptor = ArgumentCaptor.forClass(ProvideAndRegisterDocumentSetRequestType.class);
         when(documentManagement.documentRepositoryProvideAndRegisterDocumentSetB(documentSetCaptor.capture())).thenReturn(responseType);
+
+        ArgumentCaptor<RemoveObjectsRequest> removeObjectsCaptor = ArgumentCaptor.forClass(RemoveObjectsRequest.class);
+        when(documentManagement.documentRegistryDeleteDocumentSet(removeObjectsCaptor.capture())).thenReturn(responseType);
+
+        AdhocQueryResponse adhocQueryResponse = RawSoapUtils.deserializeAdhocQueryResponse(getStringFixture("AdhocQueryResponse.xml"));
+        when(documentManagement.documentRegistryRegistryStoredQuery(any())).thenReturn(adhocQueryResponse);
+
         IDocumentManagementPortTypeProvider provider = mock(IDocumentManagementPortTypeProvider.class);
         when(provider.buildIDocumentManagementPortType(any(), any())).thenReturn(documentManagement);
         QuarkusMock.installMockForType(provider, IDocumentManagementPortTypeProvider.class);
 
 
-        String telematikId = "1-SMC-B-Testkarte--883110000162363";
+        String telematikId = "3-SMC-B-Testkarte--883110000147807";
         String kvnr = "X110587452";
         prepareInsurantFiles(telematikId, kvnr);
 
         String fileName = "Medication-List.pdf";
+        byte[] pdfBytes = getBinaryFixture(fileName);
         ValidatableResponse response = given()
             .contentType("multipart/form-data")
             .multiPart("raw_soap", getStringFixture("UploadSoapRequest.xml"), "application/xop+xml")
-            .multiPart("pdf_body", fileName, getBinaryFixture(fileName), "application/pdf")
+            .multiPart("pdf_body", fileName, pdfBytes, "application/pdf")
             .header(USER_AGENT, "RestAssured/1.0")
             .header("Lang-Code", "de-DE")
             .queryParams(Map.of(X_KONNEKTOR, "localhost"))
@@ -139,6 +155,42 @@ public class RawUploadIT extends AbstractWiremockTest {
         ClassificationType typeCodeClassification = getClassificationType(extrinsicObjectType, TYPE_CODE_CLASSIFICATION_SCHEME);
         String typeCodeValue = typeCodeClassification.getName().getLocalizedString().getFirst().getValue();
         assertEquals("Arztberichte", typeCodeValue);
+
+        ChecksumFile checksumFile = new ChecksumFile(folderService.getInsurantFolder(telematikId, kvnr));
+
+        List<File> medFilesPdf = folderService.getMedFilesPdf(telematikId, kvnr);
+        assertTrue(medFilesPdf.stream().anyMatch(f -> f.getName().endsWith(fileName)));
+        String checksum = checksumFile.calculateChecksum(pdfBytes);
+        assertTrue(checksumFile.getChecksums().contains(checksum));
+
+        response = given()
+            .contentType(MEDIA_TYPE_WILDCARD)
+            .header(USER_AGENT, "RestAssured/1.0")
+            .queryParams(Map.of(X_KONNEKTOR, "localhost"))
+            .queryParams(Map.of(KVNR, kvnr))
+            .body(getBinaryFixture("DeleteSoapRequest.xml"))
+            .when()
+            .post("/xds-document/delete/raw")
+            .then()
+            .statusCode(200);
+
+        taskId = response.extract().body().asPrettyString();
+
+        String removeResponse = "InProgress";
+        while (removeResponse.contains("InProgress")) {
+            TimeUnit.MILLISECONDS.sleep(100);
+            ValidatableResponse taskResponse = given()
+                .header(USER_AGENT, "RestAssured/1.0")
+                .when()
+                .get("xds-document/task/" + taskId)
+                .then()
+                .statusCode(200);
+            removeResponse = taskResponse.extract().xmlPath().prettify();
+        }
+        assertTrue(removeResponse.contains("Success"));
+        assertFalse(checksumFile.getChecksums().contains(checksum));
+        medFilesPdf = folderService.getMedFilesPdf(telematikId, kvnr);
+        assertFalse(medFilesPdf.stream().anyMatch(f -> f.getName().endsWith(fileName)));
     }
 
     private ClassificationType getClassificationType(ExtrinsicObjectType extrinsicObjectType, String classificationScheme) {
