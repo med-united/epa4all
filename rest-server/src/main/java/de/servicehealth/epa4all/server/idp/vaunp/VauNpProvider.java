@@ -160,7 +160,6 @@ public class VauNpProvider extends StartableService {
                                     konnektorConfig.getUserConfigurations()
                                 );
                                 AuthorizationSmcBApi smcBApi = epaAPI.getAuthorizationSmcBApi();
-                                String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
                                 vauFacade.getEmptyClients(konnektorWorkplace).forEach(vauClient ->
                                     futures.add(scheduledThreadPool.submit(() -> {
                                         reloadHappened.set(true);
@@ -171,7 +170,6 @@ public class VauNpProvider extends StartableService {
                                             vauClient,
                                             uri,
                                             backend,
-                                            smcbHandle,
                                             userAgent,
                                             clientId
                                         );
@@ -220,11 +218,11 @@ public class VauNpProvider extends StartableService {
         VauClient vauClient,
         String uri,
         String backend,
-        String smcbHandle,
         String userAgent,
         String clientId
     ) {
         try {
+            String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
             KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
             String uuid = vauClient.getUuid();
             Map<LogField, String> mdcMap = Map.of(
