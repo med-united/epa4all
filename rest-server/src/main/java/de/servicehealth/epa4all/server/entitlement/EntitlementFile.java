@@ -44,8 +44,6 @@ public class EntitlementFile extends MapDumpFile<String, Instant> {
     }
 
     public void setEntitlement(Instant validTo) {
-        Map<String, Instant> map = get();
-        map.put(insurantId, validTo);
-        overwrite(map);
+        put(insurantId, validTo);
     }
 }

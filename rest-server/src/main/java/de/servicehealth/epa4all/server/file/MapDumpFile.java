@@ -67,29 +67,46 @@ public abstract class MapDumpFile<K, V> {
         writeLock(new HashMap<>(), this::store);
     }
 
-    public Map<K, V> overwrite(Predicate<? super Map.Entry<K, V>> predicate) {
-        Map<K, V> current = get();
-        Map<K, V> filtered = current.entrySet().stream()
-            .filter(predicate)
-            .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-        if (current.size() > filtered.size()) {
-            writeLock(filtered, this::store);
+    public Map<K, V> overwrite(Predicate<? super Map.Entry<K, V>> predicate) throws Exception {
+        filesLocks.get(getClass()).writeLock().lock();
+        try {
+            Map<K, V> current = load();
+            Map<K, V> filtered = current.entrySet().stream()
+                .filter(predicate)
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+            if (current.size() > filtered.size()) {
+                store(filtered);
+            }
+            return filtered;
+        } finally {
+            filesLocks.get(getClass()).writeLock().unlock();
         }
-        return filtered;
     }
 
     public void overwrite(Map<K, V> map) {
         writeLock(map, this::store);
     }
 
-    public void append(K key, V value) {
-        Map<K, V> map = get();
-        map.put(key, value);
-        writeLock(map, this::store);
+    public void put(K key, V value) {
+        filesLocks.get(getClass()).writeLock().lock();
+        try {
+            Map<K, V> map;
+            try {
+                map = load();
+            } catch (Exception e) {
+                map = new HashMap<>();
+            }
+            map.put(key, value);
+            store(map);
+        } finally {
+            filesLocks.get(getClass()).writeLock().unlock();
+        }
     }
 
     protected abstract String getFileName();
+
     protected abstract Pair<K, V> deserialize(String line);
+
     protected abstract String serialize(Map.Entry<K, V> entry);
 
     protected Map<K, V> load() throws Exception {

@@ -104,6 +104,14 @@ public interface IFolderService {
         return getNestedFiles(getMedFolder(telematikId, insurantId, medFolder));
     }
 
+    default List<File> getMedFilesPdf(String telematikId, String insurantId) {
+        return getAllMedFiles(telematikId, insurantId, Set.of(".pdf"));
+    }
+
+    default List<File> getMedFilesXmlPdf(String telematikId, String insurantId) {
+        return getAllMedFiles(telematikId, insurantId, Set.of(".xml", ".pdf"));
+    }
+
     default List<File> getAllMedFiles(String telematikId, String insurantId, Set<String> extSet) {
         return Arrays.stream(getInsurantMedFolders(telematikId, insurantId))
             .filter(f -> !f.getName().equals(LOCAL_FOLDER))

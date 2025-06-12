@@ -1,0 +1,12 @@
+<ns4:RemoveObjectsRequest xmlns="urn:oasis:names:tc:ebxml-regrep:xsd:rim:3.0"
+                          xmlns:ns2="urn:oasis:names:tc:ebxml-regrep:xsd:rs:3.0"
+                          xmlns:ns3="urn:oasis:names:tc:ebxml-regrep:xsd:query:3.0"
+                          xmlns:ns4="urn:oasis:names:tc:ebxml-regrep:xsd:lcm:3.0"
+                          xmlns:ns5="urn:ihe:iti:xds-b:2007"
+                          xmlns:ns6="urn:ihe:iti:rmd:2017">
+    <ObjectRefList>
+        <ObjectRef id="urn:uuid:1e418088-3fc5-41b4-bb51-b498e599fc9d"/>
+        <ObjectRef id="urn:uuid:e0693ce0-5da4-499c-94f3-f8e14b5a5cbc"/>
+        <ObjectRef id="urn:uuid:129307b6-f74c-4a4c-bff4-015c12e0c812"/>
+    </ObjectRefList>
+</ns4:RemoveObjectsRequest>
