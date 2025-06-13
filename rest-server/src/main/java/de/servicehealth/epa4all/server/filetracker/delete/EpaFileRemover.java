@@ -28,10 +28,7 @@ public class EpaFileRemover extends EpaFileTracker<FileDelete> {
         return response;
     }
 
-    private void handleDeleteResponse(
-        FileDelete fileDelete,
-        RegistryResponseType registryResponse
-    ) {
+    private void handleDeleteResponse(FileDelete fileDelete, RegistryResponseType registryResponse) {
         boolean success = registryResponse.getStatus().contains("Success");
         if (success) {
             String telematikId = fileDelete.getTelematikId();
