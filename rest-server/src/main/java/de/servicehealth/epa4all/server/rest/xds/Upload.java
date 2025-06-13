@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.util.Optional;
 import java.util.UUID;
 
-import static de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils.deserializeUploadRequest;
+import static de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils.deserializeRegisterElement;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
@@ -91,8 +91,8 @@ public class Upload extends XdsResource {
         byte[] documentBytes = is.readAllBytes();
 
         InputPart soapPart = input.getFormDataMap().get("raw_soap").getFirst();
-        String rawSoapRequest = soapPart.getBody(String.class, null);
-        ProvideAndRegisterDocumentSetRequestType request = deserializeUploadRequest(rawSoapRequest);
+        String xmlElement = soapPart.getBody(String.class, null);
+        ProvideAndRegisterDocumentSetRequestType request = deserializeRegisterElement(xmlElement);
         Document document = new Document();
         document.setValue(documentBytes);
         document.setId(getDocumentId(request));
@@ -198,7 +198,7 @@ public class Upload extends XdsResource {
         @QueryParam(KVNR) String kvnr,
         @Parameter(name = "ig", description = "IG schema name", in = QUERY)
         @QueryParam("ig") String ig,
-        @Parameter(description = "Document to submit to the XDS registry", example = "xml/pdf")
+        @Parameter(description = "ns5:ProvideAndRegisterDocumentSetRequest XML element to submit to the XDS registry")
         InputStream is
     ) throws Exception {
         EpaContext epaContext = prepareEpaContext(kvnr);

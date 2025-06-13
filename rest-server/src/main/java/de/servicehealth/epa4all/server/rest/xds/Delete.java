@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils.deserializeDeleteRequest;
+import static de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils.deserializeRemoveElement;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
 import static de.servicehealth.vau.VauClient.KVNR;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
@@ -48,7 +48,7 @@ public class Delete extends XdsResource {
     @Consumes(MediaType.MEDIA_TYPE_WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
     @Path("delete/raw")
-    @Operation(summary = "Delete single document XML/PDF/etc from the XDS registry")
+    @Operation(summary = "Delete documents from the XDS registry")
     public String delete(
         @Parameter(
             name = X_KONNEKTOR,
@@ -57,13 +57,13 @@ public class Delete extends XdsResource {
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = KVNR, description = "Patient KVNR", required = true)
         @QueryParam(KVNR) String kvnr,
-        @Parameter(description = "Document to submit to the XDS registry", example = "xml/pdf")
+        @Parameter(description = "ns4:RemoveObjectsRequest XML element to submit to the XDS registry")
         InputStream is
     ) throws Exception {
         EpaContext epaContext = prepareEpaContext(kvnr);
 
-        String rawSoapRequest = new String(is.readAllBytes(), ISO_8859_1);
-        RemoveObjectsRequest request = deserializeDeleteRequest(rawSoapRequest);
+        String xmlElement = new String(is.readAllBytes(), ISO_8859_1);
+        RemoveObjectsRequest request = deserializeRemoveElement(xmlElement);
 
         Set<String> uuids = request.getObjectRefList().getObjectRef().stream()
             .map(IdentifiableType::getId)
