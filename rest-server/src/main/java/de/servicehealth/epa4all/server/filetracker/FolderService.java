@@ -112,7 +112,7 @@ public class FolderService implements IFolderService {
         ChecksumFile checksumFile = new ChecksumFile(getInsurantFolder(telematikId, insurantId));
         if (checksumFile.appendChecksum(documentBytes, insurantId)) {
             File medFolder = getMedFolder(telematikId, insurantId, folderCode);
-            File file = new File(medFolder, fileName);
+            File file = new File(medFolder, fileName.replace(":", "_"));
             if (!file.exists()) {
                 writeBytesToFile(telematikId, documentBytes, file);
             }
