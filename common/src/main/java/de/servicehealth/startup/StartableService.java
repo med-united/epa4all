@@ -30,8 +30,12 @@ public abstract class StartableService implements StartupEventListener {
 
     public void onStart(StartupEvent ev) throws Exception {
         String className = getClass().getSimpleName();
-        configDirectory = new File(startupConfig.getConfigFolder());
-        if (!configDirectory.exists() || !configDirectory.isDirectory()) {
+        String configFolder = startupConfig.getConfigFolder();
+        log.info("Config folder: " + configFolder);
+        configDirectory = new File(configFolder);
+        if (configDirectory.exists() && configDirectory.isDirectory()) {
+            log.info("configDirectory OK: " + configDirectory.getAbsolutePath());
+        } else {
             String configPath = configDirectory.getAbsolutePath();
             String msg = "Konnektor config directory is not correct. Should exist as directory here: " + configPath;
             throw new IllegalStateException(msg);

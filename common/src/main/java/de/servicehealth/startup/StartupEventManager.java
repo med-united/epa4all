@@ -24,7 +24,7 @@ public class StartupEventManager {
             .forEach(listener -> {
                 try {
                     listener.onStart(ev);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     String msg = String.format(
                         "Error while starting %s -> %s", listener.getClass().getSimpleName(), e.getMessage()
                     );

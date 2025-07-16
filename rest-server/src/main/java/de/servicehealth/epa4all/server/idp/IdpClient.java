@@ -78,6 +78,7 @@ public class IdpClient extends StartableService {
     }
 
     public void doStart() throws Exception {
+        log.info("IdpClient onStart");
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
         BrainpoolCurves.init();
         retrieveDiscoveryDocument();
