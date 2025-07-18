@@ -74,6 +74,9 @@ public class Workspace {
                     <param name="path" value="%s/index"/>
                     <param name="useSimpleFSDirectory" value="true"/>
                     <param name="supportHighlighting" value="true"/>
+                    <param name="mergeFactor" value="10"/>
+                    <param name="maxMergeDocs" value="100000"/>
+                    <param name="useCompoundFile" value="true"/>
                     <param name="extractorPoolSize" value="5"/>%s%s
                 </SearchIndex>
             </Workspace>""".formatted(telematikId, path, path, tikaConfigElement, indexingConfigElement);

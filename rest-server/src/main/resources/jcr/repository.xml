@@ -26,6 +26,9 @@
         <SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
             <param name="path" value="${wsp.home}/index"/>
             <param name="supportHighlighting" value="true"/>
+            <param name="mergeFactor" value="10"/>
+            <param name="maxMergeDocs" value="100000"/>
+            <param name="useCompoundFile" value="true"/>
         </SearchIndex>
     </Workspace>
 
@@ -39,6 +42,9 @@
     <SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
         <param name="path" value="${repository.home}/index"/>
         <param name="useSimpleFSDirectory" value="true"/>
+        <param name="mergeFactor" value="10"/>
+        <param name="maxMergeDocs" value="100000"/>
+        <param name="useCompoundFile" value="true"/>
     </SearchIndex>
 
     <DataStore class="org.apache.jackrabbit.core.data.FileDataStore"/>
