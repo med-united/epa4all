@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.rest.exception;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.servicehealth.epa4all.cxf.provider.VauException;
+import de.servicehealth.epa4all.server.pnw.ConsentException;
 import de.servicehealth.epa4all.server.pnw.PnwException;
 import de.servicehealth.epa4all.server.pnw.PnwResponse;
 import io.quarkus.security.AuthenticationFailedException;
@@ -16,6 +17,7 @@ import static de.servicehealth.utils.ServerUtils.getOriginalCause;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
+import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static jakarta.ws.rs.core.Response.Status.UNAUTHORIZED;
 
@@ -63,6 +65,7 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
             case ResponseProcessingException processingException -> extractPossibleVauException(getOriginalCause(processingException));
             case AuthenticationFailedException authException -> new ExInfo(authException.getMessage(), null, null, UNAUTHORIZED);
             case PnwException pnwException -> extractPossibleVauException(getOriginalCause(pnwException));
+            case ConsentException consentException -> new ExInfo(consentException.getMessage(), null, null, FORBIDDEN);
             case null -> new ExInfo("Unknown error", null, null, INTERNAL_SERVER_ERROR);
             default -> extractPossibleVauException(getOriginalCause(exception));
         };

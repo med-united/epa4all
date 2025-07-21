@@ -1,5 +1,6 @@
 package de.servicehealth.api.epa4all;
 
+import de.servicehealth.api.ConsentDecisionsApi;
 import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.api.epa4all.proxy.IAdminProxy;
@@ -22,6 +23,7 @@ public class EpaAPIAggregator implements EpaAPI {
     private final Supplier<IDocumentManagementPortType> documentManagementPortType;
     private final IDocumentManagementInsurantPortType documentManagementInsurantPortType;
     private final AccountInformationApi accountInformationApi;
+    private final ConsentDecisionsApi consentDecisionsApi;
     private final AuthorizationSmcBApi authorizationSmcBApi;
     private final EntitlementsApi entitlementsApi;
     private final IAdminProxy adminProxy;
@@ -33,6 +35,7 @@ public class EpaAPIAggregator implements EpaAPI {
         Supplier<IDocumentManagementPortType> documentManagementPortType,
         IDocumentManagementInsurantPortType documentManagementInsurantPortType,
         AccountInformationApi accountInformationApi,
+        ConsentDecisionsApi consentDecisionsApi,
         AuthorizationSmcBApi authorizationSmcBApi,
         EntitlementsApi entitlementsApi,
         IAdminProxy adminProxy,
@@ -43,6 +46,7 @@ public class EpaAPIAggregator implements EpaAPI {
         this.documentManagementPortType = documentManagementPortType;
         this.documentManagementInsurantPortType = documentManagementInsurantPortType;
         this.accountInformationApi = accountInformationApi;
+        this.consentDecisionsApi = consentDecisionsApi;
         this.authorizationSmcBApi = authorizationSmcBApi;
         this.entitlementsApi = entitlementsApi;
         this.adminProxy = adminProxy;
@@ -80,6 +84,11 @@ public class EpaAPIAggregator implements EpaAPI {
     @Override
     public AccountInformationApi getAccountInformationApi() {
         return accountInformationApi;
+    }
+
+    @Override
+    public ConsentDecisionsApi getContentDecisionApi() {
+        return consentDecisionsApi;
     }
 
     @Override

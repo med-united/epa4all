@@ -3,6 +3,7 @@ package de.servicehealth.api.epa4all;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import de.servicehealth.api.AccountInformationApi;
+import de.servicehealth.api.ConsentDecisionsApi;
 import de.servicehealth.api.epa4all.annotation.EpaRestFeatures;
 import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsApi;
@@ -106,6 +107,9 @@ public class EpaMultiService extends StartableService {
                     AccountInformationApi accountInformationApi = clientFactory.createRestPlainClient(
                         AccountInformationApi.class, getBackendUrl(backend, epaConfig.getInformationServiceUrl())
                     );
+                    ConsentDecisionsApi consentDecisionsApi = clientFactory.createRestPlainClient(
+                        ConsentDecisionsApi.class, getBackendUrl(backend, epaConfig.getInformationServiceUrl())
+                    );
                     String authorizationServiceUrl = epaConfig.getAuthorizationServiceUrl();
                     AuthorizationSmcBApi authorizationSmcBApi = createProxyClient(
                         AuthorizationSmcBApi.class, backend, authorizationServiceUrl, vauFacade
@@ -130,6 +134,7 @@ public class EpaMultiService extends StartableService {
                         () -> buildIDocumentManagementPortType(backend, vauFacade),
                         documentManagementInsurantPortType,
                         accountInformationApi,
+                        consentDecisionsApi,
                         authorizationSmcBApi,
                         entitlementsApi,
                         adminProxy,

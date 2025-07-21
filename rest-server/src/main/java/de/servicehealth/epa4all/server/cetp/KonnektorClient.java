@@ -251,6 +251,11 @@ public class KonnektorClient implements IKonnektorClient {
         }
     }
 
+    /*
+        Workplace1 -> CT1,CT2
+        Workplace2 -> CT2
+        Workplace3 -> CT1,CT2,CT3
+     */
     @Override
     public List<Card> getCards(UserRuntimeConfig runtimeConfig, CardType cardType) throws CetpFault {
         GetCardsResponse cardsResponse = getCardsResponse(runtimeConfig, cardType);
