@@ -1,5 +1,6 @@
 package de.servicehealth.api.epa4all;
 
+import de.servicehealth.api.ConsentDecisionsApi;
 import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.api.epa4all.proxy.IAdminProxy;
@@ -22,6 +23,8 @@ public interface EpaAPI {
     IDocumentManagementPortType getDocumentManagementPortType(String taskId, Map<String, String> xHeaders);
 
     AccountInformationApi getAccountInformationApi();
+
+    ConsentDecisionsApi getContentDecisionApi();
 
     AuthorizationSmcBApi getAuthorizationSmcBApi();
 

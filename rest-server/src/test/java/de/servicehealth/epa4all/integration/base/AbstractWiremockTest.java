@@ -3,6 +3,8 @@ package de.servicehealth.epa4all.integration.base;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.gematik.vau.lib.VauServerStateMachine;
 import de.gematik.vau.lib.data.EccKyberKeyPair;
 import de.gematik.vau.lib.data.SignedPublicVauKeys;
@@ -33,9 +35,12 @@ import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.jcr.JcrService;
+import de.servicehealth.epa4all.server.rest.consent.ConsentFunction;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import de.servicehealth.folder.WebdavConfig;
+import de.servicehealth.model.ConsentDecisionsResponseType;
+import de.servicehealth.model.GetConsentDecisionInformation200Response;
 import de.servicehealth.registry.BeanRegistry;
 import de.servicehealth.vau.VauFacade;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -53,6 +58,7 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -69,8 +75,10 @@ import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static de.servicehealth.epa4all.common.TestUtils.getTextFixture;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
+import static wiremock.com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
 public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
@@ -139,6 +147,8 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     protected KonnektorDefaultConfig konnektorDefaultConfig;
 
     protected static Path tempDir;
+
+    protected Gson gson = new GsonBuilder().create();
 
     @BeforeAll
     public static void beforeAll() throws Exception {
@@ -247,6 +257,25 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     protected void prepareInformationStubs(int status) {
         wiremock.addStubMapping(get(urlEqualTo("/information/api/v1/ehr"))
             .willReturn(WireMock.aResponse().withStatus(status)).build());
+    }
+
+    protected void prepareConsentStubs(Map<ConsentFunction, String> functions) {
+        List<ConsentDecisionsResponseType> decisionsResponseTypes = new ArrayList<>();
+        for (Map.Entry<ConsentFunction, String> e : functions.entrySet()) {
+            ConsentDecisionsResponseType responseType = new ConsentDecisionsResponseType();
+            responseType.functionId(e.getKey().getFunction());
+            responseType.decision(e.getValue());
+            decisionsResponseTypes.add(responseType);
+        }
+        GetConsentDecisionInformation200Response response = new GetConsentDecisionInformation200Response();
+        response.data(decisionsResponseTypes);
+        wiremock.addStubMapping(get(urlEqualTo("/information/api/v1/ehr/consentdecisions"))
+            .willReturn(
+                WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader(CONTENT_TYPE, APPLICATION_JSON)
+                    .withBody(gson.toJson(response))
+            ).build());
     }
 
     protected void prepareKonnektorStubs() throws Exception {

@@ -13,6 +13,7 @@ import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.rest.consent.ConsentFunction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
+import static de.servicehealth.epa4all.server.rest.consent.ConsentFunction.Medication;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
@@ -50,6 +52,8 @@ import static org.mockito.Mockito.when;
 @TestProfile(WireMockProfile.class)
 public class ExternalPnwIT extends AbstractWiremockTest {
 
+    private static final Map<ConsentFunction, String> MEDICATION_PERMIT_MAP = Map.of(Medication, "permit");
+
     @InjectMock
     FileEventSender fileEventSender;
 
@@ -64,7 +68,8 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         String kvnr,
         String validToPayload,
         String errorHeader,
-        int informationStatus
+        int informationStatus,
+        Map<ConsentFunction, String> functions
     ) throws Exception {
         byte[] payload = validToPayload == null ? null : validToPayload.getBytes(UTF_8);
         CallInfo callInfo = new CallInfo().withJsonPayload(payload).withErrorHeader(errorHeader);
@@ -72,6 +77,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
             Pair.of("/epa/basic/api/v1/ps/entitlements", callInfo)
         ));
         prepareInformationStubs(informationStatus);
+        prepareConsentStubs(functions);
 
         String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
         String telematikId = konnektorClient.getTelematikId(defaultUserConfig, smcbHandle);
@@ -92,7 +98,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         String startDate = "2025-01-15T22:59:59Z";
         String validToValue = "2025-02-15T22:59:59";
         String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
-        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204);
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204, MEDICATION_PERMIT_MAP);
 
         String versicherungsdaten = "H4sIAAAAAAAA/81S30+DMBD+Vwjv44CJDlO6zM2YZc4Zp2h8IRVuQAaHod00++sty2JgWearL23uu/t+pFc2/C4LY4u1zCsKTMeyTQMprpKc0sCcLhe9wcDze45nDjl7GUejokixxJwwbDhxhvWGUpkIhfQ2vze0GsnAzJT6vAb4kpaeFipfWwnCSsBWJmVzwNazXNMYT+ZRePu0nC4eAlMj2p2zX2GFdatqbGScbdSOsxtMcyLu2u6FY7t9BgeAzSqpg6haYNqQO+UaibQId2zfs23/0mdwst9lFQIpwVq/CPLJEaPdYw+iRP6MUhl3s7C3DBnsETb6qDHOaD/5D+PBmXxwXJ9cxvtGCrXLaVXJTqF9OsskUSveb4kcoDYnOqTR+tGe/7p45FcDBs3N4NwkHFtDJxh0vxX8/Zf5DyMao4EcAwAA";
         String pruefungsnachweis = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
@@ -147,7 +153,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         String kvnr = "X110624007";
         String validToValue = "2025-02-15T22:59:59";
         String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
-        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 404);
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 404, MEDICATION_PERMIT_MAP);
 
         String pnw = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
 
@@ -177,7 +183,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
     public void entitlementIsNotSetAndCetpEventIsNotHandledDueToEPAInternalError() throws Exception {
         String kvnr = "X110624008";
         String errorHeader = "{\"errorCode\":\"internalError\",\"errorDetail\":\"Internal error occurred during entitlement processing.\"}";
-        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, null, errorHeader, 204);
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, null, errorHeader, 204, MEDICATION_PERMIT_MAP);
 
         String pnw = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
 
@@ -210,7 +216,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
         String startDate = "2025-01-15T22:59:59Z";
         String validToValue = "2025-02-15T22:59:59";
         String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
-        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204);
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204, MEDICATION_PERMIT_MAP);
 
         String versicherungsdaten = "H4sIAAAAAAAA/81S30+DMBD+Vwjv44CJDlO6zM2YZc4Zp2h8IRVuQAaHod00++sty2JgWearL23uu/t+pFc2/C4LY4u1zCsKTMeyTQMprpKc0sCcLhe9wcDze45nDjl7GUejokixxJwwbDhxhvWGUpkIhfQ2vze0GsnAzJT6vAb4kpaeFipfWwnCSsBWJmVzwNazXNMYT+ZRePu0nC4eAlMj2p2zX2GFdatqbGScbdSOsxtMcyLu2u6FY7t9BgeAzSqpg6haYNqQO+UaibQId2zfs23/0mdwst9lFQIpwVq/CPLJEaPdYw+iRP6MUhl3s7C3DBnsETb6qDHOaD/5D+PBmXxwXJ9cxvtGCrXLaVXJTqF9OsskUSveb4kcoDYnOqTR+tGe/7p45FcDBs3N4NwkHFtDJxh0vxX8/Zf5DyMao4EcAwAA";
         String pruefungsnachweis = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
@@ -234,6 +240,35 @@ public class ExternalPnwIT extends AbstractWiremockTest {
 
         ResponseBodyExtractionOptions body = response.extract().body();
         System.out.println(body.jsonPath().prettify());
+    }
+
+    @Test
+    public void noUserMedicationConsentError() throws Exception {
+        String kvnr = "X110624006";
+        String street = "Achenseeweg 150";
+        String startDate = "2025-01-15T22:59:59Z";
+        String validToValue = "2025-02-15T22:59:59";
+        String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204, Map.of(Medication, "forbidden"));
+
+        String versicherungsdaten = "H4sIAAAAAAAA/81S30+DMBD+Vwjv44CJDlO6zM2YZc4Zp2h8IRVuQAaHod00++sty2JgWearL23uu/t+pFc2/C4LY4u1zCsKTMeyTQMprpKc0sCcLhe9wcDze45nDjl7GUejokixxJwwbDhxhvWGUpkIhfQ2vze0GsnAzJT6vAb4kpaeFipfWwnCSsBWJmVzwNazXNMYT+ZRePu0nC4eAlMj2p2zX2GFdatqbGScbdSOsxtMcyLu2u6FY7t9BgeAzSqpg6haYNqQO+UaibQId2zfs23/0mdwst9lFQIpwVq/CPLJEaPdYw+iRP6MUhl3s7C3DBnsETb6qDHOaD/5D+PBmXxwXJ9cxvtGCrXLaVXJTqF9OsskUSveb4kcoDYnOqTR+tGe/7p45FcDBs3N4NwkHFtDJxh0vxX8/Zf5DyMao4EcAwAA";
+        String pruefungsnachweis = "H4sIAAAAAAAA/w2MXQuCMBiF/4p4K/jOmTcxB9EWKDktzcibMDQ/J4qi9u/bzXngPIdDIqGdWfBO+T32QuHqlolMpGu77IfZ1etlGY8A22xWpcyXpjOLEr45rHMhYRw2WNVepySJKUbYQRg71sHCNiKgKsIpJsApiTL6ZHwP2Osn2GkTLbcVUZh4in2q3LrLTzAYrPcy1j2wcZ3yxr9NvKrbSzX5lUtAnagQ9A9GnS9OswAAAA==";
+        String pnw = versicherungsdaten + pruefungsnachweis;
+
+        ValidatableResponse response = given()
+            .body(pnw.getBytes())
+            .queryParams(Map.of(
+                "versicherungsdatenLength", versicherungsdaten.length(),
+                "startDate", startDate,
+                "street", street,
+                X_KONNEKTOR, "localhost",
+                X_INSURANT_ID, kvnr
+            ))
+            .when()
+            .post("/vsd/pnw")
+            .then()
+            .statusCode(403)
+            .body(containsString("Function 'medication' is not permitted"));
     }
 
     @AfterEach
