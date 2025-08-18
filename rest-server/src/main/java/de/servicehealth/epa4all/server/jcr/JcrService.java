@@ -66,37 +66,10 @@ public class JcrService extends StartableService {
         credentials = jcrConfig.getCredentials();
     }
 
-    private void repositoryMaintenance(File repositoryHome) {
-        if (repositoryHome.exists()) {
-            String servicehealthClientId = System.getenv("SERVICEHEALTH_CLIENT_ID");
-            if (servicehealthClientId != null) {
-                String repositoryPath = repositoryHome.getAbsolutePath();
-                Boolean recreate = jcrConfig.getRecreateMap().get(servicehealthClientId);
-                if (recreate != null && recreate) {
-                    try {
-                        deleteDirectory(repositoryHome);
-                        if (new File(repositoryPath).exists()) {
-                            log.error(String.format("['%s'] Failed to recreate the JCR repository home: %s", servicehealthClientId, repositoryPath));
-                        } else {
-                            log.info(String.format("['%s'] JCR repository was recreated: %s", servicehealthClientId, repositoryPath));
-                        }
-                    } catch (Exception e) {
-                        log.error("Error while recreating JCR repository home: " + repositoryPath, e);
-                    }
-                } else {
-                    log.info(String.format("['%s'] JCR repository is unchanged: %s", servicehealthClientId, repositoryPath));
-                }
-            }
-        } else {
-            repositoryHome.mkdirs();
-        }
-    }
-
     @Override
     public void doStart() throws Exception {
         System.setProperty("disableCheckForReferencesInContentException", "true");
         File repositoryHome = jcrConfig.getRepositoryHome();
-        repositoryMaintenance(repositoryHome);
         String repositoryPath = repositoryHome.getAbsolutePath();
         try {
             System.setProperty("workspaces.home", jcrConfig.getWorkspacesHome());
@@ -138,12 +111,13 @@ public class JcrService extends StartableService {
                 throw new IllegalStateException(msg, e);
             }
             log.error("Failed to initialize Jackrabbit repository, home folder will be recreated", e);
+            shutdown();
             try {
-                shutdown();
                 deleteDirectory(repositoryHome);
             } catch (Throwable io) {
                 log.error("Error while deleting JCR repository.home: " + repositoryPath, io);
             }
+            repositoryHome.mkdirs();
             doStart();
         }
     }

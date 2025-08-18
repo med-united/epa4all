@@ -18,9 +18,6 @@ import static de.servicehealth.epa4all.server.jcr.webdav.JCRParams.DEFAULT_AUTHE
 @ApplicationScoped
 public class JcrConfig {
 
-    @ConfigProperty(name = "jcr.repository.recreate")
-    Map<String, Boolean> recreateMap;
-
     @ConfigProperty(name = "jcr.repository.home")
     File repositoryHome;
 
