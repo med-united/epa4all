@@ -22,11 +22,15 @@ import io.quarkus.runtime.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ProcessingException;
 import lombok.Getter;
 import org.apache.cxf.feature.Feature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.http.HttpConnectTimeoutException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -169,8 +173,23 @@ public class EpaMultiService extends StartableService {
         );
     }
 
-    public EpaAPI getEpaAPI(String backend) {
-        return backend == null ? null : epaBackendMap.get(backend);
+    public boolean checkInsurantEPA(String insurantId) {
+        for (EpaAPI api : epaBackendMap.values()) {
+            AccountInformationApi accountInformationApi = api.getAccountInformationApi();
+            try {
+                accountInformationApi.getRecordStatus(insurantId, epaConfig.getEpaUserAgent());
+                return true;
+            } catch (ProcessingException e) {
+                if (e.getCause() instanceof HttpConnectTimeoutException) {
+                    throw e;
+                }
+            } catch (BadRequestException e) {
+                throw new BadRequestException("[%s] Check ePA failed: 400 BadRequest".formatted(insurantId));
+            } catch (NotFoundException e) {
+                return false;
+            }
+        }
+        return false;
     }
 
     public EpaAPI findEpaAPI(String insurantId) {

@@ -88,7 +88,7 @@ public class Vsd extends AbstractResource {
         } else {
             return resultMdcEx(Map.of(
                 SMCB_HANDLE, smcbHandle,
-                KONNEKTOR, konnektor,
+                KONNEKTOR, konnektor == null ? "default" : konnektor,
                 INSURANT, insurantId
             ), () -> {
                 try {

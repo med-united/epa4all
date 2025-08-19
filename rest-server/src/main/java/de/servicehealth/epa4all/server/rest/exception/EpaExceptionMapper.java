@@ -6,7 +6,7 @@ import de.servicehealth.epa4all.server.pnw.ConsentException;
 import de.servicehealth.epa4all.server.pnw.PnwException;
 import de.servicehealth.epa4all.server.pnw.PnwResponse;
 import io.quarkus.security.AuthenticationFailedException;
-import jakarta.ws.rs.client.ResponseProcessingException;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import static de.servicehealth.utils.ServerUtils.getOriginalCause;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
@@ -40,7 +41,7 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
         }
     }
 
-    private ExInfo extractPossibleVauException(Throwable t) {
+    private ExInfo extractException(Throwable t) {
         if (t instanceof VauException vauException) {
             return new ExInfo(null, vauException.getJsonNode(), null, CONFLICT);
         } else if (t instanceof PnwException pnwException) {
@@ -62,12 +63,11 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
         log.error("Client EXCEPTION", getOriginalCause(exception));
 
         ExInfo exInfo = switch (exception) {
-            case ResponseProcessingException processingException -> extractPossibleVauException(getOriginalCause(processingException));
-            case AuthenticationFailedException authException -> new ExInfo(authException.getMessage(), null, null, UNAUTHORIZED);
-            case PnwException pnwException -> extractPossibleVauException(getOriginalCause(pnwException));
-            case ConsentException consentException -> new ExInfo(consentException.getMessage(), null, null, FORBIDDEN);
+            case AuthenticationFailedException authEx -> new ExInfo(authEx.getMessage(), null, null, UNAUTHORIZED);
+            case ConsentException consentEx -> new ExInfo(consentEx.getMessage(), null, null, FORBIDDEN);
+            case BadRequestException badRequestEx -> new ExInfo(badRequestEx.getMessage(), null, null, BAD_REQUEST);
             case null -> new ExInfo("Unknown error", null, null, INTERNAL_SERVER_ERROR);
-            default -> extractPossibleVauException(getOriginalCause(exception));
+            default -> extractException(getOriginalCause(exception));
         };
         Object entity = exInfo.message != null
             ? new EpaClientError(exInfo.message)
