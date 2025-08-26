@@ -12,6 +12,7 @@ import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.ws.CETPPayload;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,6 +23,9 @@ public class CETPEventHandlerProvider {
 
     @Inject
     jakarta.enterprise.event.Event<WebSocketPayload> webSocketPayloadEvent;
+
+    @Inject
+    jakarta.enterprise.event.Event<CETPPayload> cetpPayloadEvent;
 
     @Inject
     protected KonnektorDefaultConfig konnektorDefaultConfig;
@@ -60,8 +64,8 @@ public class CETPEventHandlerProvider {
         FeatureConfig featureCfg = mockFeatureConfig != null ? mockFeatureConfig : featureConfig;
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
         return new CETPEventHandler(
-            webSocketPayloadEvent, insuranceDataService, entitlementService, downloader, konnektorClient,
-            epaMultiService, mockCardlinkClient, runtimeConfig, featureCfg, epaCallGuard
+            webSocketPayloadEvent, cetpPayloadEvent, insuranceDataService, entitlementService, downloader,
+            konnektorClient, epaMultiService, mockCardlinkClient, runtimeConfig, featureCfg, epaCallGuard
         );
     }
 }

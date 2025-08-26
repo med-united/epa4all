@@ -13,6 +13,7 @@ import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.ws.CETPPayload;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import io.netty.channel.ChannelInboundHandler;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -31,6 +32,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
     private final InsuranceDataService insuranceDataService;
     private final CardlinkClientWSFactory cardlinkClientFactory;
     private final Event<WebSocketPayload> webSocketPayloadEvent;
+    private final Event<CETPPayload> cetpPayloadEvent;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
@@ -44,6 +46,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         InsuranceDataService insuranceDataService,
         CardlinkClientWSFactory cardlinkClientFactory,
         Event<WebSocketPayload> webSocketPayloadEvent,
+        Event<CETPPayload> cetpPayloadEvent,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
         this.epaCallGuard = epaCallGuard;
@@ -54,6 +57,7 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         this.entitlementService = entitlementService;
         this.insuranceDataService = insuranceDataService;
         this.webSocketPayloadEvent = webSocketPayloadEvent;
+        this.cetpPayloadEvent = cetpPayloadEvent;
         this.cardlinkClientFactory = cardlinkClientFactory;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
     }
@@ -63,8 +67,8 @@ public class CETPServerHandlerFactory implements CETPEventHandlerFactory {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, konnektorConfig.getUserConfigurations());
         CardlinkClient cardlinkClient = cardlinkClientFactory.build(konnektorConfig);
         CETPEventHandler cetpEventHandler = new CETPEventHandler(
-            webSocketPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader, konnektorClient,
-            epaMultiService, cardlinkClient, runtimeConfig, featureConfig, epaCallGuard
+            webSocketPayloadEvent, cetpPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader,
+            konnektorClient, epaMultiService, cardlinkClient, runtimeConfig, featureConfig, epaCallGuard
         );
         return new ChannelInboundHandler[] { cetpEventHandler };
     }
