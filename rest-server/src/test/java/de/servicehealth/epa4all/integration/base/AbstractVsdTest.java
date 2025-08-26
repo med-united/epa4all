@@ -26,6 +26,7 @@ import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.vsd.VsdService;
+import de.servicehealth.epa4all.server.ws.CETPPayload;
 import de.servicehealth.epa4all.server.ws.WebSocketPayload;
 import de.servicehealth.folder.WebdavConfig;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -94,6 +95,9 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
 
     @Inject
     protected jakarta.enterprise.event.Event<WebSocketPayload> webSocketPayloadEvent;
+
+    @Inject
+    protected jakarta.enterprise.event.Event<CETPPayload> cetpPayloadEvent;
 
     @Inject
     protected InsuranceDataService insuranceDataService;
@@ -166,8 +170,8 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 
         CETPEventHandler cetpServerHandler = new CETPEventHandler(
-            webSocketPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader, konnektorClient,
-            epaMultiService, cardlinkClient, runtimeConfig, featureConfig, epaCallGuard
+            webSocketPayloadEvent, cetpPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader,
+            konnektorClient, epaMultiService, cardlinkClient, runtimeConfig, featureConfig, epaCallGuard
         );
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 
