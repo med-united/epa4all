@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.creationdate;
 import static de.servicehealth.epa4all.server.jcr.prop.MixinProp.EPA_NAMESPACE_PREFIX;
@@ -53,6 +54,9 @@ public class MixinJCRIT extends AbstractJCRTest {
         String telematikId = "1-SMC-B-Testkarte--883110000162363";
         String kvnr = "X110485291";
         prepareInsurantFiles(telematikId, kvnr);
+
+        // This delay is needed because of async nature of FileEvent when it is fired into JCR repo
+        TimeUnit.SECONDS.sleep(3);
 
         String resource = "/webdav2/" + telematikId + "/jcr:root/rootFolder/" + kvnr + "/local";
 

@@ -1,8 +1,8 @@
-package de.servicehealth.epa4all.integration.nonbc;
+package de.servicehealth.epa4all.integration.bc.wiremock;
 
 import de.gematik.ws.conn.eventservice.v7.GetCardsResponse;
 import de.health.service.cetp.IKonnektorClient;
-import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
+import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -19,14 +19,15 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 
 import static de.servicehealth.epa4all.common.TestUtils.getTextFixture;
-import static io.restassured.RestAssured.when;
+import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @QuarkusTest
-@TestProfile(ProxyEpaTestProfile.class)
+@TestProfile(WireMockProfile.class)
 public class EventServiceEpaIT {
 
     private static final Logger log = LoggerFactory.getLogger(EventServiceEpaIT.class.getName());
@@ -56,10 +57,10 @@ public class EventServiceEpaIT {
         GetCardsResponse getCardsResponse = (GetCardsResponse) getCardsJaxbContext.createUnmarshaller().unmarshal(is);
         
         KonnektorClient konnektorClientMock = mock(KonnektorClient.class);
-        org.mockito.Mockito.when(konnektorClientMock.getCardsResponse(any(), any())).thenReturn(getCardsResponse);
+        when(konnektorClientMock.getCardsResponse(any(), any())).thenReturn(getCardsResponse);
         QuarkusMock.installMockForType(konnektorClientMock, IKonnektorClient.class);
 
-        Response response = when().get("/event/cards");
+        Response response = given().when().get("/event/cards");
         assertEquals(200, response.getStatusCode());
         String xml = response.asString();
         assertTrue(xml.contains("GetCardsResponse"));

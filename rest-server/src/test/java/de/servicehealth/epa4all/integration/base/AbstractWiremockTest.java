@@ -196,6 +196,9 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         jcrService.shutdown();
         registry.getInstances(VauFacade.class).forEach(registry::unregister);
         deleteFiles(tempDir.toFile().listFiles());
+        epaMultiService.getEpaBackendMap().values().forEach(epaAPI -> {
+            epaAPI.getVauFacade().getSessionClients().forEach(vc -> vc.forceRelease(null));
+        });
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
         QuarkusMock.installMockForType(folderService, FolderService.class);
     }

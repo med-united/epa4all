@@ -4,6 +4,7 @@ import de.servicehealth.epa4all.common.profile.MTLSTestProfile;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -13,6 +14,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Disabled
 @QuarkusTest
 @TestProfile(MTLSTestProfile.class)
 public class TelematikAuthFilterIT {

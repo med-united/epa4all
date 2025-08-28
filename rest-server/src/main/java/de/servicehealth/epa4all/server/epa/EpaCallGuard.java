@@ -36,7 +36,7 @@ public class EpaCallGuard {
 
     public <T extends RegistryResponseType> T callAndRetry(String backend, XdsResponseAction<T> action) throws Exception {
         return Retrier.callAndRetryEx(
-            vauConfig.getVauCallRetries(),
+            vauConfig.getVauCallRetries().orElse(List.of()),
             vauConfig.getVauCallRetryPeriodMs(),
             true,
             Set.of(EPA_RECORD_IS_NOT_FOUND),
@@ -55,7 +55,7 @@ public class EpaCallGuard {
 
     public Response callAndRetry(String backend, ResponseAction action) throws Exception {
         return Retrier.callAndRetryEx(
-            vauConfig.getVauCallRetries(),
+            vauConfig.getVauCallRetries().orElse(List.of()),
             vauConfig.getVauCallRetryPeriodMs(),
             true,
             Set.of(EPA_RECORD_IS_NOT_FOUND, "Die eGK hat bereits eine Kartensitzung", "Pin-Status: VERIFIABLE"),
@@ -70,8 +70,8 @@ public class EpaCallGuard {
 
     public <T> T callAndRetry(KonnektorAction<T> action) throws Exception {
         return Retrier.callAndRetryEx(
-            List.of(500),
-            1500,
+            vauConfig.getVauCallRetries().orElse(List.of()),
+            vauConfig.getVauCallRetryPeriodMs(),
             true,
             Set.of(),
             action::execute,

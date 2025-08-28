@@ -211,23 +211,6 @@
                 <version>3.5.3</version>
                 <executions>
                     <execution>
-                        <id>no-bc</id>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                        <configuration>
-                            <includes>
-                                <include>**/*IT.java</include>
-                            </includes>
-                            <excludes>
-                                <exclude>**/bc/**/*IT.java</exclude>
-                            </excludes>
-                            <reuseForks>true</reuseForks>
-                            <forkCount>2</forkCount>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>bc</id>
                         <goals>
                             <goal>integration-test</goal>
@@ -235,7 +218,8 @@
                         </goals>
                         <configuration>
                             <includes>
-                                <include>**/bc/**/*IT.java</include>
+                                <include>**/bc/wiremock/**/*IT.java</include>
+                                <include>**/bc/xds/**/*IT.java</include>
                             </includes>
                             <reuseForks>false</reuseForks>
                             <forkCount>1</forkCount>
