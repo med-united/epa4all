@@ -73,7 +73,7 @@ public class IdpClientIT {
 
     @Test
     public void testGetVauNp() throws Exception {
-        EpaAPI epaAPI = epaMultiService.findEpaAPI("X110485291");
+        EpaAPI epaAPI = epaMultiService.findEpaAPI("X110624006");
         String backend = epaAPI.getBackend();
 
         // TODO disable vauNpProvider.onStart();

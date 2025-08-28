@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static de.servicehealth.epa4all.server.propsource.PropBuilder.SKIPPED_FILES;
+import static de.servicehealth.utils.ServerUtils.makePrefixPath;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.jcr.query.Query.JCR_SQL2;
 
@@ -44,7 +45,7 @@ public class Workspace {
 
     private String getConfigElement(String name, String configName, String elementTemplate) {
         File configFile = new File(jcrConfig.getConfigPath(), configName);
-        URL configUrl = Workspace.class.getResource("/jcr/" + configName);
+        URL configUrl = Workspace.class.getResource(makePrefixPath("jcr", configName));
         String configElement = getConfigurationParam(elementTemplate, configFile, configUrl);
         log.info(String.format("%s config = '%s'", name, configElement));
         return configElement;
@@ -62,7 +63,7 @@ public class Workspace {
             "\n<param name=\"indexingConfiguration\" value=\"%s\"/>"
         );
 
-        String path = jcrConfig.getWorkspacesHome() + "/" + telematikId;
+        String path = jcrConfig.getWorkspacesHome() + File.separator + telematikId;
         String configXml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <Workspace name="%s">
@@ -71,7 +72,7 @@ public class Workspace {
                 </FileSystem>
                 <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.BundleFsPersistenceManager"/>
                 <SearchIndex class="org.apache.jackrabbit.core.query.lucene.SearchIndex">
-                    <param name="path" value="%s/index"/>
+                    <param name="path" value="%s%sindex"/>
                     <param name="useSimpleFSDirectory" value="true"/>
                     <param name="supportHighlighting" value="true"/>
                     <param name="mergeFactor" value="10"/>
@@ -79,7 +80,7 @@ public class Workspace {
                     <param name="useCompoundFile" value="true"/>
                     <param name="extractorPoolSize" value="5"/>%s%s
                 </SearchIndex>
-            </Workspace>""".formatted(telematikId, path, path, tikaConfigElement, indexingConfigElement);
+            </Workspace>""".formatted(telematikId, path, path, File.separator, tikaConfigElement, indexingConfigElement);
 
         return new InputSource(new ByteArrayInputStream(configXml.getBytes(UTF_8)));
     }

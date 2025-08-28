@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static de.servicehealth.epa4all.common.TestUtils.getBinaryFixture;
+import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -80,13 +81,13 @@ public class ExpiredPatientDataIT extends AbstractJCRTest {
             assertEquals(1, hrefs.size());
             assertTrue(hrefs.getFirst().contains(kvnr + "/other/"));
 
-            File otherFolder = new File(tempDir.toFile(), "webdav/" + telematikId + "/" + kvnr + "/other");
+            File otherFolder = new File(tempDir.toFile(), makeSimplePath("webdav", telematikId, kvnr, "other"));
             File[] pdfFiles = otherFolder.listFiles(name -> name.getName().endsWith(".pdf"));
             assertNotNull(pdfFiles);
             assertEquals(1, pdfFiles.length);
             assertTrue(hrefs.getFirst().contains(pdfFiles[0].getName()));
         } else {
-            File kvnrFolder = new File(tempDir.toFile(), "webdav/" + telematikId + "/" + kvnr);
+            File kvnrFolder = new File(tempDir.toFile(), makeSimplePath("webdav", telematikId, kvnr));
             assertFalse(kvnrFolder.exists());
             assertEquals(0, hrefs.size());
 

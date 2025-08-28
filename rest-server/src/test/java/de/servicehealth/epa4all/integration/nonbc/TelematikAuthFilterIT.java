@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.File;
 
+import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,7 +30,7 @@ public class TelematikAuthFilterIT {
     @Test
     public void testHealthEndpoint() {
         File projectDir = new File("").getAbsoluteFile().getParentFile();
-        String path = projectDir.getAbsolutePath() + "/tls/server/trust-store/client/client.p12";
+        String path = makeSimplePath(projectDir.getAbsolutePath(), "tls", "server", "trust-store", "client", "client.p12");
         setupSSL(path, "changeit");
         given()
             .relaxedHTTPSValidation()
@@ -38,7 +39,7 @@ public class TelematikAuthFilterIT {
             .statusCode(200)
             .body(containsString("UP"));
 
-        setupSSL("/some-client-keystore.p12", "passpass");
+        setupSSL(File.separator + "some-client-keystore.p12", "passpass");
         assertThrows(SSLHandshakeException.class, () -> given()
             .relaxedHTTPSValidation()
             .when().get("https://localhost:8442/health")

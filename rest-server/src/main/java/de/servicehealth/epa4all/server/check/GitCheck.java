@@ -9,6 +9,7 @@ import jakarta.enterprise.event.Observes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
@@ -23,7 +24,7 @@ public class GitCheck implements Check {
 
     private static final Properties properties = new Properties();
     static {
-        try (InputStream inputStream = GitCheck.class.getResourceAsStream("/git.properties")) {
+        try (InputStream inputStream = GitCheck.class.getResourceAsStream(File.separator + "git.properties")) {
             properties.load(inputStream);
         } catch (Exception e) {
             log.warn("Error while loading git.properties:" + e.getMessage());

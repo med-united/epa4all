@@ -30,6 +30,7 @@ import static de.servicehealth.epa4all.server.jcr.Workspace.ROOT_FOLDER_NODE;
 import static de.servicehealth.epa4all.server.jcr.prop.JcrProp.EPA_NAMESPACE_URI;
 import static de.servicehealth.epa4all.server.jcr.prop.MixinProp.EPA_NAMESPACE_PREFIX;
 import static de.servicehealth.utils.ServerUtils.getPathParts;
+import static de.servicehealth.utils.ServerUtils.makePrefixPath;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 @ApplicationScoped
@@ -80,7 +81,7 @@ public class JcrService extends StartableService {
             if (repositoryConfig.exists()) {
                 config = RepositoryConfig.create(repositoryConfig.toURI(), repositoryPath);
             } else {
-                InputStream is = JcrService.class.getResourceAsStream("/jcr/repository.xml");
+                InputStream is = JcrService.class.getResourceAsStream(makePrefixPath("jcr", "repository.xml"));
                 config = RepositoryConfig.create(is, repositoryPath);
             }
             Repository repository = RepositoryImpl.create(config);
