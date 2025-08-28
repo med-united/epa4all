@@ -23,7 +23,7 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 public class TestUtils {
 
-    public final static String WIREMOCK = "wiremock/";
+    public final static String WIREMOCK = "wiremock" + File.separator;
     public final static String FIXTURES = WIREMOCK + "fixtures";
 
     private static final Logger log = LoggerFactory.getLogger(TestUtils.class.getName());
@@ -127,7 +127,7 @@ public class TestUtils {
     }
 
     public static Path getResourcePath(String... paths) {
-        return Path.of("src/test/resources", paths);
+        return Path.of("src" + File.separator + "test" + File.separator + "resources", paths);
     }
 
     public static String getStringFixture(String fileName) throws Exception {

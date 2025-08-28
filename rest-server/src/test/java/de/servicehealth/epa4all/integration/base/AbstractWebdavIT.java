@@ -35,7 +35,7 @@ public class AbstractWebdavIT {
         File repository = new File(tempDir, "repository");
         repository.mkdirs();
         when(jcrConfig.getRepositoryHome()).thenReturn(repository);
-        when(jcrConfig.getWorkspacesHome()).thenReturn(repository.getAbsolutePath() + "/workspaces");
+        when(jcrConfig.getWorkspacesHome()).thenReturn(repository.getAbsolutePath() + File.separator + "workspaces");
         when(jcrConfig.getMissingAuthMapping()).thenReturn("admin:admin");
         when(jcrConfig.getResourcePathPrefix()).thenReturn("/webdav2");
         when(jcrConfig.getAuthenticateHeader()).thenReturn(DEFAULT_AUTHENTICATE_HEADER);

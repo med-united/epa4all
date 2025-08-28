@@ -46,6 +46,7 @@ import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_SORT_BY;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_TOTAL_COUNT;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy.Latest;
+import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static de.servicehealth.utils.XmlUtils.createDocument;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
@@ -143,7 +144,7 @@ public class WebdavIT extends AbstractWiremockTest {
 
     private void printFilesInfo(String telematikId, String kvnr) {
         System.out.println("---------");
-        List<File> leafFiles = folderService.getLeafFiles(new File(tempDir.toFile(), "webdav/" + telematikId + "/" + kvnr));
+        List<File> leafFiles = folderService.getLeafFiles(new File(tempDir.toFile(), makeSimplePath("webdav", telematikId, kvnr)));
         for (File file : leafFiles) {
             System.out.println(file.getAbsolutePath() + " -> " + file.lastModified() + "\r\n");
         }
@@ -195,7 +196,7 @@ public class WebdavIT extends AbstractWiremockTest {
 
         TimeUnit.SECONDS.sleep(1);
 
-        File other = new File(tempDir.toFile(), "webdav/" + telematikId + "/" + kvnr + "/eab");
+        File other = new File(tempDir.toFile(), makeSimplePath("webdav", telematikId, kvnr, "eab"));
         File someFile = new File(other, "some.txt");
         boolean created = someFile.createNewFile();
         assertTrue(created);

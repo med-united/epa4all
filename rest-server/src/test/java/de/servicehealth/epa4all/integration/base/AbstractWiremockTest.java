@@ -74,6 +74,7 @@ import static de.servicehealth.epa4all.common.TestUtils.WIREMOCK;
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static de.servicehealth.epa4all.common.TestUtils.getTextFixture;
+import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -340,7 +341,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     }
 
     private VauServerStateMachine prepareVauServer() throws Exception {
-        Files.deleteIfExists(Path.of("target/vau3traffic.tgr"));
+        Files.deleteIfExists(Path.of(makeSimplePath("target", "vau3traffic.tgr")));
 
         KeyFactory keyFactory = KeyFactory.getInstance("EC");
         PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(Files.readAllBytes(getResourcePath(VAU, "vau-sig-key.der")));

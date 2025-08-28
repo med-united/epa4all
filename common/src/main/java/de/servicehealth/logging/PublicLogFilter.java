@@ -18,6 +18,7 @@ import java.util.logging.Filter;
 import java.util.logging.LogRecord;
 import java.util.stream.Collectors;
 
+import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @LoggingFilter(name = "de.servicehealth.logging.PublicLogFilter")
@@ -81,7 +82,7 @@ public class PublicLogFilter implements Filter {
 
     private static void reload() {
         Set<String> set = new HashSet<>();
-        String path = CONFIG.getOptionalValue(PERSONAL_DATA_PATH, String.class).orElse("secret/personal-data.dict");
+        String path = CONFIG.getOptionalValue(PERSONAL_DATA_PATH, String.class).orElse(makeSimplePath("secret", "personal-data.dict"));
         try {
             File file = new File(path);
             set.addAll(Files.readLines(file, UTF_8).stream()

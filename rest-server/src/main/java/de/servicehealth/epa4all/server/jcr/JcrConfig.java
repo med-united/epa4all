@@ -49,7 +49,7 @@ public class JcrConfig {
     private volatile Map<String, List<String>> mixinConfigMap;
 
     public String getWorkspacesHome() {
-        return repositoryHome.getAbsolutePath() + "/workspaces";
+        return repositoryHome.getAbsolutePath() + File.separator + "workspaces";
     }
 
     public SimpleCredentials getCredentials() {

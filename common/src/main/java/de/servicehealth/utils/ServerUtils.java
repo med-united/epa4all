@@ -44,8 +44,31 @@ public class ServerUtils {
     private ServerUtils() {
     }
 
+    public static String makeSimplePath(String... paths) {
+        return makePath(false, false, paths);
+    }
+
+    public static String makePrefixPath(String... paths) {
+        return makePath(true, false, paths);
+    }
+
+    public static String makePostfixPath(String... paths) {
+        return makePath(false, true, paths);
+    }
+
+    public static String makePath(boolean prefix, boolean postfix, String... paths) {
+        String path = String.join(File.separator, paths);
+        if (prefix) {
+            path = File.separator + path;
+        }
+        if (postfix) {
+            path = path + File.separator;
+        }
+        return path;
+    }
+
     public static List<String> getPathParts(String path) {
-        return Arrays.stream(path.split("/")).filter(s -> !s.isEmpty()).toList();
+        return Arrays.stream(path.split("[/\\\\]+")).filter(s -> !s.isEmpty()).toList();
     }
 
     public static String getBaseUrl(String url) {

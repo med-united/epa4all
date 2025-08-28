@@ -244,9 +244,9 @@ public class PropBuilder {
         return node;
     }
 
-    public Node handleFolder(Session session, Node parentNode, File file, String fileName, boolean staleMixins) throws RepositoryException {
+    public Node handleFolder(Session session, Node parentNode, File file, String relName, boolean staleMixins) throws RepositoryException {
         try {
-            Node dirNode = parentNode.getNode(fileName);
+            Node dirNode = parentNode.getNode(relName);
             // it is implied that all orphan mixin properties are already removed in TypeService
             if (staleMixins) {
                 applyMixins(dirNode, TYPE_NT_FOLDER, file);
@@ -254,7 +254,7 @@ public class PropBuilder {
             }
             return dirNode;
         } catch (PathNotFoundException e) {
-            Node node = addNodeAndApplyMixins(parentNode, fileName, TYPE_NT_FOLDER, file);
+            Node node = addNodeAndApplyMixins(parentNode, relName, TYPE_NT_FOLDER, file);
             session.save();
             return node;
         }

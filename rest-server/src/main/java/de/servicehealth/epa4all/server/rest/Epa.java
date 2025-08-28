@@ -1,6 +1,8 @@
 package de.servicehealth.epa4all.server.rest;
 
+import de.servicehealth.api.epa4all.EpaMultiService;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
@@ -16,7 +18,10 @@ import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 
 @RequestScoped
 @Path("epa")
-public class Epa extends AbstractResource {
+public class Epa {
+
+    @Inject
+    protected EpaMultiService epaMultiService;
 
     @APIResponses({
         @APIResponse(responseCode = "204", description = "The patient has ePA"),
