@@ -26,6 +26,9 @@ public class CETPPayload {
     @JsonbProperty("error")
     String error;
 
+    @JsonbProperty("persoenlicheVersichertendaten")
+    String persoenlicheVersichertendaten;
+
     @JsonbProperty("parameters")
     Map<String, String> parameters;
 }

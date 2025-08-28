@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
+import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
 import static de.servicehealth.logging.LogContext.voidMdc;
 import static de.servicehealth.logging.LogContext.voidMdcEx;
 import static de.servicehealth.logging.LogField.CT_ID;
@@ -149,6 +150,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     }
                     String insurantId = insuranceData.getInsurantId();
                     cetpPayload.setKvnr(insurantId);
+                    cetpPayload.setPersoenlicheVersichertendaten(print(insuranceData.getPersoenlicheVersichertendaten(), false));
 
                     EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
                     String backend = epaApi.getBackend();
