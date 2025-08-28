@@ -52,7 +52,7 @@ public class InsuranceUtils {
             StringWriter sw = new StringWriter();
             marshaller.marshal(object, sw);
             return sw.toString();
-        } catch (JAXBException e) {
+        } catch (Exception e) {
             log.error("Error converting object to XML", e);
             return e.getMessage();
         }

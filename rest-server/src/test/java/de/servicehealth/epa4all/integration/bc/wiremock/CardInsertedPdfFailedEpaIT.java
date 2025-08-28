@@ -99,6 +99,7 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
                 CETPPayload cetpPayload = build.fromJson(msg, CETPPayload.class);
                 assertEquals("X110485291", cetpPayload.getKvnr());
                 assertTrue(cetpPayload.getError().contains("Problem with reading the data"));
+                assertTrue(cetpPayload.getPersoenlicheVersichertendaten().contains("UC_PersoenlicheVersichertendatenXML"));
                 assertNotNull(cetpPayload.getParameters());
             }
         }
