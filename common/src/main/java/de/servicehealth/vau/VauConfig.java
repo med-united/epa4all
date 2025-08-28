@@ -5,6 +5,7 @@ import lombok.Getter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.List;
+import java.util.Optional;
 
 @Getter
 @ApplicationScoped
@@ -25,8 +26,8 @@ public class VauConfig {
     @ConfigProperty(name = "epa.vau.read.timeout.ms", defaultValue = "20000")
     int vauReadTimeoutMs;
 
-    @ConfigProperty(name = "epa.vau.call.retries.ms", defaultValue = "500")
-    List<Integer> vauCallRetries;
+    @ConfigProperty(name = "epa.vau.call.retries.ms")
+    Optional<List<Integer>> vauCallRetries;
 
     @ConfigProperty(name = "epa.vau.call.retry.period.ms", defaultValue = "2000")
     int vauCallRetryPeriodMs;
