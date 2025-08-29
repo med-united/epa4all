@@ -74,14 +74,22 @@ import static de.servicehealth.epa4all.common.TestUtils.WIREMOCK;
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static de.servicehealth.epa4all.common.TestUtils.getTextFixture;
+import static de.servicehealth.epa4all.server.rest.consent.ConsentFunction.Medication;
 import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static wiremock.com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
 public abstract class AbstractWiremockTest extends AbstractWebdavIT {
+
+    protected static final Map<ConsentFunction, String> MEDICATION_PERMIT_MAP = Map.of(Medication, "permit");
 
     public final static String VAU = WIREMOCK + "vau";
 
@@ -202,6 +210,33 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         });
         QuarkusMock.installMockForType(webdavConfig, WebdavConfig.class);
         QuarkusMock.installMockForType(folderService, FolderService.class);
+    }
+
+    protected String initStubsAndHandleCardInsertedEvent(
+        String kvnr,
+        String validToPayload,
+        String errorHeader,
+        int informationStatus,
+        Map<ConsentFunction, String> functions
+    ) throws Exception {
+        byte[] payload = validToPayload == null ? null : validToPayload.getBytes(UTF_8);
+        CallInfo callInfo = new CallInfo().withJsonPayload(payload).withErrorHeader(errorHeader);
+        prepareVauStubs(List.of(
+            Pair.of("/epa/basic/api/v1/ps/entitlements", callInfo)
+        ));
+        prepareInformationStubs(informationStatus);
+        prepareConsentStubs(functions);
+
+        String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
+        String telematikId = konnektorClient.getTelematikId(defaultUserConfig, smcbHandle);
+
+        EpaFileDownloader mockDownloader = mock(EpaFileDownloader.class);
+        FeatureConfig mockFeatureConfig = mock(FeatureConfig.class);
+        when(mockFeatureConfig.isExternalPnwEnabled()).thenReturn(true);
+        CardlinkClient cardlinkClient = receiveCardInsertedEvent(mockDownloader, mockFeatureConfig, kvnr);
+        verify(cardlinkClient, never()).sendJson(any(), any(), any(), any());
+
+        return telematikId;
     }
 
     protected UCPersoenlicheVersichertendatenXML.Versicherter.Person prepareInsurantFiles(

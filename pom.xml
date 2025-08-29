@@ -219,7 +219,6 @@
                         <configuration>
                             <includes>
                                 <include>**/bc/wiremock/**/*IT.java</include>
-                                <include>**/bc/xds/**/*IT.java</include>
                             </includes>
                             <reuseForks>false</reuseForks>
                             <forkCount>1</forkCount>

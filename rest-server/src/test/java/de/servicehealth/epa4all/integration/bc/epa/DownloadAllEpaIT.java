@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.integration.bc.xds;
+package de.servicehealth.epa4all.integration.bc.epa;
 
 import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
