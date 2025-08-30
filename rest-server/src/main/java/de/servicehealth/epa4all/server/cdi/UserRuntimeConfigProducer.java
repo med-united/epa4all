@@ -3,8 +3,10 @@ package de.servicehealth.epa4all.server.cdi;
 import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.config.api.IRuntimeConfig;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
+import de.servicehealth.epa4all.server.config.InternalRuntimeConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Produces;
@@ -12,6 +14,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Provider;
@@ -23,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static de.servicehealth.vau.VauClient.X_SMCB_ICCSN;
 import static de.servicehealth.vau.VauClient.X_WORKPLACE;
 
 @Provider
@@ -36,6 +40,9 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
     @Context
     UriInfo info;
 
+    @Context
+    HttpHeaders httpHeaders;
+
     @Inject
     KonnektorDefaultConfig konnektorDefaultConfig;
 
@@ -48,6 +55,9 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
     public UserRuntimeConfig userRuntimeConfig() {
         String konnektor = getQueryParameter(X_KONNEKTOR);
         String workplaceId = getQueryParameter(X_WORKPLACE);
+        String smcbIccsn = httpHeaders.getHeaderString(X_SMCB_ICCSN);
+        String userDefinedIccsn = smcbIccsn == null || smcbIccsn.trim().isEmpty() ? null : smcbIccsn.split(",")[0];
+        
         List<KonnektorConfig> foundConfigs = konnektorsConfigs.entrySet().stream()
             .filter(e -> konnektor == null || e.getKey().startsWith(konnektor))
             .filter(e -> workplaceId == null || e.getKey().endsWith(workplaceId))
@@ -57,12 +67,24 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
         if (foundConfigs.isEmpty()) {
             String msg = "Zero KonnektorConfigs found for konnektor=%s workplace=%s, using default";
             log.warn(String.format(msg, konnektor, workplaceId));
+            if (userDefinedIccsn != null) {
+                defaultUserConfig.getRuntimeConfig().setIccsn(userDefinedIccsn);
+            }
             return defaultUserConfig;
         } else if (foundConfigs.size() > 1) {
             String msg = "Multiple KonnektorConfigs found for konnektor=%s workplace=%s, using first one";
             log.warn(String.format(msg, konnektor, workplaceId));
         }
-        return new RuntimeConfig(konnektorDefaultConfig, foundConfigs.getFirst().getUserConfigurations());
+
+        IRuntimeConfig internalRuntimeConfig = userDefinedIccsn == null
+            ? null
+            : new InternalRuntimeConfig(userDefinedIccsn);
+        
+        return new RuntimeConfig(
+            konnektorDefaultConfig,
+            foundConfigs.getFirst().getUserConfigurations(),
+            internalRuntimeConfig
+        );
     }
 
     private String getQueryParameter(String parameterName) {

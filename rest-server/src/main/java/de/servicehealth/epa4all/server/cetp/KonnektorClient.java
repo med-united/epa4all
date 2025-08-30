@@ -32,6 +32,7 @@ import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.cetp.domain.eventservice.cardTerminal.CardTerminal;
 import de.health.service.cetp.domain.fault.CetpFault;
+import de.health.service.config.api.IRuntimeConfig;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardTypeMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardsResponseMapper;
@@ -46,8 +47,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.ByteArrayInputStream;
@@ -75,8 +74,6 @@ import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 
 @ApplicationScoped
 public class KonnektorClient implements IKonnektorClient {
-
-    private static final Logger log = LoggerFactory.getLogger(KonnektorClient.class.getName());
 
     @Getter
     private final ConcurrentHashMap<String, String> smcbTelematikMap = new ConcurrentHashMap<>();
@@ -152,12 +149,14 @@ public class KonnektorClient implements IKonnektorClient {
                 .findAny();
             return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
         } else {
-            String primaryIccsn = vsdConfig.getPrimaryIccsn();
+            IRuntimeConfig internalRuntimeConfig = userRuntimeConfig.getRuntimeConfig();
+            String forcedIccsn = internalRuntimeConfig == null ? null : internalRuntimeConfig.getIccsn();
+            String iccsn = forcedIccsn == null ? vsdConfig.getPrimaryIccsn() : forcedIccsn;
             return cards.stream()
-                .filter(c -> primaryIccsn.equals(c.getIccsn()))
+                .filter(c -> iccsn.equals(c.getIccsn()))
                 .findAny()
                 .map(Card::getCardHandle)
-                .orElseThrow(() -> new CetpFault(String.format("Could not get SMC-B card for ICCSN: %s", primaryIccsn)));
+                .orElseThrow(() -> new CetpFault(String.format("Could not get SMC-B card for ICCSN: %s", iccsn)));
         }
     }
 

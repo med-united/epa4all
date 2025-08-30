@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.integration.bc.wiremock;
 import de.gematik.ws.conn.eventservice.v7.GetCardsResponse;
 import de.health.service.cetp.IKonnektorClient;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
+import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
-public class EventServiceEpaIT {
+public class EventServiceEpaIT extends AbstractWiremockTest {
 
     private static final Logger log = LoggerFactory.getLogger(EventServiceEpaIT.class.getName());
 
@@ -52,6 +53,11 @@ public class EventServiceEpaIT {
 
     @Test
     public void getCardsResponseIsExposed() throws Exception {
+        String kvnr = "X110624006";
+        String validToValue = "2025-02-15T22:59:59";
+        String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
+        initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204, MEDICATION_PERMIT_MAP);
+
         byte[] fixture = getTextFixture("GetAllCardsResponse.xml");
         ByteArrayInputStream is = new ByteArrayInputStream(fixture);
         GetCardsResponse getCardsResponse = (GetCardsResponse) getCardsJaxbContext.createUnmarshaller().unmarshal(is);

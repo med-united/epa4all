@@ -3,17 +3,14 @@ package de.servicehealth.epa4all.integration.bc.wiremock;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCAllgemeineVersicherungsdatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.cardlink.CardlinkClient;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
-import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
-import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.rest.consent.ConsentFunction;
+import de.servicehealth.epa4all.server.vsd.VsdConfig;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -22,28 +19,28 @@ import io.restassured.path.xml.XmlPath;
 import io.restassured.response.ResponseBodyExtractionOptions;
 import io.restassured.response.ValidatableResponse;
 import jakarta.inject.Inject;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 
 import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
 import static de.servicehealth.epa4all.server.rest.consent.ConsentFunction.Medication;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static de.servicehealth.vau.VauClient.X_SMCB_ICCSN;
 import static io.restassured.RestAssured.given;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasXPath;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,10 +49,11 @@ import static org.mockito.Mockito.when;
 @TestProfile(WireMockProfile.class)
 public class ExternalPnwIT extends AbstractWiremockTest {
 
-    private static final Map<ConsentFunction, String> MEDICATION_PERMIT_MAP = Map.of(Medication, "permit");
-
     @InjectMock
     FileEventSender fileEventSender;
+
+    @Inject
+    protected VsdConfig vsdConfig;
 
     @Inject
     protected FeatureConfig featureConfig;
@@ -64,31 +62,58 @@ public class ExternalPnwIT extends AbstractWiremockTest {
     protected InsuranceDataService insuranceDataService;
 
 
-    private String initStubsAndHandleCardInsertedEvent(
-        String kvnr,
-        String validToPayload,
-        String errorHeader,
-        int informationStatus,
-        Map<ConsentFunction, String> functions
-    ) throws Exception {
-        byte[] payload = validToPayload == null ? null : validToPayload.getBytes(UTF_8);
-        CallInfo callInfo = new CallInfo().withJsonPayload(payload).withErrorHeader(errorHeader);
-        prepareVauStubs(List.of(
-            Pair.of("/epa/basic/api/v1/ps/entitlements", callInfo)
-        ));
-        prepareInformationStubs(informationStatus);
-        prepareConsentStubs(functions);
+    @Test
+    public void smcbIsChangedWhenIccsnIsForcedByHeader() throws Exception {
+        VsdConfig configMock = mock(VsdConfig.class);
+        when(configMock.getPrimaryIccsn()).thenReturn("80276883110000147807");
+        when(configMock.getTestSmcbCardholderName()).thenReturn("test-name");
+        when(configMock.isHandlesTestMode()).thenReturn(false);
+        QuarkusMock.installMockForType(configMock, VsdConfig.class);
 
-        String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
-        String telematikId = konnektorClient.getTelematikId(defaultUserConfig, smcbHandle);
+        InsuranceDataService mockDefault = mock(InsuranceDataService.class);
+        QuarkusMock.installMockForType(mockDefault, InsuranceDataService.class);
 
-        EpaFileDownloader mockDownloader = mock(EpaFileDownloader.class);
-        FeatureConfig mockFeatureConfig = mock(FeatureConfig.class);
-        when(mockFeatureConfig.isExternalPnwEnabled()).thenReturn(true);
-        CardlinkClient cardlinkClient = receiveCardInsertedEvent(mockDownloader, mockFeatureConfig, kvnr);
-        verify(cardlinkClient, never()).sendJson(any(), any(), any(), any());
+        String kvnr = "X110624006";
+        String validToValue = "2025-02-15T22:59:59";
+        String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
+        String telematikId = initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204, MEDICATION_PERMIT_MAP);
 
-        return telematikId;
+        given()
+            .queryParams(Map.of(
+                X_KONNEKTOR, "localhost",
+                X_INSURANT_ID, kvnr
+            ))
+            .when()
+            .post("/vsd/kvnr")
+            .then()
+            .statusCode(201);
+
+        ArgumentCaptor<String> smcbCaptorDefault = ArgumentCaptor.forClass(String.class);
+        verify(mockDefault, times(1)).loadInsuranceData(any(), smcbCaptorDefault.capture(), any(), any());
+        String smcbDefault = smcbCaptorDefault.getAllValues().getFirst();
+        assertEquals("SMC-B-11", smcbDefault);
+
+        InsuranceDataService mockForced = mock(InsuranceDataService.class);
+        QuarkusMock.installMockForType(mockForced, InsuranceDataService.class);
+        
+        given()
+            .queryParams(Map.of(
+                X_KONNEKTOR, "localhost",
+                X_INSURANT_ID, kvnr
+            ))
+            .header(X_SMCB_ICCSN, "80276883110000147805")
+            .when()
+            .post("/vsd/kvnr")
+            .then()
+            .statusCode(201);
+
+        ArgumentCaptor<String> smcbCaptorForced = ArgumentCaptor.forClass(String.class);
+        verify(mockForced, times(1)).loadInsuranceData(any(), smcbCaptorForced.capture(), any(), any());
+        String smcbForced = smcbCaptorForced.getAllValues().getFirst();
+        assertEquals("SMC-B-3", smcbForced);
+
+        QuarkusMock.installMockForType(vsdConfig, VsdConfig.class);
+        QuarkusMock.installMockForType(insuranceDataService, InsuranceDataService.class);
     }
 
     @Test

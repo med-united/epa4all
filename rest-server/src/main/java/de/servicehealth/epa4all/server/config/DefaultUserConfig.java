@@ -19,42 +19,7 @@ public class DefaultUserConfig implements UserRuntimeConfig {
     public DefaultUserConfig(KonnektorDefaultConfig konnektorDefaultConfig, IdpConfig idpConfig) {
         this.konnektorDefaultConfig = konnektorDefaultConfig;
 
-        runtimeConfig = new IRuntimeConfig() {
-            @Override
-            public String getEHBAHandle() {
-                return null;
-            }
-
-            @Override
-            public String getSMCBHandle() {
-                return null;
-            }
-
-            @Override
-            public void setEHBAHandle(String eHBAHandle) {
-
-            }
-
-            @Override
-            public void setSMCBHandle(String smcbHandle) {
-
-            }
-
-            @Override
-            public boolean isSendPreview() {
-                return false;
-            }
-
-            @Override
-            public String getIdpAuthRequestRedirectURL() {
-                return idpConfig.getAuthRequestRedirectUrl();
-            }
-
-            @Override
-            public String getIdpClientId() {
-                return idpConfig.getClientId();
-            }
-        };
+        runtimeConfig = new InternalRuntimeConfig(idpConfig.getClientId(), idpConfig.getAuthRequestRedirectUrl());
 
         userConfigurations = new IUserConfigurations() {
             @Override

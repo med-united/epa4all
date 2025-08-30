@@ -22,7 +22,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 @SuppressWarnings("unused")
 @RequestScoped
 @Path("event")
-public class EventService extends AbstractResource {
+public class Event extends AbstractResource {
 
     @Inject
     KonnektorClient konnektorClient;
