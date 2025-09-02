@@ -65,7 +65,7 @@ public class AdminProxyService extends BaseProxyService implements IAdminProxy {
         ForwardRequest forwardRequest = prepareFwdRequest(isGet, body);
         Response response = adminClient
             .headers(map)
-            .replacePath(adminPath.replace("admin", ""))
+            .replacePath(adminPath.replace("vau-admin", ""))
             .replaceQuery(query)
             .post(forwardRequest);
 

@@ -141,7 +141,7 @@ public class VauSessionsJob extends StartableService {
                 VauFacade vauFacade = epaApi.getVauFacade();
                 return vauFacade.getSessionClients().stream().map(vc -> {
                     try {
-                        return epaApi.getAdminProxy().forwardGet("admin/VAU-Status", vc.getUuid(), xHeaders);
+                        return epaApi.getAdminProxy().forwardGet("vau-admin/VAU-Status", vc.getUuid(), xHeaders);
                     } catch (Exception ex) {
                         JsonNode errorNode = createObjectNode(Map.of("error", ex.getMessage(), VAU_CLIENT, vc.getUuid()));
                         return Response.status(Response.Status.CONFLICT).entity(errorNode).build();
