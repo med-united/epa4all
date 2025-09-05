@@ -19,7 +19,7 @@
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jaxrs</artifactId>
             <scope>compile</scope>
-            <version>1.6.15</version>
+            <version>1.6.16</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.validation</groupId>
