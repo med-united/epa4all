@@ -58,7 +58,7 @@ public class InsuranceDataService {
             String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, kvnr);
             return getData(telematikId, insurantId);
         } catch (Exception e) {
-            log.error("Error while get InsuranceData", e);
+            log.warn("Error while get InsuranceData: %s".formatted(e.getMessage()));
             return null;
         }
     }

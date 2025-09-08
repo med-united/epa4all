@@ -174,7 +174,16 @@ public class KonnektorClient implements IKonnektorClient {
         Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
         Optional<String> egkHandleOpt = card.map(Card::getCardHandle);
         if (vsdConfig.isHandlesTestMode()) {
-            return egkHandleOpt.orElse(cards.getFirst().getCardHandle());
+            if (egkHandleOpt.isPresent()) {
+                return egkHandleOpt.get();
+            } else {
+                Card first = cards.isEmpty() ? null : cards.getFirst();
+                if (first != null) {
+                    return first.getCardHandle();
+                } else {
+                    throw new CetpFault("EGK cards were not found");
+                }
+            }
         } else {
             return egkHandleOpt.orElseThrow(() ->
                 new CetpFault(String.format("Could not get EGK card for insurantId: %s", insurantId))
