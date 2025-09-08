@@ -119,12 +119,12 @@
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>1.6.2</version>
+            <version>1.6.3</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.34</version>
+            <version>1.18.40</version>
         </dependency>
 
         <dependency>
@@ -195,7 +195,7 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.34</version>
+                            <version>1.18.40</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
