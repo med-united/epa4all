@@ -32,6 +32,10 @@ jobs:
         username: servicehealtherxgmbh
         password: ${{ secrets.DOCKERHUB }}
 
+    - name: Generate timestamp
+      id: timestamp
+      run: echo "value=$(TZ=Europe/Berlin date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
     - name: Build and push Docker image
       uses: docker/build-push-action@v6
       with:
@@ -40,5 +44,5 @@ jobs:
         push: true
         tags: |
           servicehealtherxgmbh/epa4all:latest
-          servicehealtherxgmbh/epa4all:$(TZ=Europe/Berlin date +%Y%m%d-%H%M%S)
+          servicehealtherxgmbh/epa4all:${{ steps.timestamp.outputs.value }}
         no-cache: true
