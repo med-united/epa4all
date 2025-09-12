@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 import static de.servicehealth.epa4all.server.propsource.PropBuilder.SKIPPED_FILES;
 import static de.servicehealth.utils.ServerUtils.makePrefixPath;
+import static java.io.File.separator;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.jcr.query.Query.JCR_SQL2;
 
@@ -63,7 +64,7 @@ public class Workspace {
             "\n<param name=\"indexingConfiguration\" value=\"%s\"/>"
         );
 
-        String path = jcrConfig.getWorkspacesHome() + File.separator + telematikId;
+        String path = jcrConfig.getWorkspacesHome() + separator + telematikId;
         String configXml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <Workspace name="%s">
@@ -80,7 +81,7 @@ public class Workspace {
                     <param name="useCompoundFile" value="true"/>
                     <param name="extractorPoolSize" value="5"/>%s%s
                 </SearchIndex>
-            </Workspace>""".formatted(telematikId, path, path, File.separator, tikaConfigElement, indexingConfigElement);
+            </Workspace>""".formatted(telematikId, path, path, separator, tikaConfigElement, indexingConfigElement);
 
         return new InputSource(new ByteArrayInputStream(configXml.getBytes(UTF_8)));
     }

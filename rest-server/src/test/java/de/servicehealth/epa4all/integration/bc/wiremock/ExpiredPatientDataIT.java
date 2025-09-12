@@ -54,7 +54,7 @@ public class ExpiredPatientDataIT extends AbstractJCRTest {
 
         String telematikId = "3-SMC-B-Testkarte--883110000147807";
         String kvnr = "X110485291";
-        receiveCardInsertedEvent(fileDownloader, null, kvnr);
+        receiveCardInsertedEvent(fileDownloader, kvnr);
         assertFileSearch(telematikId, kvnr, "Ibuprofen", true);
 
         String objectName = TelematikMXBean.OBJECT_NAME.formatted(telematikId);

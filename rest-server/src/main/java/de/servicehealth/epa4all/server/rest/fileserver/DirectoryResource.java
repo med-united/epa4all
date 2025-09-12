@@ -16,6 +16,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
 import static de.servicehealth.folder.WebdavConfig.RESOURCE_NAME;
+import static java.io.File.separator;
 
 @Dependent
 public class DirectoryResource extends AbstractResource {
@@ -39,7 +40,7 @@ public class DirectoryResource extends AbstractResource {
         destination = URLDecoder.decode(destination, StandardCharsets.UTF_8);
         destination = destination.replace(host, "");
 
-        File destFile = new File(davFolder + File.separator + destination);
+        File destFile = new File(davFolder + separator + destination);
         boolean overwrite = overwriteStr.equalsIgnoreCase("T");
 
         return logResponse("MOVE", uriInfo, move(originalDestination, destFile, overwrite));

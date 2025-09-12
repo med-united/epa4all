@@ -95,12 +95,11 @@ public class VauAdmin extends AbstractResource {
         String backend,
         byte[] body
     ) {
-        String userAgent = epaConfig.getEpaUserAgent();
         List<Response> responses = epaMultiService.getEpaBackendMap().entrySet().stream()
             .filter(e -> backend == null || e.getKey().equalsIgnoreCase(backend))
             .flatMap(e -> {
                 try {
-                    Map<String, String> xHeaders = prepareXHeaders(userAgent, e.getKey(), Optional.empty());
+                    Map<String, String> xHeaders = prepareXHeaders(e.getKey(), Optional.empty());
                     String baseQuery = uriInfo.getRequestUri().getQuery();
                     EpaAPI epaApi = e.getValue();
                     VauFacade vauFacade = epaApi.getVauFacade();

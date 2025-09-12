@@ -1,13 +1,11 @@
 package de.servicehealth.epa4all.server.rest;
 
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
-import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.epa4all.cxf.provider.VauException;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.pnw.ConsentException;
 import de.servicehealth.epa4all.server.pnw.PnwException;
 import de.servicehealth.epa4all.server.pnw.PnwResponse;
-import de.servicehealth.epa4all.server.rest.consent.ConsentValidator;
 import de.servicehealth.epa4all.server.rest.exception.EpaClientError;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import jakarta.enterprise.context.RequestScoped;
@@ -92,13 +90,11 @@ public class Vsd extends AbstractResource {
                 INSURANT, insurantId
             ), () -> {
                 try {
-                    EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
-                    ConsentValidator.validate(epaApi, xInsurantId, epaConfig.getEpaUserAgent(), Medication);
+                    consentValidator.validate(xInsurantId, Medication);
                     vsdService.saveVsdFile(telematikId, insurantId, readVSDResponse);
                     InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
-                    String userAgent = epaConfig.getEpaUserAgent();
                     Instant expiry = entitlementService.setEntitlement(
-                        userRuntimeConfig, insuranceData, epaApi, telematikId, userAgent, smcbHandle
+                        userRuntimeConfig, insuranceData, telematikId, smcbHandle
                     );
                     PnwResponse pnwResponse = new PnwResponse(insurantId, startDate, expiry.toString(), street, null);
                     return Response.ok().entity(pnwResponse).type(APPLICATION_XML).build();

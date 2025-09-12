@@ -72,30 +72,28 @@ public class InsuranceDataService {
         }
     }
 
-    public InsuranceData getData(
-        String telematikId,
-        String egkHandle,
-        UserRuntimeConfig runtimeConfig
-    ) {
+    public InsuranceData getData(String telematikId, String egkHandle, UserRuntimeConfig runtimeConfig) {
         String kvnr = getKvnr(egkHandle, runtimeConfig);
         return kvnr == null ? null : getData(telematikId, kvnr);
     }
 
     public InsuranceData getData(String telematikId, String kvnr) {
         File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-        return new VsdResponseFile(localFolder).load(telematikId, kvnr);
+        return localFolder == null ? null : new VsdResponseFile(localFolder).load(telematikId, kvnr);
     }
 
     public void cleanUpInsuranceData(String telematikId, String kvnr) {
         log.info("Deleting local insurance data, kvnr={}", kvnr);
         File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-        new VsdResponseFile(localFolder).cleanUp();
+        if (localFolder != null) {
+            new VsdResponseFile(localFolder).cleanUp();
+        }
     }
 
     public Instant getEntitlementExpiry(String telematikId, String kvnr) {
         try {
             File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-            return new EntitlementFile(localFolder, kvnr).getEntitlement();
+            return localFolder == null ? null : new EntitlementFile(localFolder, kvnr).getEntitlement();
         } catch (Exception e) {
             log.error("Error while getEntitlementExpiry", e);
             return null;
@@ -105,7 +103,9 @@ public class InsuranceDataService {
     public void setEntitlementExpiry(Instant validTo, String telematikId, String kvnr) {
         try {
             File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-            new EntitlementFile(localFolder, kvnr).setEntitlement(validTo);
+            if (localFolder != null) {
+                new EntitlementFile(localFolder, kvnr).setEntitlement(validTo);
+            }
         } catch (Exception e) {
             log.error("Error while updateEntitlement", e);
         }

@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.rest.exception;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import de.servicehealth.api.epa4all.EpaNotFoundException;
 import de.servicehealth.epa4all.cxf.provider.VauException;
 import de.servicehealth.epa4all.server.pnw.ConsentException;
 import de.servicehealth.epa4all.server.pnw.PnwException;
@@ -20,6 +21,7 @@ import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.UNAUTHORIZED;
 
 @Provider
@@ -27,23 +29,28 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
 
     private static final Logger log = LoggerFactory.getLogger(EpaExceptionMapper.class.getName());
 
-    private static class ExInfo {
+    private static class ErrorStatus {
         private final String message;
-        private final JsonNode jsonNode;
-        private final Object xmlRoot;
+        private JsonNode jsonNode;
+        private Object xmlRoot;
         private final Response.Status status;
 
-        public ExInfo(String message, JsonNode jsonNode, Object xmlRoot, Response.Status status) {
+        public ErrorStatus(String message, JsonNode jsonNode, Object xmlRoot, Response.Status status) {
             this.message = message;
             this.jsonNode = jsonNode;
             this.xmlRoot = xmlRoot;
             this.status = status;
         }
+
+        public ErrorStatus(String message, Response.Status status) {
+            this.message = message;
+            this.status = status;
+        }
     }
 
-    private ExInfo extractException(Throwable t) {
+    private ErrorStatus extractException(Throwable t) {
         if (t instanceof VauException vauException) {
-            return new ExInfo(null, vauException.getJsonNode(), null, CONFLICT);
+            return new ErrorStatus(null, vauException.getJsonNode(), null, CONFLICT);
         } else if (t instanceof PnwException pnwException) {
             PnwResponse pnwResponse = new PnwResponse(
                 pnwException.getKvnr(),
@@ -52,9 +59,9 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
                 null,
                 pnwException.getMessage()
             );
-            return new ExInfo(null, null, pnwResponse, CONFLICT);
+            return new ErrorStatus(null, null, pnwResponse, CONFLICT);
         } else {
-            return new ExInfo(t.getMessage(), null, null, INTERNAL_SERVER_ERROR);
+            return new ErrorStatus(t.getMessage(), INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -62,18 +69,19 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
     public Response toResponse(Exception exception) {
         log.error("Client EXCEPTION", getOriginalCause(exception));
 
-        ExInfo exInfo = switch (exception) {
-            case AuthenticationFailedException authEx -> new ExInfo(authEx.getMessage(), null, null, UNAUTHORIZED);
-            case ConsentException consentEx -> new ExInfo(consentEx.getMessage(), null, null, FORBIDDEN);
-            case BadRequestException badRequestEx -> new ExInfo(badRequestEx.getMessage(), null, null, BAD_REQUEST);
-            case null -> new ExInfo("Unknown error", null, null, INTERNAL_SERVER_ERROR);
+        ErrorStatus errorStatus = switch (exception) {
+            case AuthenticationFailedException authEx -> new ErrorStatus(authEx.getMessage(), UNAUTHORIZED);
+            case EpaNotFoundException epaEx -> new ErrorStatus(epaEx.getMessage(), NOT_FOUND);
+            case ConsentException consentEx -> new ErrorStatus(consentEx.getMessage(), FORBIDDEN);
+            case BadRequestException badRequestEx -> new ErrorStatus(badRequestEx.getMessage(), BAD_REQUEST);
+            case null -> new ErrorStatus("Unknown error", INTERNAL_SERVER_ERROR);
             default -> extractException(getOriginalCause(exception));
         };
-        Object entity = exInfo.message != null
-            ? new EpaClientError(exInfo.message)
-            : exInfo.jsonNode != null ? exInfo.jsonNode : exInfo.xmlRoot;
+        Object entity = errorStatus.message != null
+            ? new EpaClientError(errorStatus.message)
+            : errorStatus.jsonNode != null ? errorStatus.jsonNode : errorStatus.xmlRoot;
 
-        String type = exInfo.xmlRoot != null ? APPLICATION_XML : APPLICATION_JSON;
-        return Response.status(exInfo.status).entity(entity).type(type).build();
+        String type = errorStatus.xmlRoot != null ? APPLICATION_XML : APPLICATION_JSON;
+        return Response.status(errorStatus.status).entity(entity).type(type).build();
     }
 }

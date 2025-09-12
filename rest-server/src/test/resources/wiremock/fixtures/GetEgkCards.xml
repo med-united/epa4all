@@ -82,6 +82,44 @@
                     <ns5:Kvnr>X110587452</ns5:Kvnr>
                     <ns5:CertificateExpirationDate>2029-04-01Z</ns5:CertificateExpirationDate>
                 </ns5:Card>
+                <ns5:Card>
+                    <ns2:CardHandle>EGK-5</ns2:CardHandle>
+                    <ns4:CardType>EGK</ns4:CardType>
+                    <ns5:CardVersion>
+                        <ns5:COSVersion>
+                            <ns5:Major>4</ns5:Major>
+                            <ns5:Minor>6</ns5:Minor>
+                            <ns5:Revision>0</ns5:Revision>
+                        </ns5:COSVersion>
+                        <ns5:ObjectSystemVersion>
+                            <ns5:Major>4</ns5:Major>
+                            <ns5:Minor>5</ns5:Minor>
+                            <ns5:Revision>2</ns5:Revision>
+                        </ns5:ObjectSystemVersion>
+                        <ns5:LoggingVersion>
+                            <ns5:Major>1</ns5:Major>
+                            <ns5:Minor>0</ns5:Minor>
+                            <ns5:Revision>0</ns5:Revision>
+                        </ns5:LoggingVersion>
+                        <ns5:ATRVersion>
+                            <ns5:Major>2</ns5:Major>
+                            <ns5:Minor>0</ns5:Minor>
+                            <ns5:Revision>0</ns5:Revision>
+                        </ns5:ATRVersion>
+                        <ns5:GDOVersion>
+                            <ns5:Major>1</ns5:Major>
+                            <ns5:Minor>0</ns5:Minor>
+                            <ns5:Revision>0</ns5:Revision>
+                        </ns5:GDOVersion>
+                    </ns5:CardVersion>
+                    <ns4:Iccsn>80276883110000156115</ns4:Iccsn>
+                    <ns4:CtId>2cd3aba7-1691-47a3-95af-f8d50886ae17</ns4:CtId>
+                    <ns4:SlotId>2</ns4:SlotId>
+                    <ns5:InsertTime>2025-01-31T19:05:07.025Z</ns5:InsertTime>
+                    <ns5:CardHolderName>Dr. Christian Batcher-TütenheimTEST-ONLY</ns5:CardHolderName>
+                    <ns5:Kvnr>X110485291</ns5:Kvnr>
+                    <ns5:CertificateExpirationDate>2029-04-01Z</ns5:CertificateExpirationDate>
+                </ns5:Card>
             </ns5:Cards>
         </ns6:GetCardsResponse>
     </SOAP-ENV:Body>

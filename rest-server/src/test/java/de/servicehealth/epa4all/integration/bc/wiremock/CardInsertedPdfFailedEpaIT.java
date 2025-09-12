@@ -90,7 +90,7 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
 
             String kvnr = "X110587452";
             EpaFileDownloader mockDownloader = mock(EpaFileDownloader.class);
-            receiveCardInsertedEvent(mockDownloader, null, kvnr);
+            receiveCardInsertedEvent(mockDownloader, kvnr);
             verify(mockDownloader, never()).handleDownloadResponse(any(), any());
 
             String msg = MESSAGES.poll(20, TimeUnit.SECONDS);

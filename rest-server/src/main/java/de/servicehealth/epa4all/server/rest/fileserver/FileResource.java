@@ -28,6 +28,7 @@ import java.util.Date;
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy.Earliest;
 import static de.servicehealth.folder.WebdavConfig.RESOURCE_NAME;
 import static de.servicehealth.utils.MimeHelper.resolveMimeType;
+import static java.io.File.separator;
 
 @Dependent
 public class FileResource extends AbstractResource {
@@ -83,7 +84,7 @@ public class FileResource extends AbstractResource {
         destination = URLDecoder.decode(destination, StandardCharsets.UTF_8);
         destination = destination.replace(host, "");
 
-        File destFile = new File(davFolder + File.separator + destination);
+        File destFile = new File(davFolder + separator + destination);
         boolean overwrite = overwriteStr.equalsIgnoreCase("T");
 
         return logResponse("MOVE", uriInfo, move(originalDestination, destFile, overwrite));

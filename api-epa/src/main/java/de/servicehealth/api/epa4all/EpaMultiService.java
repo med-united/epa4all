@@ -66,7 +66,7 @@ public class EpaMultiService extends StartableService {
     private final List<Feature> epaRestFeatures;
     private final IDocumentManagementPortTypeProvider portTypeProvider;
 
-    private final Cache<String, EpaAPI> xInsurantid2ePAApi = CacheBuilder.newBuilder()
+    private final Cache<String, EpaAPI> apiCache = CacheBuilder.newBuilder()
         .maximumSize(1000)
         .expireAfterWrite(10, TimeUnit.MINUTES)
         .build();
@@ -192,19 +192,19 @@ public class EpaMultiService extends StartableService {
         return false;
     }
 
-    public EpaAPI findEpaAPI(String insurantId) {
-        EpaAPI epaAPI = xInsurantid2ePAApi.getIfPresent(insurantId);
+    public EpaAPI findEpaAPI(String insurantId) throws EpaNotFoundException {
+        EpaAPI epaAPI = apiCache.getIfPresent(insurantId);
         if (epaAPI != null) {
             return epaAPI;
         } else {
             for (EpaAPI api : epaBackendMap.values()) {
                 if (hasEpaRecord(api, insurantId)) {
-                    xInsurantid2ePAApi.put(insurantId, api);
+                    apiCache.put(insurantId, api);
                     return api;
                 }
             }
             String msg = String.format("Insurant [%s] - %s in ePA backends", insurantId, EPA_RECORD_IS_NOT_FOUND);
-            throw new IllegalStateException(msg);
+            throw new EpaNotFoundException(msg, insurantId);
         }
     }
 
@@ -219,5 +219,9 @@ public class EpaMultiService extends StartableService {
             }
             return result;
         });
+    }
+
+    public void invalidateApiCache() {
+        apiCache.invalidateAll();
     }
 }
