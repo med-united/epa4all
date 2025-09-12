@@ -47,6 +47,7 @@ import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X
 import static de.servicehealth.utils.ServerUtils.writeStreamToFile;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
+import static java.io.File.separator;
 import static org.jugs.webdav.jaxrs.Headers.DAV;
 
 public class AbstractResource implements WebDavResource {
@@ -298,7 +299,7 @@ public class AbstractResource implements WebDavResource {
 
     @Override
     public Object findResource(final String res) {
-        String path = resource.getPath() + File.separator + res;
+        String path = resource.getPath() + separator + res;
         File newResource = new File(path);
         String newUrl = url + "/" + res;
 

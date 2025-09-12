@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.server.jcr.webdav.JCRParams.DEFAULT_AUTHENTICATE_HEADER;
+import static java.io.File.separator;
 
 @Getter
 @ApplicationScoped
@@ -49,7 +50,7 @@ public class JcrConfig {
     private volatile Map<String, List<String>> mixinConfigMap;
 
     public String getWorkspacesHome() {
-        return repositoryHome.getAbsolutePath() + File.separator + "workspaces";
+        return repositoryHome.getAbsolutePath() + separator + "workspaces";
     }
 
     public SimpleCredentials getCredentials() {

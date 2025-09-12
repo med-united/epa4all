@@ -13,6 +13,7 @@ import de.servicehealth.epa4all.server.idp.IdpConfig;
 import de.servicehealth.epa4all.server.idp.vaunp.VauSessionsJob;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
+import de.servicehealth.epa4all.server.rest.consent.ConsentValidator;
 import de.servicehealth.logging.LogField;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.ResponseProcessingException;
@@ -58,6 +59,9 @@ public abstract class AbstractResource {
 
     @Inject
     EpaConfig epaConfig;
+
+    @Inject
+    protected ConsentValidator consentValidator;
 
     @Inject
     protected EpaMultiService epaMultiService;
@@ -123,25 +127,20 @@ public abstract class AbstractResource {
             }
             String insurantId = insuranceData == null ? kvnr : insuranceData.getInsurantId();
             EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
-            String userAgent = epaConfig.getEpaUserAgent();
-            String backend = epaApi.getBackend();
-            Instant entitlementExpiry = entitlementService.getEntitlementExpiry(
-                userRuntimeConfig, insuranceData, epaApi, userAgent, smcbHandle, telematikId, insurantId
+            Instant entitlementExpiry = entitlementService.resolveEntitlement(
+                userRuntimeConfig, insuranceData, smcbHandle, telematikId, insurantId
             );
-            Map<String, String> xHeaders = prepareXHeaders(userAgent, backend, Optional.of(insurantId));
+            String backend = epaApi.getBackend();
+            Map<String, String> xHeaders = prepareXHeaders(backend, Optional.of(insurantId));
             return new EpaContext(insurantId, backend, entitlementExpiry, insuranceData, xHeaders);
         });
     }
 
-    protected Map<String, String> prepareXHeaders(
-        String userAgent,
-        String backend,
-        Optional<String> insurantIdOpt
-    ) {
+    protected Map<String, String> prepareXHeaders(String backend, Optional<String> insurantIdOpt) {
         Map<String, String> attributes = new HashMap<>();
         attributes.put(X_KONNEKTOR, userRuntimeConfig.getKonnektorHost());
         attributes.put(X_WORKPLACE, userRuntimeConfig.getWorkplaceId());
-        attributes.put(X_USER_AGENT, userAgent);
+        attributes.put(X_USER_AGENT, epaConfig.getEpaUserAgent());
         attributes.put(X_BACKEND, backend);
         attributes.put(CLIENT_ID, idpConfig.getClientId());
         insurantIdOpt.ifPresent(insurantId -> attributes.put(X_INSURANT_ID, insurantId));

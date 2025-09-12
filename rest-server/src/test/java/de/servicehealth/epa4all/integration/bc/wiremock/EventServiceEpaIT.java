@@ -53,10 +53,9 @@ public class EventServiceEpaIT extends AbstractWiremockTest {
 
     @Test
     public void getCardsResponseIsExposed() throws Exception {
-        String kvnr = "X110624006";
         String validToValue = "2025-02-15T22:59:59";
         String validToPayload = "{\"validTo\":\"" + validToValue + "\"}";
-        initStubsAndHandleCardInsertedEvent(kvnr, validToPayload, null, 204, MEDICATION_PERMIT_MAP);
+        initStubs(validToPayload, null, 204, MEDICATION_PERMIT_MAP);
 
         byte[] fixture = getTextFixture("GetAllCardsResponse.xml");
         ByteArrayInputStream is = new ByteArrayInputStream(fixture);

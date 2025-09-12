@@ -90,7 +90,7 @@ public class XDSRawUploadIT extends AbstractWiremockTest {
 
 
         String telematikId = "3-SMC-B-Testkarte--883110000147807";
-        String kvnr = "X110587452";
+        String kvnr = "X110485291";
         prepareInsurantFiles(telematikId, kvnr);
 
         String fileName = "Medication-List.pdf";

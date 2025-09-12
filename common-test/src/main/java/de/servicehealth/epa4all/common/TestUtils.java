@@ -18,12 +18,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.io.File.separator;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
 public class TestUtils {
 
-    public final static String WIREMOCK = "wiremock" + File.separator;
+    public final static String WIREMOCK = "wiremock" + separator;
     public final static String FIXTURES = WIREMOCK + "fixtures";
 
     private static final Logger log = LoggerFactory.getLogger(TestUtils.class.getName());
@@ -127,7 +128,7 @@ public class TestUtils {
     }
 
     public static Path getResourcePath(String... paths) {
-        return Path.of("src" + File.separator + "test" + File.separator + "resources", paths);
+        return Path.of("src" + separator + "test" + separator + "resources", paths);
     }
 
     public static String getStringFixture(String fileName) throws Exception {

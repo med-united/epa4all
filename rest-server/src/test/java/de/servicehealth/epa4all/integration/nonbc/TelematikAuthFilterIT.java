@@ -12,6 +12,7 @@ import java.io.File;
 
 import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static io.restassured.RestAssured.given;
+import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -39,7 +40,7 @@ public class TelematikAuthFilterIT {
             .statusCode(200)
             .body(containsString("UP"));
 
-        setupSSL(File.separator + "some-client-keystore.p12", "passpass");
+        setupSSL(separator + "some-client-keystore.p12", "passpass");
         assertThrows(SSLHandshakeException.class, () -> given()
             .relaxedHTTPSValidation()
             .when().get("https://localhost:8442/health")

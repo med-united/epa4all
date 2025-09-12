@@ -85,7 +85,7 @@ public class UploadIT extends AbstractWiremockTest {
         String information2Header = "information2";
 
         String telematikId = "1-SMC-B-Testkarte--883110000162363";
-        String kvnr = "X110587452";
+        String kvnr = "X110485291";
         prepareInsurantFiles(telematikId, kvnr);
 
         String fileName = "Medication-List.pdf";

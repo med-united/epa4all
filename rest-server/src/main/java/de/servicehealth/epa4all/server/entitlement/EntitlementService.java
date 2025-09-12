@@ -5,6 +5,9 @@ import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.api.epa4all.EpaAPI;
+import de.servicehealth.api.epa4all.EpaConfig;
+import de.servicehealth.api.epa4all.EpaMultiService;
+import de.servicehealth.api.epa4all.EpaNotFoundException;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsApi;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
@@ -28,65 +31,54 @@ public class EntitlementService {
 
     private static final Logger log = LoggerFactory.getLogger(EntitlementService.class.getName());
 
+    EpaConfig epaConfig;
     IdpClient idpClient;
     VauNpProvider vauNpProvider;
+    EpaMultiService epaMultiService;
     IKonnektorClient konnektorClient;
     InsuranceDataService insuranceDataService;
 
     @Inject
     public EntitlementService(
+        EpaConfig epaConfig,
         IdpClient idpClient,
         VauNpProvider vauNpProvider,
+        EpaMultiService epaMultiService,
         IKonnektorClient konnektorClient,
         InsuranceDataService insuranceDataService
     ) {
+        this.epaConfig = epaConfig;
         this.idpClient = idpClient;
         this.vauNpProvider = vauNpProvider;
+        this.epaMultiService = epaMultiService;
         this.konnektorClient = konnektorClient;
         this.insuranceDataService = insuranceDataService;
     }
 
-    public Instant getEntitlementExpiry(
+    public Instant resolveEntitlement(
         UserRuntimeConfig runtimeConfig,
         InsuranceData insuranceData,
-        EpaAPI epaApi,
-        String userAgent,
         String smcbHandle,
         String telematikId,
         String insurantId
-    ) {
-        try {
-            Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
-            log.info("Current entitlement-expiry = {}", validTo);
-            if (validTo != null && validTo.isAfter(Instant.now())) {
-                return validTo;
-            }
-            if (insuranceData == null) {
-                log.info("Call setEntitlement is skipped, insuranceData == NULL");
-                return null;
-            }
-            return setEntitlement(
-                runtimeConfig,
-                insuranceData,
-                epaApi,
-                telematikId,
-                userAgent,
-                smcbHandle
-            );
-        } catch (Exception e) {
-            log.error("Error while resolveEntitlement", e);
-            return null;
-        }
+    ) throws EpaNotFoundException {
+        Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
+        log.info("Current entitlement-expiry = {}", validTo);
+        return validTo != null && validTo.isAfter(Instant.now())
+            ? validTo
+            : setEntitlement(runtimeConfig, insuranceData, telematikId, smcbHandle);
     }
 
     public Instant setEntitlement(
         UserRuntimeConfig userRuntimeConfig,
         InsuranceData insuranceData,
-        EpaAPI epaAPI,
         String telematikId,
-        String userAgent,
         String smcbHandle
-    ) {
+    ) throws EpaNotFoundException {
+        if (insuranceData == null) {
+            log.warn("Call setEntitlement is skipped, insuranceData is NULL");
+            return null;
+        }
         String insurantId = insuranceData.getInsurantId();
         String pz = insuranceData.getPz();
         String hcv = extractHCV(insuranceData);
@@ -95,9 +87,10 @@ public class EntitlementService {
         EntitlementRequestType entitlementRequest = new EntitlementRequestType();
         entitlementRequest.setJwt(jwt);
 
-        EntitlementsApi entitlementsApi = epaAPI.getEntitlementsApi();
+        EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
+        EntitlementsApi entitlementsApi = epaApi.getEntitlementsApi();
         ValidToResponseType response = entitlementsApi.setEntitlementPs(
-            insurantId, userAgent, epaAPI.getBackend(),
+            insurantId, epaConfig.getEpaUserAgent(), epaApi.getBackend(),
             "Apache-CXF/4.0.5", "Upgrade, HTTP2-Settings", "h2c", entitlementRequest
         );
         log.info("Updating local entitlement expiry with {}", response.getValidTo());

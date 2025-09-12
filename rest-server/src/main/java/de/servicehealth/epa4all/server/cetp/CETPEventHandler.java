@@ -124,7 +124,6 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             String ctId = paramsMap.get("CtID");
             Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
             String egkHandle = paramsMap.get("CardHandle");
-            String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
             String konnektorHost = configurations.getKonnektorHost();
             String workplaceId = configurations.getWorkplaceId();
             try {
@@ -152,12 +151,12 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     cetpPayload.setKvnr(insurantId);
                     cetpPayload.setPersoenlicheVersichertendaten(print(insuranceData.getPersoenlicheVersichertendaten(), false));
 
+                    Instant entitlementExpiry = entitlementService.resolveEntitlement(
+                        runtimeConfig, insuranceData, smcbHandle, telematikId, insurantId
+                    );
+
                     EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
                     String backend = epaApi.getBackend();
-
-                    Instant entitlementExpiry = entitlementService.getEntitlementExpiry(
-                        runtimeConfig, insuranceData, epaApi, userAgent, smcbHandle, telematikId, insurantId
-                    );
                     Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, konnektorHost, workplaceId);
                     try (Response response = epaCallGuard.callAndRetry(backend, () ->
                         epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders)

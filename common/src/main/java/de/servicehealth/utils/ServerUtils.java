@@ -30,6 +30,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static de.servicehealth.vau.VauFacade.AUTH_ERRORS;
+import static java.io.File.separator;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class ServerUtils {
@@ -57,12 +58,12 @@ public class ServerUtils {
     }
 
     public static String makePath(boolean prefix, boolean postfix, String... paths) {
-        String path = String.join(File.separator, paths);
+        String path = String.join(separator, paths);
         if (prefix) {
-            path = File.separator + path;
+            path = separator + path;
         }
         if (postfix) {
-            path = path + File.separator;
+            path = path + separator;
         }
         return path;
     }

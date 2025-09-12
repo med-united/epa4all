@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static de.servicehealth.epa4all.server.jcr.webdav.JCRParams.DEFAULT_AUTHENTICATE_HEADER;
+import static java.io.File.separator;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -35,7 +36,7 @@ public class AbstractWebdavIT {
         File repository = new File(tempDir, "repository");
         repository.mkdirs();
         when(jcrConfig.getRepositoryHome()).thenReturn(repository);
-        when(jcrConfig.getWorkspacesHome()).thenReturn(repository.getAbsolutePath() + File.separator + "workspaces");
+        when(jcrConfig.getWorkspacesHome()).thenReturn(repository.getAbsolutePath() + separator + "workspaces");
         when(jcrConfig.getMissingAuthMapping()).thenReturn("admin:admin");
         when(jcrConfig.getResourcePathPrefix()).thenReturn("/webdav2");
         when(jcrConfig.getAuthenticateHeader()).thenReturn(DEFAULT_AUTHENTICATE_HEADER);
