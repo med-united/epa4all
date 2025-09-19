@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import kong.unirest.core.HttpResponse;
 import kong.unirest.core.JsonNode;
 import kong.unirest.core.Unirest;
+import kong.unirest.core.UnirestInstance;
 import kong.unirest.core.json.JSONObject;
 
 import java.security.NoSuchAlgorithmException;
@@ -33,6 +34,10 @@ import static de.gematik.idp.field.ClaimName.X509_CERTIFICATE_CHAIN;
 public class TSSAuthenticatorClient extends AuthenticatorClient {
 
     private static final String USER_AGENT = "IdP-Client";
+
+    public TSSAuthenticatorClient(UnirestInstance unirestInstance) {
+        super(unirestInstance);
+    }
 
     @Override
     public DiscoveryDocumentResponse retrieveDiscoveryDocument(
