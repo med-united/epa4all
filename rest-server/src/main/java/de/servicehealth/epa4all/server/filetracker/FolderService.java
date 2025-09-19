@@ -73,9 +73,6 @@ public class FolderService implements IFolderService {
         File telematikFolder = getTelematikFolder(telematikId);
         if (insurantId != null && !insurantId.trim().isEmpty()) {
             String telematikFolderPath = telematikFolder.getAbsolutePath();
-            if (!new File(telematikFolder, insurantId).exists()) {
-                telematikMXBeanRegistry.registerNewPatient(telematikId);
-            }
             webdavConfig.getSmcbFolders().keySet().forEach(folder -> {
                     try {
                         getOrCreateFolder(String.join(separator, telematikFolderPath, insurantId, folder));
@@ -90,9 +87,6 @@ public class FolderService implements IFolderService {
 
     public void deleteFile(String telematikId, String insurantId, String fileName) throws Exception {
         File insurantFolder = getInsurantFolder(telematikId, insurantId);
-        if (insurantFolder == null) {
-            throw new IllegalStateException("Folder doesn't exist: %s".formatted(telematikId + separator + insurantId));
-        }
         ChecksumFile checksumFile = new ChecksumFile(insurantFolder);
         File file = new File(fileName);
         if (file.exists()) {
@@ -112,16 +106,9 @@ public class FolderService implements IFolderService {
         String insurantId,
         byte[] documentBytes
     ) throws Exception {
-        File insurantFolder = getInsurantFolder(telematikId, insurantId);
-        if (insurantFolder == null) {
-            throw new IllegalStateException("Folder doesn't exist: %s".formatted(telematikId + separator + insurantId));
-        }
-        ChecksumFile checksumFile = new ChecksumFile(insurantFolder);
+        ChecksumFile checksumFile = new ChecksumFile(getInsurantFolder(telematikId, insurantId));
         if (checksumFile.appendChecksum(documentBytes, insurantId)) {
             File medFolder = getMedFolder(telematikId, insurantId, folderCode);
-            if (medFolder == null) {
-                throw new IllegalStateException("[%s] Med folder '%s' doesn't exist".formatted(insurantId, folderCode));
-            }
             File file = new File(medFolder, fileName.replace(":", "_"));
             if (!file.exists()) {
                 writeBytesToFile(telematikId, documentBytes, file);
@@ -142,11 +129,7 @@ public class FolderService implements IFolderService {
 
     public Set<String> getChecksums(String telematikId, String insurantId) {
         try {
-            File insurantFolder = getInsurantFolder(telematikId, insurantId);
-            if (insurantFolder == null) {
-                throw new IllegalStateException("Folder doesn't exist: %s".formatted(telematikId + separator + insurantId));
-            }
-            return new ChecksumFile(insurantFolder).getChecksums();
+            return new ChecksumFile(getInsurantFolder(telematikId, insurantId)).getChecksums();
         } catch (Exception e) {
             log.error(String.format("Error while getting unique checksums for %s", insurantId), e);
         }

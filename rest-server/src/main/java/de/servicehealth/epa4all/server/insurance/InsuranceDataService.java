@@ -4,6 +4,7 @@ import de.health.service.cetp.IKonnektorClient;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
+import de.servicehealth.epa4all.server.jmx.TelematikMXBeanRegistry;
 import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -21,29 +22,32 @@ public class InsuranceDataService {
 
     private static final Logger log = LoggerFactory.getLogger(InsuranceDataService.class.getName());
 
+    private final TelematikMXBeanRegistry telematikMXBeanRegistry;
     private final IKonnektorClient konnektorClient;
     private final FolderService folderService;
     private final VsdService vsdService;
 
     @Inject
     public InsuranceDataService(
+        TelematikMXBeanRegistry telematikMXBeanRegistry,
         IKonnektorClient konnektorClient,
         FolderService folderService,
         VsdService vsdService
     ) {
+        this.telematikMXBeanRegistry = telematikMXBeanRegistry;
         this.konnektorClient = konnektorClient;
         this.folderService = folderService;
         this.vsdService = vsdService;
     }
 
-    public InsuranceData loadInsuranceDataEx(
+    public InsuranceData loadInsuranceData(
         UserRuntimeConfig runtimeConfig,
         String egkHandle,
         String smcbHandle,
-        String telematikId
+        String telematikId,
+        String fallbackKvnr
     ) throws Exception {
-        String kvnr = getKvnr(egkHandle, runtimeConfig);
-        String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, kvnr);
+        String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, fallbackKvnr);
         return getData(telematikId, insurantId);
     }
 
@@ -63,37 +67,33 @@ public class InsuranceDataService {
         }
     }
 
-    public String getKvnr(String egkHandle, UserRuntimeConfig runtimeConfig) {
-        try {
-            return konnektorClient.getKvnr(runtimeConfig, egkHandle);
-        } catch (Exception e) {
-            log.error("Error while konnektorClient.getKvnr", e);
-            return null;
-        }
-    }
-
-    public InsuranceData getData(String telematikId, String egkHandle, UserRuntimeConfig runtimeConfig) {
-        String kvnr = getKvnr(egkHandle, runtimeConfig);
-        return kvnr == null ? null : getData(telematikId, kvnr);
+    private boolean newPatient(String telematikId, String kvnr) {
+        File telematikFolder = folderService.getTelematikFolder(telematikId);
+        return !new File(telematikFolder, kvnr).exists();
     }
 
     public InsuranceData getData(String telematikId, String kvnr) {
-        File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-        return localFolder == null ? null : new VsdResponseFile(localFolder).load(telematikId, kvnr);
+        boolean newPatient = newPatient(telematikId, kvnr);
+        try {
+            File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
+            return new VsdResponseFile(localFolder).load(telematikId, kvnr);
+        } finally {
+            if (newPatient) {
+                telematikMXBeanRegistry.registerNewPatient(telematikId);
+            }
+        }
     }
 
     public void cleanUpInsuranceData(String telematikId, String kvnr) {
         log.info("Deleting local insurance data, kvnr={}", kvnr);
         File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-        if (localFolder != null) {
-            new VsdResponseFile(localFolder).cleanUp();
-        }
+        new VsdResponseFile(localFolder).cleanUp();
     }
 
     public Instant getEntitlementExpiry(String telematikId, String kvnr) {
         try {
             File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-            return localFolder == null ? null : new EntitlementFile(localFolder, kvnr).getEntitlement();
+            return new EntitlementFile(localFolder, kvnr).getEntitlement();
         } catch (Exception e) {
             log.error("Error while getEntitlementExpiry", e);
             return null;
@@ -103,9 +103,7 @@ public class InsuranceDataService {
     public void setEntitlementExpiry(Instant validTo, String telematikId, String kvnr) {
         try {
             File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
-            if (localFolder != null) {
-                new EntitlementFile(localFolder, kvnr).setEntitlement(validTo);
-            }
+            new EntitlementFile(localFolder, kvnr).setEntitlement(validTo);
         } catch (Exception e) {
             log.error("Error while updateEntitlement", e);
         }
