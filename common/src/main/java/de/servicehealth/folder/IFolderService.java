@@ -58,7 +58,7 @@ public interface IFolderService {
             return Arrays.asList(getNestedFiles(parent));
         } else {
             List<File> files = new ArrayList<>();
-            for (File folder: nestedFolders) {
+            for (File folder : nestedFolders) {
                 files.addAll(getLeafFiles(folder));
             }
             return files;
@@ -71,9 +71,6 @@ public interface IFolderService {
     }
 
     default File[] getNestedFolders(File parent) {
-        if (parent == null) {
-            return new File[0];
-        }
         File[] folders = parent.listFiles(File::isDirectory);
         return folders == null ? new File[0] : folders;
     }
@@ -89,7 +86,7 @@ public interface IFolderService {
         return Arrays.stream(getNestedFolders(getTelematikFolder(telematikId)))
             .filter(f -> f.getName().equals(insurantId))
             .findFirst()
-            .orElse(null);
+            .orElse(getInsurantFolderSupplier(telematikId, insurantId).get());
     }
 
     default File[] getInsurantMedFolders(String telematikId, String insurantId) {
@@ -100,7 +97,7 @@ public interface IFolderService {
         return Arrays.stream(getInsurantMedFolders(telematikId, insurantId))
             .filter(f -> f.getName().equals(medFolder))
             .findFirst()
-            .orElse(null);
+            .orElse(getFolderSupplier(telematikId, insurantId, medFolder).get());
     }
 
     default File[] getMedFiles(String telematikId, String insurantId, String medFolder) {

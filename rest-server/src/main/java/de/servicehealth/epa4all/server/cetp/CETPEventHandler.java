@@ -140,9 +140,12 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     KONNEKTOR, konnektorHost,
                     WORKPLACE, workplaceId
                 ), () -> {
-                    InsuranceData insuranceData = insuranceDataService.getData(telematikId, egkHandle, runtimeConfig);
+                    String kvnr = konnektorClient.getKvnr(runtimeConfig, egkHandle);
+                    InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
                     if (insuranceData == null) {
-                        insuranceData = insuranceDataService.loadInsuranceDataEx(runtimeConfig, egkHandle, smcbHandle, telematikId);
+                        insuranceData = insuranceDataService.loadInsuranceData(
+                            runtimeConfig, egkHandle, smcbHandle, telematikId, kvnr
+                        );
                     }
                     if (insuranceData == null) {
                         throw new IllegalStateException("Unable to read InsuranceData after VSD call");
