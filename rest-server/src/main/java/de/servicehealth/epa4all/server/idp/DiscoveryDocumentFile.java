@@ -16,16 +16,20 @@ public class DiscoveryDocumentFile<T extends Serializable> {
 
     private static final Logger log = LoggerFactory.getLogger(DiscoveryDocumentFile.class.getName());
 
-    private static final String DISCOVERY_DOC_FILE_NAME = "discovery-doc";
-
     private final ReentrantReadWriteLock lock;
+    private final String fileName;
     private final File file;
 
-    public DiscoveryDocumentFile(File configFolder) throws IOException {
+    public DiscoveryDocumentFile(File configFolder, String fileName) throws IOException {
+        this.fileName = fileName;
         lock = new ReentrantReadWriteLock();
-        file = new File(configFolder, DISCOVERY_DOC_FILE_NAME);
+        if (configFolder == null) {
+            log.warn("Config folder is null, using current directory.");
+            configFolder = new File(".");
+        }
+        file = new File(configFolder, fileName);
         if (!file.exists()) {
-            log.info(String.format("Creating '%s' in the folder '%s'", DISCOVERY_DOC_FILE_NAME, configFolder.getAbsolutePath()));
+            log.info(String.format("Creating '%s' in the folder '%s'", fileName, configFolder.getAbsolutePath()));
             file.createNewFile();
         }
     }
@@ -36,7 +40,7 @@ public class DiscoveryDocumentFile<T extends Serializable> {
         try (ObjectInputStream is = new ObjectInputStream(new FileInputStream(file))) {
             return (T) is.readObject();
         } catch (Exception e) {
-            log.error(String.format("Unable to read '%s' file: %s", DISCOVERY_DOC_FILE_NAME, e.getMessage()));
+            log.error(String.format("Unable to read '%s' file: %s", fileName, e.getMessage()));
         } finally {
             lock.readLock().unlock();
         }
@@ -48,7 +52,7 @@ public class DiscoveryDocumentFile<T extends Serializable> {
         try (ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file))) {
             os.writeObject(serializable);
         } catch (IOException e) {
-            log.error(String.format("Unable to store '%s' file: %s", DISCOVERY_DOC_FILE_NAME, e.getMessage()));
+            log.error(String.format("Unable to store '%s' file: %s", fileName, e.getMessage()));
         } finally {
             lock.writeLock().unlock();
         }

@@ -44,6 +44,7 @@ public class IdpClient extends StartableService {
     private final static Logger log = LoggerFactory.getLogger(IdpClient.class.getName());
 
     public static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
+    private static final String DISCOVERY_DOC_FILE_NAME_EPA = "epa-discovery-doc";
 
     static {
         Security.removeProvider(BOUNCY_CASTLE_PROVIDER.getName());
@@ -57,6 +58,10 @@ public class IdpClient extends StartableService {
     MultiKonnektorService multiKonnektorService;
 
     private DiscoveryDocumentResponse discoveryDocumentResponse;
+
+    public IdpClient() {
+        // Default constructor for CDI
+    }
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -75,7 +80,6 @@ public class IdpClient extends StartableService {
     }
 
     public void doStart() throws Exception {
-        log.info("IdpClient onStart");
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
         BrainpoolCurves.init();
         retrieveDiscoveryDocument();
@@ -83,13 +87,16 @@ public class IdpClient extends StartableService {
 
     public DiscoveryDocumentResponse retrieveDocument()  {
         log.info("Downloading: " + idpConfig.getDiscoveryDocumentUrl());
-        return authenticatorClient.retrieveDiscoveryDocument(
-            idpConfig.getDiscoveryDocumentUrl(), Optional.empty()
-        );
+        return authenticatorClient.retrieveDiscoveryDocument(idpConfig.getDiscoveryDocumentUrl(), Optional.empty());
+    }
+
+    protected String getFileName() {
+        return DISCOVERY_DOC_FILE_NAME_EPA;
     }
 
     private void retrieveDiscoveryDocument() throws Exception {
-        DiscoveryDocumentFile<DiscoveryDocumentWrapper> documentFile = new DiscoveryDocumentFile<>(configDirectory);
+        String fileName = getFileName();
+        DiscoveryDocumentFile<DiscoveryDocumentWrapper> documentFile = new DiscoveryDocumentFile<>(configDirectory, fileName);
         DiscoveryDocumentWrapper documentWrapper = documentFile.load();
         if (documentWrapper != null) {
             discoveryDocumentResponse = documentWrapper.toDiscoveryDocumentResponse();
@@ -101,7 +108,7 @@ public class IdpClient extends StartableService {
             try {
                 discoveryDocumentResponse = retrieveDocument();
                 DiscoveryDocumentWrapper wrapper = new DiscoveryDocumentWrapper(discoveryDocumentResponse);
-                new DiscoveryDocumentFile<>(configDirectory).store(wrapper);
+                new DiscoveryDocumentFile<>(configDirectory, fileName).store(wrapper);
                 worked = true;
             } catch (Exception ex) {
                 log.error("Could not read discovery document. Trying again in 10 seconds.", ex);

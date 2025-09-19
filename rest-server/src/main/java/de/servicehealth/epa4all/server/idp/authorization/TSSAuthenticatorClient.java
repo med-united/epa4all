@@ -24,12 +24,12 @@ import java.util.function.Supplier;
 import static de.gematik.idp.crypto.CryptoLoader.getCertificateFromPem;
 import static de.gematik.idp.field.ClaimName.AUTHORIZATION_ENDPOINT;
 import static de.gematik.idp.field.ClaimName.AUTH_PAIR_ENDPOINT;
-import static de.gematik.idp.field.ClaimName.SSO_ENDPOINT;
 import static de.gematik.idp.field.ClaimName.TOKEN_ENDPOINT;
 import static de.gematik.idp.field.ClaimName.URI_PAIR;
 import static de.gematik.idp.field.ClaimName.URI_PUK_IDP_ENC;
 import static de.gematik.idp.field.ClaimName.URI_PUK_IDP_SIG;
 import static de.gematik.idp.field.ClaimName.X509_CERTIFICATE_CHAIN;
+import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
 
 public class TSSAuthenticatorClient extends AuthenticatorClient {
 
