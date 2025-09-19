@@ -22,7 +22,25 @@ public class AuthenticatorProvider {
 
     @Produces
     @Singleton
-    AuthenticatorClient getAuthenticatorClient(@ConfigProperty(name="idp.kind") String kind) {
+    AuthenticatorClient getAuthenticatorClient(@ConfigProperty(name="idp.kind", defaultValue = "epa") String kind) {
+        UnirestInstance unirestInstance = getUnirestInstance();
+        
+        if ("tss".equals(kind)) {
+            return new TSSAuthenticatorClient(unirestInstance);
+        } else {
+            return new AuthenticatorClient(unirestInstance);
+        }
+    }
+
+    @Produces
+    @Singleton
+    @TSSClient
+    AuthenticatorClient produce() {
+        UnirestInstance unirestInstance = getUnirestInstance();
+        return new TSSAuthenticatorClient(unirestInstance);
+    }
+
+    private UnirestInstance getUnirestInstance() {
         UnirestInstance unirestInstance = Unirest.spawnInstance();
         unirestInstance.config().followRedirects(false);
         unirestInstance.config().setObjectMapper(new JacksonObjectMapper());
@@ -68,11 +86,6 @@ public class AuthenticatorProvider {
                 return null;
             }
         });
-        
-        if ("tss".equals(kind)) {
-            return new TSSAuthenticatorClient(unirestInstance);
-        } else {
-            return new AuthenticatorClient(unirestInstance);
-        }
+        return unirestInstance;
     }
 }

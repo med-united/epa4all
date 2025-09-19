@@ -59,6 +59,10 @@ public class IdpClient extends StartableService {
 
     private DiscoveryDocumentResponse discoveryDocumentResponse;
 
+    public IdpClient() {
+        // Default constructor for CDI
+    }
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public IdpClient(
@@ -73,6 +77,10 @@ public class IdpClient extends StartableService {
         this.konnektorClient = konnektorClient;
         this.authenticatorClient = authenticatorClient;
         this.multiKonnektorService = multiKonnektorService;
+    }
+
+    public void setAuthenticatorClient(AuthenticatorClient authenticatorClient) {
+        this.authenticatorClient = authenticatorClient;
     }
 
     public void doStart() throws Exception {

@@ -23,6 +23,10 @@ public class DiscoveryDocumentFile<T extends Serializable> {
 
     public DiscoveryDocumentFile(File configFolder) throws IOException {
         lock = new ReentrantReadWriteLock();
+        if(configFolder == null) {
+            log.warn("Config folder is null, using current directory.");
+            configFolder = new File(".");
+        }
         file = new File(configFolder, DISCOVERY_DOC_FILE_NAME);
         if (!file.exists()) {
             log.info(String.format("Creating '%s' in the folder '%s'", DISCOVERY_DOC_FILE_NAME, configFolder.getAbsolutePath()));

@@ -5,6 +5,7 @@ import de.gematik.idp.client.IdpClientRuntimeException;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.crypto.EcKeyUtility;
 import de.gematik.idp.token.JsonWebToken;
+import de.servicehealth.epa4all.server.idp.IdpConfig;
 import jakarta.ws.rs.core.HttpHeaders;
 import kong.unirest.core.HttpResponse;
 import kong.unirest.core.JsonNode;
@@ -36,7 +37,7 @@ public class TSSAuthenticatorClient extends AuthenticatorClient {
     private static final String USER_AGENT = "IdP-Client";
 
     public TSSAuthenticatorClient(UnirestInstance unirestInstance) {
-        super(unirestInstance);
+        super(unirestInstance);  
     }
 
     @Override
