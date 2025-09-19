@@ -31,7 +31,7 @@ public class ConsentValidator {
     
     public void validate(String insurantId, ConsentFunction function) throws EpaNotFoundException, ConsentException {
         EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
-        ConsentDecisionsApi decisionApi = epaApi.getContentDecisionApi();
+        ConsentDecisionsApi decisionApi = epaApi.getContentDecisionAPI();
         List<Decision> decisions;
         try {
             GetConsentDecisionInformation200Response decisionsResponse = decisionApi.getConsentDecisionInformation(

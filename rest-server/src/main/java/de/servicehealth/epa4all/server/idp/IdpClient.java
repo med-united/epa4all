@@ -6,7 +6,6 @@ import de.gematik.idp.client.AuthenticatorClient;
 import de.gematik.idp.client.data.AuthorizationRequest;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.field.ClaimName;
-import de.gematik.idp.field.CodeChallengeMethod;
 import de.health.service.cetp.CertificateInfo;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
@@ -27,19 +26,17 @@ import org.jose4j.jwt.JwtClaims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import static de.servicehealth.epa4all.server.idp.utils.IdpUtils.getSignedJwt;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @ApplicationScoped
 public class IdpClient extends StartableService {
@@ -117,33 +114,14 @@ public class IdpClient extends StartableService {
         }
     }
 
-    public void getAuthCode(
-        String nonce,
-        URI location,
-        String smcbHandle,
-        UserRuntimeConfig runtimeConfig,
-        Consumer<SendAuthCodeSCtype> authCodeConsumer
-    ) {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
-        IdpFunc idpFunc = IdpFunc.init(servicePorts);
-        VauNpAction authAction = new VauNpAction(
-            authenticatorClient,
-            discoveryDocumentResponse,
-            authCodeConsumer,
-            idpFunc
-        );
-        processVauNPAction(nonce, location, smcbHandle, runtimeConfig, authAction, idpFunc);
-    }
-
-    public SendAuthCodeSCtype getAuthCodeSync(
-        String nonce,
+    public SendAuthCodeSCtype getAuthCode(
+        String epaNonce,
         URI location,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ThreadLocal<SendAuthCodeSCtype> threadLocalAuthCode = new ThreadLocal<>();
-        IdpFunc idpFunc = IdpFunc.init(multiKonnektorService.getServicePorts(runtimeConfig));
         VauNpAction authAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
@@ -151,87 +129,67 @@ public class IdpClient extends StartableService {
                 threadLocalAuthCode.set(s);
                 countDownLatch.countDown();
             },
-            idpFunc
+            IdpFunc.init(multiKonnektorService.getServicePorts(runtimeConfig))
         );
-        processVauNPAction(nonce, location, smcbHandle, runtimeConfig, authAction, idpFunc);
-        countDownLatch.await();
+        // A_24760 - Start der Nutzerauthentifizierung
+        // Parse query string into map
+        AuthorizationData authorizationData = AuthorizationData.fromLocation(location);
+        processAuthAction(epaNonce, smcbHandle, runtimeConfig, authorizationData, authAction);
+        countDownLatch.await(10, SECONDS);
         return threadLocalAuthCode.get();
     }
 
-    private void processVauNPAction(
-        String nonce,
-        URI location,
+    public String getAccessToken(
         String smcbHandle,
-        UserRuntimeConfig userRuntimeConfig,
-        AuthAction authAction,
-        IdpFunc idpFunc
-    ) {
-        CertificateInfo certificateInfo = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
-
-        JwtClaims claims = new JwtClaims();
-        claims.setClaim(ClaimName.NONCE.getJoseName(), nonce);
-        claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
-        claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);
-
-        // A_24882-01 - Signatur clientAttest
-        X509Certificate smcbAuthCert = certificateInfo.getCertificate();
-        String clientAttest = getSignedJwt(
-            smcbAuthCert,
-            claims,
-            certificateInfo.getSignatureType(),
-            smcbHandle,
-            true,
-            idpFunc
+        UserRuntimeConfig runtimeConfig
+    ) throws Exception {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        ThreadLocal<String> threadLocalAccessToken = new ThreadLocal<>();
+        LoginAction loginAction = new LoginAction(
+            idpConfig.getClientId(),
+            idpConfig.getAuthRequestRedirectUrl(),
+            authenticatorClient,
+            discoveryDocumentResponse,
+            (s) -> {
+                threadLocalAccessToken.set(s);
+                countDownLatch.countDown();
+            },
+            IdpFunc.init(multiKonnektorService.getServicePorts(runtimeConfig))
         );
-
-        // A_24760 - Start der Nutzerauthentifizierung
-        // Parse query string into map
-        Map<String, String> queryMap = new HashMap<>();
-        String query = location.getQuery();
-        Arrays.stream(query.split("&")).map(s -> s.split("=")).forEach(s -> queryMap.put(s[0], s[1]));
-        sendAuthorizationRequest(
-            smcbHandle,
-            queryMap,
-            smcbAuthCert,
-            clientAttest,
-            certificateInfo.getSignatureType(),
-            authAction
-        );
+        Set<String> scopes = Set.of("Abrechnungsinformation");
+        AuthorizationData authorizationData = AuthorizationData.fromConfig(idpConfig, scopes);
+        processAuthAction(null, smcbHandle, runtimeConfig, authorizationData, loginAction);
+        countDownLatch.await(10, SECONDS);
+        return threadLocalAccessToken.get();
     }
 
-    // A_24944-01 - Anfrage des "AUTHORIZATION_CODE" für ein "ID_TOKEN"
-    private void sendAuthorizationRequest(
+    private void processAuthAction(
+        String epaNonce,
         String smcbHandle,
-        Map<String, String> queryMap,
-        X509Certificate smcbAuthCert,
-        String clientAttest,
-        String signatureType,
+        UserRuntimeConfig runtimeConfig,
+        AuthorizationData authorizationData,
         AuthAction authAction
     ) {
-        String codeChallenge = queryMap.get("code_challenge");
-        AuthorizationRequest authorizationRequest = AuthorizationRequest.builder()
-            .link(discoveryDocumentResponse.getAuthorizationEndpoint())
-            .clientId(queryMap.get("client_id"))
-            .codeChallenge(codeChallenge)
-            .codeChallengeMethod(CodeChallengeMethod.valueOf(queryMap.get("code_challenge_method")))
-            .redirectUri(queryMap.get("redirect_uri"))
-            .state(queryMap.get("state"))
-            .scopes(Set.of(queryMap.get("scope").replace("+", " ")))
-            .nonce(queryMap.get("nonce"))
-            .build();
-
+        CertificateInfo certificateInfo = konnektorClient.getSmcbX509Certificate(runtimeConfig, smcbHandle);
+        AuthorizationRequest authorizationRequest = authorizationData.buildAuthorizationRequest(
+            discoveryDocumentResponse.getAuthorizationEndpoint()
+        );
+        // A_24944-01 - Anfrage des "AUTHORIZATION_CODE" für ein "ID_TOKEN"
         authenticatorClient.doAuthorizationRequest(
             authorizationRequest,
             UnaryOperator.identity(),
-            (HttpResponse<AuthenticationChallenge> authenticationChallenge) -> {
-                authAction.execute(
-                    authenticationChallenge.getBody(),
-                    smcbAuthCert,
-                    codeChallenge,
-                    smcbHandle,
-                    clientAttest,
-                    signatureType
-                );
+            (HttpResponse<AuthenticationChallenge> challengeResponse) -> {
+                try {
+                    authAction.execute(
+                        epaNonce,
+                        smcbHandle,
+                        authorizationRequest.getCodeChallenge(),
+                        certificateInfo,
+                        challengeResponse.getBody()
+                    );
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         );
     }
@@ -254,7 +212,7 @@ public class IdpClient extends StartableService {
         String auditEvidence,
         String hcv,
         UserRuntimeConfig userRuntimeConfig
-    ) {
+    ) throws NoSuchAlgorithmException, IOException {
         IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
         JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
@@ -264,37 +222,6 @@ public class IdpClient extends StartableService {
             claims.setClaim("hcv", hcv);
         }
         CertificateInfo certificateInfo = konnektorClient.getSmcbX509Certificate(userRuntimeConfig, smcbHandle);
-        return getSignedJwt(
-            certificateInfo.getCertificate(),
-            claims,
-            certificateInfo.getSignatureType(),
-            smcbHandle,
-            true,
-            IdpFunc.init(servicePorts)
-        );
-    }
-
-    public void getBearerToken(
-        UserRuntimeConfig userRuntimeConfig,
-        Consumer<String> bearerConsumer
-    ) throws Exception {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
-        IdpFunc idpFunc = IdpFunc.init(servicePorts);
-        LoginAction authAction = new LoginAction(
-            idpConfig.getClientId(),
-            idpConfig.getAuthRequestRedirectUrl(),
-            authenticatorClient,
-            discoveryDocumentResponse,
-            bearerConsumer,
-            idpFunc
-        );
-        processBearerAction(userRuntimeConfig, authAction);
-    }
-
-    public void processBearerAction(
-        UserRuntimeConfig userRuntimeConfig,
-        AuthAction authAction
-    ) throws Exception {
-
+        return getSignedJwt(certificateInfo, claims.toJson(), smcbHandle, true, IdpFunc.init(servicePorts));
     }
 }
