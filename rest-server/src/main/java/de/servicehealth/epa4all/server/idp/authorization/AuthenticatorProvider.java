@@ -4,13 +4,18 @@ import de.gematik.idp.client.AuthenticatorClient;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Singleton;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 public class AuthenticatorProvider {
 
     @Produces
     @Singleton
-    AuthenticatorClient getAuthenticatorClient() {
-        return new AuthenticatorClient();
+    AuthenticatorClient getAuthenticatorClient(@ConfigProperty(name="idp.kind") String kind) {
+        if ("tss".equals(kind)) {
+            return new TSSAuthenticatorClient();
+        } else {
+            return new AuthenticatorClient();
+        }
     }
 }

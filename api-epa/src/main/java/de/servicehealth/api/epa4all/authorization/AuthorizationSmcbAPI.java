@@ -23,7 +23,7 @@ import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
 @Path("/epa/authz/v1")
 @Api(value = "/")
-public interface AuthorizationSmcBApi extends de.servicehealth.api.AuthorizationSmcBApi {
+public interface AuthorizationSmcbAPI extends de.servicehealth.api.AuthorizationSmcBApi {
     /**
      * (sendAuthorizationRequestSC) Send authorization request
      * Request authorization for a smartcard (SMC-B) based client.

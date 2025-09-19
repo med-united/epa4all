@@ -1,7 +1,7 @@
 package de.servicehealth.epa4all.integration.base;
 
 import de.servicehealth.api.epa4all.EpaConfig;
-import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.api.epa4all.authorization.AuthorizationSmcbAPI;
 import de.servicehealth.epa4all.common.ITAction;
 import de.servicehealth.epa4all.common.TestUtils;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
@@ -50,7 +50,7 @@ public abstract class AbstractAuthIT {
             String authorizationServiceUrl = epaConfig.getAuthorizationServiceUrl();
             String backend = epaConfig.getEpaBackends().iterator().next();
             String backendUrl = getBackendUrl(backend, authorizationServiceUrl);
-            AuthorizationSmcBApi api = buildApi(vauFacade, AuthorizationSmcBApi.class, backendUrl);
+            AuthorizationSmcbAPI api = buildApi(vauFacade, AuthorizationSmcbAPI.class, backendUrl);
 
             VauClient vauClient = vauFacade.getEmptyClients().getFirst();
 

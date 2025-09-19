@@ -5,8 +5,8 @@ import com.google.common.cache.CacheBuilder;
 import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.ConsentDecisionsApi;
 import de.servicehealth.api.epa4all.annotation.EpaRestFeatures;
-import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
-import de.servicehealth.api.epa4all.entitlement.EntitlementsApi;
+import de.servicehealth.api.epa4all.authorization.AuthorizationSmcbAPI;
+import de.servicehealth.api.epa4all.entitlement.EntitlementsAPI;
 import de.servicehealth.api.epa4all.jmx.EpaMXBeanRegistry;
 import de.servicehealth.api.epa4all.proxy.AdminProxyService;
 import de.servicehealth.api.epa4all.proxy.FhirProxyService;
@@ -115,12 +115,12 @@ public class EpaMultiService extends StartableService {
                         ConsentDecisionsApi.class, getBackendUrl(backend, epaConfig.getInformationServiceUrl())
                     );
                     String authorizationServiceUrl = epaConfig.getAuthorizationServiceUrl();
-                    AuthorizationSmcBApi authorizationSmcBApi = createProxyClient(
-                        AuthorizationSmcBApi.class, backend, authorizationServiceUrl, vauFacade
+                    AuthorizationSmcbAPI authorizationSmcBApi = createProxyClient(
+                        AuthorizationSmcbAPI.class, backend, authorizationServiceUrl, vauFacade
                     );
                     String entitlementServiceUrl = epaConfig.getEntitlementServiceUrl();
-                    EntitlementsApi entitlementsApi = createProxyClient(
-                        EntitlementsApi.class, backend, entitlementServiceUrl, vauFacade
+                    EntitlementsAPI entitlementsApi = createProxyClient(
+                        EntitlementsAPI.class, backend, entitlementServiceUrl, vauFacade
                     );
 
                     Set<String> maskedHeaders = servicehealthConfig.getSafeMaskedHeaders();
@@ -175,7 +175,7 @@ public class EpaMultiService extends StartableService {
 
     public boolean checkInsurantEPA(String insurantId) {
         for (EpaAPI api : epaBackendMap.values()) {
-            AccountInformationApi accountInformationApi = api.getAccountInformationApi();
+            AccountInformationApi accountInformationApi = api.getAccountInformationAPI();
             try {
                 accountInformationApi.getRecordStatus(insurantId, epaConfig.getEpaUserAgent());
                 return true;
@@ -212,7 +212,7 @@ public class EpaMultiService extends StartableService {
         return resultMdc(Map.of(INSURANT, insurantId, BACKEND, api.getBackend()), () -> {
             boolean result = false;
             try {
-                api.getAccountInformationApi().getRecordStatus(insurantId, epaConfig.getEpaUserAgent());
+                api.getAccountInformationAPI().getRecordStatus(insurantId, epaConfig.getEpaUserAgent());
                 result = true;
             } catch (Exception e) {
                 log.info(String.format("ePA record not found: %s", e.getMessage()));

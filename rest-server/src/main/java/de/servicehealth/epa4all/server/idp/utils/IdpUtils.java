@@ -18,6 +18,8 @@ import java.util.Base64;
 import static de.gematik.idp.brainPoolExtension.BrainpoolAlgorithmSuiteIdentifiers.BRAINPOOL256_USING_SHA256;
 import static de.health.service.cetp.CertificateInfo.URN_BSI_TR_03111_ECDSA;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.commons.codec.digest.DigestUtils.sha256;
+import static org.apache.commons.lang3.RandomStringUtils.random;
 import static org.jose4j.jws.AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256;
 import static org.jose4j.jws.AlgorithmIdentifiers.RSA_PSS_USING_SHA256;
 import static org.jose4j.jws.EcdsaUsingShaAlgorithm.convertDerToConcatenated;
@@ -46,7 +48,7 @@ public class IdpUtils {
         String smcbHandle,
         boolean nonce,
         IdpFunc idpFunc
-    ) {
+    ) throws NoSuchAlgorithmException, IOException {
         String payload = claims.toJson();
         final JsonWebSignature jsonWebSignature = getJsonWebSignature(certificate, nonce, payload);
         String body = jsonWebSignature.getHeaders().getEncodedHeader() + "." + jsonWebSignature.getEncodedPayload();
@@ -57,29 +59,24 @@ public class IdpUtils {
         return body + "." + Base64.getUrlEncoder().withoutPadding().encodeToString(signatureBytes);
     }
 
-    private static byte[] hashAndSignBytesWithExternalAuthenticateWithSMCB(
-        byte[] inputBytes,
+    public static byte[] hashAndSignBytesWithExternalAuthenticateWithSMCB(
+        byte[] challengeBytes,
         String signatureType,
         String smcbHandle,
         IdpFunc idpFunc
-    ) {
-        MessageDigest digest;
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Could not apply SHA-256 to signing bytes", e);
-        }
-        byte[] encodedHash = digest.digest(inputBytes);
+    ) throws NoSuchAlgorithmException, IOException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
         ExternalAuthenticate externalAuthenticate = new ExternalAuthenticate();
         BinaryDocumentType binaryDocumentType = new BinaryDocumentType();
         Base64Data base64Data = new Base64Data();
-        base64Data.setValue(encodedHash);
+        base64Data.setValue(digest.digest(challengeBytes));
         base64Data.setMimeType("application/octet-stream");
         binaryDocumentType.setBase64Data(base64Data);
         externalAuthenticate.setBinaryString(binaryDocumentType);
         externalAuthenticate.setContext(idpFunc.getCtxSupplier().get());
         externalAuthenticate.setCardHandle(smcbHandle);
+
         ExternalAuthenticate.OptionalInputs optionalInputs = new ExternalAuthenticate.OptionalInputs();
         // A_24883-02 - clientAttest als ECDSA-Signatur
         optionalInputs.setSignatureType(signatureType);
@@ -87,14 +84,11 @@ public class IdpUtils {
 
         ExternalAuthenticateResponse externalAuthenticateResponse = idpFunc.getExtAuthFunc().apply(externalAuthenticate);
         byte[] value = externalAuthenticateResponse.getSignatureObject().getBase64Signature().getValue();
-        if (signatureType.equals(URN_BSI_TR_03111_ECDSA)) {
-            try {
-                return convertDerToConcatenated(value, 64);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            return value;
-        }
+        return signatureType.equals(URN_BSI_TR_03111_ECDSA) ? convertDerToConcatenated(value, 64) : value;
+    }
+
+    @SuppressWarnings({"java:S2245", "deprecation"})
+    public static String generateCodeVerifier() {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(sha256(random(123)));
     }
 }
