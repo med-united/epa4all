@@ -36,7 +36,6 @@ public class VauNpAction extends AbstractAuthAction {
     public void execute(
         String epaNonce,
         String smcbHandle,
-        String codeChallenge,
         CertificateInfo certificateInfo,
         AuthenticationChallenge authChallenge
     ) throws NoSuchAlgorithmException, IOException {

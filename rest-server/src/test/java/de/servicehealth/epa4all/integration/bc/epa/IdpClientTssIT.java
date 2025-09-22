@@ -6,6 +6,7 @@ import de.servicehealth.epa4all.common.profile.IdpTssProfile;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.idp.IdpClient;
+import de.servicehealth.epa4all.server.idp.authorization.TSSClient;
 import de.servicehealth.epa4all.server.serviceport.ServicePortProvider;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -26,6 +27,7 @@ public class IdpClientTssIT {
     private static final Logger log = LoggerFactory.getLogger(IdpClientEpaIT.class.getName());
 
     @Inject
+    @TSSClient
     IdpClient idpClient;
 
     @Inject

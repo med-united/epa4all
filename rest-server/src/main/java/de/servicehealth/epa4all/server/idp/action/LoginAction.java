@@ -8,9 +8,9 @@ import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.client.data.TokenRequest;
 import de.health.service.cetp.CertificateInfo;
 import de.servicehealth.epa4all.server.idp.func.IdpFunc;
-import org.apache.commons.codec.digest.DigestUtils;
 
-import java.util.Base64;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
@@ -39,25 +39,24 @@ public class LoginAction extends AbstractAuthAction {
     public void execute(
         String epaNonce,
         String smcbHandle,
-        String codeChallenge,
         CertificateInfo certificateInfo,
         AuthenticationChallenge authChallenge
-    ) throws Exception {
+    ) throws NoSuchAlgorithmException, IOException {
         AuthenticationResponse authenticationResponse = processAuthenticationChallenge(
             smcbHandle, certificateInfo, authChallenge
         );
-
-        String codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(DigestUtils.sha256(codeChallenge));
+        String codeChallenge = (String) authChallenge.getChallenge().extractBodyClaims().get("code_challenge");
         TokenRequest tokenRequest = TokenRequest.builder()
             .tokenUrl(discoveryDocumentResponse.getTokenEndpoint())
             .clientId(idpClientId)
             .code(authenticationResponse.getCode())
             .ssoToken(authenticationResponse.getSsoToken())
             .redirectUrl(idpAuthRequestRedirectUrl)
-            .codeVerifier(codeVerifier)
+            .codeVerifier(codeChallenge)
             .idpEnc(discoveryDocumentResponse.getIdpEnc())
             .build();
-        IdpTokenResult idpTokenResult = authenticatorClient.retrieveAccessToken(tokenRequest, UnaryOperator.identity(), o -> {});
+        IdpTokenResult idpTokenResult = authenticatorClient.retrieveAccessToken(tokenRequest, UnaryOperator.identity(), o -> {
+        });
         tokenConsumer.accept(idpTokenResult.getAccessToken().getRawString());
     }
 }

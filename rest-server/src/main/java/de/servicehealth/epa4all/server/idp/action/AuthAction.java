@@ -11,8 +11,7 @@ public interface AuthAction {
     void execute(
         String epaNonce,
         String smcbHandle,
-        String codeChallenge,
         CertificateInfo certificateInfo,
         AuthenticationChallenge authChallenge
-    ) throws NoSuchAlgorithmException, IOException, Exception;
+    ) throws NoSuchAlgorithmException, IOException;
 }
