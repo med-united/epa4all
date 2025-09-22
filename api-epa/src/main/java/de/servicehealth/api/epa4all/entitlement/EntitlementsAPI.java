@@ -15,7 +15,7 @@ import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 
-public interface EntitlementsApi extends de.servicehealth.api.EntitlementsApi {
+public interface EntitlementsAPI extends de.servicehealth.api.EntitlementsApi {
 
     @POST
     @Consumes({ "application/json" })

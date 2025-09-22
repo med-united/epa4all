@@ -1,8 +1,8 @@
 package de.servicehealth.api.epa4all;
 
 import de.servicehealth.api.ConsentDecisionsApi;
-import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
-import de.servicehealth.api.epa4all.entitlement.EntitlementsApi;
+import de.servicehealth.api.epa4all.authorization.AuthorizationSmcbAPI;
+import de.servicehealth.api.epa4all.entitlement.EntitlementsAPI;
 import de.servicehealth.api.epa4all.proxy.IAdminProxy;
 import de.servicehealth.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.api.AccountInformationApi;
@@ -24,8 +24,8 @@ public class EpaAPIAggregator implements EpaAPI {
     private final IDocumentManagementInsurantPortType documentManagementInsurantPortType;
     private final AccountInformationApi accountInformationApi;
     private final ConsentDecisionsApi consentDecisionsApi;
-    private final AuthorizationSmcBApi authorizationSmcBApi;
-    private final EntitlementsApi entitlementsApi;
+    private final AuthorizationSmcbAPI authorizationSmcBApi;
+    private final EntitlementsAPI entitlementsApi;
     private final IAdminProxy adminProxy;
     private final IFhirProxy fhirProxy;
 
@@ -36,8 +36,8 @@ public class EpaAPIAggregator implements EpaAPI {
         IDocumentManagementInsurantPortType documentManagementInsurantPortType,
         AccountInformationApi accountInformationApi,
         ConsentDecisionsApi consentDecisionsApi,
-        AuthorizationSmcBApi authorizationSmcBApi,
-        EntitlementsApi entitlementsApi,
+        AuthorizationSmcbAPI authorizationSmcBApi,
+        EntitlementsAPI entitlementsApi,
         IAdminProxy adminProxy,
         IFhirProxy fhirProxy
     ) {
@@ -82,22 +82,22 @@ public class EpaAPIAggregator implements EpaAPI {
     }
 
     @Override
-    public AccountInformationApi getAccountInformationApi() {
+    public AccountInformationApi getAccountInformationAPI() {
         return accountInformationApi;
     }
 
     @Override
-    public ConsentDecisionsApi getContentDecisionApi() {
+    public ConsentDecisionsApi getContentDecisionAPI() {
         return consentDecisionsApi;
     }
 
     @Override
-    public AuthorizationSmcBApi getAuthorizationSmcBApi() {
+    public AuthorizationSmcbAPI getAuthorizationSmcbAPI() {
         return authorizationSmcBApi;
     }
 
     @Override
-    public EntitlementsApi getEntitlementsApi() {
+    public EntitlementsAPI getEntitlementsAPI() {
         return entitlementsApi;
     }
 

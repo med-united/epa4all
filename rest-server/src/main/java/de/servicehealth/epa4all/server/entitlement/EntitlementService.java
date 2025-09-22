@@ -8,7 +8,7 @@ import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.api.epa4all.EpaConfig;
 import de.servicehealth.api.epa4all.EpaMultiService;
 import de.servicehealth.api.epa4all.EpaNotFoundException;
-import de.servicehealth.api.epa4all.entitlement.EntitlementsApi;
+import de.servicehealth.api.epa4all.entitlement.EntitlementsAPI;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
@@ -20,7 +20,9 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Base64;
 
@@ -61,7 +63,7 @@ public class EntitlementService {
         String smcbHandle,
         String telematikId,
         String insurantId
-    ) throws EpaNotFoundException {
+    ) throws EpaNotFoundException, NoSuchAlgorithmException, IOException {
         Instant validTo = insuranceDataService.getEntitlementExpiry(telematikId, insurantId);
         log.info("Current entitlement-expiry = {}", validTo);
         return validTo != null && validTo.isAfter(Instant.now())
@@ -74,7 +76,7 @@ public class EntitlementService {
         InsuranceData insuranceData,
         String telematikId,
         String smcbHandle
-    ) throws EpaNotFoundException {
+    ) throws EpaNotFoundException, NoSuchAlgorithmException, IOException {
         if (insuranceData == null) {
             log.warn("Call setEntitlement is skipped, insuranceData is NULL");
             return null;
@@ -88,7 +90,7 @@ public class EntitlementService {
         entitlementRequest.setJwt(jwt);
 
         EpaAPI epaApi = epaMultiService.findEpaAPI(insurantId);
-        EntitlementsApi entitlementsApi = epaApi.getEntitlementsApi();
+        EntitlementsAPI entitlementsApi = epaApi.getEntitlementsAPI();
         ValidToResponseType response = entitlementsApi.setEntitlementPs(
             insurantId, epaConfig.getEpaUserAgent(), epaApi.getBackend(),
             "Apache-CXF/4.0.5", "Upgrade, HTTP2-Settings", "h2c", entitlementRequest

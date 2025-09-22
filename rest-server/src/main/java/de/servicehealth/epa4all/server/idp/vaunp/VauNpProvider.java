@@ -8,7 +8,7 @@ import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.api.epa4all.EpaMultiService;
-import de.servicehealth.api.epa4all.authorization.AuthorizationSmcBApi;
+import de.servicehealth.api.epa4all.authorization.AuthorizationSmcbAPI;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import de.servicehealth.epa4all.server.idp.IdpClient;
@@ -136,15 +136,12 @@ public class VauNpProvider extends StartableService {
     public JsonNode reload(Set<String> backendsToReload) throws Exception {
         List<JsonNode> reloading = new ArrayList<>();
 
-        String clientId = idpConfig.getClientId();
-        String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
         AtomicBoolean reloadHappened = new AtomicBoolean(false);
         Set<JsonNode> statuses = new HashSet<>();
         epaMultiService.getEpaBackendMap().entrySet().stream()
             .filter(e -> backendsToReload.isEmpty() || backendsToReload.stream().anyMatch(t -> e.getKey().startsWith(t)))
             .forEach(e -> {
                 String backend = e.getKey();
-                String uri = "https://" + backend;
                 if (reloadMap.get(backend).tryAcquire()) {
                     try {
                         EpaAPI epaAPI = e.getValue();
@@ -159,7 +156,7 @@ public class VauNpProvider extends StartableService {
                                     konnektorDefaultConfig,
                                     konnektorConfig.getUserConfigurations()
                                 );
-                                AuthorizationSmcBApi smcBApi = epaAPI.getAuthorizationSmcBApi();
+                                AuthorizationSmcbAPI smcBApi = epaAPI.getAuthorizationSmcbAPI();
                                 vauFacade.getEmptyClients(konnektorWorkplace).forEach(vauClient ->
                                     futures.add(scheduledThreadPool.submit(() -> {
                                         reloadHappened.set(true);
@@ -168,10 +165,7 @@ public class VauNpProvider extends StartableService {
                                             runtimeConfig,
                                             konnektorWorkplace,
                                             vauClient,
-                                            uri,
-                                            backend,
-                                            userAgent,
-                                            clientId
+                                            backend
                                         );
                                     }))
                                 );
@@ -211,17 +205,16 @@ public class VauNpProvider extends StartableService {
         return jsonNode;
     }
 
-    private void reloadVauClient(
-        AuthorizationSmcBApi smcBApi,
+    public void reloadVauClient(
+        AuthorizationSmcbAPI smcbAPI,
         UserRuntimeConfig runtimeConfig,
         String konnektorWorkplace,
         VauClient vauClient,
-        String uri,
-        String backend,
-        String userAgent,
-        String clientId
+        String backend
     ) {
         try {
+            String clientId = idpConfig.getClientId();
+            String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
             String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
             KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
             String uuid = vauClient.getUuid();
@@ -233,14 +226,14 @@ public class VauNpProvider extends StartableService {
                 CLIENT_UUID, uuid
             );
             voidMdc(mdcMap, () -> {
-                boolean vauInfoSet = vauHandshake.get().apply(uri, vauClient);
+                boolean vauInfoSet = vauHandshake.get().apply("https://" + backend, vauClient);
                 if (vauInfoSet) {
                     // A_24881 - Nonce anfordern für Erstellung "Attestation der Umgebung"
-                    String nonce = smcBApi.getNonce(clientId, userAgent, backend, uuid).getNonce();
-                    try (Response response = smcBApi.sendAuthRequest(clientId, userAgent, backend, uuid)) {
+                    String epaNonce = smcbAPI.getNonce(clientId, userAgent, backend, uuid).getNonce();
+                    try (Response response = smcbAPI.sendAuthRequest(clientId, userAgent, backend, uuid)) {
                         URI location = response.getLocation();
-                        SendAuthCodeSCtype authCode = getAuthCode(runtimeConfig, smcbHandle, nonce, location);
-                        applyVauNp(smcBApi, vauClient, clientId, userAgent, backend, authCode);
+                        SendAuthCodeSCtype authCode = getAuthCode(runtimeConfig, smcbHandle, epaNonce, location);
+                        applyVauNp(smcbAPI, vauClient, clientId, userAgent, backend, authCode);
                     }
                 }
             });
@@ -252,7 +245,7 @@ public class VauNpProvider extends StartableService {
     }
 
     private void applyVauNp(
-        AuthorizationSmcBApi smcBApi,
+        AuthorizationSmcbAPI smcbAPI,
         VauClient vauClient,
         String clientId,
         String userAgent,
@@ -260,7 +253,7 @@ public class VauNpProvider extends StartableService {
         SendAuthCodeSCtype authCode
     ) {
         try {
-            SendAuthCodeSC200Response sc200Response = smcBApi.sendAuthCodeSC(
+            SendAuthCodeSC200Response sc200Response = smcbAPI.sendAuthCodeSC(
                 clientId,
                 userAgent,
                 backend,
@@ -277,11 +270,11 @@ public class VauNpProvider extends StartableService {
     private SendAuthCodeSCtype getAuthCode(
         UserRuntimeConfig runtimeConfig,
         String smcbHandle,
-        String nonce,
+        String epaNonce,
         URI location
     ) {
         try {
-            SendAuthCodeSCtype authCode = idpClient.getAuthCodeSync(nonce, location, smcbHandle, runtimeConfig);
+            SendAuthCodeSCtype authCode = idpClient.getAuthCode(epaNonce, location, smcbHandle, runtimeConfig);
             log.info("Successfully got authCode from IDP");
             return authCode;
         } catch (Exception e) {

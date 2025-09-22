@@ -3,6 +3,7 @@ package de.servicehealth.startup;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ public class StartupEventManager {
 
     private static final Logger log = LoggerFactory.getLogger(StartupEventManager.class.getName());
 
+    @Any
     @Inject
     Instance<StartupEventListener> listeners;
 

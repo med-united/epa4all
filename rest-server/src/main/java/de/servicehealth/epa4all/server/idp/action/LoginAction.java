@@ -6,11 +6,10 @@ import de.gematik.idp.client.IdpTokenResult;
 import de.gematik.idp.client.data.AuthenticationResponse;
 import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.client.data.TokenRequest;
+import de.health.service.cetp.CertificateInfo;
 import de.servicehealth.epa4all.server.idp.func.IdpFunc;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.security.cert.X509Certificate;
-import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -19,39 +18,36 @@ public class LoginAction extends AbstractAuthAction {
 
     private final String idpClientId;
     private final String idpAuthRequestRedirectUrl;
-    private final Consumer<String> authConsumer;
+    private final Consumer<String> tokenConsumer;
 
     public LoginAction(
         String idpClientId,
         String idpAuthRequestRedirectUrl,
         AuthenticatorClient authenticatorClient,
         DiscoveryDocumentResponse discoveryDocumentResponse,
-        Consumer<String> authConsumer,
+        Consumer<String> tokenConsumer,
         IdpFunc idpFunc
     ) {
         super(idpFunc, authenticatorClient, discoveryDocumentResponse);
 
         this.idpClientId = idpClientId;
         this.idpAuthRequestRedirectUrl = idpAuthRequestRedirectUrl;
-        this.authConsumer = authConsumer;
+        this.tokenConsumer = tokenConsumer;
     }
 
     @Override
     public void execute(
-        AuthenticationChallenge authChallenge,
-        X509Certificate smcbAuthCert,
-        String codeChallenge,
+        String epaNonce,
         String smcbHandle,
-        String clientAttest,
-        String signatureType
-    ) {
+        String codeChallenge,
+        CertificateInfo certificateInfo,
+        AuthenticationChallenge authChallenge
+    ) throws Exception {
         AuthenticationResponse authenticationResponse = processAuthenticationChallenge(
-            smcbHandle, authChallenge, smcbAuthCert, signatureType
+            smcbHandle, certificateInfo, authChallenge
         );
 
-        String codeVerifier = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(DigestUtils.sha256(codeChallenge));
-
+        String codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(DigestUtils.sha256(codeChallenge));
         TokenRequest tokenRequest = TokenRequest.builder()
             .tokenUrl(discoveryDocumentResponse.getTokenEndpoint())
             .clientId(idpClientId)
@@ -61,12 +57,7 @@ public class LoginAction extends AbstractAuthAction {
             .codeVerifier(codeVerifier)
             .idpEnc(discoveryDocumentResponse.getIdpEnc())
             .build();
-
-        IdpTokenResult idpTokenResult = authenticatorClient.retrieveAccessToken(
-            tokenRequest, UnaryOperator.identity(), o -> {
-            }
-        );
-        LocalDateTime validUntil = idpTokenResult.getValidUntil();
-        authConsumer.accept(idpTokenResult.getAccessToken().getRawString());
+        IdpTokenResult idpTokenResult = authenticatorClient.retrieveAccessToken(tokenRequest, UnaryOperator.identity(), o -> {});
+        tokenConsumer.accept(idpTokenResult.getAccessToken().getRawString());
     }
 }

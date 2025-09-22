@@ -1,17 +1,18 @@
 package de.servicehealth.epa4all.server.idp.action;
 
 import de.gematik.idp.authentication.AuthenticationChallenge;
+import de.health.service.cetp.CertificateInfo;
 
-import java.security.cert.X509Certificate;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 public interface AuthAction {
 
     void execute(
-        AuthenticationChallenge authChallenge,
-        X509Certificate smcbAuthCert,
-        String codeChallenge,
+        String epaNonce,
         String smcbHandle,
-        String clientAttest,
-        String signatureType
-    );
+        String codeChallenge,
+        CertificateInfo certificateInfo,
+        AuthenticationChallenge authChallenge
+    ) throws NoSuchAlgorithmException, IOException, Exception;
 }
