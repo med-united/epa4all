@@ -20,10 +20,11 @@ import static org.apache.commons.codec.digest.DigestUtils.sha256;
 @AllArgsConstructor
 public class AuthorizationData {
 
+    @Getter
+    private String codeVerifier;
+    private CodeChallengeMethod codeChallengeMethod;
     private String codeChallenge;
     private String clientId;
-    @Getter
-    private CodeChallengeMethod codeChallengeMethod;
     private String redirectUri;
     private String state;
     private Set<String> scopes;
@@ -41,7 +42,7 @@ public class AuthorizationData {
         Set<String> scopes = Set.of(queryMap.get("scope").replace("+", " "));
         String nonce = queryMap.get("nonce");
 
-        return new AuthorizationData(codeChallenge, clientId, codeChallengeMethod, redirectUri, state, scopes, nonce);
+        return new AuthorizationData(null, codeChallengeMethod, codeChallenge, clientId, redirectUri, state, scopes, nonce);
     }
 
     @SuppressWarnings("deprecation")
@@ -52,7 +53,7 @@ public class AuthorizationData {
         String redirectUrl = idpConfig.getAuthRequestRedirectUrl();
         String state = RandomStringUtils.randomAlphanumeric(20);
         String nonce = RandomStringUtils.randomAlphanumeric(20);
-        return new AuthorizationData(codeChallenge, clientId, S256, redirectUrl, state, scopes, nonce);
+        return new AuthorizationData(codeVerifier, S256, codeChallenge, clientId, redirectUrl, state, scopes, nonce);
     }
 
     public AuthorizationRequest buildAuthorizationRequest(String authorizationEndpoint) {

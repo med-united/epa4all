@@ -190,6 +190,7 @@ public class IdpClient extends StartableService {
                     authAction.execute(
                         epaNonce,
                         smcbHandle,
+                        authorizationData.getCodeVerifier(),
                         certificateInfo,
                         challengeResponse.getBody()
                     );

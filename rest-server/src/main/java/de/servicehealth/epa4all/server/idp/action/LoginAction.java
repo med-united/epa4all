@@ -39,20 +39,20 @@ public class LoginAction extends AbstractAuthAction {
     public void execute(
         String epaNonce,
         String smcbHandle,
+        String codeVerifier,
         CertificateInfo certificateInfo,
         AuthenticationChallenge authChallenge
     ) throws NoSuchAlgorithmException, IOException {
         AuthenticationResponse authenticationResponse = processAuthenticationChallenge(
             smcbHandle, certificateInfo, authChallenge
         );
-        String codeChallenge = (String) authChallenge.getChallenge().extractBodyClaims().get("code_challenge");
         TokenRequest tokenRequest = TokenRequest.builder()
             .tokenUrl(discoveryDocumentResponse.getTokenEndpoint())
             .clientId(idpClientId)
             .code(authenticationResponse.getCode())
             .ssoToken(authenticationResponse.getSsoToken())
             .redirectUrl(idpAuthRequestRedirectUrl)
-            .codeVerifier(codeChallenge)
+            .codeVerifier(codeVerifier)
             .idpEnc(discoveryDocumentResponse.getIdpEnc())
             .build();
         IdpTokenResult idpTokenResult = authenticatorClient.retrieveAccessToken(tokenRequest, UnaryOperator.identity(), o -> {
