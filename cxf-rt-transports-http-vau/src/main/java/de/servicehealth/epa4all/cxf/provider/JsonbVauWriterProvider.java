@@ -144,7 +144,7 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
         if (obj instanceof ForwardRequest forwardRequest) {
             return forwardRequest.getAcceptHeaders();
         } else {
-            return List.of(Pair.of(ACCEPT, "application/json"));
+            return List.of(Pair.of(ACCEPT, APPLICATION_JSON));
         }
     }
 

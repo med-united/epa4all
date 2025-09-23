@@ -46,6 +46,7 @@ import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
 import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
 import static jakarta.ws.rs.core.MediaType.MEDIA_TYPE_WILDCARD;
+import static jakarta.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,7 +97,7 @@ public class XDSRawUploadIT extends AbstractWiremockTest {
         String fileName = "Medication-List.pdf";
         byte[] pdfBytes = getBinaryFixture(fileName);
         ValidatableResponse response = given()
-            .contentType("multipart/form-data")
+            .contentType(MULTIPART_FORM_DATA)
             .multiPart("raw_soap", getStringFixture("UploadSoapRequest.xml"), "application/xop+xml")
             .multiPart("pdf_body", fileName, pdfBytes, "application/pdf")
             .header(USER_AGENT, "RestAssured/1.0")

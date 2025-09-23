@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -57,7 +58,7 @@ public class IdpClientTssIT {
     @Test
     public void accessTokenObtained() throws Exception {
         String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
-        String accessToken = idpClient.getAccessToken(smcbHandle, defaultUserConfig);
+        String accessToken = idpClient.getAccessToken(smcbHandle, Set.of("Abrechnungsinformation"), defaultUserConfig);
         log.info("Bearer " + accessToken);
         assertNotNull(accessToken);
     }

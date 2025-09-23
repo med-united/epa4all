@@ -25,6 +25,7 @@ import static de.servicehealth.vau.VauClient.VAU_CLIENT_UUID;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT_ENCODING;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 
 public class AdminProxyService extends BaseProxyService implements IAdminProxy {
@@ -83,7 +84,7 @@ public class AdminProxyService extends BaseProxyService implements IAdminProxy {
     private ForwardRequest prepareFwdRequest(boolean isGet, byte[] body) {
         List<Pair<String, String>> acceptHeaders = List.of(
             Pair.of(ACCEPT_ENCODING, "gzip"),
-            Pair.of(ACCEPT, "application/json")
+            Pair.of(ACCEPT, APPLICATION_JSON)
         );
         List<Pair<String, String>> contentHeaders = buildContentHeaders(body);
         return new ForwardRequest(isGet, acceptHeaders, contentHeaders, body);

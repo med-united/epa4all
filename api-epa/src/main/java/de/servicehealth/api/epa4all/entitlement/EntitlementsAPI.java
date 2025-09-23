@@ -14,12 +14,13 @@ import jakarta.ws.rs.Produces;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 public interface EntitlementsAPI extends de.servicehealth.api.EntitlementsApi {
 
     @POST
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
+    @Consumes({ APPLICATION_JSON })
+    @Produces({ APPLICATION_JSON })
     @ApiOperation(value = "(setEntitlementPs) Set a single entitlement with proof of audit evidence", tags={  })
     @ApiResponses(value = {
         @ApiResponse(code = 201, message = "Created. User is entitled", response = ValidToResponseType.class),

@@ -12,6 +12,10 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+import static jakarta.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
+import static jakarta.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
+
 /**
  * <code>CSRFUtil</code>...
  */
@@ -26,7 +30,7 @@ public class CSRFUtil {
      * Request content types for CSRF checking, see JCR-3909, JCR-4002, and JCR-4009
      */
     public static final Set<String> CONTENT_TYPES = Set.of(
-        "application/x-www-form-urlencoded", "multipart/form-data", "text/plain"
+        APPLICATION_FORM_URLENCODED, MULTIPART_FORM_DATA, TEXT_PLAIN
     );
 
     /**

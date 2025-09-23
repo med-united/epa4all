@@ -5,6 +5,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.ArrayList;
 import java.util.List;
 
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+
 public class CallInfo {
     List<Pair<String, String>> innerHeaders = new ArrayList<>();
     String errorHeader;
@@ -24,7 +26,7 @@ public class CallInfo {
 
     public CallInfo withJsonPayload(byte[] payload) {
         this.payload = payload;
-        contentType = "application/json";
+        contentType = APPLICATION_JSON;
         return this;
     }
 

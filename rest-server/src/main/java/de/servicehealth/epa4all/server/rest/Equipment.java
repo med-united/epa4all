@@ -43,7 +43,7 @@ public class Equipment {
     ) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create("%s/equipment?q=%s".formatted(aiConfig.getSearchUrl(), URLEncoder.encode(searchText, UTF_8))))
-            .header("Content-Type", "application/json")
+            .header("Content-Type", APPLICATION_JSON)
             .GET()
             .build();
 

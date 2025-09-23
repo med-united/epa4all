@@ -20,6 +20,7 @@ import static de.servicehealth.vau.VauClient.CLIENT_ID;
 import static de.servicehealth.vau.VauClient.VAU_CLIENT_UUID;
 import static de.servicehealth.vau.VauClient.X_BACKEND;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Path("/epa/authz/v1")
 @Api(value = "/")
@@ -44,7 +45,7 @@ public interface AuthorizationSmcbAPI extends de.servicehealth.api.Authorization
      */
     @GET
     @Path("/send_authorization_request_sc")
-    @Produces({"application/json"})
+    @Produces({APPLICATION_JSON})
     @ApiOperation(value = "(sendAuthorizationRequestSC) Send authorization request", tags = {})
     @ApiResponses(value = {
         @ApiResponse(code = 302, message = "Found"),
@@ -60,7 +61,7 @@ public interface AuthorizationSmcbAPI extends de.servicehealth.api.Authorization
 
     @GET
     @Path("/getNonce")
-    @Produces({ "application/json" })
+    @Produces({ APPLICATION_JSON })
     @ApiOperation(value = "(getNonce) Generate nonce (random value) for an authorization request", tags={  })
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "Ok.", response = GetNonce200Response.class),
@@ -75,8 +76,8 @@ public interface AuthorizationSmcbAPI extends de.servicehealth.api.Authorization
 
     @POST
     @Path("/send_authcode_sc")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
+    @Consumes({ APPLICATION_JSON })
+    @Produces({ APPLICATION_JSON })
     @ApiOperation(value = "(sendAuthCodeSC) Send authorization code", tags={  })
     @ApiResponses(value = {
         @ApiResponse(code = 200, message = "OK, Successful login", response = SendAuthCodeSC200Response.class),

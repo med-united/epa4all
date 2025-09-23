@@ -148,6 +148,7 @@ public class IdpClient extends StartableService {
 
     public String getAccessToken(
         String smcbHandle,
+        Set<String> scopes,
         UserRuntimeConfig runtimeConfig
     ) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -163,7 +164,6 @@ public class IdpClient extends StartableService {
             },
             IdpFunc.init(multiKonnektorService.getServicePorts(runtimeConfig))
         );
-        Set<String> scopes = Set.of("Abrechnungsinformation");
         AuthorizationData authorizationData = AuthorizationData.fromConfig(idpConfig, scopes);
         processAuthAction(null, smcbHandle, runtimeConfig, authorizationData, loginAction);
         countDownLatch.await(10, SECONDS);
