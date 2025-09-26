@@ -78,7 +78,7 @@ public abstract class AbstractProp implements WebDavProp {
         ));
     }
 
-    private PropStatInfo getPropStatInfo(@NotNull PropFind propFind, File resource, URI requestUri) {
+    PropStatInfo getPropStatInfo(@NotNull PropFind propFind, File resource, URI requestUri) {
         Set<String> targetProps = propFind.getProp().getProperties().stream().map(obj -> {
                 if (obj instanceof Element element) {
                     return element.getLocalName();

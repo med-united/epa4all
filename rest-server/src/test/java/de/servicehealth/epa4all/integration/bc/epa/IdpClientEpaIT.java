@@ -15,8 +15,6 @@ import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -25,8 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @QuarkusTest
 @TestProfile(IdpEpaProfile.class)
 public class IdpClientEpaIT {
-
-    private static final Logger log = LoggerFactory.getLogger(IdpClientEpaIT.class.getName());
 
     @Inject
     IdpClient idpClient;
@@ -48,7 +44,7 @@ public class IdpClientEpaIT {
 
     @BeforeEach
     public void before() throws Exception {
-        new File("config/konnektoren/discovery-doc").delete();
+        new File("config/konnektoren/epa-discovery-doc").delete();
         idpClient.doStart();
         clientFactory.doStart();
         epaMultiService.doStart();

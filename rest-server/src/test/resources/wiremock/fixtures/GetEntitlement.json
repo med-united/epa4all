@@ -1,0 +1,11 @@
+{
+  "actorId": "2-883110000092419",
+  "oid": "1.2.276.0.76.4.51",
+  "displayName": "Zahnarztpraxis Hillary Gräfin Münchhausen",
+  "validTo": "2025-12-07T22:59:59.000Z",
+  "issued": {
+    "at": "2025-10-01T14:00:00.000Z",
+    "actorId": "X999999999",
+    "displayName": "Name of health record owner"
+  }
+}

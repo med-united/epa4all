@@ -1,5 +1,6 @@
 package de.servicehealth.api.epa4all.entitlement;
 
+import de.servicehealth.api.EntitlementsApi;
 import de.servicehealth.model.EntitlementRequestType;
 import de.servicehealth.model.ErrorType;
 import de.servicehealth.model.ValidToResponseType;
@@ -16,7 +17,7 @@ import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
-public interface EntitlementsAPI extends de.servicehealth.api.EntitlementsApi {
+public interface EntitlementsAPI extends EntitlementsApi {
 
     @POST
     @Consumes({ APPLICATION_JSON })
@@ -33,7 +34,6 @@ public interface EntitlementsAPI extends de.servicehealth.api.EntitlementsApi {
         @HeaderParam(X_INSURANT_ID)  String xInsurantid,
         @HeaderParam(X_USER_AGENT)  String xUseragent,
         @HeaderParam(X_BACKEND)  String xBackend,
-        // @HeaderParam(VAU_NP)  String vauNp,
         @HeaderParam("User-Agent")  String userAgent,
         @HeaderParam("Connection")  String connection,
         @HeaderParam("Upgrade")  String upgrade,

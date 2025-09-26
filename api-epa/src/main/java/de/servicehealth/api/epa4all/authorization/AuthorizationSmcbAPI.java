@@ -1,5 +1,6 @@
 package de.servicehealth.api.epa4all.authorization;
 
+import de.servicehealth.api.AuthorizationSmcBApi;
 import de.servicehealth.model.ErrorType;
 import de.servicehealth.model.GetNonce200Response;
 import de.servicehealth.model.SendAuthCodeSC200Response;
@@ -24,7 +25,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @Path("/epa/authz/v1")
 @Api(value = "/")
-public interface AuthorizationSmcbAPI extends de.servicehealth.api.AuthorizationSmcBApi {
+public interface AuthorizationSmcbAPI extends AuthorizationSmcBApi {
     /**
      * (sendAuthorizationRequestSC) Send authorization request
      * Request authorization for a smartcard (SMC-B) based client.

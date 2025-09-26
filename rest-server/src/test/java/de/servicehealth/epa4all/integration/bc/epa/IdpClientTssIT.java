@@ -48,7 +48,7 @@ public class IdpClientTssIT {
 
     @BeforeEach
     public void before() throws Exception {
-        new File("config/konnektoren/discovery-doc").delete();
+        new File("config/konnektoren/epa-discovery-doc").delete();
         idpClient.doStart();
         clientFactory.doStart();
         epaMultiService.doStart();
@@ -58,7 +58,7 @@ public class IdpClientTssIT {
     @Test
     public void accessTokenObtained() throws Exception {
         String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
-        String accessToken = idpClient.getAccessToken(smcbHandle, Set.of("Abrechnungsinformation"), defaultUserConfig);
+        String accessToken = idpClient.getAccessToken(smcbHandle, Set.of("Vermittlungscode-anfordern"), defaultUserConfig);
         log.info("Bearer " + accessToken);
         assertNotNull(accessToken);
     }

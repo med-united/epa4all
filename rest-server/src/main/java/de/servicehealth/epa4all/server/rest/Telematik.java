@@ -5,6 +5,7 @@ import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.fault.CetpFault;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -31,6 +32,7 @@ public class Telematik extends AbstractResource {
 
     @APIResponses({
         @APIResponse(responseCode = "200", description = "TelematikId string value"),
+        @APIResponse(responseCode = "400", description = "Some parameter is invalid"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @GET
@@ -44,7 +46,7 @@ public class Telematik extends AbstractResource {
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = "iccsn", description = "SMC-B card ICCSN", required = true)
-        @QueryParam("iccsn") String iccsn
+        @NotBlank @QueryParam("iccsn") String iccsn
     ) throws Exception {
         List<Card> cards = konnektorClient.getCards(userRuntimeConfig, SMC_B);
         String smcbHandle = cards.stream()

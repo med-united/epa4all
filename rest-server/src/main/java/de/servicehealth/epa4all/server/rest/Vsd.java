@@ -6,10 +6,10 @@ import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.pnw.ConsentException;
 import de.servicehealth.epa4all.server.pnw.PnwException;
 import de.servicehealth.epa4all.server.pnw.PnwResponse;
-import de.servicehealth.epa4all.server.rest.exception.EpaClientError;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -34,10 +34,8 @@ import static de.servicehealth.logging.LogField.SMCB_HANDLE;
 import static de.servicehealth.utils.ServerUtils.getOriginalCause;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
-import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 import static jakarta.ws.rs.core.MediaType.WILDCARD;
-import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 
 @SuppressWarnings("unused")
@@ -50,7 +48,7 @@ public class Vsd extends AbstractResource {
 
     @APIResponses({
         @APIResponse(responseCode = "200", description = "The patient entitlement was successfully created"),
-        @APIResponse(responseCode = "400", description = "InsurantId was not extracted"),
+        @APIResponse(responseCode = "400", description = "x-insurantid is invalid"),
         @APIResponse(responseCode = "409", description = "ePA error"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
@@ -66,7 +64,7 @@ public class Vsd extends AbstractResource {
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
-        @QueryParam(X_INSURANT_ID) String xInsurantId,
+        @NotBlank @QueryParam(X_INSURANT_ID) String xInsurantId,
         @Parameter(name = "startDate", description = "Patient entitlement start date", required = true)
         @QueryParam("startDate") String startDate,
         @Parameter(name = "street", description = "Patient street", required = true)
@@ -78,43 +76,36 @@ public class Vsd extends AbstractResource {
         int len = versicherungsdatenLength == null ? 0 : versicherungsdatenLength;
         ReadVSDResponse readVSDResponse = buildSyntheticVSDResponse(street, null, null, pnwBodyBase64, len);
         String insurantId = extractInsurantId(readVSDResponse, xInsurantId);
-        if (insurantId == null) {
-            return Response.status(BAD_REQUEST)
-                .entity(new EpaClientError("Unable to resolve 'x-insurantid'"))
-                .type(APPLICATION_JSON)
-                .build();
-        } else {
-            return resultMdcEx(Map.of(
-                SMCB_HANDLE, smcbHandle,
-                KONNEKTOR, konnektor == null ? "default" : konnektor,
-                INSURANT, insurantId
-            ), () -> {
-                try {
-                    consentValidator.validate(xInsurantId, Medication);
-                    vsdService.saveVsdFile(telematikId, insurantId, readVSDResponse);
-                    InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
-                    Instant expiry = entitlementService.setEntitlement(
-                        userRuntimeConfig, insuranceData, telematikId, smcbHandle
-                    );
-                    PnwResponse pnwResponse = new PnwResponse(insurantId, startDate, expiry.toString(), street, null);
-                    return Response.ok().entity(pnwResponse).type(APPLICATION_XML).build();
-                } catch (ConsentException e) {
-                    throw e;
-                } catch (Exception e) {
-                    Throwable cause = getOriginalCause(e);
-                    if (cause instanceof VauException vauException) {
-                        throw new PnwException(insurantId, "<![CDATA[" + vauException.getJsonNode().toString()  + "]]>");
-                    } else {
-                        throw new PnwException(insurantId, cause.getMessage());
-                    }
+        return resultMdcEx(Map.of(
+            SMCB_HANDLE, smcbHandle,
+            KONNEKTOR, konnektor == null ? "default" : konnektor,
+            INSURANT, insurantId
+        ), () -> {
+            try {
+                consentValidator.validate(xInsurantId, Medication);
+                vsdService.saveVsdFile(telematikId, insurantId, readVSDResponse);
+                InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
+                Instant expiry = entitlementService.setEntitlement(
+                    userRuntimeConfig, insuranceData, telematikId, smcbHandle
+                );
+                PnwResponse pnwResponse = new PnwResponse(insurantId, startDate, expiry.toString(), street, null);
+                return Response.ok().entity(pnwResponse).type(APPLICATION_XML).build();
+            } catch (ConsentException e) {
+                throw e;
+            } catch (Exception e) {
+                Throwable cause = getOriginalCause(e);
+                if (cause instanceof VauException vauException) {
+                    throw new PnwException(insurantId, "<![CDATA[" + vauException.getJsonNode().toString()  + "]]>");
+                } else {
+                    throw new PnwException(insurantId, cause.getMessage());
                 }
-            });
-        }
+            }
+        });
     }
     
     @APIResponses({
         @APIResponse(responseCode = "201", description = "The patient folder was successfully created"),
-        @APIResponse(responseCode = "400", description = "InsurantId was not extracted"),
+        @APIResponse(responseCode = "400", description = "x-insurantid is invalid"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @POST
@@ -129,17 +120,11 @@ public class Vsd extends AbstractResource {
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
-        @QueryParam(X_INSURANT_ID) String xInsurantId
+        @NotBlank @QueryParam(X_INSURANT_ID) String xInsurantId
     ) throws Exception {
         ReadVSDResponse readVSDResponse = buildSyntheticVSDResponse();
-        if (xInsurantId == null) {
-            return Response.status(BAD_REQUEST)
-                .entity(new EpaClientError("Unable to resolve 'x-insurantid'"))
-                .build();
-        } else {
-            vsdService.saveVsdFile(telematikId, xInsurantId, readVSDResponse);
-            prepareEpaContext(xInsurantId);
-            return Response.status(CREATED).build();
-        }
+        vsdService.saveVsdFile(telematikId, xInsurantId, readVSDResponse);
+        prepareEpaContext(xInsurantId);
+        return Response.status(CREATED).build();
     }
 }

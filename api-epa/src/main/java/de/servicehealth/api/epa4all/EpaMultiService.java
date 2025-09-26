@@ -7,6 +7,7 @@ import de.servicehealth.api.ConsentDecisionsApi;
 import de.servicehealth.api.epa4all.annotation.EpaRestFeatures;
 import de.servicehealth.api.epa4all.authorization.AuthorizationSmcbAPI;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsAPI;
+import de.servicehealth.api.epa4all.entitlement.EntitlementsFdvAPI;
 import de.servicehealth.api.epa4all.jmx.EpaMXBeanRegistry;
 import de.servicehealth.api.epa4all.proxy.AdminProxyService;
 import de.servicehealth.api.epa4all.proxy.FhirProxyService;
@@ -122,6 +123,9 @@ public class EpaMultiService extends StartableService {
                     EntitlementsAPI entitlementsApi = createProxyClient(
                         EntitlementsAPI.class, backend, entitlementServiceUrl, vauFacade
                     );
+                    EntitlementsFdvAPI entitlementsFdvApi = createProxyClient(
+                        EntitlementsFdvAPI.class, backend, entitlementServiceUrl, vauFacade
+                    );
 
                     Set<String> maskedHeaders = servicehealthConfig.getSafeMaskedHeaders();
                     Set<String> maskedAttributes = servicehealthConfig.getSafeMaskedAttributes();
@@ -140,6 +144,7 @@ public class EpaMultiService extends StartableService {
                         accountInformationApi,
                         consentDecisionsApi,
                         authorizationSmcBApi,
+                        entitlementsFdvApi,
                         entitlementsApi,
                         adminProxy,
                         fhirProxy

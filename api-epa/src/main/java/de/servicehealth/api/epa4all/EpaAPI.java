@@ -4,6 +4,7 @@ import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.ConsentDecisionsApi;
 import de.servicehealth.api.epa4all.authorization.AuthorizationSmcbAPI;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsAPI;
+import de.servicehealth.api.epa4all.entitlement.EntitlementsFdvAPI;
 import de.servicehealth.api.epa4all.proxy.IAdminProxy;
 import de.servicehealth.api.epa4all.proxy.IFhirProxy;
 import de.servicehealth.vau.VauFacade;
@@ -27,6 +28,8 @@ public interface EpaAPI {
     ConsentDecisionsApi getContentDecisionAPI();
 
     AuthorizationSmcbAPI getAuthorizationSmcbAPI();
+
+    EntitlementsFdvAPI getEntitlementsFdvAPI();
 
     EntitlementsAPI getEntitlementsAPI();
 

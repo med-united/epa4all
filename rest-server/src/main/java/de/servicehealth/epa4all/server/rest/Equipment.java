@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.rest;
 import de.servicehealth.epa4all.server.presription.AiConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -39,7 +40,7 @@ public class Equipment {
     @Operation(summary = "Return medical equipment list related to the search request")
     public String search(
         @Parameter(name = "q", description = "Search text", required = true)
-        @QueryParam("q") String searchText
+        @NotBlank @QueryParam("q") String searchText
     ) throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create("%s/equipment?q=%s".formatted(aiConfig.getSearchUrl(), URLEncoder.encode(searchText, UTF_8))))

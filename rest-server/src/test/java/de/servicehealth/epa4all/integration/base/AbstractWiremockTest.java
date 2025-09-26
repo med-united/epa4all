@@ -1,7 +1,6 @@
 package de.servicehealth.epa4all.integration.base;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -62,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -77,7 +77,6 @@ import static de.servicehealth.epa4all.server.rest.consent.ConsentFunction.Medic
 import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static wiremock.com.google.common.net.HttpHeaders.CONTENT_TYPE;
@@ -209,16 +208,11 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     }
 
     protected String initStubs(
-        String validToPayload,
-        String errorHeader,
         int informationStatus,
+        List<Pair<String, CallInfo>> responseFuncs,
         Map<ConsentFunction, String> functions
     ) throws Exception {
-        byte[] payload = validToPayload == null ? null : validToPayload.getBytes(UTF_8);
-        CallInfo callInfo = new CallInfo().withJsonPayload(payload).withErrorHeader(errorHeader);
-        prepareVauStubs(List.of(
-            Pair.of("/epa/basic/api/v1/ps/entitlements", callInfo)
-        ));
+        prepareVauStubs(responseFuncs);
         prepareInformationStubs(informationStatus);
         prepareConsentStubs(functions);
 
@@ -260,7 +254,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
                     wiremock
                         .addStubMapping(post(urlEqualTo(vauPath))
-                            .willReturn(WireMock.aResponse().withTransformer(VAU_MESSAGE1_TRANSFORMER, KEY, VALUE)).build());
+                            .willReturn(aResponse().withTransformer(VAU_MESSAGE1_TRANSFORMER, KEY, VALUE)).build());
 
                     vauPath = vauPath + "/" + uniquePath;
 
@@ -268,7 +262,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
                     vauMessage3Transformer.registerVauFacade(epaApi.getVauFacade());
                     wiremock
                         .addStubMapping(post(urlEqualTo(vauPath))
-                            .willReturn(WireMock.aResponse().withTransformer(VAU_MESSAGE3_TRANSFORMER, KEY, VALUE)).build());
+                            .willReturn(aResponse().withTransformer(VAU_MESSAGE3_TRANSFORMER, KEY, VALUE)).build());
 
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -282,7 +276,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     protected void prepareInformationStubs(int status) {
         wiremock.addStubMapping(get(urlEqualTo("/information/api/v1/ehr"))
-            .willReturn(WireMock.aResponse().withStatus(status)).build());
+            .willReturn(aResponse().withStatus(status)).build());
     }
 
     protected void prepareConsentStubs(Map<ConsentFunction, String> functions) {
@@ -297,7 +291,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         response.data(decisionsResponseTypes);
         wiremock.addStubMapping(get(urlEqualTo("/information/api/v1/ehr/consentdecisions"))
             .willReturn(
-                WireMock.aResponse()
+                aResponse()
                     .withStatus(200)
                     .withHeader(CONTENT_TYPE, APPLICATION_JSON)
                     .withBody(gson.toJson(response))
@@ -309,31 +303,31 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
         byte[] soapGetHbaCardsEnvelop = getTextFixture("GetHbaCards.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("HBA"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetHbaCardsEnvelop)).build());
+            .willReturn(aResponse().withStatus(200).withBody(soapGetHbaCardsEnvelop)).build());
 
         byte[] soapGetSmcbCardsEnvelop = getTextFixture("GetSmcbCards.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("SMC-B"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetSmcbCardsEnvelop)).build());
+            .willReturn(aResponse().withStatus(200).withBody(soapGetSmcbCardsEnvelop)).build());
 
         byte[] soapGetEgkCardsEnvelop = getTextFixture("GetEgkCards.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("EGK"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapGetEgkCardsEnvelop)).build());
+            .willReturn(aResponse().withStatus(200).withBody(soapGetEgkCardsEnvelop)).build());
 
         byte[] soapHbaCertificateEnvelop = getTextFixture("HbaCertificate.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService")).withRequestBody(containing("C.QES"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapHbaCertificateEnvelop)).build());
+            .willReturn(aResponse().withStatus(200).withBody(soapHbaCertificateEnvelop)).build());
 
         byte[] soapSmcbCertificateEnvelop = getTextFixture("SmcbCertificate.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService")).withRequestBody(containing("C.AUT"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapSmcbCertificateEnvelop)).build());
+            .willReturn(aResponse().withStatus(200).withBody(soapSmcbCertificateEnvelop)).build());
 
         byte[] soapExternalAuthenticateEnvelop = getTextFixture("ExternalAuthenticateResponse.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/AuthSignatureService"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapExternalAuthenticateEnvelop)).build());
+            .willReturn(aResponse().withStatus(200).withBody(soapExternalAuthenticateEnvelop)).build());
 
         byte[] soapReadVSDResponseEnvelop = getTextFixture("ReadVSDResponse.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/VSDService"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(soapReadVSDResponseEnvelop)).build());
+            .willReturn(aResponse().withStatus(200).withBody(soapReadVSDResponseEnvelop)).build());
     }
 
     protected void prepareIdpStubs() throws Exception {
@@ -345,13 +339,13 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
         byte[] jsonAuthenticationResponse = getTextFixture("AuthenticationResponse.json");
         wiremock.addStubMapping(post(urlEqualTo("/idp/auth"))
-            .willReturn(WireMock.aResponse()
+            .willReturn(aResponse()
                 .withHeader(LOCATION, "https://e4a-rt.deine-epa.de/?code\u003deyJlbmMiOiJBMjU2R0NNIiwiY3R5IjoiTkpXVCIsImV4cCI6MTczNTAwOTU5MiwiYWxnIjoiZGlyIiwia2lkIjoiMDAwMSJ9..jQOcvkSkNe_2svy6.yswP6uELSRQSBvJrewOOXjmLWwTccmhWKXXrsDPfBo6vZButt0rvkV0cosOyksnbCfQqLscWaJCF3UQZ06jDiIqB_A1OlBY6tfgVLnLfe2QRtXbmcQOl-aQSyu3QDMZ_Qc0fxrGfK4PhMrYOHwWniaptNXStr59EzeXGHVbkfasxu2ALhuS94SP0PsxMyicWiOWEZT34Tc1rS2g6YZQzrH0spsPDUES9nMnH-m-y7ZX8VDs7iVMbJ-0njR9KdvKMPjoZGicPYt54jDPiAy_5Ge_e9PxY3vpfiq2Ey7tdg4alhYhkVzPR6L6kqE3uunYSamkwuMo2VIj60S8rYol3sHmYR6ywaiZ-b9TjT_XI7LuPLeMgBlGBP7SOoCikpR0QuX6NBTPmvN1TCOpmuyrdyBHGAEhqCbqtB0Y6l5Y247DHU6ccKZi9n1L3WQ795GLBaayntvhlsNQSr667xlj0aNLe4wWjxEHDUI8o8XQRkTdXg457adL5ETFAR7_RcjVYjZW9Dk2fAo39pmOQhI8lYKdm2-epO8GLSz-T6AJrNqb2nI7dSDq2waY0NBLezQxZKXHXEoMGMsLp8NS7gtQT_zaoGYGZzlmxfZyFg-a8S6F_KIpTPYzvkzntr671Wz_EuPskyY7eDf4ziDDiN8tuo6lgEzKpwDgJDn8-6lD-8vb9gU52O9YhgsrFpbmWL8aMUOTaLE1sKIYCFZOoFfkW_zZ-gY8mjHtCZ3QUDGaVBb5a1lmdr-6k4XG4qk7IBrOjKTHVHH1sbgw76VHTFHH9v6r4ylFpB1LSY4Ce13nghSUDE_f15Xa2BfEUgFPPZhqyGVnSE_ITa1BNQ0ivQs7uacE2xKZaUxKTz-np2RIAgqERWdqAxChcoSvKAKOHipqGKyR8VVZbo5rHlN4Pt9Ng1UU651fLMaEW0Zh8R5bBBIAX-oH37VKn-m8b-7IVmlvcYfQkfT12pr1BpPConY1qLGZfsoptKfwhVDGioKz0VaGy--ksuaABNMi0DQG4BchJDORWR89TYRI-tFhA8oHVgEsq4ftdh-Awc1SNMjcGxeXAPvrudMzcy7VrPyMBacQyJ894XwZCJiWEjRfLJCRVQeUJrSuwDbnQ0VyNpwrAgEA65f8dEH_7UBvvXeCey5JgnJFkEmnfhVoh8i5cqcM9FwauzybHMHUwjxFlMbkmJTSLLKqX14tG7nMmYoThr4GxbscfDcPdvmvlTKIROaLeXhtekQR1rU_y2PMMBOwcSkbwa1N-_KxzcAjgxZr15tA65S-_w4RqP_1hUbsRc3cPoZ6WYuGqyQCoJp2jxqRdjl1TTlCut_vy8nLaJlWtfsu5Y3sBgN2qObegmTD6iodKuY6Rdbs0cMNYIXKQVmHvavfYtYwy8HOb3gXaZdCBxr9xHiUA5p1AMJoX9qdt31DQK1djOlwX-tICnShsw9_gEMhR2O3b9hRs7emCxmTh0ca2P15BMMZoNxgnpSk8MehX_eRK2ZT_zkYI8pRc74bvgMAfkH1NDm04gIutX8auk8a5SMZQy-hm7xtdwAfB6hPVVlMJ8Piv3Lcs2m2AicGTSynvw0cdAVlcCUU5pwcd-h69xIOef8yXApMp1hvzr2lQ-ZcNEoQcEGyNFefQ4nLmqjh2izO-G8SSVi-z99Jys35IqtHUMCE.SJLonvjMnBK6X9nxtOLo_Q\u0026state\u003dnRGsqMXISWqr6oaTcdGMcs6Oxt2vIOebYvUwd85BtLLk8d0vAgiy88kP3gBsr6xL")
                 .withStatus(302).withBody(jsonAuthenticationResponse)).build());
 
         byte[] jsonAuthenticationChallenge = getTextFixture("AuthenticationChallenge.json");
         wiremock.addStubMapping(get(urlPathMatching("/idp/auth.*"))
-            .willReturn(WireMock.aResponse().withStatus(200).withBody(jsonAuthenticationChallenge)).build());
+            .willReturn(aResponse().withStatus(200).withBody(jsonAuthenticationChallenge)).build());
     }
 
     protected String concatUuids(int times) {
