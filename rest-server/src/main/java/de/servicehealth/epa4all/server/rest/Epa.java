@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.rest;
 import de.servicehealth.api.epa4all.EpaMultiService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
@@ -25,6 +26,7 @@ public class Epa {
 
     @APIResponses({
         @APIResponse(responseCode = "204", description = "The patient has ePA"),
+        @APIResponse(responseCode = "400", description = "x-insurantid was not specified"),
         @APIResponse(responseCode = "404", description = "The patient has no ePA"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
@@ -32,7 +34,7 @@ public class Epa {
     @Operation(summary = "Check ePA for the KVNR")
     public Response checkEpa(
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
-        @QueryParam(X_INSURANT_ID) String insurantId
+        @NotBlank @QueryParam(X_INSURANT_ID) String insurantId
     ) {
         Response.Status status = epaMultiService.checkInsurantEPA(insurantId) ? NO_CONTENT : NOT_FOUND;
         return Response.status(status).build();

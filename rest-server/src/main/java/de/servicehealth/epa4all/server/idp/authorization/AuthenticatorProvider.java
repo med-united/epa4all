@@ -2,7 +2,6 @@ package de.servicehealth.epa4all.server.idp.authorization;
 
 import de.gematik.idp.authentication.AuthenticationChallenge;
 import de.gematik.idp.client.AuthenticatorClient;
-import de.gematik.idp.data.UserConsent;
 import de.gematik.idp.token.JsonWebToken;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
@@ -66,13 +65,15 @@ public class AuthenticatorProvider {
                     JsonWebToken jwt = challenge.getChallenge();
                     String headerClaims = jwt.extractHeaderClaims().toString();
                     String bodyClaims = jwt.extractBodyClaims().toString();
-                    UserConsent userConsent = challenge.getUserConsent();
+                    String userConsent = challenge.getUserConsent() == null
+                        ? "null consent"
+                        : challenge.getUserConsent().toString();
 
                     log.info("<-- {} {}\nHeaders: {}\nBody: {}\n",
                         res.getStatus(),
                         req.getUrl(),
                         res.getHeaders(),
-                        headerClaims + "\n" + bodyClaims + "\n" + userConsent.toString()
+                        headerClaims + "\n" + bodyClaims + "\n" + userConsent
                     );
                 } else {
                     log.info("<-- {} {}\nHeaders: {}\nBody: {}\n",

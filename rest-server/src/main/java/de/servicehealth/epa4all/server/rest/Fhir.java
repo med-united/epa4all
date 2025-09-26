@@ -4,6 +4,7 @@ import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -38,8 +39,9 @@ public class Fhir extends AbstractResource {
     EpaCallGuard epaCallGuard;
 
     @APIResponses({
-        @APIResponse(description = "ePA response"),
+        @APIResponse(responseCode = "200", description = "FHIR request was successfully forwarded"),
         @APIResponse(responseCode = "400", description = "x-insurantid is missed"),
+        @APIResponse(responseCode = "404", description = "Patient is not found in any ePA"),
         @APIResponse(responseCode = "429", description = "duplicated call"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
@@ -64,16 +66,12 @@ public class Fhir extends AbstractResource {
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
-        @QueryParam(X_INSURANT_ID) String xInsurantId,
+        @NotBlank @QueryParam(X_INSURANT_ID) String xInsurantId,
         @Parameter(name = X_SUBJECT, description = "Patient KVNR (FHIR compatible)")
         @QueryParam(X_SUBJECT) String subject,
         @Parameter(name = "ui5", description = "Flag of partial updates (JSON Patch) usage, true/false")
         @QueryParam("ui5") String ui5
     ) throws Exception {
-        if (xInsurantId == null) {
-            log.warn(String.format("[Bad Request] Path %s xInsurantId == null", fhirPath));
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
         String backend = epaMultiService.findEpaAPI(xInsurantId).getBackend();
         String query = uriInfo.getRequestUri().getQuery();
         Integer hash = Objects.hash(fhirPath, query, xInsurantId);
@@ -83,8 +81,9 @@ public class Fhir extends AbstractResource {
     }
 
     @APIResponses({
-        @APIResponse(description = "ePA response"),
+        @APIResponse(responseCode = "200", description = "FHIR request was successfully forwarded"),
         @APIResponse(responseCode = "400", description = "x-insurantid is missed"),
+        @APIResponse(responseCode = "404", description = "Patient is not found in any ePA"),
         @APIResponse(responseCode = "429", description = "duplicated call"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
@@ -109,7 +108,7 @@ public class Fhir extends AbstractResource {
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
-        @QueryParam(X_INSURANT_ID) String xInsurantId,
+        @NotBlank @QueryParam(X_INSURANT_ID) String xInsurantId,
         @Parameter(name = X_SUBJECT, description = "Patient KVNR (FHIR compatible)")
         @QueryParam(X_SUBJECT) String subject,
         @Parameter(name = "ui5", description = "Flag of partial updates (JSON Patch) usage, true/false")
@@ -117,10 +116,6 @@ public class Fhir extends AbstractResource {
         @Parameter(description = "Payload to submit to ePA", example = "xml/pdf")
         byte[] body
     ) throws Exception {
-        if (xInsurantId == null) {
-            log.warn(String.format("[Bad Request] Path %s xInsurantId == null", fhirPath));
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
         String backend = epaMultiService.findEpaAPI(xInsurantId).getBackend();
         String query = uriInfo.getRequestUri().getQuery();
         Integer hash = Objects.hash(fhirPath, query, xInsurantId);

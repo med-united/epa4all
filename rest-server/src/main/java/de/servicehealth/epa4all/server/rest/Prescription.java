@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -36,6 +37,7 @@ public class Prescription extends AbstractResource {
 
     @APIResponses({
         @APIResponse(responseCode = "200", description = "KIM email was sent"),
+        @APIResponse(responseCode = "400", description = "Some parameter is invalid"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @POST
@@ -49,7 +51,7 @@ public class Prescription extends AbstractResource {
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
-        @QueryParam(X_INSURANT_ID) String insurantId,
+        @NotBlank @QueryParam(X_INSURANT_ID) String insurantId,
         PrescriptionDto request
     ) throws Exception {
         String equipment = request.getEquipment();

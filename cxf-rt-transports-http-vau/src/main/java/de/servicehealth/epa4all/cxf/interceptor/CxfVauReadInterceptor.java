@@ -33,6 +33,7 @@ import static org.apache.cxf.message.Message.RESPONSE_CODE;
 public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
 
     private static final Logger log = LoggerFactory.getLogger(CxfVauReadInterceptor.class.getName());
+    private static final int LOGGED_PAYLOAD_LENGTH = 300;
 
     private final VauFacade vauFacade;
     private final VauResponseReader vauResponseReader;
@@ -86,7 +87,10 @@ public class CxfVauReadInterceptor extends AbstractPhaseInterceptor<Message> {
     private void replaceLoggingFeatureStream(Message message, byte[] payload) {
         CachedOutputStream os = new CachedOutputStream();
         try {
-            IOUtils.copyAtLeast(new ByteArrayInputStream(payload), os, 300);
+            IOUtils.copyAtLeast(new ByteArrayInputStream(payload), os, LOGGED_PAYLOAD_LENGTH);
+            if (payload.length > LOGGED_PAYLOAD_LENGTH) {
+                os.write(" >> Content suppressed <<".getBytes());
+            }
             os.flush();
             message.setContent(CachedOutputStream.class, os);
         } catch (Exception e) {

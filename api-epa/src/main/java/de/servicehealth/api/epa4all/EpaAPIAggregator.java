@@ -1,11 +1,12 @@
 package de.servicehealth.api.epa4all;
 
+import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.api.ConsentDecisionsApi;
 import de.servicehealth.api.epa4all.authorization.AuthorizationSmcbAPI;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsAPI;
+import de.servicehealth.api.epa4all.entitlement.EntitlementsFdvAPI;
 import de.servicehealth.api.epa4all.proxy.IAdminProxy;
 import de.servicehealth.api.epa4all.proxy.IFhirProxy;
-import de.servicehealth.api.AccountInformationApi;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
@@ -25,6 +26,7 @@ public class EpaAPIAggregator implements EpaAPI {
     private final AccountInformationApi accountInformationApi;
     private final ConsentDecisionsApi consentDecisionsApi;
     private final AuthorizationSmcbAPI authorizationSmcBApi;
+    private final EntitlementsFdvAPI entitlementsFdvApi;
     private final EntitlementsAPI entitlementsApi;
     private final IAdminProxy adminProxy;
     private final IFhirProxy fhirProxy;
@@ -37,6 +39,7 @@ public class EpaAPIAggregator implements EpaAPI {
         AccountInformationApi accountInformationApi,
         ConsentDecisionsApi consentDecisionsApi,
         AuthorizationSmcbAPI authorizationSmcBApi,
+        EntitlementsFdvAPI entitlementsFdvApi,
         EntitlementsAPI entitlementsApi,
         IAdminProxy adminProxy,
         IFhirProxy fhirProxy
@@ -48,6 +51,7 @@ public class EpaAPIAggregator implements EpaAPI {
         this.accountInformationApi = accountInformationApi;
         this.consentDecisionsApi = consentDecisionsApi;
         this.authorizationSmcBApi = authorizationSmcBApi;
+        this.entitlementsFdvApi = entitlementsFdvApi;
         this.entitlementsApi = entitlementsApi;
         this.adminProxy = adminProxy;
         this.fhirProxy = fhirProxy;
@@ -94,6 +98,11 @@ public class EpaAPIAggregator implements EpaAPI {
     @Override
     public AuthorizationSmcbAPI getAuthorizationSmcbAPI() {
         return authorizationSmcBApi;
+    }
+
+    @Override
+    public EntitlementsFdvAPI getEntitlementsFdvAPI() {
+        return entitlementsFdvApi;
     }
 
     @Override

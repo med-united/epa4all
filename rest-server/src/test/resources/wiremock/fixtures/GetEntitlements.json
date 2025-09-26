@@ -1,0 +1,79 @@
+[
+  {
+    "actorId": "2-883110000092419",
+    "oid": "1.2.276.0.76.4.51",
+    "displayName": "Zahnarztpraxis Hillary Gräfin Münchhausen",
+    "validTo": "2025-12-07T22:59:59.000Z",
+    "issued": {
+      "at": "2025-10-01T14:00:00.000Z",
+      "actorId": "X999999999",
+      "displayName": "Name of health record owner"
+    }
+  },
+  {
+    "actorId": "1-883110000092404",
+    "oid": "1.2.276.0.76.4.53",
+    "displayName": "Krankenhaus St. Johannes",
+    "validTo": "2025-12-07T22:59:59.000Z",
+    "issued": {
+      "at": "2025-10-02T14:01:00.000Z",
+      "actorId": "X999999999",
+      "displayName": "Name of health record owner"
+    }
+  },
+  {
+    "actorId": "2-883110000092417",
+    "oid": "1.2.276.0.76.4.51",
+    "displayName": "Zahnarztpraxis Dr. Marie-Ella Blankenbergç",
+    "validTo": "2025-11-01T22:59:59.000Z",
+    "issued": {
+      "at": "2025-10-03T14:02:00.000Z",
+      "actorId": "X999999999",
+      "displayName": "Name of health record owner"
+    }
+  },
+  {
+    "actorId": "3-883110000092471",
+    "oid": "1.2.276.0.76.4.54",
+    "displayName": "Arminius Apotheke",
+    "validTo": "2025-10-06T22:59:59.000Z",
+    "issued": {
+      "at": "2025-10-04T14:03:00.000Z",
+      "actorId": "X999999999",
+      "displayName": "Name of health record owner"
+    }
+  },
+  {
+    "actorId": "4-883110000094346",
+    "oid": "1.2.276.0.76.4.52",
+    "displayName": "Psychotherapeutische Praxis Swantje Freifrau Dômbrowski",
+    "validTo": "2025-11-11T22:59:59.000Z",
+    "issued": {
+      "at": "2025-10-05T14:04:00.000Z",
+      "actorId": "X110434370",
+      "displayName": "Simon von Düsterbehn-Hardenbergshausen"
+    }
+  },
+  {
+    "actorId": "3-88311000009248",
+    "oid": "1.2.276.0.76.4.54",
+    "displayName": "Paracelsius Apotheke",
+    "validTo": "2025-10-08T22:59:59.000Z",
+    "issued": {
+      "at": "2025-10-06T14:05:00.000Z",
+      "actorId": "X110434370",
+      "displayName": "Simon von Düsterbehn-Hardenbergshausen"
+    }
+  },
+  {
+    "actorId": "X110434370",
+    "oid": "1.2.276.0.76.4.49",
+    "displayName": "Simon von Düsterbehn-Hardenbergshausen",
+    "validTo": "9999-12-31T00:00:00.000Z",
+    "issued": {
+      "at": "2025-01-01T23:00:00.000Z",
+      "actorId": "X999999999",
+      "displayName": "Name of health record owner"
+    }
+  }
+]
