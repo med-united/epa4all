@@ -15,8 +15,14 @@ import javax.jcr.query.RowIterator;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.URL;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static de.servicehealth.epa4all.server.propsource.PropBuilder.SKIPPED_FILES;
@@ -149,7 +155,25 @@ public class Workspace {
                 Node folderNode = propBuilder.handleFolder(session, parentNode, file, file.getName(), staleMixins);
                 importFiles(file, folderNode, session, staleMixins);
             } else {
-                propBuilder.handleFileCreation(session, parentNode, file, staleMixins);
+                if (file.getName().contains(":")) {
+                    String absolutePath = file.getAbsolutePath();
+                    try {
+                        Path path = file.toPath();
+                        Map<String, Object> attributes = Files.readAttributes(path, "basic:*");
+                        FileStore fs = Files.getFileStore(path);
+                        if (fs.supportsFileAttributeView(DosFileAttributeView.class)) {
+                            attributes.putAll(Files.readAttributes(path, "dos:*"));
+                        }
+                        if (fs.supportsFileAttributeView(PosixFileAttributeView.class)) {
+                            attributes.putAll(Files.readAttributes(path, "posix:*"));
+                        }
+                        log.warn("File '%s' is not imported into JCR - %s".formatted(absolutePath, attributes));
+                    } catch (Exception e) {
+                        log.error("Error while inspecting file '%s'".formatted(absolutePath), e);
+                    }
+                } else {
+                    propBuilder.handleFileCreation(session, parentNode, file, staleMixins);
+                }
             }
         }
     }

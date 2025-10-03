@@ -74,6 +74,7 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
             case EpaNotFoundException epaEx -> new ErrorStatus(epaEx.getMessage(), NOT_FOUND);
             case ConsentException consentEx -> new ErrorStatus(consentEx.getMessage(), FORBIDDEN);
             case BadRequestException badRequestEx -> new ErrorStatus(badRequestEx.getMessage(), BAD_REQUEST);
+            case XdsException xdsException -> new ErrorStatus(null, null, xdsException.getRegistryResponse(), CONFLICT);
             case null -> new ErrorStatus("Unknown error", INTERNAL_SERVER_ERROR);
             default -> extractException(getOriginalCause(exception));
         };

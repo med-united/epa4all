@@ -26,12 +26,15 @@ public abstract class EpaFileTracker<T extends FileAction> {
 
     private static final Logger log = LoggerFactory.getLogger(EpaFileTracker.class.getName());
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSS");
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSS");
     private static final Map<String, RegistryResponseType> resultsMap = new ConcurrentHashMap<>();
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     ManagedExecutor filesTransferExecutor;
+
+    @Inject
+    XdsConfig xdsConfig;
 
     @Inject
     EpaCallGuard epaCallGuard;
@@ -111,7 +114,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
         return registryResponse;
     }
 
-    private RegistryResponseType prepareFailedResponse(String taskId, String startedAt, String errorMessage) {
+    public RegistryResponseType prepareFailedResponse(String taskId, String startedAt, String errorMessage) {
         RegistryResponseType responseType = new RegistryResponseType();
         RegistryError registryError = new RegistryError();
         registryError.setErrorCode("Failed");
@@ -133,7 +136,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
         StructureDefinition structureDefinition
     ) throws Exception {
         boolean success = registryResponse.getStatus().contains("Success");
-        if (success) {
+        if (success && xdsConfig.isStoreUploadedFiles()) {
             // NEW FILE: get fileName         | EXISTING FILE: existing fileName
             // NEW FILE: select webdav folder | EXISTING FILE: existing folder
             // NEW FILE: calculate checksum   | EXISTING FILE: check record in file and proceed if no record is present
