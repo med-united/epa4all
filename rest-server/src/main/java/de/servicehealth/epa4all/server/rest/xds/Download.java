@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.rest.xds;
 
 import de.servicehealth.epa4all.server.filetracker.download.FileDownload;
 import de.servicehealth.epa4all.server.rest.EpaContext;
+import de.servicehealth.epa4all.server.rest.exception.XdsException;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetRequestType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
@@ -9,6 +10,7 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.SlotType1;
@@ -18,19 +20,23 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static de.servicehealth.epa4all.server.filetracker.EpaFileTracker.FORMATTER;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 import static de.servicehealth.vau.VauClient.KVNR;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 
 @SuppressWarnings("unused")
 @RequestScoped
 @Path(XDS_DOCUMENT_PATH)
+@Produces(APPLICATION_XML)
 public class Download extends XdsResource {
 
     @APIResponses({
@@ -62,7 +68,8 @@ public class Download extends XdsResource {
             .stream()
             .filter(e -> {
                 Optional<SlotType1> fileNameOpt = e.getValue().getSlot().stream().filter(s -> s.getName().equals("URI")).findFirst();
-                return fileNameOpt.map(st -> st.getValueList().getValue().getFirst().contains(uniqueId)).isPresent();
+                Optional<Boolean> containsOpt = fileNameOpt.map(st -> st.getValueList().getValue().getFirst().contains(uniqueId));
+                return containsOpt.orElse(false);
             })
             .findFirst()
             .flatMap(e -> e.getValue().getSlot()
@@ -72,7 +79,13 @@ public class Download extends XdsResource {
             );
 
         String taskId = UUID.randomUUID().toString();
-        String repositoryUniqueId = repositoryUniqueIdOpt.orElse("undefined");
+        if (repositoryUniqueIdOpt.isEmpty()) {
+            String startedAt = LocalDateTime.now().format(FORMATTER);
+            String msg = "Document uniqueId is not found '%s'".formatted(uniqueId);
+            RegistryResponseType registryResponse = epaFileDownloader.prepareFailedResponse(taskId, startedAt, msg);
+            throw new XdsException(msg, registryResponse);
+        }
+        String repositoryUniqueId = repositoryUniqueIdOpt.get();
         String insurantId = epaContext.getInsurantId();
         Map<String, String> xHeaders = epaContext.getXHeaders();
         IDocumentManagementPortType documentManagementPortType = epaMultiService

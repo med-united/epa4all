@@ -1,6 +1,8 @@
 package de.servicehealth.epa4all.server.filetracker.upload.soap;
 
+import de.servicehealth.epa4all.server.filetracker.download.soap.RetrieveDocumentSetResponseTypeRoot;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
+import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Unmarshaller;
 import oasis.names.tc.ebxml_regrep.xsd.lcm._3.RemoveObjectsRequest;
@@ -22,6 +24,7 @@ public class RawSoapUtils {
     private static JAXBContext deleteContext;
     private static JAXBContext changeContext;
     private static JAXBContext adhocContext;
+    private static JAXBContext downloadContext;
 
     private RawSoapUtils() {
     }
@@ -32,6 +35,7 @@ public class RawSoapUtils {
             deleteContext = JAXBContext.newInstance(DeleteRoot.class);
             changeContext = JAXBContext.newInstance(ChangeRoot.class);
             adhocContext = JAXBContext.newInstance(AdhocResponseRoot.class);
+            downloadContext = JAXBContext.newInstance(RetrieveDocumentSetResponseTypeRoot.class);
         } catch (Exception e) {
             log.error("Could create unmarshaller", e);
         }
@@ -63,5 +67,12 @@ public class RawSoapUtils {
         StringReader reader = new StringReader(ROOT_WRAPPER.formatted(rawSoapRequest));
         AdhocResponseRoot adhocResponseRoot = (AdhocResponseRoot) unmarshaller.unmarshal(reader);
         return adhocResponseRoot.getResponse();
+    }
+
+    public static RetrieveDocumentSetResponseType deserializeRetrieveDocumentSetResponse(String rawSoapRequest) throws Exception {
+        Unmarshaller unmarshaller = downloadContext.createUnmarshaller();
+        StringReader reader = new StringReader(ROOT_WRAPPER.formatted(rawSoapRequest));
+        RetrieveDocumentSetResponseTypeRoot retrieveDocumentRoot = (RetrieveDocumentSetResponseTypeRoot) unmarshaller.unmarshal(reader);
+        return retrieveDocumentRoot.getResponse();
     }
 }
