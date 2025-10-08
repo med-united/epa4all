@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: epa4all
+Source: https://github.com/med-united/epa4all
+
+Files: *
+Copyright: 2025 Service Health
+License: Apache-2.0

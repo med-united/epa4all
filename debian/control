@@ -1,0 +1,13 @@
+Source: epa4all
+Section: misc
+Priority: optional
+Maintainer: Manuel Blechschmidt <manuel.blechschmidt@service-health.de>
+Homepage: https://ere.health
+Build-Depends: debhelper-compat (= 12), maven
+Standards-Version: 4.5.1
+
+Package: epa4all
+Architecture: all
+Depends: openjdk-21-jre | openjdk-17-jre, curl, bash, tini, ca-certificates, less, iproute2, sudo, nano, socat, unzip
+Description: epa4all - Electronic patient record system built with Quarkus
+ epa4all is a Java-based application for managing electronic patient records.

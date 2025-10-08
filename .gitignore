@@ -69,3 +69,7 @@ node_modules/
 rest-server/frontend/
 rest-server/config/repository/
 rest-server/config/backup/
+
+#debian package build file
+debian/epa4all/
+debian/.debhelper/
