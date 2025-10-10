@@ -13,10 +13,16 @@ public class AuthorPersonClassificationBuilder extends AbstractSSClassificationB
     public static final String AUTHOR_ID = "author";
 
     private AuthorPerson authorPerson;
+    private String authorInstitution;
     private String telematikId;
 
     public AuthorPersonClassificationBuilder withAuthorPerson(AuthorPerson authorPerson) {
         this.authorPerson = authorPerson;
+        return this;
+    }
+
+    public AuthorPersonClassificationBuilder withAuthorInstitution(String authorInstitution) {
+        this.authorInstitution = authorInstitution;
         return this;
     }
 
@@ -30,7 +36,7 @@ public class AuthorPersonClassificationBuilder extends AbstractSSClassificationB
         classificationTypeAutor.setId(AUTHOR_ID);
         classificationTypeAutor.setClassificationScheme(SS_AUTHOR_CLASSIFICATION_SCHEME);
         classificationTypeAutor.getSlot().add(createSlotType("authorPerson", authorPerson.toString()));
-        classificationTypeAutor.getSlot().add(createSlotType("authorInstitution", "Unknown^^^^^&1.2.276.0.76.4.188&ISO^^^^" + telematikId));
+        classificationTypeAutor.getSlot().add(createSlotType("authorInstitution", authorInstitution + "^^^^^&1.2.276.0.76.4.188&ISO^^^^" + telematikId));
         classificationTypeAutor.getSlot().add(createSlotType("authorRole", "8^^^&1.3.6.1.4.1.19376.3.276.1.5.13&ISO"));
         return classificationTypeAutor;
     }

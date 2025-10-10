@@ -95,8 +95,8 @@ public class BulkTransfer {
                     eventFileUpload.fireAsync(new FileUpload(
                         epaContext, null, taskId, contentType, languageCode,
                         telematikId, kvnr, fileName,
-                        null, null, null, null, null, null, null, null, null, // TODO confirm
-                        folderName, documentBytes
+                        null, null, null, null, null, null, null, null, null, null, // TODO confirm
+                        folderName, List.of(), documentBytes
                     ));
                     return taskId;
                 } catch (Exception e) {

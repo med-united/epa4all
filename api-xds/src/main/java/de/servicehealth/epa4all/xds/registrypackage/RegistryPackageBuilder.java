@@ -29,6 +29,7 @@ public class RegistryPackageBuilder {
     AuthorPersonClassificationBuilder authorPersonClassificationBuilder;
 
     private AuthorPerson authorPerson;
+    private String authorInstitution;
     private ClassificationType[] classificationTypes;
     private ExternalIdentifierType[] externalIdentifierTypes;
 
@@ -57,6 +58,11 @@ public class RegistryPackageBuilder {
         return this;
     }
 
+    public RegistryPackageBuilder withAuthorInstitution(String authorInstitution) {
+        this.authorInstitution = authorInstitution;
+        return this;
+    }
+
     public RegistryPackageType build() {
         RegistryPackageType registryPackageType = new RegistryPackageType();
 
@@ -78,6 +84,7 @@ public class RegistryPackageBuilder {
                 .withClassifiedObject(id)
                 .withTelematikId(telematikId)
                 .withAuthorPerson(authorPerson)
+                .withAuthorInstitution(authorInstitution)
                 .build();
             registryPackageType.getClassification().add(authorClassificationType);
         }

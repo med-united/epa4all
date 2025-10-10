@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.rest.xds;
 import de.servicehealth.epa4all.server.filetracker.upload.FileRawUpload;
 import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
 import de.servicehealth.epa4all.server.rest.EpaContext;
+import de.servicehealth.epa4all.xds.CustomCodingScheme;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.Document;
 import jakarta.enterprise.context.RequestScoped;
@@ -16,6 +17,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.xml.bind.JAXBElement;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExtrinsicObjectType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.IdentifiableType;
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -24,11 +26,19 @@ import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils.deserializeRegisterElement;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
+import static de.servicehealth.epa4all.xds.CodingScheme.ClassCodeClassification;
+import static de.servicehealth.epa4all.xds.CodingScheme.PracticeSettingClassification;
+import static de.servicehealth.epa4all.xds.CodingScheme.TypeCodeClassification;
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 import static de.servicehealth.vau.VauClient.KVNR;
@@ -167,6 +177,8 @@ public class Upload extends XdsResource {
             in = HEADER
         )
         @HeaderParam("Title") String title,
+        @Parameter(name = "Author-Institution", description = "Praxis Heider", in = HEADER)
+        @HeaderParam("Author-Institution") String authorInstitution,
         @Parameter(
             name = "Author-Lanr",
             description = "https://de.wikipedia.org/wiki/Lebenslange_Arztnummer",
@@ -189,6 +201,24 @@ public class Upload extends XdsResource {
         @Parameter(name = "Information2", example = "Format aus MIME Type ableitbar", in = HEADER)
         @HeaderParam("Information2") String information2,
         @Parameter(
+            name = "PracticeSettingClassification",
+            example = "nodeRepresentation=AUGE; name=Augenheilkunde",
+            in = HEADER
+        )
+        @HeaderParam("PracticeSettingClassification") List<String> practiceSettingClassification,
+        @Parameter(
+            name = "ClassCodeClassification",
+            example = "nodeRepresentation=ADM; name=Administratives Dokument",
+            in = HEADER
+        )
+        @HeaderParam("ClassCodeClassification") List<String> classCodeClassification,
+        @Parameter(
+            name = "TypeCodeClassification",
+            example = "nodeRepresentation=ADCH; name=Administrative Checklisten",
+            in = HEADER
+        )
+        @HeaderParam("TypeCodeClassification") List<String> typeCodeClassification,
+        @Parameter(
             name = X_KONNEKTOR,
             description = "IP of the target Konnektor (can be skipped for single-tenancy)",
             in = QUERY
@@ -206,6 +236,11 @@ public class Upload extends XdsResource {
         if (fileName == null) {
             fileName = String.format("%s_%s.%s", kvnr, UUID.randomUUID(), getExtension(contentType));
         }
+
+        List<CustomCodingScheme> customCodingSchemes = extractCustomCodingSchemes(
+            practiceSettingClassification, classCodeClassification, typeCodeClassification
+        );
+
         String taskId = UUID.randomUUID().toString();
         FileUpload fileUpload = new FileUpload(
             epaContext,
@@ -217,6 +252,7 @@ public class Upload extends XdsResource {
             kvnr,
             fileName,
             title,
+            authorInstitution,
             authorLanr,
             authorFirstName,
             authorLastName,
@@ -226,10 +262,38 @@ public class Upload extends XdsResource {
             information,
             information2,
             "other",
+            customCodingSchemes,
             is.readAllBytes()
         );
         fileActionEvent.fireAsync(fileUpload);
         return taskId;
+    }
+
+    private List<CustomCodingScheme> extractCustomCodingSchemes(
+        List<String> practiceSettingClassification,
+        List<String> classCodeClassification,
+        List<String> typeCodeClassification
+    ) {
+        List<CustomCodingScheme> codingSchemes = new ArrayList<>();
+        if (!practiceSettingClassification.isEmpty()) {
+            codingSchemes.add(new CustomCodingScheme(PracticeSettingClassification, c12nHeaderToMap(practiceSettingClassification)));
+        }
+        if (!classCodeClassification.isEmpty()) {
+            codingSchemes.add(new CustomCodingScheme(ClassCodeClassification, c12nHeaderToMap(classCodeClassification)));
+        }
+        if (!typeCodeClassification.isEmpty()) {
+            codingSchemes.add(new CustomCodingScheme(TypeCodeClassification, c12nHeaderToMap(typeCodeClassification)));
+        }
+        return codingSchemes;
+    }
+
+    private Map<String, String> c12nHeaderToMap(List<String> c12nHeader) {
+        return c12nHeader.stream()
+            .flatMap(values -> Arrays.stream(values.split("[;,]")))
+            .map(String::trim)
+            .map(kv -> kv.split("="))
+            .map(kvArr -> Pair.of(kvArr[0], kvArr[1]))
+            .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
     private String getExtension(String contentType) {
