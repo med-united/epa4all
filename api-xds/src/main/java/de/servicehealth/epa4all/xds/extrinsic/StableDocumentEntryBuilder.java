@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.xds.extrinsic;
 
+import de.servicehealth.epa4all.xds.CustomCodingScheme;
 import de.servicehealth.epa4all.xds.author.AuthorPerson;
 import de.servicehealth.epa4all.xds.classification.ClassificationBuilder;
 import de.servicehealth.epa4all.xds.classification.de.AuthorClassificationBuilder;
@@ -15,8 +16,10 @@ import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExtrinsicObjectType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
+import static de.servicehealth.epa4all.xds.CodingScheme.PracticeSettingClassification;
 import static de.servicehealth.epa4all.xds.XDSUtils.createLocalizedString;
 
 @Dependent
@@ -44,6 +47,7 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
         String practiceSetting,
         String information,
         String information2,
+        List<CustomCodingScheme> customCodingSchemes,
         List<FolderDefinition> folderDefinitions
     ) {
         List<ClassificationType> classificationTypes = new ArrayList<>();
@@ -63,14 +67,7 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
             .build();
         classificationTypes.add(classificationType);
 
-        classificationType = practiceSettingCodeClassificationBuilder
-            .withClassifiedObject(documentId)
-            .withNodeRepresentation("ALLG") // TODO check
-            .withCodingScheme("1.3.6.1.4.1.19376.3.276.1.5.4")
-            .withLocalizedString(createLocalizedString(languageCode, practiceSetting == null ? "Allgemeinmedizin" : practiceSetting))
-            .build();
-        classificationTypes.add(classificationType);
-
+        classificationTypes.add(preparePracticeSetting(customCodingSchemes, practiceSetting));
 
         folderDefinitions.stream()
             .filter(fd -> fd.getValue() instanceof List)
@@ -92,15 +89,17 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
                 String name = fd.getName();
                 Object obj = fd.getValue();
                 if (obj instanceof Map map) {
-                    String codeSystem;
+                    String codeSystem = (String) map.get("codeSystem");
 
-                    if (name.contains("formatCode")) {
-                        codeSystem = "1.3.6.1.4.1.19376.1.2.3"; // TODO check
-                    } else {
-                        codeSystem = (String) map.get("codeSystem");
-                    }
-                    
+                    Optional<CustomCodingScheme> customCodingScheme = customCodingSchemes.stream()
+                        .filter(cs -> cs.getCodingScheme().getCode().equals(codeSystem))
+                        .findFirst();
+
                     String code = (String) map.get("code");
+                    String nodeRepresentation = customCodingScheme.isPresent()
+                        ? customCodingScheme.get().getNodeRepresentationOrDefault(code)
+                        : code;
+                    
                     List descList = (List) map.get("desc");
                     String text;
                     if (descList == null || descList.isEmpty()) {
@@ -110,7 +109,9 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
                         text = (String) descMap.get("#text");
                     }
 
-                    if (contentType.contains("pdf")) {
+                    if (customCodingScheme.isPresent()) {
+                        text = customCodingScheme.get().getNameOrDefault(text);
+                    } else {
                         if (name.contains("classCode") && information != null) {
                             text = information;
                         }
@@ -127,7 +128,7 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
                             b
                                 .withMimeType(mimeType)
                                 .withClassifiedObject(documentId)
-                                .withNodeRepresentation(code)
+                                .withNodeRepresentation(nodeRepresentation)
                                 .withCodingScheme(codeSystem)
                                 .withLocalizedString(createLocalizedString(languageCode, textValue))
                                 .build()
@@ -136,6 +137,36 @@ public class StableDocumentEntryBuilder extends ExtrinsicObjectTypeBuilder<Stabl
             });
 
         return withClassifications(classificationTypes.toArray(ClassificationType[]::new));
+    }
+
+    private ClassificationType preparePracticeSetting(
+        List<CustomCodingScheme> customCodingSchemes,
+        String practiceSetting
+    ) {
+        Optional<CustomCodingScheme> practiceSettingScheme = customCodingSchemes.stream()
+            .filter(cs -> cs.getCodingScheme().equals(PracticeSettingClassification))
+            .findFirst();
+
+        ClassificationType classificationType;
+        if (practiceSettingScheme.isPresent()) {
+            String nodeRepresentation = practiceSettingScheme.get().getNodeRepresentationOrDefault("ALLG");
+            String name = practiceSettingScheme.get().getNameOrDefault("Allgemeinmedizin");
+            classificationType = practiceSettingCodeClassificationBuilder
+                .withClassifiedObject(documentId)
+                .withNodeRepresentation(nodeRepresentation)
+                .withCodingScheme(practiceSettingScheme.get().getCodingScheme().getCode())
+                .withLocalizedString(createLocalizedString(languageCode, name))
+                .build();
+        } else {
+            String name = practiceSetting == null ? "Allgemeinmedizin" : practiceSetting;
+            classificationType = practiceSettingCodeClassificationBuilder
+                .withClassifiedObject(documentId)
+                .withNodeRepresentation("ALLG")
+                .withCodingScheme("1.3.6.1.4.1.19376.3.276.1.5.4")
+                .withLocalizedString(createLocalizedString(languageCode, name))
+                .build();
+        }
+        return classificationType;
     }
 
     @Override

@@ -43,6 +43,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
     private ProvideAndRegisterDocumentSetRequestType.Document document;
     private List<FolderDefinition> folderDefinitions;
     private AuthorPerson authorPerson;
+    private String authorInstitution;
     private String telematikId;
     private String documentId;
     private String fileName;
@@ -51,6 +52,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
     private String practiceSetting;
     private String information;
     private String information2;
+    private List<CustomCodingScheme> customCodingSchemes;
     private String contentType;
     private String languageCode;
     private String kvnr;
@@ -59,6 +61,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         ProvideAndRegisterDocumentSetRequestType.Document document,
         List<FolderDefinition> folderDefinitions,
         AuthorPerson authorPerson,
+        String authorInstitution,
         String telematikId,
         String documentId,
         String fileName,
@@ -67,6 +70,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         String practiceSetting,
         String information,
         String information2,
+        List<CustomCodingScheme> customCodingSchemes,
         String contentType,
         String languageCode,
         String kvnr
@@ -79,10 +83,12 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         this.practiceSetting = practiceSetting;
         this.information = information;
         this.information2 = information2;
+        this.customCodingSchemes = customCodingSchemes;
         this.fileName = fileName;
         this.contentType = contentType;
         this.languageCode = languageCode;
         this.authorPerson = authorPerson;
+        this.authorInstitution = authorInstitution;
         this.kvnr = kvnr;
         this.folderDefinitions = new ArrayList<>(folderDefinitions);
     }
@@ -106,6 +112,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
             .withTelematikId(telematikId)
             .withSubmissionSetId(submissionSetId)
             .withAuthorPerson(authorPerson)
+            .withAuthorInstitution(authorInstitution)
             .withExternalIdentifiers(
                 new SSPatientIdExternalIdentifierBuilder(ssPatientId).withRegistryObject(submissionSetId).withValue(patientExternalIdValue).build(),
                 new SSUniqueIdExternalIdentifierBuilder(ssUniqueId).withValue(uniqueIdValue).withRegistryObject(submissionSetId).build()
@@ -132,8 +139,16 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
                 new DEUniqueIdExternalIdentifierBuilder(deUniqueId).withValue(uniqueIdValue).withRegistryObject(documentId).build()
             )
             // calls withClassifications() internally
-            .finalize(contentType, authorPerson, praxis, practiceSetting, information, information2, folderDefinitions)
-            .build();
+            .finalize(
+                contentType,
+                authorPerson,
+                praxis,
+                practiceSetting,
+                information,
+                information2,
+                customCodingSchemes,
+                folderDefinitions
+            ).build();
 
         AssociationType1 associationType1 = ssdeAssociationBuilder
             .withAssociationId(associationId)

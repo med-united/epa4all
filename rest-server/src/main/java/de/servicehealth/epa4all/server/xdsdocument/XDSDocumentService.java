@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.xdsdocument;
 
+import de.servicehealth.epa4all.xds.CustomCodingScheme;
 import de.servicehealth.epa4all.xds.ProvideAndRegisterSingleDocumentTypeBuilder;
 import de.servicehealth.epa4all.xds.author.AuthorPerson;
 import de.servicehealth.epa4all.xds.ebrim.FolderDefinition;
@@ -57,6 +58,7 @@ public class XDSDocumentService {
         String kvnr,
         String fileName,
         String title,
+        String authorInstitution,
         String authorLanr,
         String authorFirstName,
         String authorLastName,
@@ -65,6 +67,7 @@ public class XDSDocumentService {
         String practiceSetting,
         String information,
         String information2,
+        List<CustomCodingScheme> customCodingSchemes,
         String contentType,
         String languageCode,
         String authorVsdFirstName,
@@ -84,6 +87,7 @@ public class XDSDocumentService {
             document,
             folderDefinitions,
             authorPerson,
+            authorInstitution,
             telematikId,
             documentId,
             fileName,
@@ -91,7 +95,8 @@ public class XDSDocumentService {
             praxis,
             practiceSetting,
             information,
-            information2, 
+            information2,
+            customCodingSchemes,
             contentType,
             languageCode,
             kvnr
