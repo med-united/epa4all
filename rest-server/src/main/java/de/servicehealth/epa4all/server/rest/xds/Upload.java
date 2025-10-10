@@ -13,7 +13,6 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.xml.bind.JAXBElement;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExtrinsicObjectType;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.IdentifiableType;
@@ -46,7 +45,9 @@ import static de.servicehealth.vau.VauClient.UPLOAD_CONTENT_TYPE;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
+import static jakarta.ws.rs.core.MediaType.MEDIA_TYPE_WILDCARD;
 import static jakarta.ws.rs.core.MediaType.MULTIPART_FORM_DATA;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 import static org.eclipse.microprofile.openapi.annotations.enums.ParameterIn.HEADER;
 import static org.eclipse.microprofile.openapi.annotations.enums.ParameterIn.QUERY;
 
@@ -142,8 +143,8 @@ public class Upload extends XdsResource {
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @POST
-    @Consumes(MediaType.MEDIA_TYPE_WILDCARD)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MEDIA_TYPE_WILDCARD)
+    @Produces(TEXT_PLAIN)
     @Path("upload")
     @Operation(summary = "Upload single document XML/PDF/etc to the XDS registry")
     public String upload(
