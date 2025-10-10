@@ -6,7 +6,10 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @Getter
 @ApplicationScoped
-public class TssIdpConfig {
+public class TssConfig {
+
+    @ConfigProperty(name = "tss.post.url")
+    String postUrl;
 
     @ConfigProperty(name = "tss.idp.client.id")
     String clientId;

@@ -18,7 +18,7 @@ public class TSSIdpClient extends IdpClient implements StartupEventListener {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public TSSIdpClient(
-        TssIdpConfig tssIdpConfig,
+        TssConfig tssConfig,
         ManagedExecutor managedExecutor,
         KonnektorClient konnektorClient,
         @TSSClient
@@ -27,11 +27,11 @@ public class TSSIdpClient extends IdpClient implements StartupEventListener {
     ) {
         super(
             new IdpConfig(
-                tssIdpConfig.getClientId(),
-                tssIdpConfig.getServiceUrl(),
-                tssIdpConfig.getAuthRequestUrl(),
-                tssIdpConfig.getAuthRequestRedirectUrl(),
-                tssIdpConfig.isHcvEnabled()
+                tssConfig.getClientId(),
+                tssConfig.getServiceUrl(),
+                tssConfig.getAuthRequestUrl(),
+                tssConfig.getAuthRequestRedirectUrl(),
+                tssConfig.isHcvEnabled()
             ),
             managedExecutor,
             konnektorClient,

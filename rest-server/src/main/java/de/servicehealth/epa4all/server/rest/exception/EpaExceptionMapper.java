@@ -6,6 +6,7 @@ import de.servicehealth.epa4all.cxf.provider.VauException;
 import de.servicehealth.epa4all.server.pnw.ConsentException;
 import de.servicehealth.epa4all.server.pnw.PnwException;
 import de.servicehealth.epa4all.server.pnw.PnwResponse;
+import de.servicehealth.epa4all.server.tss.TssException;
 import io.quarkus.security.AuthenticationFailedException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Response;
@@ -73,6 +74,7 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
             case AuthenticationFailedException authEx -> new ErrorStatus(authEx.getMessage(), UNAUTHORIZED);
             case EpaNotFoundException epaEx -> new ErrorStatus(epaEx.getMessage(), NOT_FOUND);
             case ConsentException consentEx -> new ErrorStatus(consentEx.getMessage(), FORBIDDEN);
+            case TssException tssEx -> new ErrorStatus(tssEx.getMessage(), tssEx.getStatus());
             case BadRequestException badRequestEx -> new ErrorStatus(badRequestEx.getMessage(), BAD_REQUEST);
             case XdsException xdsException -> new ErrorStatus(null, null, xdsException.getRegistryResponse(), CONFLICT);
             case null -> new ErrorStatus("Unknown error", INTERNAL_SERVER_ERROR);

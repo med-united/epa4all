@@ -8,7 +8,6 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.xml.bind.JAXBElement;
 import oasis.names.tc.ebxml_regrep.xsd.lcm._3.RemoveObjectsRequest;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
@@ -33,6 +32,8 @@ import static de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUti
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
 import static de.servicehealth.vau.VauClient.KVNR;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static jakarta.ws.rs.core.MediaType.MEDIA_TYPE_WILDCARD;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 @SuppressWarnings("unused")
@@ -45,8 +46,8 @@ public class Delete extends XdsResource {
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @POST
-    @Consumes(MediaType.MEDIA_TYPE_WILDCARD)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MEDIA_TYPE_WILDCARD)
+    @Produces(TEXT_PLAIN)
     @Path("delete/raw")
     @Operation(summary = "Delete documents from the XDS registry")
     public String delete(
