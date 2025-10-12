@@ -15,12 +15,12 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import org.apache.http.HttpResponse;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
-import java.net.http.HttpResponse;
 import java.util.Set;
 
 import static de.servicehealth.vau.VauClient.SCOPE;
@@ -29,6 +29,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 import static jakarta.ws.rs.core.MediaType.WILDCARD;
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import static jakarta.ws.rs.core.Response.Status.UNAUTHORIZED;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 
@@ -99,13 +100,14 @@ public class Tss {
         byte[] body
     ) throws Exception {
         String accessToken = getTssToken(scope);
-        HttpResponse<String> response = tssClient.submit(accessToken, body);
-        if (response.statusCode() == SC_UNAUTHORIZED ) {
-            throw new TssException("401 Unauthorized: " + response.body(), UNAUTHORIZED);
+        HttpResponse httpResponse = tssClient.submit(accessToken, body);
+        int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (statusCode == SC_UNAUTHORIZED ) {
+            throw new TssException("401 Unauthorized", UNAUTHORIZED);
         }
-        if (response.statusCode() == SC_FORBIDDEN ) {
-            throw new TssException("403 Forbidden: " + response.body(), FORBIDDEN);
+        if (statusCode == SC_FORBIDDEN ) {
+            throw new TssException("403 Forbidden", FORBIDDEN);
         }
-        return response.body();
+        return new String(httpResponse.getEntity().getContent().readAllBytes(), UTF_8);
     }
 }
