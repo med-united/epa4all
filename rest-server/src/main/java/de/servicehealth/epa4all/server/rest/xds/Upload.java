@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import static de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils.deserializeRegisterElement;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
 import static de.servicehealth.epa4all.xds.CodingScheme.ClassCodeClassification;
+import static de.servicehealth.epa4all.xds.CodingScheme.FacilityTypeCodeClassification;
 import static de.servicehealth.epa4all.xds.CodingScheme.PracticeSettingClassification;
 import static de.servicehealth.epa4all.xds.CodingScheme.TypeCodeClassification;
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
@@ -178,7 +179,7 @@ public class Upload extends XdsResource {
             in = HEADER
         )
         @HeaderParam("Title") String title,
-        @Parameter(name = "Author-Institution", description = "Praxis Heider", in = HEADER)
+        @Parameter(name = "Author-Institution", example = "Praxis Heider", in = HEADER)
         @HeaderParam("Author-Institution") String authorInstitution,
         @Parameter(
             name = "Author-Lanr",
@@ -193,12 +194,16 @@ public class Upload extends XdsResource {
         @HeaderParam("Author-LastName") String authorLastName,
         @Parameter(name = "Author-Title", description = "Doctor title", example = "Dr. med.", in = HEADER)
         @HeaderParam("Author-Title") String authorTitle,
+        @Deprecated
         @Parameter(name = "Praxis", example = "Arztpraxis", in = HEADER)
         @HeaderParam("Praxis") String praxis,
+        @Deprecated
         @Parameter(name = "Fachrichtung", example = "Naturheilverfahren", in = HEADER)
         @HeaderParam("Fachrichtung") String practiceSetting,
+        @Deprecated
         @Parameter(name = "Information", example = "Format aus MIME Type ableitbar", in = HEADER)
         @HeaderParam("Information") String information,
+        @Deprecated
         @Parameter(name = "Information2", example = "Format aus MIME Type ableitbar", in = HEADER)
         @HeaderParam("Information2") String information2,
         @Parameter(
@@ -207,6 +212,12 @@ public class Upload extends XdsResource {
             in = HEADER
         )
         @HeaderParam("PracticeSettingClassification") List<String> practiceSettingClassification,
+        @Parameter(
+            name = "FacilityTypeCodeClassification",
+            example = "nodeRepresentation=PRA; name=Arztpraxis",
+            in = HEADER
+        )
+        @HeaderParam("FacilityTypeCodeClassification") List<String> facilityTypeCodeClassification,
         @Parameter(
             name = "ClassCodeClassification",
             example = "nodeRepresentation=ADM; name=Administratives Dokument",
@@ -239,7 +250,7 @@ public class Upload extends XdsResource {
         }
 
         List<CustomCodingScheme> customCodingSchemes = extractCustomCodingSchemes(
-            practiceSettingClassification, classCodeClassification, typeCodeClassification
+            practiceSettingClassification, facilityTypeCodeClassification, classCodeClassification, typeCodeClassification
         );
 
         String taskId = UUID.randomUUID().toString();
@@ -272,12 +283,16 @@ public class Upload extends XdsResource {
 
     private List<CustomCodingScheme> extractCustomCodingSchemes(
         List<String> practiceSettingClassification,
+        List<String> facilityTypeCodeClassification,
         List<String> classCodeClassification,
         List<String> typeCodeClassification
     ) {
         List<CustomCodingScheme> codingSchemes = new ArrayList<>();
         if (!practiceSettingClassification.isEmpty()) {
             codingSchemes.add(new CustomCodingScheme(PracticeSettingClassification, c12nHeaderToMap(practiceSettingClassification)));
+        }
+        if (!facilityTypeCodeClassification.isEmpty()) {
+            codingSchemes.add(new CustomCodingScheme(FacilityTypeCodeClassification, c12nHeaderToMap(facilityTypeCodeClassification)));
         }
         if (!classCodeClassification.isEmpty()) {
             codingSchemes.add(new CustomCodingScheme(ClassCodeClassification, c12nHeaderToMap(classCodeClassification)));

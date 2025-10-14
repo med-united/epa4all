@@ -142,6 +142,8 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
             .finalize(
                 contentType,
                 authorPerson,
+                telematikId,
+                authorInstitution,
                 praxis,
                 practiceSetting,
                 information,

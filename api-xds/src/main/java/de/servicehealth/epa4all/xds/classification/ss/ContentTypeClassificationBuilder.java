@@ -1,10 +1,12 @@
 package de.servicehealth.epa4all.xds.classification.ss;
 
+import de.servicehealth.epa4all.xds.classification.ClassificationBuilder;
 import jakarta.enterprise.context.Dependent;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ClassificationType;
 
 @Dependent
-public class ContentTypeClassificationBuilder extends AbstractSSClassificationBuilder<ContentTypeClassificationBuilder> {
+@SubmissionSet
+public class ContentTypeClassificationBuilder extends ClassificationBuilder<ContentTypeClassificationBuilder> {
 
     public static final String CONTENT_TYPE_ID = "author";
 

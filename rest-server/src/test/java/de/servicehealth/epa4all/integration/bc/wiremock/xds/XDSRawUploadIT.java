@@ -36,8 +36,8 @@ import java.util.concurrent.TimeUnit;
 
 import static de.servicehealth.epa4all.common.TestUtils.getBinaryFixture;
 import static de.servicehealth.epa4all.common.TestUtils.getStringFixture;
-import static de.servicehealth.epa4all.xds.classification.de.AuthorClassificationBuilder.AUTHOR_CLASSIFICATION_SCHEME;
 import static de.servicehealth.epa4all.xds.classification.de.ClassCodeClassificationBuilder.CLASS_CODE_CLASSIFICATION_SCHEME;
+import static de.servicehealth.epa4all.xds.classification.de.ExtrinsicAuthorClassificationBuilder.EXTRINSIC_AUTHOR_CLASSIFICATION_SCHEME;
 import static de.servicehealth.epa4all.xds.classification.de.FacilityTypeCodeClassificationBuilder.FACILITY_TYPE_CODE_CLASSIFICATION_SCHEME;
 import static de.servicehealth.epa4all.xds.classification.de.PracticeSettingCodeClassificationBuilder.PRACTICE_SETTING_CODE_CLASSIFICATION_SCHEME;
 import static de.servicehealth.epa4all.xds.classification.de.TypeCodeClassificationBuilder.TYPE_CODE_CLASSIFICATION_SCHEME;
@@ -137,7 +137,7 @@ public class XDSRawUploadIT extends AbstractWiremockTest {
         String dokumentTitle = extrinsicObjectType.getName().getLocalizedString().getFirst().getValue();
         assertEquals("Dokument X110624006_08d5ee7a-704a-4f2f-9c4c-4a54f045ee5c.pdf", dokumentTitle);
         //
-        ClassificationType authorClassification = getClassificationType(extrinsicObjectType, AUTHOR_CLASSIFICATION_SCHEME);
+        ClassificationType authorClassification = getClassificationType(extrinsicObjectType, EXTRINSIC_AUTHOR_CLASSIFICATION_SCHEME);
         String authorData = authorClassification.getSlot().getFirst().getValueList().getValue().getFirst();
         assertTrue(authorData.startsWith("123456667^Lukas"));
         //

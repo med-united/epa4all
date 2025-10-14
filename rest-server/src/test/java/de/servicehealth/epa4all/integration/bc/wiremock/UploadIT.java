@@ -33,12 +33,12 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static de.servicehealth.epa4all.common.TestUtils.getBinaryFixture;
-import static de.servicehealth.epa4all.xds.classification.de.AuthorClassificationBuilder.AUTHOR_CLASSIFICATION_SCHEME;
 import static de.servicehealth.epa4all.xds.classification.de.ClassCodeClassificationBuilder.CLASS_CODE_CLASSIFICATION_SCHEME;
+import static de.servicehealth.epa4all.xds.classification.de.ExtrinsicAuthorClassificationBuilder.EXTRINSIC_AUTHOR_CLASSIFICATION_SCHEME;
 import static de.servicehealth.epa4all.xds.classification.de.FacilityTypeCodeClassificationBuilder.FACILITY_TYPE_CODE_CLASSIFICATION_SCHEME;
 import static de.servicehealth.epa4all.xds.classification.de.PracticeSettingCodeClassificationBuilder.PRACTICE_SETTING_CODE_CLASSIFICATION_SCHEME;
 import static de.servicehealth.epa4all.xds.classification.de.TypeCodeClassificationBuilder.TYPE_CODE_CLASSIFICATION_SCHEME;
-import static de.servicehealth.epa4all.xds.classification.ss.AuthorPersonClassificationBuilder.SS_AUTHOR_CLASSIFICATION_SCHEME;
+import static de.servicehealth.epa4all.xds.classification.ss.PackageAuthorPersonClassificationBuilder.SUBMISSION_SET_AUTHOR_CLASSIFICATION_SCHEME;
 import static de.servicehealth.utils.ServerUtils.APPLICATION_PDF;
 import static de.servicehealth.vau.VauClient.KVNR;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
@@ -47,6 +47,7 @@ import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -108,21 +109,38 @@ public class UploadIT extends AbstractWiremockTest {
             information2Header,
             null,
             null,
+            null,
             null
         );
         RegistryPackageType registryPackageType = pair.getKey();
-        ClassificationType authorPersonClassification = getClassificationType(registryPackageType, SS_AUTHOR_CLASSIFICATION_SCHEME);
+        ClassificationType authorPersonClassification = getClassificationType(registryPackageType, SUBMISSION_SET_AUTHOR_CLASSIFICATION_SCHEME);
         String authorInstitutionData = authorPersonClassification.getSlot().get(1).getValueList().getValue().getFirst();
         assertTrue(authorInstitutionData.startsWith(authorInstitution));
+
+        checkAuthorStuff(
+            registryPackageType,
+            SUBMISSION_SET_AUTHOR_CLASSIFICATION_SCHEME,
+            authorInstitution,
+            authorLanrHeader,
+            authorFirstNameHeader,
+            authorLastNameHeader,
+            authorTitleHeader
+        );
 
         ExtrinsicObjectType extrinsicObjectType = pair.getValue();
 
         String dokumentTitle = extrinsicObjectType.getName().getLocalizedString().getFirst().getValue();
         assertEquals(titleHeader, dokumentTitle);
 
-        ClassificationType authorClassification = getClassificationType(extrinsicObjectType, AUTHOR_CLASSIFICATION_SCHEME);
-        String authorData = authorClassification.getSlot().getFirst().getValueList().getValue().getFirst();
-        assertTrue(authorData.startsWith(authorLanrHeader + "^" + authorFirstNameHeader + "^" + authorLastNameHeader + "^^^" + authorTitleHeader));
+        checkAuthorStuff(
+            extrinsicObjectType,
+            EXTRINSIC_AUTHOR_CLASSIFICATION_SCHEME,
+            authorInstitution,
+            authorLanrHeader,
+            authorFirstNameHeader,
+            authorLastNameHeader,
+            authorTitleHeader
+        );
 
         ClassificationType facilityTypeCodeClassification = getClassificationType(extrinsicObjectType, FACILITY_TYPE_CODE_CLASSIFICATION_SCHEME);
         String facilityTypeCodeValue = facilityTypeCodeClassification.getName().getLocalizedString().getFirst().getValue();
@@ -155,10 +173,15 @@ public class UploadIT extends AbstractWiremockTest {
             informationHeader,
             information2Header,
             "nodeRepresentation=AUGE; name=Augenheilkunde",
+            "nodeRepresentation=TRA; name=Arztpraxis2",
             "nodeRepresentation=ADM; name=Administratives Dokument",
             "nodeRepresentation=ADCH; name=Administrative Checklisten"
         );
         extrinsicObjectType = pair.getValue();
+
+        facilityTypeCodeClassification = getClassificationType(extrinsicObjectType, FACILITY_TYPE_CODE_CLASSIFICATION_SCHEME);
+        facilityTypeCodeValue = facilityTypeCodeClassification.getName().getLocalizedString().getFirst().getValue();
+        assertEquals("Arztpraxis2", facilityTypeCodeValue);
 
         practiceSettingCodeClassification = getClassificationType(extrinsicObjectType, PRACTICE_SETTING_CODE_CLASSIFICATION_SCHEME);
         practiceSettingCodeValue = practiceSettingCodeClassification.getName().getLocalizedString().getFirst().getValue();
@@ -171,6 +194,25 @@ public class UploadIT extends AbstractWiremockTest {
         typeCodeClassification = getClassificationType(extrinsicObjectType, TYPE_CODE_CLASSIFICATION_SCHEME);
         typeCodeValue = typeCodeClassification.getName().getLocalizedString().getFirst().getValue();
         assertEquals("Administrative Checklisten", typeCodeValue);
+    }
+
+    private void checkAuthorStuff(
+        RegistryObjectType registryObjectType,
+        String authorClassificationScheme,
+        String authorInstitution,
+        String authorLanrHeader,
+        String authorFirstNameHeader,
+        String authorLastNameHeader,
+        String authorTitleHeader
+    ) {
+        ClassificationType authorClassification = getClassificationType(registryObjectType, authorClassificationScheme);
+        assertNull(authorClassification.getNodeRepresentation());
+        String authorData = authorClassification.getSlot().get(0).getValueList().getValue().getFirst();
+        assertTrue(authorData.startsWith(authorLanrHeader + "^" + authorFirstNameHeader + "^" + authorLastNameHeader + "^^^" + authorTitleHeader));
+        String authorInstitutionData = authorClassification.getSlot().get(1).getValueList().getValue().getFirst();
+        assertTrue(authorInstitutionData.startsWith(authorInstitution));
+        String authorRoleData = authorClassification.getSlot().get(2).getValueList().getValue().getFirst();
+        assertEquals("8^^^&1.3.6.1.4.1.19376.3.276.1.5.13&ISO", authorRoleData);
     }
 
     private ClassificationType getClassificationType(RegistryObjectType registryObjectType, String classificationScheme) {
@@ -197,6 +239,7 @@ public class UploadIT extends AbstractWiremockTest {
         String informationHeader,
         String information2Header,
         String practiceSettingClassification,
+        String facilityTypeCodeClassification,
         String classCodeClassification,
         String typeCodeClassification
     ) throws Exception {
@@ -222,6 +265,9 @@ public class UploadIT extends AbstractWiremockTest {
 
         if (practiceSettingClassification != null) {
             requestSpecification = requestSpecification.header("PracticeSettingClassification", practiceSettingClassification);
+        }
+        if (facilityTypeCodeClassification != null) {
+            requestSpecification = requestSpecification.header("FacilityTypeCodeClassification", facilityTypeCodeClassification);
         }
         if (classCodeClassification != null) {
             requestSpecification = requestSpecification.header("ClassCodeClassification", classCodeClassification);

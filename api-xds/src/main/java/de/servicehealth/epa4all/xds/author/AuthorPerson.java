@@ -11,7 +11,6 @@ public class AuthorPerson {
     private String firstName;
     private String lastName;
     private String title;
-    private String nodeRepresentation;
 
     @Override
     public String toString() {

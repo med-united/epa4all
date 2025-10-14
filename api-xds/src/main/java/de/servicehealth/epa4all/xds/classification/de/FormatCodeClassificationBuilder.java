@@ -1,12 +1,14 @@
 package de.servicehealth.epa4all.xds.classification.de;
 
+import de.servicehealth.epa4all.xds.classification.ClassificationBuilder;
 import jakarta.enterprise.context.Dependent;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ClassificationType;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
 
 @Dependent
-public class FormatCodeClassificationBuilder extends AbstractDEClassificationBuilder<FormatCodeClassificationBuilder> {
+@DocumentEntry
+public class FormatCodeClassificationBuilder extends ClassificationBuilder<FormatCodeClassificationBuilder> {
 
     public static final String FORMAT_CODE_CLASSIFICATION_SCHEME = "urn:uuid:a09d5840-386c-46f2-b5ad-9c3699a4309d";
     public static final String MIME_TYPE_SUFFICIENT_REPRESENTATION = "urn:ihe:iti:xds:2017:mimeTypeSufficient";

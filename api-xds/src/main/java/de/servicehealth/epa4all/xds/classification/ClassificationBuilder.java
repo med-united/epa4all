@@ -18,7 +18,6 @@ public abstract class ClassificationBuilder<T extends ClassificationBuilder<T>> 
     protected String mimeType;
     protected String codingScheme;
 
-    public abstract String getCodingSchemaType();
     public abstract String getName();
 
     public T withLocalizedString(LocalizedStringType localizedString) {
