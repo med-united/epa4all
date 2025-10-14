@@ -1,7 +1,8 @@
 package de.servicehealth.epa4all.xds.registrypackage;
 
 import de.servicehealth.epa4all.xds.author.AuthorPerson;
-import de.servicehealth.epa4all.xds.classification.ss.AuthorPersonClassificationBuilder;
+import de.servicehealth.epa4all.xds.classification.ss.PackageAuthorPersonClassificationBuilder;
+import de.servicehealth.epa4all.xds.classification.ss.SubmissionSet;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ClassificationType;
@@ -26,7 +27,8 @@ public class RegistryPackageBuilder {
     private String id;
 
     @Inject
-    AuthorPersonClassificationBuilder authorPersonClassificationBuilder;
+    @SubmissionSet
+    PackageAuthorPersonClassificationBuilder packageAuthorPersonClassificationBuilder;
 
     private AuthorPerson authorPerson;
     private String authorInstitution;
@@ -80,7 +82,7 @@ public class RegistryPackageBuilder {
         }
 
         if (authorPerson != null) {
-            ClassificationType authorClassificationType = authorPersonClassificationBuilder
+            ClassificationType authorClassificationType = packageAuthorPersonClassificationBuilder
                 .withClassifiedObject(id)
                 .withTelematikId(telematikId)
                 .withAuthorPerson(authorPerson)

@@ -80,8 +80,8 @@ public class XDSDocumentService {
         document.setId(documentId);
 
         AuthorPerson authorPerson = authorFirstName == null && authorLastName == null
-            ? new AuthorPerson("123456667", authorVsdFirstName, authorVsdLastName, authorVsdTitle, "PRA")
-            : new AuthorPerson(authorLanr == null ? "123456667" : authorLanr, authorFirstName, authorLastName, authorTitle, "PRA");
+            ? new AuthorPerson("123456667", authorVsdFirstName, authorVsdLastName, authorVsdTitle)
+            : new AuthorPerson(authorLanr == null ? "123456667" : authorLanr, authorFirstName, authorLastName, authorTitle);
 
         provideAndRegisterDocumentBuilder.init(
             document,

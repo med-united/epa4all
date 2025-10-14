@@ -1,45 +1,46 @@
-package de.servicehealth.epa4all.xds.classification.ss;
+package de.servicehealth.epa4all.xds.classification;
 
 import de.servicehealth.epa4all.xds.author.AuthorPerson;
-import jakarta.enterprise.context.Dependent;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ClassificationType;
+
+import java.util.UUID;
 
 import static de.servicehealth.epa4all.xds.XDSUtils.createSlotType;
 
-@Dependent
-public class AuthorPersonClassificationBuilder extends AbstractSSClassificationBuilder<AuthorPersonClassificationBuilder> {
-
-    public static final String SS_AUTHOR_CLASSIFICATION_SCHEME = "urn:uuid:a7058bb9-b4e4-4307-ba5b-e3f0ab85e12d";
-    public static final String AUTHOR_ID = "author";
+@SuppressWarnings("unchecked")
+public abstract class AbstractAuthorPersonClassificationBuilder<T extends AbstractAuthorPersonClassificationBuilder<T>> extends ClassificationBuilder<T> {
 
     private AuthorPerson authorPerson;
     private String authorInstitution;
     private String telematikId;
 
-    public AuthorPersonClassificationBuilder withAuthorPerson(AuthorPerson authorPerson) {
+    public T withAuthorPerson(AuthorPerson authorPerson) {
         this.authorPerson = authorPerson;
-        return this;
+        return (T) this;
     }
 
-    public AuthorPersonClassificationBuilder withAuthorInstitution(String authorInstitution) {
+    public T withAuthorInstitution(String authorInstitution) {
         this.authorInstitution = authorInstitution;
-        return this;
+        return (T) this;
     }
 
-    public AuthorPersonClassificationBuilder withTelematikId(String telematikId) {
+    public T withTelematikId(String telematikId) {
         this.telematikId = telematikId;
-        return this;
+        return (T) this;
     }
 
     public ClassificationType build() {
         ClassificationType classificationTypeAutor = super.build();
-        classificationTypeAutor.setId(AUTHOR_ID);
-        classificationTypeAutor.setClassificationScheme(SS_AUTHOR_CLASSIFICATION_SCHEME);
+        classificationTypeAutor.setId(UUID.randomUUID().toString());
+        classificationTypeAutor.setClassificationScheme(getClassificationScheme());
         classificationTypeAutor.getSlot().add(createSlotType("authorPerson", authorPerson.toString()));
         classificationTypeAutor.getSlot().add(createSlotType("authorInstitution", authorInstitution + "^^^^^&1.2.276.0.76.4.188&ISO^^^^" + telematikId));
         classificationTypeAutor.getSlot().add(createSlotType("authorRole", "8^^^&1.3.6.1.4.1.19376.3.276.1.5.13&ISO"));
+        // authorTelecommunication
         return classificationTypeAutor;
     }
+
+    protected abstract String getClassificationScheme();
 
     @Override
     public String getName() {
