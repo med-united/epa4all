@@ -48,7 +48,16 @@ public class Event extends AbstractResource {
         )
         @QueryParam("cardType") String cardType
     ) throws Exception {
-        CardType ct = cardType == null ? null : CardType.valueOf(cardType);
+        CardType ct;
+        if (cardType == null) {
+            ct = null;
+        } else {
+            try {
+                ct = CardType.from(cardType);
+            } catch (IllegalArgumentException e) {
+                ct = CardType.valueOf(cardType);
+            }
+        }
         return konnektorClient.getCardsResponse(userRuntimeConfig, ct);
     }
 
