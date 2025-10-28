@@ -71,19 +71,18 @@ public abstract class BaseProxyService {
         return webClient;
     }
 
-    protected String excludeQueryParams(String query, Set<String> excluded) {
-        if (query == null || query.isEmpty()) {
-            return null;
-        }
-        Map<String, String> params = Arrays.stream(query.split("&"))
-            .map(p -> p.split("=", 2))
-            .filter(p -> excluded.stream().noneMatch(ex -> ex.equalsIgnoreCase(p[0])))
-            .collect(Collectors.toMap(p -> p[0], p -> p.length > 1 ? p[1] : ""));
-
-        return params.entrySet().stream()
-            .map(e -> e.getKey() + "=" + e.getValue())
-            .collect(Collectors.joining("&"));
-    }
+	protected String excludeQueryParams(String query, Set<String> excluded) {
+		if (query == null || query.isEmpty()) {
+			return null;
+		}
+		
+		return Arrays.stream(query.split("&"))
+			.filter(param -> {
+				String key = param.split("=", 2)[0];
+				return excluded.stream().noneMatch(ex -> ex.equalsIgnoreCase(key));
+			})
+			.collect(Collectors.joining("&"));
+	}
 
     protected List<Pair<String, String>> buildContentHeaders(byte[] body) {
         if (body == null || body.length == 0) {
