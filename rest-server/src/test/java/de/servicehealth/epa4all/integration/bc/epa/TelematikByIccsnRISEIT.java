@@ -8,22 +8,25 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
+import static de.servicehealth.vau.VauClient.X_SMCB_ICCSN;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 
 @QuarkusTest
 @TestProfile(ProxyEpaTestProfile.class)
-public class TelematikByIccsnIT {
+public class TelematikByIccsnRISEIT {
 
     @Test
     public void telematikIdReturnedByIccsn() {
+        String iccsn = "80276883110000147793";
         given()
+            .header(X_SMCB_ICCSN, iccsn)
             .queryParams(Map.of(X_KONNEKTOR, "localhost"))
-            .queryParams(Map.of("iccsn", "80276883110000141773")) // SMC-B
+            .queryParams(Map.of("iccsn", iccsn)) // SMC-B
             .when()
             .get("/telematik/id")
             .then()
-            .body(containsString("3-SMC-B-Testkarte--883110000147807"))
+            .body(equalTo("3-SMC-B-Testkarte--883110000147793"))
             .statusCode(200);
     }
 }

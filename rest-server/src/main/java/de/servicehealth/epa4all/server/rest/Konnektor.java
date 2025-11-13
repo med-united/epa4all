@@ -49,6 +49,7 @@ public class Konnektor extends AbstractResource {
             .filter(kc -> konnektor == null || (kc.getHost() != null && kc.getHost().contains(konnektor)))
             .map(kc -> {
                 IUserConfigurations userConfigurations = kc.getUserConfigurations();
+                // TODO username/password?
                 return new KonnektorUserConfig(
                     userConfigurations.getClientCertificate(),
                     userConfigurations.getClientSystemId(),

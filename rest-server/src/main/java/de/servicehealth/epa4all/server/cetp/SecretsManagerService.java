@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.util.Optional;
 
+import static de.health.service.cetp.config.KonnektorAuth.BASIC;
 import static de.servicehealth.utils.SSLUtils.getClientCertificateBytes;
 import static de.servicehealth.utils.SSLUtils.initSSLContext;
 
@@ -48,7 +49,7 @@ public class SecretsManagerService implements ISecretsManager {
     public KeyManagerFactory getKeyManagerFactory(KonnektorConfig config) {
         IUserConfigurations userConfigurations = config.getUserConfigurations();
         String clientCertificate = userConfigurations.getClientCertificate();
-        if (clientCertificate == null) {
+        if (userConfigurations.getKonnektorAuth() == BASIC || clientCertificate == null) {
             return keyManagerFactory;
         } else {
             byte[] clientCertificateBytes = getClientCertificateBytes(clientCertificate);

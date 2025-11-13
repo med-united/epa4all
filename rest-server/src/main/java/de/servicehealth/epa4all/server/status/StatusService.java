@@ -74,14 +74,14 @@ public class StatusService {
         futures.add(scheduledThreadPool.submit(() -> {
             String smcbHandle = null;
             try {
-                smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig); // TODO cache
+                smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
                 status.setSmcbAvailable(true, "Card Handle: " + smcbHandle);
             } catch (Exception e) {
                 status.setSmcbAvailable(false, "Exception: " + e.getMessage() + " Cause: " + (e.getCause() != null ? e.getCause().getMessage() : ""));
             }
             // CautReadable
             try {
-                konnektorClient.getSmcbX509Certificate(runtimeConfig, smcbHandle); // TODO cache
+                konnektorClient.getSmcbX509Certificate(runtimeConfig, smcbHandle);
                 status.setCautReadable(true, "");
             } catch (Exception e) {
                 status.setCautReadable(false, "Exception: " + e.getMessage() + " Cause: " + (e.getCause() != null ? e.getCause().getMessage() : ""));

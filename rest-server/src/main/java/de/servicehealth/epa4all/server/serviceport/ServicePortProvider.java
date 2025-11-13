@@ -10,15 +10,14 @@ import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventService;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDService;
 import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
+import de.health.service.cetp.config.KonnektorAuth;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IUserConfigurations;
-import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.api.epa4all.annotation.KonnektorSoapFeatures;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.utils.SSLResult;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.Invocation.Builder;
@@ -34,13 +33,10 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import javax.net.ssl.SSLContext;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.HashMap;
@@ -48,9 +44,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static de.health.service.cetp.config.KonnektorAuth.CERTIFICATE;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.utils.SSLUtils.createSSLContext;
 import static de.servicehealth.utils.SSLUtils.initSSLContext;
+import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static jakarta.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
+import static jakarta.xml.ws.BindingProvider.PASSWORD_PROPERTY;
+import static jakarta.xml.ws.BindingProvider.USERNAME_PROPERTY;
 
 @ApplicationScoped
 public class ServicePortProvider extends StartableService {
@@ -81,9 +82,14 @@ public class ServicePortProvider extends StartableService {
 
     @Inject
     public ServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) {
+        Optional<KonnektorAuth> auth = konnektorDefaultConfig.getAuth();
         Optional<String> certAuthStoreFile = konnektorDefaultConfig.getCertAuthStoreFile();
         Optional<String> certAuthStoreFilePassword = konnektorDefaultConfig.getCertAuthStoreFilePassword();
-        if (certAuthStoreFile.isPresent() && certAuthStoreFilePassword.isPresent()) {
+        if (auth.isPresent()
+            && auth.get() == CERTIFICATE
+            && certAuthStoreFile.isPresent()
+            && certAuthStoreFilePassword.isPresent()
+        ) {
             String certPass = certAuthStoreFilePassword.get();
             try (FileInputStream certInputStream = new FileInputStream(certAuthStoreFile.get())) {
                 SSLResult sslResult = initSSLContext(certInputStream, certPass);
@@ -109,78 +115,79 @@ public class ServicePortProvider extends StartableService {
         return konnektorSoapFeatures.toArray(WebServiceFeature[]::new);
     }
 
-    public CertificateServicePortType getCertificateServicePort(UserRuntimeConfig userRuntimeConfig) {
-        SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        CertificateService certificateService = new CertificateService(getFeatures());
-        CertificateServicePortType certificateServicePort = certificateService.getCertificateServicePort();
-        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = konnektorsEndpoints.get(connectorBaseURL).get("certificateServiceEndpointAddress");
-        setEndpointAddress((BindingProvider) certificateServicePort, url, sslContext);
-
+    public CertificateServicePortType getCertificateServicePort(IUserConfigurations userConfigurations) {
+        CertificateServicePortType certificateServicePort = new CertificateService(getFeatures()).getCertificateServicePort();
+        initServicePort(userConfigurations, (BindingProvider) certificateServicePort, "certificateServiceEndpointAddress");
         return certificateServicePort;
     }
 
-    public CardServicePortType getCardServicePortType(UserRuntimeConfig userRuntimeConfig) {
-        SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        CardService cardService = new CardService(getFeatures());
-        CardServicePortType cardServicePort = cardService.getCardServicePort();
-        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = konnektorsEndpoints.get(connectorBaseURL).get("cardServiceEndpointAddress");
-        setEndpointAddress((BindingProvider) cardServicePort, url, sslContext);
-
+    public CardServicePortType getCardServicePortType(IUserConfigurations userConfigurations) {
+        CardServicePortType cardServicePort = new CardService(getFeatures()).getCardServicePort();
+        initServicePort(userConfigurations, (BindingProvider) cardServicePort, "cardServiceEndpointAddress");
         return cardServicePort;
     }
 
-    public VSDServicePortType getVSDServicePortType(UserRuntimeConfig userRuntimeConfig) {
-        SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        VSDService vsdService = new VSDService(getFeatures());
-        VSDServicePortType cardServicePort = vsdService.getVSDServicePort();
-        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = konnektorsEndpoints.get(connectorBaseURL).get("vsdServiceEndpointAddress");
-        setEndpointAddress((BindingProvider) cardServicePort, url, sslContext);
-
-        return cardServicePort;
+    public VSDServicePortType getVSDServicePortType(IUserConfigurations userConfigurations) {
+        VSDServicePortType vsdServicePort = new VSDService(getFeatures()).getVSDServicePort();
+        initServicePort(userConfigurations, (BindingProvider) vsdServicePort, "vsdServiceEndpointAddress");
+        return vsdServicePort;
     }
 
-    public AuthSignatureServicePortType getAuthSignatureServicePortType(UserRuntimeConfig userRuntimeConfig) {
-        SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        AuthSignatureService authSignatureService = new AuthSignatureService(getFeatures());
-        AuthSignatureServicePortType authSignatureServicePort = authSignatureService.getAuthSignatureServicePort();
-        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = konnektorsEndpoints.get(connectorBaseURL).get("authSignatureServiceEndpointAddress");
-        setEndpointAddress((BindingProvider) authSignatureServicePort, url, sslContext);
-
+    public AuthSignatureServicePortType getAuthSignatureServicePortType(IUserConfigurations userConfigurations) {
+        AuthSignatureServicePortType authSignatureServicePort = new AuthSignatureService(getFeatures()).getAuthSignatureServicePort();
+        initServicePort(userConfigurations, (BindingProvider) authSignatureServicePort, "authSignatureServiceEndpointAddress");
         return authSignatureServicePort;
     }
 
-    public EventServicePortType getEventServicePortSilent(UserRuntimeConfig userRuntimeConfig) {
-        SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        EventService eventService = new EventService();
-        EventServicePortType eventServicePort = eventService.getEventServicePort();
-        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = konnektorsEndpoints.get(connectorBaseURL).get("eventServiceEndpointAddress");
-        setEndpointAddress((BindingProvider) eventServicePort, url, sslContext);
-
+    public EventServicePortType getEventServicePortSilent(IUserConfigurations userConfigurations) {
+        EventServicePortType eventServicePort = new EventService().getEventServicePort();
+        initServicePort(userConfigurations, (BindingProvider) eventServicePort, "eventServiceEndpointAddress");
         return eventServicePort;
     }
 
-    public EventServicePortType getEventServicePort(UserRuntimeConfig userRuntimeConfig) {
-        SSLContext sslContext = getSSLContext(userRuntimeConfig.getUserConfigurations());
-        EventService eventService = new EventService(getFeatures());
-        EventServicePortType eventServicePort = eventService.getEventServicePort();
-        String connectorBaseURL = userRuntimeConfig.getUserConfigurations().getConnectorBaseURL();
-        String url = konnektorsEndpoints.get(connectorBaseURL).get("eventServiceEndpointAddress");
-        setEndpointAddress((BindingProvider) eventServicePort, url, sslContext);
-
+    public EventServicePortType getEventServicePort(IUserConfigurations userConfigurations) {
+        EventServicePortType eventServicePort = new EventService(getFeatures()).getEventServicePort();
+        initServicePort(userConfigurations, (BindingProvider) eventServicePort, "eventServiceEndpointAddress");
         return eventServicePort;
     }
 
-    private SSLContext getSSLContext(IUserConfigurations userConfigurations) {
+    private void initServicePort(IUserConfigurations userConfigurations, BindingProvider servicePort, String endpointKey) {
         String certificate = userConfigurations.getClientCertificate();
-        String certificatePassword = userConfigurations.getClientCertificatePassword();
-        SSLContext sslContext = createSSLContext(certificate, certificatePassword, defaultSSLContext);
+        String password = userConfigurations.getClientCertificatePassword();
+        SSLContext sslContext = certificate == null
+            ? defaultSSLContext
+            : createSSLContext(certificate, password, defaultSSLContext);
+
         lookupWebServiceURLsIfNecessary(sslContext, userConfigurations);
-        return sslContext;
+
+        String connectorBaseURL = userConfigurations.getConnectorBaseURL();
+        String url = konnektorsEndpoints.get(connectorBaseURL).get(endpointKey);
+        setEndpointAddress(servicePort, url, sslContext, userConfigurations);
+    }
+
+    private void setEndpointAddress(
+        BindingProvider bindingProvider,
+        String url,
+        SSLContext sslContext,
+        IUserConfigurations userConfigurations
+    ) {
+        bindingProvider.getRequestContext().put(ENDPOINT_ADDRESS_PROPERTY, url);
+
+        TLSClientParameters tlsParams = new TLSClientParameters();
+        tlsParams.setDisableCNCheck(true);  // Disable hostname verification
+
+        switch (userConfigurations.getKonnektorAuth()) {
+            case BASIC -> {
+                bindingProvider.getRequestContext().put(USERNAME_PROPERTY, userConfigurations.getBasicAuthUsername());
+                bindingProvider.getRequestContext().put(PASSWORD_PROPERTY, userConfigurations.getBasicAuthPassword());
+            }
+            case CERTIFICATE ->
+                tlsParams.setSSLSocketFactory(sslContext.getSocketFactory());
+        }
+
+        Client client = ClientProxy.getClient(bindingProvider);
+        HTTPConduit httpConduit = (HTTPConduit) client.getConduit();
+        httpConduit.setTlsClientParameters(tlsParams);
     }
 
     @SuppressWarnings("resource")
@@ -203,10 +210,11 @@ public class ServicePortProvider extends StartableService {
             .path("/connector.sds")
             .request();
 
-        String basicAuthUsername = userConfigurations.getBasicAuthUsername();
-        String basicAuthPassword = userConfigurations.getBasicAuthPassword();
-        if (basicAuthUsername != null && !basicAuthUsername.isEmpty()) {
-            builder.header("Authorization", "Basic " + Base64.getEncoder().encodeToString((basicAuthUsername + ":" + basicAuthPassword).getBytes()));
+        String username = userConfigurations.getBasicAuthUsername();
+        String password = userConfigurations.getBasicAuthPassword();
+        if (username != null && !username.isEmpty()) {
+            String basicCreds = username + ":" + password;
+            builder.header(AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(basicCreds.getBytes()));
         }
         Invocation invocation = builder.buildGet();
 
@@ -232,7 +240,6 @@ public class ServicePortProvider extends StartableService {
                 if (!node.hasAttributes() || node.getAttributes().getNamedItem("Name") == null) {
                     break;
                 }
-
 
                 switch (node.getAttributes().getNamedItem("Name").getTextContent()) {
                     case "AuthSignatureService": {
@@ -262,11 +269,9 @@ public class ServicePortProvider extends StartableService {
             }
             konnektorsEndpoints.put(userConfigurations.getConnectorBaseURL(), endpointMap);
 
-        } catch (ProcessingException | SAXException | IllegalArgumentException | IOException |
-                 ParserConfigurationException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
     }
 
     private String getEndpoint(Node serviceNode, String version, IUserConfigurations userConfig) {
@@ -313,23 +318,5 @@ public class ServicePortProvider extends StartableService {
             }
         }
         return null;
-    }
-
-    private void setEndpointAddress(BindingProvider bp, String url, SSLContext sslContext) {
-        bp.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, url);
-
-        // Get the CXF client proxy
-        Client client = ClientProxy.getClient(bp);
-
-        // Get the HTTPConduit
-        HTTPConduit httpConduit = (HTTPConduit) client.getConduit();
-
-        // Set TLS parameters
-        TLSClientParameters tlsParams = new TLSClientParameters();
-        tlsParams.setSSLSocketFactory(sslContext.getSocketFactory());
-        tlsParams.setDisableCNCheck(true);  // Disable hostname verification (optional)
-
-        // Set the TLS parameters on the HTTPConduit
-        httpConduit.setTlsClientParameters(tlsParams);
     }
 }

@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.server.serviceport;
 
-import de.health.service.config.api.UserRuntimeConfig;
+import de.health.service.config.api.IUserConfigurations;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode
@@ -11,10 +11,10 @@ public class KonnektorKey {
     private final String clientSystemId;
     private final String konnektorBaseUrl;
 
-    public KonnektorKey(UserRuntimeConfig userRuntimeConfig) {
-        mandantId = userRuntimeConfig.getMandantId();
-        workplaceId = userRuntimeConfig.getWorkplaceId();
-        clientSystemId = userRuntimeConfig.getClientSystemId();
-        konnektorBaseUrl = userRuntimeConfig.getConnectorBaseURL();
+    public KonnektorKey(IUserConfigurations userConfigurations) {
+        mandantId = userConfigurations.getMandantId();
+        workplaceId = userConfigurations.getWorkplaceId();
+        clientSystemId = userConfigurations.getClientSystemId();
+        konnektorBaseUrl = userConfigurations.getConnectorBaseURL();
     }
 }

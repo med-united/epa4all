@@ -129,19 +129,19 @@ public class IdpClient extends StartableService {
     ) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         ThreadLocal<SendAuthCodeSCtype> threadLocalAuthCode = new ThreadLocal<>();
-        VauNpAction authAction = new VauNpAction(
+        VauNpAction vauNpAction = new VauNpAction(
             authenticatorClient,
             discoveryDocumentResponse,
             (s) -> {
                 threadLocalAuthCode.set(s);
                 countDownLatch.countDown();
             },
-            IdpFunc.init(multiKonnektorService.getServicePorts(runtimeConfig))
+            IdpFunc.init(multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations()))
         );
         // A_24760 - Start der Nutzerauthentifizierung
         // Parse query string into map
         AuthorizationData authorizationData = AuthorizationData.fromLocation(location);
-        processAuthAction(epaNonce, smcbHandle, runtimeConfig, authorizationData, authAction);
+        processAuthAction(epaNonce, smcbHandle, runtimeConfig, authorizationData, vauNpAction);
         countDownLatch.await(10, SECONDS);
         return threadLocalAuthCode.get();
     }
@@ -162,7 +162,7 @@ public class IdpClient extends StartableService {
                 threadLocalAccessToken.set(s);
                 countDownLatch.countDown();
             },
-            IdpFunc.init(multiKonnektorService.getServicePorts(runtimeConfig))
+            IdpFunc.init(multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations()))
         );
         AuthorizationData authorizationData = AuthorizationData.fromConfig(idpConfig, scopes);
         processAuthAction(null, smcbHandle, runtimeConfig, authorizationData, loginAction);
@@ -220,7 +220,7 @@ public class IdpClient extends StartableService {
         String hcv,
         UserRuntimeConfig userRuntimeConfig
     ) throws NoSuchAlgorithmException, IOException {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig.getUserConfigurations());
         JwtClaims claims = new JwtClaims();
         claims.setClaim(ClaimName.ISSUED_AT.getJoseName(), System.currentTimeMillis() / 1000);
         claims.setClaim(ClaimName.EXPIRES_AT.getJoseName(), (System.currentTimeMillis() / 1000) + 1200);

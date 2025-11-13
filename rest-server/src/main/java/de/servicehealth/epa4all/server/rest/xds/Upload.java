@@ -92,6 +92,7 @@ public class Upload extends XdsResource {
         @QueryParam(KVNR) String kvnr,
         @Parameter(name = "ig", description = "IG schema name")
         @QueryParam("ig") String ig,
+        @Parameter(description = "MultipartFormData: 'pdf_body' and 'raw_soap' ns5:ProvideAndRegisterDocumentSetRequest XML element to submit to the XDS registry")
         MultipartFormDataInput input
     ) throws Exception {
         EpaContext epaContext = prepareEpaContext(kvnr);
@@ -240,7 +241,7 @@ public class Upload extends XdsResource {
         @QueryParam(KVNR) String kvnr,
         @Parameter(name = "ig", description = "IG schema name", in = QUERY)
         @QueryParam("ig") String ig,
-        @Parameter(description = "ns5:ProvideAndRegisterDocumentSetRequest XML element to submit to the XDS registry")
+        @Parameter(description = "Document to submit to the XDS registry")
         InputStream is
     ) throws Exception {
         EpaContext epaContext = prepareEpaContext(kvnr);

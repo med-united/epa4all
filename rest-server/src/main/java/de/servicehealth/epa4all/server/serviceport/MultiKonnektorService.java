@@ -6,7 +6,7 @@ import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortTyp
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
-import de.health.service.config.api.UserRuntimeConfig;
+import de.health.service.config.api.IUserConfigurations;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.Getter;
@@ -26,19 +26,19 @@ public class MultiKonnektorService {
         this.servicePortProvider = servicePortProvider;
     }
 
-    public IKonnektorAPI getServicePorts(UserRuntimeConfig userRuntimeConfig) {
-        return portMap.computeIfAbsent(new KonnektorKey(userRuntimeConfig), kk -> {
-            CardServicePortType cardServicePortType = servicePortProvider.getCardServicePortType(userRuntimeConfig);
-            EventServicePortType eventServicePort = servicePortProvider.getEventServicePort(userRuntimeConfig);
-            EventServicePortType eventServicePortSilent = servicePortProvider.getEventServicePortSilent(userRuntimeConfig);
-            VSDServicePortType vsdServicePortType = servicePortProvider.getVSDServicePortType(userRuntimeConfig);
-            CertificateServicePortType certificateService = servicePortProvider.getCertificateServicePort(userRuntimeConfig);
-            AuthSignatureServicePortType authSignatureService = servicePortProvider.getAuthSignatureServicePortType(userRuntimeConfig);
+    public IKonnektorAPI getServicePorts(IUserConfigurations userConfigurations) {
+        return portMap.computeIfAbsent(new KonnektorKey(userConfigurations), kk -> {
+            CardServicePortType cardServicePortType = servicePortProvider.getCardServicePortType(userConfigurations);
+            EventServicePortType eventServicePort = servicePortProvider.getEventServicePort(userConfigurations);
+            EventServicePortType eventServicePortSilent = servicePortProvider.getEventServicePortSilent(userConfigurations);
+            VSDServicePortType vsdServicePortType = servicePortProvider.getVSDServicePortType(userConfigurations);
+            CertificateServicePortType certificateService = servicePortProvider.getCertificateServicePort(userConfigurations);
+            AuthSignatureServicePortType authSignatureService = servicePortProvider.getAuthSignatureServicePortType(userConfigurations);
 
             servicePortProvider.saveEndpointsConfiguration();
 
             return new KonnektorServicePorts(
-                buildContextType(userRuntimeConfig),
+                buildContextType(userConfigurations),
                 cardServicePortType,
                 eventServicePort,
                 eventServicePortSilent,
@@ -53,12 +53,12 @@ public class MultiKonnektorService {
         return servicePortProvider.getConfigDirectory() != null;
     }
 
-    private ContextType buildContextType(UserRuntimeConfig userRuntimeConfig) {
+    private ContextType buildContextType(IUserConfigurations userConfigurations) {
         ContextType contextType = new ContextType();
-        contextType.setMandantId(userRuntimeConfig.getMandantId());
-        contextType.setClientSystemId(userRuntimeConfig.getClientSystemId());
-        contextType.setWorkplaceId(userRuntimeConfig.getWorkplaceId());
-        contextType.setUserId(userRuntimeConfig.getUserId());
+        contextType.setMandantId(userConfigurations.getMandantId());
+        contextType.setClientSystemId(userConfigurations.getClientSystemId());
+        contextType.setWorkplaceId(userConfigurations.getWorkplaceId());
+        contextType.setUserId(userConfigurations.getUserId());
         return contextType;
     }
 
