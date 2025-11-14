@@ -32,17 +32,10 @@ public class SSLUtils {
         JKS, PKCS12
     }
 
-    public static SSLContext createSSLContext(
-        String certificate,
-        String certificatePassword,
-        SSLContext defaultSSLContext
-    ) {
-        if (certificate == null) {
-            return defaultSSLContext;
-        }
+    public static SSLContext createSSLContext(String certificate, String password, SSLContext defaultSSLContext) {
         byte[] clientCertificateBytes = getClientCertificateBytes(certificate);
         try (ByteArrayInputStream certInputStream = new ByteArrayInputStream(clientCertificateBytes)) {
-            SSLResult sslResult = initSSLContext(certInputStream, certificatePassword);
+            SSLResult sslResult = initSSLContext(certInputStream, password);
             return sslResult.getSslContext();
         } catch (Exception e) {
             return defaultSSLContext;

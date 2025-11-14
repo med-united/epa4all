@@ -137,7 +137,7 @@
                                     registryObject="urn:uuid:01fc9f46-2a06-4160-877d-7af988af5849"
                                     identificationScheme="urn:uuid:2e82c1f6-a085-4c72-9da3-8640a32e42ab">
                 <Name>
-                    <LocalizedString value="XDSDocumentEntry.uniqueId"></LocalizedString>
+                    <LocalizedString value="XDSDocumentEntry.uniqueId"/>
                 </Name>
             </ExternalIdentifier>
             <ExternalIdentifier id="urn:uuid:0196a994-4f9b-70a3-805f-e4ad3c55f307"
@@ -146,7 +146,7 @@
                                     registryObject="urn:uuid:01fc9f46-2a06-4160-877d-7af988af5849"
                                     identificationScheme="urn:uuid:58a6f841-87b3-4a3e-92fd-a8ffeff98427">
                 <Name>
-                    <LocalizedString value="XDSDocumentEntry.patientId"></LocalizedString>
+                    <LocalizedString value="XDSDocumentEntry.patientId"/>
                 </Name>
             </ExternalIdentifier>
         </ExtrinsicObject>

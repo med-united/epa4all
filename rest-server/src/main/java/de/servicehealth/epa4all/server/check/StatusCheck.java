@@ -30,9 +30,7 @@ public class StatusCheck implements Check {
                 && serverStatus.isConnectorReachable()
                 && serverStatus.isIdpReachable()
                 && serverStatus.isEhbaAvailable()
-                && serverStatus.isFachdienstReachable()
-                && serverStatus.isSmcbAvailable()
-                && serverStatus.isIdpaccesstokenObtainable();
+                && serverStatus.isSmcbAvailable();
             return ok ? Status.Up200 : Status.Down503;
         } catch (Throwable e) {
             return Status.Down500;
@@ -44,17 +42,16 @@ public class StatusCheck implements Check {
         ServerStatus serverStatus = statusService.getStatus();
         Map<String, Object> map = new HashMap<>();
         map.put("cautReadable", String.valueOf(serverStatus.isCautReadable()));
-        map.put("cautInformation", serverStatus.getCautInformation());
-        map.put("comfortSignatureAvailable", String.valueOf(serverStatus.isComfortSignatureAvailable()));
+        String cautInformation = serverStatus.getCautInformation();
+        if (!cautInformation.isBlank()) {
+            map.put("cautInformation", cautInformation);
+        }
         map.put("connectorReachable", String.valueOf(serverStatus.isConnectorReachable()));
         map.put("connectorInformation", serverStatus.getConnectorInformation());
         map.put("ehbaAvailable", String.valueOf(serverStatus.isEhbaAvailable()));
         map.put("ehbaInformation", serverStatus.getEhbaInformation());
-        map.put("fachdienstReachable", String.valueOf(serverStatus.isFachdienstReachable()));
-        map.put("fachdienstInformation", serverStatus.getFachdienstInformation());
         map.put("idpReachable", String.valueOf(serverStatus.isIdpReachable()));
         map.put("idpInformation", serverStatus.getIdpInformation());
-        map.put("idpaccesstokenObtainable", String.valueOf(serverStatus.isIdpaccesstokenObtainable()));
         map.put("smcbAvailable", String.valueOf(serverStatus.isSmcbAvailable()));
         map.put("smcbInformation", serverStatus.getSmcbInformation());
         return map;

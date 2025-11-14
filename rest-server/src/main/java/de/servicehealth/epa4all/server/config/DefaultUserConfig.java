@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.config;
 
+import de.health.service.cetp.config.KonnektorAuth;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IRuntimeConfig;
 import de.health.service.config.api.IUserConfigurations;
@@ -7,10 +8,21 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.idp.IdpConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Default;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Base64;
+import java.util.Optional;
+
+import static de.health.service.cetp.config.KonnektorAuth.CERTIFICATE;
 
 @ApplicationScoped
 @Default
 public class DefaultUserConfig implements UserRuntimeConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(DefaultUserConfig.class.getName());
 
     private final KonnektorDefaultConfig konnektorDefaultConfig;
     private final IUserConfigurations userConfigurations;
@@ -22,24 +34,45 @@ public class DefaultUserConfig implements UserRuntimeConfig {
         runtimeConfig = new InternalRuntimeConfig(idpConfig.getClientId(), idpConfig.getAuthRequestRedirectUrl());
 
         userConfigurations = new IUserConfigurations() {
+
+            private String clientCertificate;
+
+            @Override
+            public KonnektorAuth getKonnektorAuth() {
+                return konnektorDefaultConfig.getAuth().orElse(CERTIFICATE);
+            }
+
             @Override
             public String getBasicAuthUsername() {
-                return null;
+                return konnektorDefaultConfig.getBasicAuthUsername().orElse(null);
             }
 
             @Override
             public String getBasicAuthPassword() {
-            	return null;
+            	return konnektorDefaultConfig.getBasicAuthPassword().orElse(null);
             }
 
             @Override
             public String getClientCertificate() {
-                return null; // defaultSSLContext will be used from konnektor.default.cert.auth.store.file
+                if (clientCertificate == null) {
+                    Optional<String> certAuthStoreFileOpt = konnektorDefaultConfig.getCertAuthStoreFile();
+                    if (certAuthStoreFileOpt.isPresent()) {
+                        String certFilePath = certAuthStoreFileOpt.get();
+                        try {
+                            byte[] certBytes = Files.readAllBytes(Paths.get(certFilePath));
+                            String prefix = "data:application/x-pkcs12;base64,";
+                            clientCertificate = prefix + Base64.getEncoder().encodeToString(certBytes).replace("\n", "");
+                        } catch (Exception e) {
+                            log.error("Unable to read certificate from " + certFilePath, e);
+                        }
+                    }
+                }
+                return clientCertificate;
             }
 
             @Override
             public String getClientCertificatePassword() {
-                return null;
+                return konnektorDefaultConfig.getCertAuthStoreFilePassword().orElse(null);
             }
 
             @Override

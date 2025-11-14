@@ -117,7 +117,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public List<Subscription> getSubscriptions(UserRuntimeConfig runtimeConfig) throws CetpFault {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations());
         EventServicePortType eventService = servicePorts.getEventServiceSilent();
         GetSubscription getSubscriptionRequest = new GetSubscription();
         getSubscriptionRequest.setContext(servicePorts.getContextType());
@@ -193,7 +193,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public SubscriptionResult renewSubscription(UserRuntimeConfig runtimeConfig, String subscriptionId) throws CetpFault {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations());
         EventServicePortType eventService = servicePorts.getEventServiceSilent();
 
         Holder<Status> statusHolder = new Holder<>();
@@ -212,7 +212,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public SubscriptionResult subscribe(UserRuntimeConfig runtimeConfig, String cetpHost) throws CetpFault {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations());
         EventServicePortType eventService = servicePorts.getEventServiceSilent();
 
         Subscribe subscribe = new Subscribe();
@@ -235,7 +235,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public CetpStatus unsubscribe(UserRuntimeConfig runtimeConfig, String subscriptionId, String cetpHost, boolean forceCetp) throws CetpFault {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations());
         EventServicePortType eventService = servicePorts.getEventServiceSilent();
         try {
             Unsubscribe unsubscribe = new Unsubscribe();
@@ -271,7 +271,7 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public GetCardsResponse getCardsResponse(UserRuntimeConfig runtimeConfig, CardType cardType) throws CetpFault {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations());
         EventServicePortType eventService = servicePorts.getEventService();
         GetCards getCards = new GetCards();
         getCards.setContext(servicePorts.getContextType());
@@ -290,7 +290,7 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     public GetCardTerminalsResponse getCardTerminalsResponse(UserRuntimeConfig runtimeConfig) throws CetpFault {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations());
         EventServicePortType eventService = servicePorts.getEventService();
         GetCardTerminals getCardTerminals = new GetCardTerminals();
         getCardTerminals.setContext(servicePorts.getContextType());
@@ -303,7 +303,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public X509Certificate getHbaX509Certificate(UserRuntimeConfig runtimeConfig, String hbaHandle) throws CetpFault {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations());
         ReadCardCertificate readCardCertificateRequest = prepareReadCardCertificateRequest(
             servicePorts.getContextType(),
             hbaHandle,
@@ -337,7 +337,7 @@ public class KonnektorClient implements IKonnektorClient {
 
     @Override
     public CertificateInfo getSmcbX509Certificate(UserRuntimeConfig runtimeConfig, String smcbHandle) {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations());
         return getSmcbX509Certificate(servicePorts, smcbHandle);
     }
 

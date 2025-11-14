@@ -62,7 +62,7 @@ public class VsdService {
         String telematikId,
         String fallbackKvnr
     ) throws Exception {
-        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig);
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(runtimeConfig.getUserConfigurations());
         ContextType context = servicePorts.getContextType();
         if (context.getUserId() == null || context.getUserId().isEmpty()) {
             context.setUserId(UUID.randomUUID().toString());
