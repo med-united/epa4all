@@ -243,27 +243,23 @@ public class ServicePortProvider extends StartableService {
 
                 switch (node.getAttributes().getNamedItem("Name").getTextContent()) {
                     case "AuthSignatureService": {
-                        endpointMap.put("authSignatureServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
+                        endpointMap.put("authSignatureServiceEndpointAddress", getEndpoint(node, userConfigurations));
                         break;
                     }
                     case "CardService": {
-                        endpointMap.put("cardServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
+                        endpointMap.put("cardServiceEndpointAddress", getEndpoint(node, userConfigurations));
                         break;
                     }
                     case "EventService": {
-                        endpointMap.put("eventServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
+                        endpointMap.put("eventServiceEndpointAddress", getEndpoint(node, userConfigurations));
                         break;
                     }
                     case "CertificateService": {
-                        endpointMap.put("certificateServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
-                        break;
-                    }
-                    case "SignatureService": {
-                        endpointMap.put("signatureServiceEndpointAddress", getEndpoint(node, "7.5", userConfigurations));
+                        endpointMap.put("certificateServiceEndpointAddress", getEndpoint(node, userConfigurations));
                         break;
                     }
                     case "VSDService": {
-                        endpointMap.put("vsdServiceEndpointAddress", getEndpoint(node, null, userConfigurations));
+                        endpointMap.put("vsdServiceEndpointAddress", getEndpoint(node, userConfigurations));
                     }
                 }
             }
@@ -274,7 +270,7 @@ public class ServicePortProvider extends StartableService {
         }
     }
 
-    private String getEndpoint(Node serviceNode, String version, IUserConfigurations userConfig) {
+    private String getEndpoint(Node serviceNode, IUserConfigurations userConfig) {
         Node versionsNode = getNodeWithTag(serviceNode, "Versions");
 
         if (versionsNode == null) {
@@ -284,12 +280,6 @@ public class ServicePortProvider extends StartableService {
         String location = "";
         for (int i = 0, n = versionNodes.getLength(); i < n; ++i) {
             Node versionNode = versionNodes.item(i);
-
-            // if we have a specified version search in the list until we find it
-            if (version != null && versionNode.hasAttributes() && !versionNode.getAttributes().getNamedItem("Version").getTextContent().startsWith(version)) {
-                continue;
-            }
-
             Node endpointNode = getNodeWithTag(versionNode, "EndpointTLS");
 
             if (endpointNode == null || !endpointNode.hasAttributes()
