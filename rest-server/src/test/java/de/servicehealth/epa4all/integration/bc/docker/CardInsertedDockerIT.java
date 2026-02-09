@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.integration.bc.docker;
 
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.servicehealth.epa4all.common.profile.ProxyLocalTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,17 +44,19 @@ public class CardInsertedDockerIT extends AbstractVsdTest {
     public void epaPdfDocumentIsSentToCardlink() throws Exception {
         runWithDockerContainers(containers, () -> {
             String telematikId = "5-SMC-B-Testkarte-883110000118001";
-            String egkHandle = "EGK-127";
+            String egkCardHandle = "EGK-127";
             String kvnr = "X110485291";
             String smcbHandle = "SMC-B-123";
 
             mockWebdavConfig(TEST_FOLDER, null, null);
             mockVsdService(kvnr);
+
+            EgkHandle egkHandle = new EgkHandle(egkCardHandle, "ctId", new BigInteger("1"));
             mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
 
             CardlinkClient cardlinkClient = receiveCardInsertedEvent(
                 mockKonnektorConfig(),
-                egkHandle,
+                egkCardHandle,
                 "ctId-222"
             );
 

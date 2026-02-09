@@ -1,10 +1,13 @@
 package de.servicehealth.epa4all.server.vsd;
 
+import de.gematik.ws.conn.cardterminalservice.v1.Slot;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSD;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.conn.vsds.vsdservice.v5.VSDStatusType;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
+import de.health.service.cetp.IKonnektorClient;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
@@ -38,25 +41,31 @@ public class VsdService {
     private static final Logger log = LoggerFactory.getLogger(VsdService.class.getName());
 
     private final MultiKonnektorService multiKonnektorService;
+    private final IKonnektorClient konnektorClient;
     private final FileEventSender fileEventSender;
     private final FolderService folderService;
     private final EpaCallGuard epaCallGuard;
+    private final VsdConfig vsdConfig;
 
     @Inject
     public VsdService(
         MultiKonnektorService multiKonnektorService,
+        IKonnektorClient konnektorClient,
         FileEventSender fileEventSender,
         FolderService folderService,
-        EpaCallGuard epaCallGuard
+        EpaCallGuard epaCallGuard,
+        VsdConfig vsdConfig
     ) {
         this.multiKonnektorService = multiKonnektorService;
+        this.konnektorClient = konnektorClient;
         this.fileEventSender = fileEventSender;
         this.folderService = folderService;
         this.epaCallGuard = epaCallGuard;
+        this.vsdConfig = vsdConfig;
     }
 
     public synchronized String read(
-        String egkHandle,
+        EgkHandle egkHandle,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig,
         String telematikId,
@@ -67,7 +76,7 @@ public class VsdService {
         if (context.getUserId() == null || context.getUserId().isEmpty()) {
             context.setUserId(UUID.randomUUID().toString());
         }
-        ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle, smcbHandle);
+        ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle.cardHandle(), smcbHandle);
         ReadVSDResponse readVSDResponse = epaCallGuard.callAndRetry(() ->
             servicePorts.getVSDServicePortType().readVSD(readVSD)
         );
@@ -76,6 +85,10 @@ public class VsdService {
             throw new CetpFault("Unable to get insurantId");
         }
         saveVsdFile(telematikId, insurantId, readVSDResponse);
+        if (vsdConfig.isSharedCardSession()) {
+            String result = konnektorClient.ejectEgkCard(runtimeConfig, egkHandle);
+            log.info("EjectEgkCard result: " + result);
+        }
         return insurantId;
     }
 

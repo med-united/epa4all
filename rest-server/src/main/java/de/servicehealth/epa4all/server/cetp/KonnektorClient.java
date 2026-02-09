@@ -1,6 +1,10 @@
 package de.servicehealth.epa4all.server.cetp;
 
 import de.gematik.ws.conn.cardservice.v8.VerifyPin;
+import de.gematik.ws.conn.cardterminalservice.v1.EjectCard;
+import de.gematik.ws.conn.cardterminalservice.v1.EjectCardResponse;
+import de.gematik.ws.conn.cardterminalservice.v1.Slot;
+import de.gematik.ws.conn.cardterminalservice.wsdl.v1_1.CardTerminalServicePortType;
 import de.gematik.ws.conn.certificateservice.v6.ReadCardCertificate;
 import de.gematik.ws.conn.certificateservice.v6.ReadCardCertificateResponse;
 import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortType;
@@ -23,10 +27,12 @@ import de.gematik.ws.conn.eventservice.v7.Unsubscribe;
 import de.gematik.ws.conn.eventservice.v7.UnsubscribeResponse;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.FaultMessage;
+import de.gematik.ws.tel.error.v2.Error;
 import de.health.service.cetp.CertificateInfo;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.CetpStatus;
 import de.health.service.cetp.domain.SubscriptionResult;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.cetp.domain.eventservice.Subscription;
 import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
@@ -169,25 +175,52 @@ public class KonnektorClient implements IKonnektorClient {
             .orElseThrow(() -> new CetpFault(String.format("Could not get KVNR for EGK=%s", egkHandle)));
     }
 
-    public String getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) throws CetpFault {
+    public EgkHandle getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) throws CetpFault {
         List<Card> cards = getCards(userRuntimeConfig, EGK);
         Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
-        Optional<String> egkHandleOpt = card.map(Card::getCardHandle);
+        Optional<EgkHandle> egkHandleOpt = card.map(c -> new EgkHandle(c.getCardHandle(), c.getCtId(), c.getSlotId()));
         if (vsdConfig.isHandlesTestMode()) {
             if (egkHandleOpt.isPresent()) {
                 return egkHandleOpt.get();
             } else {
                 Card first = cards.isEmpty() ? null : cards.getFirst();
                 if (first != null) {
-                    return first.getCardHandle();
+                    return new EgkHandle(first.getCardHandle(), first.getCtId(), first.getSlotId());
                 } else {
-                    throw new CetpFault("EGK cards were not found");
+                    throw new CetpFault("No eGK card detected. Please check the card connection.");
                 }
             }
         } else {
             return egkHandleOpt.orElseThrow(() ->
-                new CetpFault(String.format("Could not get EGK card for insurantId: %s", insurantId))
+                new CetpFault("No eGK card detected. Please check the card connection.")
             );
+        }
+    }
+
+    @Override
+    public String ejectEgkCard(UserRuntimeConfig userRuntimeConfig, EgkHandle egkHandle) throws CetpFault {
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig.getUserConfigurations());
+        CardTerminalServicePortType cardTerminalService = servicePorts.getCardTerminalService();
+        try {
+            Slot slot = new Slot();
+            slot.setCtId(egkHandle.ctId());
+            slot.setSlotId(egkHandle.slotId());
+
+            EjectCard ejectCard = new EjectCard();
+            ejectCard.setContext(servicePorts.getContextType());
+            ejectCard.setCardHandle(egkHandle.cardHandle());
+            ejectCard.setSlot(slot);
+            ejectCard.setTimeOut(new BigInteger("1"));
+
+            EjectCardResponse ejectCardResponse = cardTerminalService.ejectCard(ejectCard);
+            Status status = ejectCardResponse.getStatus();
+            Error error = status.getError();
+            if (error != null) {
+                throw new CetpFault(error.getTrace().getFirst().getErrorText());
+            }
+            return status.getResult();
+        } catch (de.gematik.ws.conn.cardterminalservice.wsdl.v1_1.FaultMessage faultMessage) {
+            throw new CetpFault(faultMessage.getMessage());
         }
     }
 

@@ -25,9 +25,9 @@ public class AuthenticatorProvider {
 
     @Produces
     @Singleton
-    AuthenticatorClient getAuthenticatorClient(@ConfigProperty(name="idp.kind", defaultValue = "epa") String kind) {
+    AuthenticatorClient getAuthenticatorClient(@ConfigProperty(name = "idp.kind", defaultValue = "epa") String kind) {
         UnirestInstance unirestInstance = getUnirestInstance();
-        
+
         if ("tss".equals(kind)) {
             return new TSSAuthenticatorClient(unirestInstance);
         } else {
@@ -48,7 +48,7 @@ public class AuthenticatorProvider {
         unirestInstance.config().followRedirects(false);
         unirestInstance.config().setObjectMapper(new JacksonObjectMapper());
         unirestInstance.config().interceptor(new Interceptor() {
-            
+
             @Override
             public void onRequest(HttpRequest<?> req, Config cfg) {
                 log.info("--> {} {}\nHeaders: {}\nBody: {}\n",
@@ -84,7 +84,7 @@ public class AuthenticatorProvider {
                     );
                 }
             }
-            
+
             @Override
             public HttpResponse<?> onFail(Exception e, HttpRequestSummary req, Config cfg) {
                 log.error("<XX {} {} :", req.getHttpMethod(), req.getUrl(), e);

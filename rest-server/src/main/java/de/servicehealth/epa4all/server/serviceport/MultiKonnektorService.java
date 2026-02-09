@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.serviceport;
 
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureServicePortType;
 import de.gematik.ws.conn.cardservice.wsdl.v8_1.CardServicePortType;
+import de.gematik.ws.conn.cardterminalservice.wsdl.v1_1.CardTerminalServicePortType;
 import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortType;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
@@ -29,6 +30,7 @@ public class MultiKonnektorService {
     public IKonnektorAPI getServicePorts(IUserConfigurations userConfigurations) {
         return portMap.computeIfAbsent(new KonnektorKey(userConfigurations), kk -> {
             CardServicePortType cardServicePortType = servicePortProvider.getCardServicePortType(userConfigurations);
+            CardTerminalServicePortType cardTerminalServicePortType = servicePortProvider.getCardTerminalServicePortType(userConfigurations);
             EventServicePortType eventServicePort = servicePortProvider.getEventServicePort(userConfigurations);
             EventServicePortType eventServicePortSilent = servicePortProvider.getEventServicePortSilent(userConfigurations);
             VSDServicePortType vsdServicePortType = servicePortProvider.getVSDServicePortType(userConfigurations);
@@ -44,7 +46,8 @@ public class MultiKonnektorService {
                 eventServicePortSilent,
                 vsdServicePortType,
                 certificateService,
-                authSignatureService
+                authSignatureService,
+                cardTerminalServicePortType
             );
         });
     }
@@ -61,6 +64,4 @@ public class MultiKonnektorService {
         contextType.setUserId(userConfigurations.getUserId());
         return contextType;
     }
-
-    // todo - cleanup ?
 }

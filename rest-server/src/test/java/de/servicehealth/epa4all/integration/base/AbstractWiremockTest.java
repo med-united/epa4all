@@ -15,6 +15,7 @@ import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.servicehealth.api.epa4all.EpaMultiService;
@@ -225,7 +226,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         String kvnr
     ) throws Exception {
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
-        String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
+        EgkHandle egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
         String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
 
         String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, null);
@@ -301,6 +302,10 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     protected void prepareKonnektorStubs() throws Exception {
         servicePortProvider.doStart();
 
+        byte[] soapConnectorSdsEnvelop = getTextFixture("ConnectorSds.xml");
+        wiremock.addStubMapping(get(urlEqualTo("/konnektor/connector.sds"))
+            .willReturn(aResponse().withStatus(200).withBody(soapConnectorSdsEnvelop)).build());
+
         byte[] soapGetHbaCardsEnvelop = getTextFixture("GetHbaCards.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("HBA"))
             .willReturn(aResponse().withStatus(200).withBody(soapGetHbaCardsEnvelop)).build());
@@ -328,6 +333,11 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         byte[] soapReadVSDResponseEnvelop = getTextFixture("ReadVSDResponse.xml");
         wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/VSDService"))
             .willReturn(aResponse().withStatus(200).withBody(soapReadVSDResponseEnvelop)).build());
+
+        // TODO
+        // byte[] soapEjectCardResponseEnvelop = getTextFixture("EjectCardResponse.xml");
+        // wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CardTerminalService"))
+        //     .willReturn(aResponse().withStatus(200).withBody(soapEjectCardResponseEnvelop)).build());
     }
 
     protected void prepareIdpStubs() throws Exception {
@@ -384,8 +394,8 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         String ctIdValue = "cardTerminal-124";
 
         KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
-        String egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
-        channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue, egkHandle));
+        EgkHandle egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
+        channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue, egkHandle.cardHandle()));
         channel.pipeline().fireChannelReadComplete();
         return cardlinkClient;
     }

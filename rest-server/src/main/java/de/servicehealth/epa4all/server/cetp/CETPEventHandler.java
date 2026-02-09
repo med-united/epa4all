@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.cetp;
 import de.health.service.cetp.AbstractCETPEventHandler;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.config.api.IUserConfigurations;
 import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.api.epa4all.EpaMultiService;
@@ -23,6 +24,7 @@ import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HashMap;
@@ -122,8 +124,8 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         if (hasEGK && hasCardHandle && hasSlotID && hasCtID) {
             String egkIccsn = paramsMap.get("ICCSN");
             String ctId = paramsMap.get("CtID");
-            Integer slotId = Integer.parseInt(paramsMap.get("SlotID"));
-            String egkHandle = paramsMap.get("CardHandle");
+            Long slotId = Long.parseLong(paramsMap.get("SlotID"));
+            String cardHandle = paramsMap.get("CardHandle");
             String konnektorHost = configurations.getKonnektorHost();
             String workplaceId = configurations.getWorkplaceId();
             try {
@@ -134,15 +136,16 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 voidMdcEx(Map.of(
                     CT_ID, ctId,
                     SLOT, String.valueOf(slotId),
-                    EGK_HANDLE, egkHandle,
+                    EGK_HANDLE, cardHandle,
                     SMCB_HANDLE, smcbHandle,
                     TELEMATIKID, telematikId,
                     KONNEKTOR, konnektorHost,
                     WORKPLACE, workplaceId
                 ), () -> {
-                    String kvnr = konnektorClient.getKvnr(runtimeConfig, egkHandle);
+                    String kvnr = konnektorClient.getKvnr(runtimeConfig, cardHandle);
                     InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
                     if (insuranceData == null) {
+                        EgkHandle egkHandle = new EgkHandle(cardHandle, ctId, BigInteger.valueOf(slotId));
                         insuranceData = insuranceDataService.loadInsuranceData(
                             runtimeConfig, egkHandle, smcbHandle, telematikId, kvnr
                         );
@@ -177,7 +180,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 voidMdc(Map.of(
                     CT_ID, ctId,
                     SLOT, String.valueOf(slotId),
-                    EGK_HANDLE, egkHandle,
+                    EGK_HANDLE, cardHandle,
                     KONNEKTOR, konnektorHost,
                     WORKPLACE, workplaceId
                 ), () -> {
