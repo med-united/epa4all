@@ -1,6 +1,5 @@
 package de.servicehealth.epa4all.server.vsd;
 
-import de.gematik.ws.conn.cardterminalservice.v1.Slot;
 import de.gematik.ws.conn.connectorcontext.v2.ContextType;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSD;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
@@ -84,15 +83,21 @@ public class VsdService {
         if (insurantId == null || insurantId.isEmpty()) {
             throw new CetpFault("Unable to get insurantId");
         }
-        saveVsdFile(telematikId, insurantId, readVSDResponse);
-        if (vsdConfig.isSharedCardSession()) {
-            String result = konnektorClient.ejectEgkCard(runtimeConfig, egkHandle);
-            log.info("EjectEgkCard result: " + result);
+        boolean vsdFileSaved = saveVsdFile(telematikId, insurantId, readVSDResponse);
+        if (vsdFileSaved) {
+            if (vsdConfig.isSharedCardSessionEject()) {
+                String result = konnektorClient.ejectEgkCard(runtimeConfig, egkHandle);
+                log.info("Eject eGK: " + result);
+                if (vsdConfig.isSharedCardSessionRequest()) {
+                    result = konnektorClient.requestEgkCard(runtimeConfig, egkHandle);
+                    log.info("Request eGK: " + result);
+                }
+            }
         }
         return insurantId;
     }
 
-    public void saveVsdFile(String telematikId, String insurantId, ReadVSDResponse readVSDResponse) {
+    public boolean saveVsdFile(String telematikId, String insurantId, ReadVSDResponse readVSDResponse) {
         try {
             // 1. Make sure all med folders are created
             File telematikFolder = folderService.initInsurantFolders(telematikId, insurantId);
@@ -104,8 +109,10 @@ public class VsdService {
             vsdResponseFile.store(readVSDResponse);
 
             fileEventSender.sendAsync(new FileEvent(Create, telematikId, vsdResponseFile.getFiles()));
+            return true;
         } catch (Exception e) {
             log.warn("Could not save ReadVSDResponse", e);
+            return false;
         }
     }
 

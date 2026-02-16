@@ -11,8 +11,11 @@ public class VsdConfig {
     @ConfigProperty(name = "vsd.handles.test.mode", defaultValue = "true")
     boolean handlesTestMode;
 
-    @ConfigProperty(name = "vsd.shared.card.session", defaultValue = "false")
-    boolean sharedCardSession;
+    @ConfigProperty(name = "vsd.shared.card.session.eject", defaultValue = "false")
+    boolean sharedCardSessionEject;
+
+    @ConfigProperty(name = "vsd.shared.card.session.request", defaultValue = "false")
+    boolean sharedCardSessionRequest;
 
     @ConfigProperty(name = "vsd.primary.iccsn")
     String primaryIccsn;

@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.rest.tss;
 
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cdi.FromHttpPath;
 import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.authorization.TSSClient;
@@ -28,6 +29,7 @@ import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML;
 import static jakarta.ws.rs.core.MediaType.WILDCARD;
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.UNAUTHORIZED;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
@@ -52,8 +54,12 @@ public class Tss {
     @Inject
     TssClient tssClient;
 
+    @Inject
+    FeatureConfig featureConfig;
+
     @APIResponses({
         @APIResponse(responseCode = "200", description = "TSS accessToken is acquired"),
+        @APIResponse(responseCode = "404", description = "TSS feature is disabled"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @GET
@@ -66,7 +72,11 @@ public class Tss {
         )
         @QueryParam(SCOPE) String scope
     ) throws Exception {
-        return getTssToken(scope);
+        if (featureConfig.isTssEnabled()) {
+            return getTssToken(scope);
+        } else {
+            throw new TssException("Tss feature is disabled", NOT_FOUND);
+        }
     }
 
     private String getTssToken(String scope) throws Exception {
@@ -79,6 +89,7 @@ public class Tss {
 
     @APIResponses({
         @APIResponse(responseCode = "200", description = "TSS request was successfully forwarded"),
+        @APIResponse(responseCode = "404", description = "TSS feature is disabled"),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @POST
@@ -99,15 +110,19 @@ public class Tss {
         @Parameter(description = "XML payload to submit to TerminServer")
         byte[] body
     ) throws Exception {
-        String accessToken = getTssToken(scope);
-        HttpResponse httpResponse = tssClient.submit(accessToken, body);
-        int statusCode = httpResponse.getStatusLine().getStatusCode();
-        if (statusCode == SC_UNAUTHORIZED ) {
-            throw new TssException("401 Unauthorized", UNAUTHORIZED);
+        if (featureConfig.isTssEnabled()) {
+            String accessToken = getTssToken(scope);
+            HttpResponse httpResponse = tssClient.submit(accessToken, body);
+            int statusCode = httpResponse.getStatusLine().getStatusCode();
+            if (statusCode == SC_UNAUTHORIZED ) {
+                throw new TssException("401 Unauthorized", UNAUTHORIZED);
+            }
+            if (statusCode == SC_FORBIDDEN ) {
+                throw new TssException("403 Forbidden", FORBIDDEN);
+            }
+            return new String(httpResponse.getEntity().getContent().readAllBytes(), UTF_8);
+        } else {
+            throw new TssException("Tss feature is disabled", NOT_FOUND);
         }
-        if (statusCode == SC_FORBIDDEN ) {
-            throw new TssException("403 Forbidden", FORBIDDEN);
-        }
-        return new String(httpResponse.getEntity().getContent().readAllBytes(), UTF_8);
     }
 }
