@@ -1,4 +1,5 @@
 https://localhost:9443/konnektor<sep>authSignatureServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/AuthSignatureService
+https://localhost:9443/konnektor<sep>cardTerminalServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/CardTerminalService
 https://localhost:9443/konnektor<sep>cardServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/CardService
 https://localhost:9443/konnektor<sep>signatureServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/SignatureService
 https://localhost:9443/konnektor<sep>eventServiceEndpointAddress<sep>https://localhost:9443/konnektor/ws/EventService

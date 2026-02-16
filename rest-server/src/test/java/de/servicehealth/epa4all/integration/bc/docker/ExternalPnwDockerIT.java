@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.integration.bc.docker;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.servicehealth.epa4all.common.profile.ExternalDockerTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
@@ -54,14 +56,14 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
 
     private final String kvnr = "X110485291";
 
-    private String egkHandle;
+    private EgkHandle egkHandle;
     private String smcbHandle;
     private String telematikId;
 
     @BeforeEach
     public void before() throws Exception {
         telematikId = "5-SMC-B-Testkarte-883110000118001";
-        egkHandle = "EGK-127";
+        egkHandle = new EgkHandle("EGK-127", "ctId", new BigInteger("1"));
         smcbHandle = "SMC-B-123";
 
         File localFolder = folderService.getMedFolder(telematikId, kvnr, LOCAL_FOLDER);
@@ -78,7 +80,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
             mockKonnectorClient(egkHandle, telematikId, kvnr, smcbHandle);
 
             KonnektorConfig konnektorConfig = mockKonnektorConfig();
-            CardlinkClient cardlinkClient = receiveCardInsertedEvent(konnektorConfig, egkHandle, "ctId-244");
+            CardlinkClient cardlinkClient = receiveCardInsertedEvent(konnektorConfig, egkHandle.cardHandle(), "ctId-244");
 
             verify(cardlinkClient, never()).sendJson(any(), any(), any(), any());
 
@@ -108,7 +110,7 @@ public class ExternalPnwDockerIT extends AbstractVsdTest {
             InsuranceData insuranceData = insuranceDataService.getData(telematikId, kvnr);
             assertEquals("WDExMDQ4NTI5MTE3MzIxODk5OTdVWDFjxzDPSFvdIrRmmmOWFP/aP5rakVUqQj8=", insuranceData.getPz());
 
-            receiveCardInsertedEvent(konnektorConfig, egkHandle, "ctId-244");
+            receiveCardInsertedEvent(konnektorConfig, egkHandle.cardHandle(), "ctId-244");
             verify(cardlinkClient, times(1)).sendJson(any(), any(), eq("eRezeptBundlesFromAVS"), any());
         });
     }

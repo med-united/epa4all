@@ -13,6 +13,9 @@ public class FeatureConfig implements IFeatureConfig, EpaFeatureConfig {
     @ConfigProperty(name = "feature.mutual.tls.enabled", defaultValue = "false")
     boolean mutualTlsEnabled;
 
+    @ConfigProperty(name = "feature.tss.enabled", defaultValue = "false")
+    boolean tssEnabled;
+
     @ConfigProperty(name = "feature.cetp.enabled", defaultValue = "true")
     boolean cetpEnabled;
 

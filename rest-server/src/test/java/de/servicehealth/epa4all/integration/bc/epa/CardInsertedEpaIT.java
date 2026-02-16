@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.integration.bc.epa;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
@@ -81,7 +82,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
         }
     }
 
-    private String egkHandle;
+    private EgkHandle egkHandle;
     private String telematikId;
 
     @BeforeEach
@@ -113,7 +114,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
                 // epa-deployment doesn't work for some reason:
                 // {"MessageType":"Error","ErrorMessage":"Transcript Error: 500 : [no body]","ErrorCode":5}
                 // but epa-as-2.dev.epa4all.de:443 works
-                CardlinkClient cardlinkClient = receiveCardInsertedEvent(konnektorConfig, egkHandle, ctId);
+                CardlinkClient cardlinkClient = receiveCardInsertedEvent(konnektorConfig, egkHandle.cardHandle(), ctId);
 
                 Instant entitlement = insuranceDataService.getEntitlementExpiry(telematikId, kvnr);
                 assertNotNull(entitlement);

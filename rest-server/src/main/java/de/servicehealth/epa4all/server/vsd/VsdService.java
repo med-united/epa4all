@@ -5,6 +5,8 @@ import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSD;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.gematik.ws.conn.vsds.vsdservice.v5.VSDStatusType;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
+import de.health.service.cetp.IKonnektorClient;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.epa.EpaCallGuard;
@@ -16,6 +18,7 @@ import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,25 +41,31 @@ public class VsdService {
     private static final Logger log = LoggerFactory.getLogger(VsdService.class.getName());
 
     private final MultiKonnektorService multiKonnektorService;
+    private final IKonnektorClient konnektorClient;
     private final FileEventSender fileEventSender;
     private final FolderService folderService;
     private final EpaCallGuard epaCallGuard;
+    private final VsdConfig vsdConfig;
 
     @Inject
     public VsdService(
         MultiKonnektorService multiKonnektorService,
+        IKonnektorClient konnektorClient,
         FileEventSender fileEventSender,
         FolderService folderService,
-        EpaCallGuard epaCallGuard
+        EpaCallGuard epaCallGuard,
+        VsdConfig vsdConfig
     ) {
         this.multiKonnektorService = multiKonnektorService;
+        this.konnektorClient = konnektorClient;
         this.fileEventSender = fileEventSender;
         this.folderService = folderService;
         this.epaCallGuard = epaCallGuard;
+        this.vsdConfig = vsdConfig;
     }
 
     public synchronized String read(
-        String egkHandle,
+        EgkHandle egkHandle,
         String smcbHandle,
         UserRuntimeConfig runtimeConfig,
         String telematikId,
@@ -67,7 +76,7 @@ public class VsdService {
         if (context.getUserId() == null || context.getUserId().isEmpty()) {
             context.setUserId(UUID.randomUUID().toString());
         }
-        ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle, smcbHandle);
+        ReadVSD readVSD = prepareReadVSDRequest(context, egkHandle.cardHandle(), smcbHandle);
         ReadVSDResponse readVSDResponse = epaCallGuard.callAndRetry(() ->
             servicePorts.getVSDServicePortType().readVSD(readVSD)
         );
@@ -75,11 +84,28 @@ public class VsdService {
         if (insurantId == null || insurantId.isEmpty()) {
             throw new CetpFault("Unable to get insurantId");
         }
-        saveVsdFile(telematikId, insurantId, readVSDResponse);
+        boolean vsdFileSaved = saveVsdFile(telematikId, insurantId, readVSDResponse);
+        if (vsdFileSaved) {
+            if (vsdConfig.isSharedCardSessionEject()) {
+                String ejectTimeout = vsdConfig.getSharedCardSessionEjectTimeout();
+                Pair<Boolean, String> pair = konnektorClient.ejectEgkCard(runtimeConfig, egkHandle, ejectTimeout);
+                Boolean ejected = pair.getKey();
+                String notRequestedReason = "";
+                if (!ejected) {
+                    notRequestedReason = ", Request eGK is skipped";
+                }
+                log.info("Eject eGK: " + pair.getValue() + notRequestedReason);
+                if (ejected && vsdConfig.isSharedCardSessionRequest()) {
+                    String requestTimeout = vsdConfig.getSharedCardSessionRequestTimeout();
+                    String result = konnektorClient.requestEgkCard(runtimeConfig, egkHandle, requestTimeout);
+                    log.info("Request eGK: " + result);
+                }
+            }
+        }
         return insurantId;
     }
 
-    public void saveVsdFile(String telematikId, String insurantId, ReadVSDResponse readVSDResponse) {
+    public boolean saveVsdFile(String telematikId, String insurantId, ReadVSDResponse readVSDResponse) {
         try {
             // 1. Make sure all med folders are created
             File telematikFolder = folderService.initInsurantFolders(telematikId, insurantId);
@@ -91,8 +117,10 @@ public class VsdService {
             vsdResponseFile.store(readVSDResponse);
 
             fileEventSender.sendAsync(new FileEvent(Create, telematikId, vsdResponseFile.getFiles()));
+            return true;
         } catch (Exception e) {
             log.warn("Could not save ReadVSDResponse", e);
+            return false;
         }
     }
 

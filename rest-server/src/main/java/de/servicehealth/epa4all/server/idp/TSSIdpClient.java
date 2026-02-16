@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.idp;
 
 import de.gematik.idp.client.AuthenticatorClient;
+import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.idp.authorization.TSSClient;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
@@ -19,6 +20,7 @@ public class TSSIdpClient extends IdpClient implements StartupEventListener {
     @Inject
     public TSSIdpClient(
         TssConfig tssConfig,
+        FeatureConfig featureConfig,
         ManagedExecutor managedExecutor,
         KonnektorClient konnektorClient,
         @TSSClient
@@ -33,6 +35,7 @@ public class TSSIdpClient extends IdpClient implements StartupEventListener {
                 tssConfig.getAuthRequestRedirectUrl(),
                 tssConfig.isHcvEnabled()
             ),
+            featureConfig,
             managedExecutor,
             konnektorClient,
             tssAuthenticatorClient,

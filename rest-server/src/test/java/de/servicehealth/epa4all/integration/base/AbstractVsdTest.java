@@ -8,6 +8,7 @@ import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
@@ -128,7 +129,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
     }
 
     protected KonnektorClient mockKonnectorClient(
-        String egkHandle,
+        EgkHandle egkHandle,
         String telematikId,
         String kvnr,
         String smcbHandle

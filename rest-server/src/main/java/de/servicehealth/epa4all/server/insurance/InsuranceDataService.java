@@ -1,6 +1,8 @@
 package de.servicehealth.epa4all.server.insurance;
 
+import de.gematik.ws.conn.cardterminalservice.v1.Slot;
 import de.health.service.cetp.IKonnektorClient;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementFile;
 import de.servicehealth.epa4all.server.filetracker.FolderService;
@@ -13,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.time.Instant;
 
 import static de.servicehealth.folder.IFolderService.LOCAL_FOLDER;
@@ -42,7 +45,7 @@ public class InsuranceDataService {
 
     public InsuranceData loadInsuranceData(
         UserRuntimeConfig runtimeConfig,
-        String egkHandle,
+        EgkHandle egkHandle,
         String smcbHandle,
         String telematikId,
         String fallbackKvnr
@@ -58,11 +61,11 @@ public class InsuranceDataService {
         String kvnr
     ) {
         try {
-            String egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
+            EgkHandle egkHandle = konnektorClient.getEgkHandle(runtimeConfig, kvnr);
             String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, kvnr);
             return getData(telematikId, insurantId);
         } catch (Exception e) {
-            log.warn("Error while get InsuranceData: %s".formatted(e.getMessage()));
+            log.error("InsuranceData error:", e);
             return null;
         }
     }

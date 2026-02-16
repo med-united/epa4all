@@ -8,6 +8,7 @@ import de.gematik.idp.client.data.DiscoveryDocumentResponse;
 import de.gematik.idp.field.ClaimName;
 import de.health.service.cetp.CertificateInfo;
 import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.idp.action.AuthAction;
 import de.servicehealth.epa4all.server.idp.action.LoginAction;
@@ -52,6 +53,7 @@ public class IdpClient extends StartableService {
     }
 
     IdpConfig idpConfig;
+    FeatureConfig featureConfig;
     ManagedExecutor managedExecutor;
     KonnektorClient konnektorClient;
     AuthenticatorClient authenticatorClient;
@@ -67,12 +69,14 @@ public class IdpClient extends StartableService {
     @Inject
     public IdpClient(
         IdpConfig idpConfig,
+        FeatureConfig featureConfig,
         ManagedExecutor managedExecutor,
         KonnektorClient konnektorClient,
         AuthenticatorClient authenticatorClient,
         MultiKonnektorService multiKonnektorService
     ) {
         this.idpConfig = idpConfig;
+        this.featureConfig = featureConfig;
         this.managedExecutor = managedExecutor;
         this.konnektorClient = konnektorClient;
         this.authenticatorClient = authenticatorClient;
@@ -95,6 +99,10 @@ public class IdpClient extends StartableService {
     }
 
     private void retrieveDiscoveryDocument() throws Exception {
+        if (this instanceof TSSIdpClient && !featureConfig.isTssEnabled()) {
+            log.warn("TSS feature is disabled");
+            return;
+        }
         String fileName = getFileName();
         DiscoveryDocumentFile<DiscoveryDocumentWrapper> documentFile = new DiscoveryDocumentFile<>(configDirectory, fileName);
         DiscoveryDocumentWrapper documentWrapper = documentFile.load();

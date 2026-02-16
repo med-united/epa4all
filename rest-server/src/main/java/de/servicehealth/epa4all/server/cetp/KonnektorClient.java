@@ -1,6 +1,13 @@
 package de.servicehealth.epa4all.server.cetp;
 
 import de.gematik.ws.conn.cardservice.v8.VerifyPin;
+import de.gematik.ws.conn.cardservicecommon.v2.CardTypeType;
+import de.gematik.ws.conn.cardterminalservice.v1.EjectCard;
+import de.gematik.ws.conn.cardterminalservice.v1.EjectCardResponse;
+import de.gematik.ws.conn.cardterminalservice.v1.RequestCard;
+import de.gematik.ws.conn.cardterminalservice.v1.RequestCardResponse;
+import de.gematik.ws.conn.cardterminalservice.v1.Slot;
+import de.gematik.ws.conn.cardterminalservice.wsdl.v1_1.CardTerminalServicePortType;
 import de.gematik.ws.conn.certificateservice.v6.ReadCardCertificate;
 import de.gematik.ws.conn.certificateservice.v6.ReadCardCertificateResponse;
 import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortType;
@@ -23,10 +30,12 @@ import de.gematik.ws.conn.eventservice.v7.Unsubscribe;
 import de.gematik.ws.conn.eventservice.v7.UnsubscribeResponse;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.FaultMessage;
+import de.gematik.ws.tel.error.v2.Error;
 import de.health.service.cetp.CertificateInfo;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.CetpStatus;
 import de.health.service.cetp.domain.SubscriptionResult;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.cetp.domain.eventservice.Subscription;
 import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
@@ -43,10 +52,13 @@ import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionResu
 import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.epa4all.server.vsd.VsdConfig;
+import de.servicehealth.epa4all.server.vsd.VsdService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.ByteArrayInputStream;
@@ -74,6 +86,8 @@ import static de.servicehealth.utils.SSLUtils.extractTelematikIdFromCertificate;
 
 @ApplicationScoped
 public class KonnektorClient implements IKonnektorClient {
+
+    private static final Logger log = LoggerFactory.getLogger(KonnektorClient.class.getName());
 
     @Getter
     private final ConcurrentHashMap<String, String> smcbTelematikMap = new ConcurrentHashMap<>();
@@ -169,25 +183,78 @@ public class KonnektorClient implements IKonnektorClient {
             .orElseThrow(() -> new CetpFault(String.format("Could not get KVNR for EGK=%s", egkHandle)));
     }
 
-    public String getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) throws CetpFault {
+    public EgkHandle getEgkHandle(UserRuntimeConfig userRuntimeConfig, String insurantId) throws CetpFault {
         List<Card> cards = getCards(userRuntimeConfig, EGK);
         Optional<Card> card = cards.stream().filter(c -> c.getKvnr().equals(insurantId)).findAny();
-        Optional<String> egkHandleOpt = card.map(Card::getCardHandle);
+        Optional<EgkHandle> egkHandleOpt = card.map(c -> new EgkHandle(c.getCardHandle(), c.getCtId(), c.getSlotId()));
         if (vsdConfig.isHandlesTestMode()) {
             if (egkHandleOpt.isPresent()) {
                 return egkHandleOpt.get();
             } else {
                 Card first = cards.isEmpty() ? null : cards.getFirst();
                 if (first != null) {
-                    return first.getCardHandle();
+                    return new EgkHandle(first.getCardHandle(), first.getCtId(), first.getSlotId());
                 } else {
-                    throw new CetpFault("EGK cards were not found");
+                    throw new CetpFault("No eGK card detected. Please check the card connection.");
                 }
             }
         } else {
             return egkHandleOpt.orElseThrow(() ->
-                new CetpFault(String.format("Could not get EGK card for insurantId: %s", insurantId))
+                new CetpFault("No eGK card detected. Please check the card connection.")
             );
+        }
+    }
+
+    @Override
+    public Pair<Boolean, String> ejectEgkCard(UserRuntimeConfig userRuntimeConfig, EgkHandle egkHandle, String timeout) {
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig.getUserConfigurations());
+        CardTerminalServicePortType cardTerminalService = servicePorts.getCardTerminalService();
+        try {
+            Slot slot = new Slot();
+            slot.setCtId(egkHandle.ctId());
+            slot.setSlotId(egkHandle.slotId());
+
+            EjectCard ejectCard = new EjectCard();
+            ContextType contextType = servicePorts.getContextType();
+            contextType.setUserId(null);
+            ejectCard.setContext(contextType);
+            // ejectCard.setCardHandle(egkHandle.cardHandle());
+            ejectCard.setSlot(slot);
+            ejectCard.setTimeOut(new BigInteger(timeout));
+
+            EjectCardResponse ejectCardResponse = cardTerminalService.ejectCard(ejectCard);
+            Status status = ejectCardResponse.getStatus();
+            Error error = status.getError();
+            if (error != null) {
+                throw new CetpFault(error.getTrace().getFirst().getErrorText());
+            }
+            return Pair.of(true, status.getResult());
+        } catch (Exception e) {
+            log.error("Eject eGK error", e);
+            return Pair.of(false, e.getMessage());
+        }
+    }
+
+    @Override
+    public String requestEgkCard(UserRuntimeConfig userRuntimeConfig, EgkHandle egkHandle, String timeout) {
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig.getUserConfigurations());
+        CardTerminalServicePortType cardTerminalService = servicePorts.getCardTerminalService();
+        try {
+            Slot slot = new Slot();
+            slot.setCtId(egkHandle.ctId());
+            slot.setSlotId(egkHandle.slotId());
+
+            RequestCard requestCard = new RequestCard();
+            requestCard.setCardType(CardTypeType.EGK);
+            requestCard.setTimeOut(new BigInteger(timeout));
+            requestCard.setContext(servicePorts.getContextType());
+            requestCard.setSlot(slot);
+
+            RequestCardResponse requestCardResponse = cardTerminalService.requestCard(requestCard);
+            return requestCardResponse.getStatus().getResult();
+        } catch (Exception e) {
+            log.error("Request eGK error", e);
+            return e.getMessage();
         }
     }
 

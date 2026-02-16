@@ -4,6 +4,8 @@ import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureService;
 import de.gematik.ws.conn.authsignatureservice.wsdl.v7_4.AuthSignatureServicePortType;
 import de.gematik.ws.conn.cardservice.wsdl.v8_1.CardService;
 import de.gematik.ws.conn.cardservice.wsdl.v8_1.CardServicePortType;
+import de.gematik.ws.conn.cardterminalservice.wsdl.v1_1.CardTerminalService;
+import de.gematik.ws.conn.cardterminalservice.wsdl.v1_1.CardTerminalServicePortType;
 import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateService;
 import de.gematik.ws.conn.certificateservice.wsdl.v6_0.CertificateServicePortType;
 import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventService;
@@ -127,6 +129,12 @@ public class ServicePortProvider extends StartableService {
         return cardServicePort;
     }
 
+    public CardTerminalServicePortType getCardTerminalServicePortType(IUserConfigurations userConfigurations) {
+        CardTerminalServicePortType cardTerminalServicePort = new CardTerminalService(getFeatures()).getCardTerminalServicePort();
+        initServicePort(userConfigurations, (BindingProvider) cardTerminalServicePort, "cardTerminalServiceEndpointAddress");
+        return cardTerminalServicePort;
+    }
+
     public VSDServicePortType getVSDServicePortType(IUserConfigurations userConfigurations) {
         VSDServicePortType vsdServicePort = new VSDService(getFeatures()).getVSDServicePort();
         initServicePort(userConfigurations, (BindingProvider) vsdServicePort, "vsdServiceEndpointAddress");
@@ -158,7 +166,7 @@ public class ServicePortProvider extends StartableService {
             ? defaultSSLContext
             : createSSLContext(certificate, password, defaultSSLContext);
 
-        lookupWebServiceURLsIfNecessary(sslContext, userConfigurations);
+        lookupWebServiceURLsIfNecessary(sslContext, userConfigurations, endpointKey);
 
         String connectorBaseURL = userConfigurations.getConnectorBaseURL();
         String url = konnektorsEndpoints.get(connectorBaseURL).get(endpointKey);
@@ -181,8 +189,7 @@ public class ServicePortProvider extends StartableService {
                 bindingProvider.getRequestContext().put(USERNAME_PROPERTY, userConfigurations.getBasicAuthUsername());
                 bindingProvider.getRequestContext().put(PASSWORD_PROPERTY, userConfigurations.getBasicAuthPassword());
             }
-            case CERTIFICATE ->
-                tlsParams.setSSLSocketFactory(sslContext.getSocketFactory());
+            case CERTIFICATE -> tlsParams.setSSLSocketFactory(sslContext.getSocketFactory());
         }
 
         Client client = ClientProxy.getClient(bindingProvider);
@@ -191,8 +198,14 @@ public class ServicePortProvider extends StartableService {
     }
 
     @SuppressWarnings("resource")
-    private void lookupWebServiceURLsIfNecessary(SSLContext sslContext, IUserConfigurations userConfigurations) {
-        if (konnektorsEndpoints.containsKey(userConfigurations.getConnectorBaseURL())) {
+    private void lookupWebServiceURLsIfNecessary(
+        SSLContext sslContext,
+        IUserConfigurations userConfigurations,
+        String endpointKey
+    ) {
+        String connectorBaseURL = userConfigurations.getConnectorBaseURL();
+        Map<String, String> konnektorEndpoints = konnektorsEndpoints.get(connectorBaseURL);
+        if (konnektorEndpoints != null && konnektorEndpoints.containsKey(endpointKey)) {
             return;
         }
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
@@ -200,13 +213,13 @@ public class ServicePortProvider extends StartableService {
 
         // disable hostname verification
         clientBuilder = clientBuilder.hostnameVerifier((h, s) -> true);
-        if (userConfigurations.getConnectorBaseURL() == null) {
+        if (connectorBaseURL == null) {
             log.warn("ConnectorBaseURL is null, won't read connector.sds");
             return;
         }
 
         Builder builder = clientBuilder.build()
-            .target(userConfigurations.getConnectorBaseURL())
+            .target(connectorBaseURL)
             .path("/connector.sds")
             .request();
 
@@ -241,6 +254,8 @@ public class ServicePortProvider extends StartableService {
                     break;
                 }
 
+                // TODO move needed servicePorts to config
+                
                 switch (node.getAttributes().getNamedItem("Name").getTextContent()) {
                     case "AuthSignatureService": {
                         endpointMap.put("authSignatureServiceEndpointAddress", getEndpoint(node, userConfigurations));
@@ -248,6 +263,10 @@ public class ServicePortProvider extends StartableService {
                     }
                     case "CardService": {
                         endpointMap.put("cardServiceEndpointAddress", getEndpoint(node, userConfigurations));
+                        break;
+                    }
+                    case "CardTerminalService": {
+                        endpointMap.put("cardTerminalServiceEndpointAddress", getEndpoint(node, userConfigurations));
                         break;
                     }
                     case "EventService": {
@@ -263,7 +282,7 @@ public class ServicePortProvider extends StartableService {
                     }
                 }
             }
-            konnektorsEndpoints.put(userConfigurations.getConnectorBaseURL(), endpointMap);
+            konnektorsEndpoints.put(connectorBaseURL, endpointMap);
 
         } catch (Exception e) {
             throw new RuntimeException(e);

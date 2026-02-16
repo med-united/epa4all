@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.integration.bc.epa;
 
 import de.health.service.cetp.IKonnektorClient;
+import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
@@ -27,7 +28,7 @@ public class InsuranceDataEpaIT extends AbstractVsdTest {
 
     private final String kvnr = "X110624006";
 
-    private String egkHandle;
+    private EgkHandle egkHandle;
     private String smcbHandle;
     private String telematikId;
 
@@ -46,7 +47,7 @@ public class InsuranceDataEpaIT extends AbstractVsdTest {
         mockWebdavConfig(TEST_FOLDER, null, null);
 
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
-        String insurantId = vsdService.read(telematikId, egkHandle, runtimeConfig, smcbHandle, null);
+        String insurantId = vsdService.read(egkHandle, smcbHandle, runtimeConfig, telematikId, null);
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
         assertEquals(kvnr, insuranceData.getInsurantId());
     }
