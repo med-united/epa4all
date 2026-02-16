@@ -206,7 +206,7 @@ public class KonnektorClient implements IKonnektorClient {
     }
 
     @Override
-    public String ejectEgkCard(UserRuntimeConfig userRuntimeConfig, EgkHandle egkHandle) {
+    public Pair<Boolean, String> ejectEgkCard(UserRuntimeConfig userRuntimeConfig, EgkHandle egkHandle, String timeout) {
         IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig.getUserConfigurations());
         CardTerminalServicePortType cardTerminalService = servicePorts.getCardTerminalService();
         try {
@@ -220,7 +220,7 @@ public class KonnektorClient implements IKonnektorClient {
             ejectCard.setContext(contextType);
             // ejectCard.setCardHandle(egkHandle.cardHandle());
             ejectCard.setSlot(slot);
-            ejectCard.setTimeOut(BigInteger.ZERO);
+            ejectCard.setTimeOut(new BigInteger(timeout));
 
             EjectCardResponse ejectCardResponse = cardTerminalService.ejectCard(ejectCard);
             Status status = ejectCardResponse.getStatus();
@@ -228,15 +228,15 @@ public class KonnektorClient implements IKonnektorClient {
             if (error != null) {
                 throw new CetpFault(error.getTrace().getFirst().getErrorText());
             }
-            return status.getResult();
+            return Pair.of(true, status.getResult());
         } catch (Exception e) {
             log.error("Eject eGK error", e);
-            return e.getMessage();
+            return Pair.of(false, e.getMessage());
         }
     }
 
     @Override
-    public String requestEgkCard(UserRuntimeConfig userRuntimeConfig, EgkHandle egkHandle) {
+    public String requestEgkCard(UserRuntimeConfig userRuntimeConfig, EgkHandle egkHandle, String timeout) {
         IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig.getUserConfigurations());
         CardTerminalServicePortType cardTerminalService = servicePorts.getCardTerminalService();
         try {
@@ -246,7 +246,7 @@ public class KonnektorClient implements IKonnektorClient {
 
             RequestCard requestCard = new RequestCard();
             requestCard.setCardType(CardTypeType.EGK);
-            requestCard.setTimeOut(BigInteger.ZERO);
+            requestCard.setTimeOut(new BigInteger(timeout));
             requestCard.setContext(servicePorts.getContextType());
             requestCard.setSlot(slot);
 

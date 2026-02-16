@@ -18,6 +18,7 @@ import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,10 +87,17 @@ public class VsdService {
         boolean vsdFileSaved = saveVsdFile(telematikId, insurantId, readVSDResponse);
         if (vsdFileSaved) {
             if (vsdConfig.isSharedCardSessionEject()) {
-                String result = konnektorClient.ejectEgkCard(runtimeConfig, egkHandle);
-                log.info("Eject eGK: " + result);
-                if (vsdConfig.isSharedCardSessionRequest()) {
-                    result = konnektorClient.requestEgkCard(runtimeConfig, egkHandle);
+                String ejectTimeout = vsdConfig.getSharedCardSessionEjectTimeout();
+                Pair<Boolean, String> pair = konnektorClient.ejectEgkCard(runtimeConfig, egkHandle, ejectTimeout);
+                Boolean ejected = pair.getKey();
+                String notRequestedReason = "";
+                if (!ejected) {
+                    notRequestedReason = ", Request eGK is skipped";
+                }
+                log.info("Eject eGK: " + pair.getValue() + notRequestedReason);
+                if (ejected && vsdConfig.isSharedCardSessionRequest()) {
+                    String requestTimeout = vsdConfig.getSharedCardSessionRequestTimeout();
+                    String result = konnektorClient.requestEgkCard(runtimeConfig, egkHandle, requestTimeout);
                     log.info("Request eGK: " + result);
                 }
             }
