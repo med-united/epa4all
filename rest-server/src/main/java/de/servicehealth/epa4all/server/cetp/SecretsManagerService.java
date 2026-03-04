@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.server.cetp;
 
 import de.health.service.cetp.ISecretsManager;
+import de.health.service.cetp.config.KonnektorAuth;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IUserConfigurations;
@@ -49,7 +50,7 @@ public class SecretsManagerService implements ISecretsManager {
     public KeyManagerFactory getKeyManagerFactory(KonnektorConfig config) {
         IUserConfigurations userConfigurations = config.getUserConfigurations();
         String clientCertificate = userConfigurations.getClientCertificate();
-        if (userConfigurations.getKonnektorAuth() == BASIC || clientCertificate == null) {
+        if (KonnektorAuth.from(userConfigurations.getAuth()) == BASIC || clientCertificate == null) {
             return keyManagerFactory;
         } else {
             byte[] clientCertificateBytes = getClientCertificateBytes(clientCertificate);

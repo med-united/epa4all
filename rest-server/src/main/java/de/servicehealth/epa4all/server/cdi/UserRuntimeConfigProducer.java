@@ -1,12 +1,11 @@
 package de.servicehealth.epa4all.server.cdi;
 
-import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
-import de.health.service.config.api.IRuntimeConfig;
+import de.health.service.cetp.konnektorconfig.KonnektorsConfigs;
+import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
-import de.servicehealth.epa4all.server.config.InternalRuntimeConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.inject.Produces;
@@ -23,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static de.servicehealth.vau.VauClient.X_SMCB_ICCSN;
@@ -46,8 +44,8 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
     @Inject
     KonnektorDefaultConfig konnektorDefaultConfig;
 
-    @KonnektorsConfigs
-    Map<String, KonnektorConfig> konnektorsConfigs;
+    @Inject
+    KonnektorsConfigs konnektorsConfigs;
 
     @RequestScoped
     @FromHttpPath
@@ -56,35 +54,25 @@ public class UserRuntimeConfigProducer implements ContainerRequestFilter {
         String konnektor = getQueryParameter(X_KONNEKTOR);
         String workplaceId = getQueryParameter(X_WORKPLACE);
         String smcbIccsn = httpHeaders.getHeaderString(X_SMCB_ICCSN);
-        String userDefinedIccsn = smcbIccsn == null || smcbIccsn.trim().isEmpty() ? null : smcbIccsn.split(",")[0];
+        String requestIccsn = smcbIccsn == null || smcbIccsn.trim().isEmpty() ? null : smcbIccsn.split(",")[0];
         
-        List<KonnektorConfig> foundConfigs = konnektorsConfigs.entrySet().stream()
-            .filter(e -> konnektor == null || e.getKey().startsWith(konnektor))
-            .filter(e -> workplaceId == null || e.getKey().endsWith(workplaceId))
-            .map(Map.Entry::getValue)
-            .toList();
-
+        List<KonnektorConfig> foundConfigs = konnektorsConfigs.filterConfigs(konnektor, workplaceId);
         if (foundConfigs.isEmpty()) {
-            String msg = "Zero KonnektorConfigs found for konnektor=%s workplace=%s, using default";
+            String msg = "No konnektor configs found for konnektor=%s workplace=%s, using default";
             log.warn(String.format(msg, konnektor, workplaceId));
-            if (userDefinedIccsn != null) {
-                defaultUserConfig.getRuntimeConfig().setIccsn(userDefinedIccsn);
-            }
-            return defaultUserConfig;
-        } else if (foundConfigs.size() > 1) {
+            return requestIccsn == null ? defaultUserConfig : new RuntimeConfig(konnektorDefaultConfig, requestIccsn);
+        }
+
+        if (foundConfigs.size() > 1) {
             String msg = "Multiple KonnektorConfigs found for konnektor=%s workplace=%s, using first one";
             log.warn(String.format(msg, konnektor, workplaceId));
         }
 
-        IRuntimeConfig internalRuntimeConfig = userDefinedIccsn == null
-            ? null
-            : new InternalRuntimeConfig(userDefinedIccsn);
-        
-        return new RuntimeConfig(
-            konnektorDefaultConfig,
-            foundConfigs.getFirst().getUserConfigurations(),
-            internalRuntimeConfig
-        );
+        IUserConfigurations userConfigurations = foundConfigs.getFirst().getUserConfigurations();
+        if (requestIccsn != null) {
+            userConfigurations.setIccsn(requestIccsn);
+        }
+        return new RuntimeConfig(konnektorDefaultConfig, userConfigurations);
     }
 
     private String getQueryParameter(String parameterName) {

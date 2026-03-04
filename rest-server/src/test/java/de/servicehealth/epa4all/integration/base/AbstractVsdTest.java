@@ -4,12 +4,12 @@ import de.gematik.ws.conn.eventservice.v7.Event;
 import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.health.service.cetp.CertificateInfo;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
+import de.health.service.cetp.konnektorconfig.KonnektorsConfigs;
 import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.api.epa4all.EpaConfig;
@@ -37,7 +37,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
-import java.util.Map;
 
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static org.mockito.ArgumentMatchers.any;
@@ -107,9 +106,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
     protected KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
-    @KonnektorsConfigs
-    protected Map<String, KonnektorConfig> konnektorConfigs;
-
+    protected KonnektorsConfigs konnektorsConfigs;
 
     @BeforeEach
     public void beforeEach() {

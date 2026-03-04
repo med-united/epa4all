@@ -12,6 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.Getter;
 
+import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
@@ -28,7 +29,7 @@ public class MultiKonnektorService {
     }
 
     public IKonnektorAPI getServicePorts(IUserConfigurations userConfigurations) {
-        return portMap.computeIfAbsent(new KonnektorKey(userConfigurations), kk -> {
+        return portMap.computeIfAbsent(new KonnektorKey(userConfigurations), key -> {
             CardServicePortType cardServicePortType = servicePortProvider.getCardServicePortType(userConfigurations);
             CardTerminalServicePortType cardTerminalServicePortType = servicePortProvider.getCardTerminalServicePortType(userConfigurations);
             EventServicePortType eventServicePort = servicePortProvider.getEventServicePort(userConfigurations);
@@ -53,7 +54,8 @@ public class MultiKonnektorService {
     }
 
     public boolean isReady() {
-        return servicePortProvider.getConfigDirectory() != null;
+        File configDirectory = servicePortProvider.getConfigDirectory();
+        return configDirectory != null && configDirectory.exists() && configDirectory.isDirectory();
     }
 
     private ContextType buildContextType(IUserConfigurations userConfigurations) {

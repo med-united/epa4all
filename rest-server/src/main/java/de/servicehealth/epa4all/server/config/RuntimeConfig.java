@@ -9,21 +9,15 @@ public class RuntimeConfig implements UserRuntimeConfig {
 
     private final KonnektorDefaultConfig konnektorDefaultConfig;
     private IUserConfigurations userConfigurations;
-    private IRuntimeConfig internalRuntimeConfig;
+
+    public RuntimeConfig(KonnektorDefaultConfig konnektorDefaultConfig, String iccsn) {
+        this.konnektorDefaultConfig = konnektorDefaultConfig;
+        this.userConfigurations = konnektorDefaultConfig.toUserConfigurations(iccsn);
+    }
 
     public RuntimeConfig(KonnektorDefaultConfig konnektorDefaultConfig, IUserConfigurations configurations) {
         this.konnektorDefaultConfig = konnektorDefaultConfig;
         this.userConfigurations = configurations;
-    }
-
-    public RuntimeConfig(
-        KonnektorDefaultConfig konnektorDefaultConfig,
-        IUserConfigurations configurations,
-        IRuntimeConfig internalRuntimeConfig
-    ) {
-        this.konnektorDefaultConfig = konnektorDefaultConfig;
-        this.userConfigurations = configurations;
-        this.internalRuntimeConfig = internalRuntimeConfig;
     }
 
     @Override
@@ -63,7 +57,7 @@ public class RuntimeConfig implements UserRuntimeConfig {
 
     @Override
     public IRuntimeConfig getRuntimeConfig() {
-        return internalRuntimeConfig;
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override

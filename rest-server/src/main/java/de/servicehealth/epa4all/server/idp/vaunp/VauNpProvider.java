@@ -2,9 +2,8 @@ package de.servicehealth.epa4all.server.idp.vaunp;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.KonnektorsConfigs;
-import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.cetp.konnektorconfig.KonnektorsConfigs;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.api.epa4all.EpaMultiService;
@@ -20,7 +19,6 @@ import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.Konnektors;
 import de.servicehealth.vau.ReloadEmptySessions;
 import de.servicehealth.vau.VauClient;
-import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
@@ -28,7 +26,6 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
-import lombok.Setter;
 import org.apache.cxf.interceptor.Fault;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.slf4j.Logger;
@@ -64,42 +61,36 @@ public class VauNpProvider extends StartableService {
 
     private final Map<String, Semaphore> reloadMap = new HashMap<>();
 
-    @Inject
-    @Setter
-    ManagedExecutor scheduledThreadPool;
-
-    VauConfig vauConfig;
-    IdpConfig idpConfig;
-    IdpClient idpClient;
-    EpaCallGuard epaCallGuard;
-    EpaMultiService epaMultiService;
-    IKonnektorClient konnektorClient;
-    Instance<VauHandshake> vauHandshake;
-    KonnektorDefaultConfig konnektorDefaultConfig;
-
-    @Setter
-    @Inject
-    @KonnektorsConfigs
-    Map<String, KonnektorConfig> konnektorsConfigs;
+    private final IdpConfig idpConfig;
+    private final IdpClient idpClient;
+    private final EpaCallGuard epaCallGuard;
+    private final EpaMultiService epaMultiService;
+    private final ManagedExecutor managedExecutor;
+    private final IKonnektorClient konnektorClient;
+    private final Instance<VauHandshake> vauHandshake;
+    private final KonnektorsConfigs konnektorsConfigs;
+    private final KonnektorDefaultConfig konnektorDefaultConfig;
 
     @Inject
     public VauNpProvider(
-        VauConfig vauConfig,
         IdpConfig idpConfig,
         IdpClient idpClient,
         EpaCallGuard epaCallGuard,
         EpaMultiService epaMultiService,
+        ManagedExecutor managedExecutor,
         IKonnektorClient konnektorClient,
         Instance<VauHandshake> vauHandshake,
+        KonnektorsConfigs konnektorsConfigs,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
-        this.vauConfig = vauConfig;
         this.idpConfig = idpConfig;
         this.idpClient = idpClient;
         this.epaCallGuard = epaCallGuard;
         this.vauHandshake = vauHandshake;
         this.epaMultiService = epaMultiService;
+        this.managedExecutor = managedExecutor;
         this.konnektorClient = konnektorClient;
+        this.konnektorsConfigs = konnektorsConfigs;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
 
         epaMultiService.getEpaConfig().getEpaBackends().forEach(backend ->
@@ -110,7 +101,7 @@ public class VauNpProvider extends StartableService {
     @Produces
     @Konnektors
     public Set<String> konnektors() {
-        return konnektorsConfigs.keySet();
+        return konnektorsConfigs.getKonnektors();
     }
 
     @Override
@@ -150,7 +141,7 @@ public class VauNpProvider extends StartableService {
 
                         long start = System.currentTimeMillis();
                         List<Future<?>> futures = new ArrayList<>();
-                        konnektorsConfigs.forEach((konnektorWorkplace, konnektorConfig) -> {
+                        konnektorsConfigs.get().forEach((konnektorWorkplace, konnektorConfig) -> {
                             try {
                                 RuntimeConfig runtimeConfig = new RuntimeConfig(
                                     konnektorDefaultConfig,
@@ -158,7 +149,7 @@ public class VauNpProvider extends StartableService {
                                 );
                                 AuthorizationSmcbAPI smcBApi = epaAPI.getAuthorizationSmcbAPI();
                                 vauFacade.getEmptyClients(konnektorWorkplace).forEach(vauClient ->
-                                    futures.add(scheduledThreadPool.submit(() -> {
+                                    futures.add(managedExecutor.submit(() -> {
                                         reloadHappened.set(true);
                                         reloadVauClient(
                                             smcBApi,

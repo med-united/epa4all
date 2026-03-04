@@ -11,13 +11,13 @@ import de.gematik.vau.lib.data.VauPublicKeys;
 import de.gematik.ws.conn.eventservice.v7.Event;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.KonnektorsConfigs;
 import de.health.service.cetp.cardlink.CardlinkClient;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.cetp.domain.eventservice.event.DecodeResult;
 import de.health.service.cetp.domain.fault.CetpFault;
+import de.health.service.cetp.konnektorconfig.KonnektorsConfigs;
 import de.servicehealth.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
@@ -144,8 +144,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     CETPEventHandlerProvider eventHandlerProvider;
 
     @Inject
-    @KonnektorsConfigs
-    Map<String, KonnektorConfig> konnektorConfigs;
+    protected KonnektorsConfigs konnektorsConfigs;
 
     @Inject
     protected KonnektorDefaultConfig konnektorDefaultConfig;
@@ -393,7 +392,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         String slotIdValue = "3";
         String ctIdValue = "cardTerminal-124";
 
-        KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
+        KonnektorConfig konnektorConfig = konnektorsConfigs.getConfigs().iterator().next();
         EgkHandle egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
         channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue, egkHandle.cardHandle()));
         channel.pipeline().fireChannelReadComplete();

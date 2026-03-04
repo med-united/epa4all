@@ -2,9 +2,8 @@ package de.servicehealth.epa4all.server.idp.vaunp;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.KonnektorsConfigs;
-import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.cetp.konnektorconfig.KonnektorsConfigs;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.api.epa4all.EpaMultiService;
@@ -44,13 +43,10 @@ public class VauSessionsJob extends StartableService {
     private final VauNpProvider vauNpProvider;
     private final EpaMultiService epaMultiService;
     private final IKonnektorClient konnektorClient;
+    private final KonnektorsConfigs konnektorsConfigs;
     private final KonnektorDefaultConfig konnektorDefaultConfig;
 
     private List<String> telematikIds;
-
-    @Inject
-    @KonnektorsConfigs
-    Map<String, KonnektorConfig> konnektorsConfigs;
 
     @Inject
     public VauSessionsJob(
@@ -58,12 +54,14 @@ public class VauSessionsJob extends StartableService {
         VauNpProvider vauNpProvider,
         EpaMultiService epaMultiService,
         IKonnektorClient konnektorClient,
+        KonnektorsConfigs konnektorsConfigs,
         KonnektorDefaultConfig konnektorDefaultConfig
     ) {
         this.registry = registry;
         this.vauNpProvider = vauNpProvider;
         this.epaMultiService = epaMultiService;
         this.konnektorClient = konnektorClient;
+        this.konnektorsConfigs = konnektorsConfigs;
         this.konnektorDefaultConfig = konnektorDefaultConfig;
     }
 
@@ -78,7 +76,7 @@ public class VauSessionsJob extends StartableService {
     }
 
     private List<String> getTelematikIds() {
-        return konnektorsConfigs.values().stream().map(konnektorConfig -> {
+        return konnektorsConfigs.getConfigs().stream().map(konnektorConfig -> {
             try {
                 UserRuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, konnektorConfig.getUserConfigurations());
                 String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
