@@ -106,7 +106,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
 
                 String ctId = "cardTerminal-124";
                 String smcbHandle = konnektorClient.getSmcbHandle(defaultUserConfig);
-                KonnektorConfig konnektorConfig = konnektorConfigs.values().iterator().next();
+                KonnektorConfig konnektorConfig = konnektorsConfigs.getConfigs().iterator().next();
                 String konnektorHost = konnektorConfig.getHost();
                 String workplaceId = konnektorConfig.getUserConfigurations().getWorkplaceId();
                 String epaBackend = epaBackends.iterator().next();

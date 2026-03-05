@@ -184,7 +184,7 @@ public class ServicePortProvider extends StartableService {
         TLSClientParameters tlsParams = new TLSClientParameters();
         tlsParams.setDisableCNCheck(true);  // Disable hostname verification
 
-        switch (userConfigurations.getKonnektorAuth()) {
+        switch (KonnektorAuth.from(userConfigurations.getAuth())) {
             case BASIC -> {
                 bindingProvider.getRequestContext().put(USERNAME_PROPERTY, userConfigurations.getBasicAuthUsername());
                 bindingProvider.getRequestContext().put(PASSWORD_PROPERTY, userConfigurations.getBasicAuthPassword());

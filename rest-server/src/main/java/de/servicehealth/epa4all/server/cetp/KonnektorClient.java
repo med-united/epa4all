@@ -41,7 +41,7 @@ import de.health.service.cetp.domain.eventservice.card.Card;
 import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.cetp.domain.eventservice.cardTerminal.CardTerminal;
 import de.health.service.cetp.domain.fault.CetpFault;
-import de.health.service.config.api.IRuntimeConfig;
+import de.health.service.config.api.IUserConfigurations;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardTypeMapper;
 import de.servicehealth.epa4all.server.cetp.mapper.card.CardsResponseMapper;
@@ -52,7 +52,6 @@ import de.servicehealth.epa4all.server.cetp.mapper.subscription.SubscriptionResu
 import de.servicehealth.epa4all.server.serviceport.IKonnektorAPI;
 import de.servicehealth.epa4all.server.serviceport.MultiKonnektorService;
 import de.servicehealth.epa4all.server.vsd.VsdConfig;
-import de.servicehealth.epa4all.server.vsd.VsdService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.xml.ws.Holder;
 import lombok.Getter;
@@ -78,7 +77,7 @@ import static de.gematik.ws.conn.certificateservice.v6.CryptType.ECC;
 import static de.gematik.ws.conn.certificateservice.v6.CryptType.RSA;
 import static de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum.C_AUT;
 import static de.gematik.ws.conn.certificateservicecommon.v2.CertRefEnum.C_QES;
-import static de.health.service.cetp.SubscriptionManager.FAILED;
+import static de.health.service.cetp.SubscriptionManager.FAILED_PREFIX;
 import static de.health.service.cetp.domain.eventservice.card.CardType.EGK;
 import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 import static de.servicehealth.epa4all.server.idp.IdpClient.BOUNCY_CASTLE_PROVIDER;
@@ -163,9 +162,10 @@ public class KonnektorClient implements IKonnektorClient {
                 .findAny();
             return cardOpt.map(Card::getCardHandle).orElse(cards.getFirst().getCardHandle());
         } else {
-            IRuntimeConfig internalRuntimeConfig = userRuntimeConfig.getRuntimeConfig();
-            String forcedIccsn = internalRuntimeConfig == null ? null : internalRuntimeConfig.getIccsn();
-            String iccsn = forcedIccsn == null ? vsdConfig.getPrimaryIccsn() : forcedIccsn;
+            IUserConfigurations userConfigurations = userRuntimeConfig.getUserConfigurations();
+            String iccsn = userConfigurations.getIccsn() != null
+                ? userConfigurations.getIccsn()
+                : vsdConfig.getPrimaryIccsn();
             return cards.stream()
                 .filter(c -> iccsn.equals(c.getIccsn()))
                 .findAny()
@@ -312,7 +312,7 @@ public class KonnektorClient implements IKonnektorClient {
                 UnsubscribeResponse unsubscribeResponse = eventService.unsubscribe(unsubscribe);
                 return statusMapper.toDomain(unsubscribeResponse.getStatus());
             } else {
-                if (subscriptionId == null || subscriptionId.startsWith(FAILED)) {
+                if (subscriptionId == null || subscriptionId.startsWith(FAILED_PREFIX)) {
                     CetpStatus status = new CetpStatus();
                     status.setResult("Previous subscription is not found");
                     return status;
