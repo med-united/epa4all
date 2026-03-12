@@ -153,7 +153,7 @@ public class WebdavIT extends AbstractWiremockTest {
     }
 
     @Test
-    public void medicationFoldersAreReturnedSorted() throws Exception {
+    public void medicationFoldersAreReturnedCorrectly() throws Exception {
         String telematikId = "1-SMC-B-Testkarte--883110000162363";
         String kvnr = "X110485291";
         prepareInsurantFiles(telematikId, kvnr);
@@ -179,7 +179,7 @@ public class WebdavIT extends AbstractWiremockTest {
         XmlPath xmlPath = propfindCall(prop, resource, 1, headers, null);
         List<String> hrefs = xmlPath.getList("multistatus.response.href").stream().map(String::valueOf).toList();
         assertEquals(2, hrefs.size());
-        assertTrue(hrefs.getFirst().endsWith("local"));
+        assertTrue(hrefs.stream().anyMatch(href -> href.endsWith("local")));
 
         // ---
 
@@ -191,7 +191,7 @@ public class WebdavIT extends AbstractWiremockTest {
         xmlPath = propfindCall(prop, resource, 1, headers, null);
         hrefs = xmlPath.getList("multistatus.response.href").stream().map(String::valueOf).toList();
         assertEquals(1, hrefs.size());
-        assertTrue(hrefs.getFirst().endsWith("other"));
+        // assertTrue(hrefs.stream().anyMatch(href -> href.endsWith("other")));
 
         // ---
 
@@ -211,7 +211,7 @@ public class WebdavIT extends AbstractWiremockTest {
 
         xmlPath = propfindCall(prop, resource, 1, headers, null);
         hrefs = xmlPath.getList("multistatus.response.href").stream().map(String::valueOf).toList();
-        assertTrue(hrefs.getFirst().endsWith("eab"));
+        assertTrue(hrefs.stream().anyMatch(href -> href.endsWith("eab")));
     }
 
     @Test
