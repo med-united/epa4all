@@ -40,7 +40,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.Paginator.X_TOTAL_COUNT;
@@ -48,6 +47,7 @@ import static de.servicehealth.utils.ServerUtils.writeStreamToFile;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_XML_TYPE;
 import static java.io.File.separator;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jugs.webdav.jaxrs.Headers.DAV;
 
 public class AbstractResource implements WebDavResource {
@@ -141,11 +141,11 @@ public class AbstractResource implements WebDavResource {
     }
 
     protected static String readResource(String name) throws IOException {
-        try (InputStream istream = AbstractResource.class.getResourceAsStream(name)) {
-            if (istream == null) {
+        try (InputStream inputStream = AbstractResource.class.getResourceAsStream(name)) {
+            if (inputStream == null) {
                 throw new FileNotFoundException(String.format("resource '%s' not found", name));
             }
-            return IOUtils.toString(istream, StandardCharsets.UTF_8);
+            return IOUtils.toString(inputStream, UTF_8);
         }
     }
 

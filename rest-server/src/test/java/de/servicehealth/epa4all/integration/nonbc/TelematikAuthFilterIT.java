@@ -1,6 +1,7 @@
 package de.servicehealth.epa4all.integration.nonbc;
 
 import de.servicehealth.epa4all.common.profile.MTLSTestProfile;
+import de.servicehealth.utils.ServerUtils;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.restassured.RestAssured;
@@ -10,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.File;
 
-import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static io.restassured.RestAssured.given;
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
@@ -31,7 +31,7 @@ public class TelematikAuthFilterIT {
     @Test
     public void testHealthEndpoint() {
         File projectDir = new File("").getAbsoluteFile().getParentFile();
-        String path = makeSimplePath(projectDir.getAbsolutePath(), "tls", "server", "trust-store", "client", "client.p12");
+        String path = ServerUtils.makeOSPath(projectDir.getAbsolutePath(), "tls", "server", "trust-store", "client", "client.p12");
         setupSSL(path, "changeit");
         given()
             .relaxedHTTPSValidation()
