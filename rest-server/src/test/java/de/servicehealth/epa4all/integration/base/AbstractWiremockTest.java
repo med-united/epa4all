@@ -158,6 +158,10 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
     @BeforeAll
     public static void beforeAll() throws Exception {
+        System.setProperty("javax.net.ssl.trustStore", "/wiremock/tls/client-truststore.jks");
+        System.setProperty("javax.net.ssl.trustStorePassword", "password");
+        System.setProperty("javax.net.ssl.trustStoreType", "JKS");
+
         tempDir = Files.createTempDirectory(UUID.randomUUID().toString());
 
         // System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
