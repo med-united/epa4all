@@ -13,8 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class CETPDecoder extends ByteToMessageDecoder {
@@ -53,7 +54,7 @@ public class CETPDecoder extends ByteToMessageDecoder {
         }
 
         int lengthOfMessage = in.readInt();
-        String message = in.readCharSequence(lengthOfMessage, StandardCharsets.UTF_8).toString();
+        String message = in.readCharSequence(lengthOfMessage, UTF_8).toString();
         log.info(message);
         try {
             Event eventType = (Event) jaxbContext.createUnmarshaller().unmarshal(new StringReader(message));

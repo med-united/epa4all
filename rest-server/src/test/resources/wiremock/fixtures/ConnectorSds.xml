@@ -35,13 +35,13 @@
                     <ns3:Abstract>Der Verschlüsselungsdienst bietet Schnittstellen zum hybriden und symmetrischen Ver-
                         und Entschlüsseln von Dokumenten an.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/EncryptionService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/EncryptionService"/>
                 </ns3:Version>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/EncryptionService/WSDL/v6.1" Version="6.1.0">
                     <ns3:Abstract>Der Verschlüsselungsdienst bietet Schnittstellen zum hybriden und symmetrischen Ver-
                         und Entschlüsseln von Dokumenten an.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/EncryptionService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/EncryptionService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -60,7 +60,7 @@
                         Berücksichtigung von aktuellen Statusinformationen (OCSP, CRL). Die Zertifikatsprüfung wird
                         sowohl für nonQES- als auch für QES-Zertifikate unterstützt.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/CertificateService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/CertificateService"/>
                 </ns3:Version>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/CertificateService/WSDL/v6.0" Version="6.0.0">
                     <ns3:Abstract>Der Zertifikatsdienst bietet eine Schnittstelle zur Überprüfung der Gültigkeit von
@@ -69,7 +69,7 @@
                         Berücksichtigung von aktuellen Statusinformationen (OCSP, CRL). Die Zertifikatsprüfung wird
                         sowohl für nonQES- als auch für QES-Zertifikate unterstützt.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/CertificateService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/CertificateService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -82,19 +82,19 @@
                     <ns3:Abstract>Der Signaturdienst bietet Clientsystemen und Fachmodulen eine Schnittstelle zum
                         Signieren von Dokumenten und Prüfen von Dokumentensignaturen
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/SignatureService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/SignatureService"/>
                 </ns3:Version>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/SignatureService/WSDL/v7.4" Version="7.4.2">
                     <ns3:Abstract>Der Signaturdienst bietet Clientsystemen und Fachmodulen eine Schnittstelle zum
                         Signieren von Dokumenten und Prüfen von Dokumentensignaturen
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/SignatureService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/SignatureService"/>
                 </ns3:Version>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/SignatureService/WSDL/v7.4" Version="7.4.0">
                     <ns3:Abstract>Der Signaturdienst bietet Clientsystemen und Fachmodulen eine Schnittstelle zum
                         Signieren von Dokumenten und Prüfen von Dokumentensignaturen
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/SignatureService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/SignatureService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -109,28 +109,28 @@
                         Konnektor verwalteten Kartenterminals gesteckt sind (CTM_CT_LIST). Alle Ereignisse und
                         Operationen, die sich auf Karten beziehen, werden durch diesen Basisdienst gekapselt.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/CardService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/CardService"/>
                 </ns3:Version>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/CardService/WSDL/v8.1" Version="8.1.1">
                     <ns3:Abstract>Der Konnektor verwaltet eine Liste aller Karten (CM_CARD_LIST), die in die vom
                         Konnektor verwalteten Kartenterminals gesteckt sind (CTM_CT_LIST). Alle Ereignisse und
                         Operationen, die sich auf Karten beziehen, werden durch diesen Basisdienst gekapselt.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/CardService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/CardService"/>
                 </ns3:Version>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/CardService/WSDL/v8.1" Version="8.1.0">
                     <ns3:Abstract>Der Konnektor verwaltet eine Liste aller Karten (CM_CARD_LIST), die in die vom
                         Konnektor verwalteten Kartenterminals gesteckt sind (CTM_CT_LIST). Alle Ereignisse und
                         Operationen, die sich auf Karten beziehen, werden durch diesen Basisdienst gekapselt.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/CardService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/CardService"/>
                 </ns3:Version>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/CardService/WSDL/v8.2" Version="8.2.1">
                     <ns3:Abstract>Der Konnektor verwaltet eine Liste aller Karten (CM_CARD_LIST), die in die vom
                         Konnektor verwalteten Kartenterminals gesteckt sind (CTM_CT_LIST). Alle Ereignisse und
                         Operationen, die sich auf Karten beziehen, werden durch diesen Basisdienst gekapselt.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/CardService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/CardService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -145,7 +145,7 @@
                         adressierbaren Kartenterminals. Dies umfasst alle administrativen Prozesse. Ferner kapselt der
                         Kartenterminaldienst die Zugriffe auf Kartenterminals durch Basisdienste und Fachmodule.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/CardTerminalService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/CardTerminalService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -158,13 +158,13 @@
                     <ns3:Abstract>Der Authentifizierungsdienst bietet Clientsystemen und Fachmodulen eine Schnittstelle
                         zum Signieren von Binärstrings zum Zweck der externen Authentisierung.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/AuthSignatureService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/AuthSignatureService"/>
                 </ns3:Version>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/AuthSignatureService/WSDL/v7.4" Version="7.4.0">
                     <ns3:Abstract>Der Authentifizierungsdienst bietet Clientsystemen und Fachmodulen eine Schnittstelle
                         zum Signieren von Binärstrings zum Zweck der externen Authentisierung.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/AuthSignatureService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/AuthSignatureService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -182,7 +182,7 @@
                         Basisdiensten und Fachmodulen zur Verteilung und Bereitstellung derer Informationen verwendet
                         werden kann.
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/EventService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/EventService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -192,7 +192,7 @@
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/amts/AMTSService/v1.0" Version="1.0.0">
                     <ns3:Abstract>Initiale Version (der Stufe A) der Fachanwendung eMP/AMTS-Datenmanagement
                     </ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/AMTSService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/AMTSService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -201,7 +201,7 @@
             <ns3:Versions>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/nfds/DPEService/WSDL/v1.0" Version="1.0.0">
                     <ns3:Abstract>DPE auf eGK verwalten</ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/DPEService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/DPEService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -210,7 +210,7 @@
             <ns3:Versions>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/nfds/NFDService/WSDL/v1.0" Version="1.0.0">
                     <ns3:Abstract>NFD auf eGK verwalten</ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/NFDService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/NFDService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -219,7 +219,7 @@
             <ns3:Versions>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/vsds/VSDService/v5.2" Version="5.2.0">
                     <ns3:Abstract>VSD von eGK lesen</ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/VSDService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/VSDService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>
@@ -228,7 +228,7 @@
             <ns3:Versions>
                 <ns3:Version TargetNamespace="http://ws.gematik.de/conn/vsds/KvkService/v4.0" Version="4.0.0">
                     <ns3:Abstract>Versichertendaten von KVK lesen</ns3:Abstract>
-                    <ns3:EndpointTLS Location="https://localhost:9443/konnektor/ws/KVKService"/>
+                    <ns3:EndpointTLS Location="https://localhost:9444/konnektor/ws/KVKService"/>
                 </ns3:Version>
             </ns3:Versions>
         </ns3:Service>

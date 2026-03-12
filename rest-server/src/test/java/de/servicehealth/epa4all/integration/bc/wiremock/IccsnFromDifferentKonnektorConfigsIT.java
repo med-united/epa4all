@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @TestProfile(WireMockProfile.class)
-public class IccsnFromDifferentKonnektorConfigsTest extends AbstractWiremockTest {
+public class IccsnFromDifferentKonnektorConfigsIT extends AbstractWiremockTest {
 
     @Inject
     KonnektorDefaultConfig konnektorDefaultConfig;

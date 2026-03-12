@@ -51,6 +51,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyFactory;
@@ -75,7 +76,7 @@ import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.getResourcePath;
 import static de.servicehealth.epa4all.common.TestUtils.getTextFixture;
 import static de.servicehealth.epa4all.server.rest.consent.ConsentFunction.Medication;
-import static de.servicehealth.utils.ServerUtils.makeSimplePath;
+import static de.servicehealth.utils.ServerUtils.makeOSPath;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -94,7 +95,9 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     protected static final String VAU_MESSAGE1_TRANSFORMER = "vauMessage1Transformer";
     protected static final String VAU_MESSAGE3_TRANSFORMER = "vauMessage3Transformer";
 
-    protected static WireMockServer wiremock;
+    protected static WireMockServer idpWmServer;
+    protected static WireMockServer epaWmServer;
+    protected static WireMockServer konnektorWmServer;
     protected static VauMessage1Transformer vauMessage1Transformer;
     protected static VauMessage3Transformer vauMessage3Transformer;
 
@@ -157,31 +160,71 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     public static void beforeAll() throws Exception {
         tempDir = Files.createTempDirectory(UUID.randomUUID().toString());
 
+        // System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
         System.setProperty("javax.xml.accessExternalDTD", "all");
-        System.setProperty("javax.xml.transform.TransformerFactory", "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl");
+        System.setProperty(
+            "javax.xml.transform.TransformerFactory",
+            "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl"
+        );
 
+        startEpaServer();
+        startIdpServer();
+        startKonnektorServer();
+    }
+
+    private static void startEpaServer() throws Exception {
         vauMessage1Transformer = new VauMessage1Transformer(VAU_MESSAGE1_TRANSFORMER);
         vauMessage3Transformer = new VauMessage3Transformer(VAU_MESSAGE3_TRANSFORMER);
-        wiremock = new WireMockServer(
-            options()
-                .httpsPort(9443)
-                .httpDisabled(true)
-                .gzipDisabled(false)
-                .needClientAuth(false)
-                .keystorePath(getResource(WireMockConfiguration.class, "keystore").toString())
-                .keystorePassword("password")
-                .extensions(
-                    vauMessage1Transformer,
-                    vauMessage3Transformer
-                )
-        );
-        wiremock.start();
+
+        WireMockConfiguration epaWmConfiguration = buildGeneralConfiguration(9442)
+            .extensions(vauMessage1Transformer, vauMessage3Transformer);
+
+        epaWmServer = new WireMockServer(epaWmConfiguration);
+        epaWmServer.start();
+    }
+
+    private static void startIdpServer() {
+        idpWmServer = new WireMockServer(buildGeneralConfiguration(9443));
+        idpWmServer.start();
+    }
+
+    private static void startKonnektorServer() {
+        String trustStorePath = "/wiremock/tls/wiremock-server-truststore.jks";
+        WireMockConfiguration konnektorWmConfiguration = buildGeneralConfiguration(9444);
+        URL trustStoreUrl = AbstractWiremockTest.class.getClassLoader().getResource(trustStorePath);
+        if (trustStoreUrl != null) {
+            konnektorWmConfiguration = konnektorWmConfiguration
+                .needClientAuth(true)
+                .trustStoreType("JKS")
+                .trustStorePath(trustStoreUrl.getPath())
+                .trustStorePassword("password");
+        }
+        konnektorWmServer = new WireMockServer(konnektorWmConfiguration);
+        konnektorWmServer.start();
+    }
+
+    private static WireMockConfiguration buildGeneralConfiguration(int port) {
+        // wiremock bundled keystore
+        URL resource = getResource(WireMockConfiguration.class, "keystore");
+        return options()
+            .httpsPort(port)
+            .httpDisabled(true)
+            .gzipDisabled(false)
+            .needClientAuth(false)
+            .keystorePath(resource.toString())
+            .keystorePassword("password");
     }
 
     @AfterAll
     static void afterAll() {
-        if (wiremock != null) {
-            wiremock.stop();
+        if (konnektorWmServer != null) {
+            konnektorWmServer.stop();
+        }
+        if (epaWmServer != null) {
+            epaWmServer.stop();
+        }
+        if (idpWmServer != null) {
+            idpWmServer.stop();
         }
         tempDir.toFile().delete();
     }
@@ -252,7 +295,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
                     vauMessage1Transformer.registerVauChannel(vauPath, uniquePath, vauServer);
 
-                    wiremock
+                    epaWmServer
                         .addStubMapping(post(urlEqualTo(vauPath))
                             .willReturn(aResponse().withTransformer(VAU_MESSAGE1_TRANSFORMER, KEY, VALUE)).build());
 
@@ -260,7 +303,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
 
                     vauMessage3Transformer.registerVauChannel(vauPath, vauServer);
                     vauMessage3Transformer.registerVauFacade(epaApi.getVauFacade());
-                    wiremock
+                    epaWmServer
                         .addStubMapping(post(urlEqualTo(vauPath))
                             .willReturn(aResponse().withTransformer(VAU_MESSAGE3_TRANSFORMER, KEY, VALUE)).build());
 
@@ -275,7 +318,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     }
 
     protected void prepareInformationStubs(int status) {
-        wiremock.addStubMapping(get(urlEqualTo("/information/api/v1/ehr"))
+        epaWmServer.addStubMapping(get(urlEqualTo("/information/api/v1/ehr"))
             .willReturn(aResponse().withStatus(status)).build());
     }
 
@@ -289,7 +332,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         }
         GetConsentDecisionInformation200Response response = new GetConsentDecisionInformation200Response();
         response.data(decisionsResponseTypes);
-        wiremock.addStubMapping(get(urlEqualTo("/information/api/v1/ehr/consentdecisions"))
+        epaWmServer.addStubMapping(get(urlEqualTo("/information/api/v1/ehr/consentdecisions"))
             .willReturn(
                 aResponse()
                     .withStatus(200)
@@ -302,35 +345,35 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         servicePortProvider.doStart();
 
         byte[] soapConnectorSdsEnvelop = getTextFixture("ConnectorSds.xml");
-        wiremock.addStubMapping(get(urlEqualTo("/konnektor/connector.sds"))
+        konnektorWmServer.addStubMapping(get(urlEqualTo("/konnektor/connector.sds"))
             .willReturn(aResponse().withStatus(200).withBody(soapConnectorSdsEnvelop)).build());
 
         byte[] soapGetHbaCardsEnvelop = getTextFixture("GetHbaCards.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("HBA"))
+        konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("HBA"))
             .willReturn(aResponse().withStatus(200).withBody(soapGetHbaCardsEnvelop)).build());
 
         byte[] soapGetSmcbCardsEnvelop = getTextFixture("GetSmcbCards.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("SMC-B"))
+        konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("SMC-B"))
             .willReturn(aResponse().withStatus(200).withBody(soapGetSmcbCardsEnvelop)).build());
 
         byte[] soapGetEgkCardsEnvelop = getTextFixture("GetEgkCards.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("EGK"))
+        konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/EventService")).withRequestBody(containing("EGK"))
             .willReturn(aResponse().withStatus(200).withBody(soapGetEgkCardsEnvelop)).build());
 
         byte[] soapHbaCertificateEnvelop = getTextFixture("HbaCertificate.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService")).withRequestBody(containing("C.QES"))
+        konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService")).withRequestBody(containing("C.QES"))
             .willReturn(aResponse().withStatus(200).withBody(soapHbaCertificateEnvelop)).build());
 
         byte[] soapSmcbCertificateEnvelop = getTextFixture("SmcbCertificate.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService")).withRequestBody(containing("C.AUT"))
+        konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService")).withRequestBody(containing("C.AUT"))
             .willReturn(aResponse().withStatus(200).withBody(soapSmcbCertificateEnvelop)).build());
 
         byte[] soapExternalAuthenticateEnvelop = getTextFixture("ExternalAuthenticateResponse.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/AuthSignatureService"))
+        konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/AuthSignatureService"))
             .willReturn(aResponse().withStatus(200).withBody(soapExternalAuthenticateEnvelop)).build());
 
         byte[] soapReadVSDResponseEnvelop = getTextFixture("ReadVSDResponse.xml");
-        wiremock.addStubMapping(post(urlEqualTo("/konnektor/ws/VSDService"))
+        konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/VSDService"))
             .willReturn(aResponse().withStatus(200).withBody(soapReadVSDResponseEnvelop)).build());
 
         // TODO
@@ -347,13 +390,13 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         idpClient.doStart();
 
         byte[] jsonAuthenticationResponse = getTextFixture("AuthenticationResponse.json");
-        wiremock.addStubMapping(post(urlEqualTo("/idp/auth"))
+        idpWmServer.addStubMapping(post(urlEqualTo("/idp/auth"))
             .willReturn(aResponse()
                 .withHeader(LOCATION, "https://e4a-rt.deine-epa.de/?code\u003deyJlbmMiOiJBMjU2R0NNIiwiY3R5IjoiTkpXVCIsImV4cCI6MTczNTAwOTU5MiwiYWxnIjoiZGlyIiwia2lkIjoiMDAwMSJ9..jQOcvkSkNe_2svy6.yswP6uELSRQSBvJrewOOXjmLWwTccmhWKXXrsDPfBo6vZButt0rvkV0cosOyksnbCfQqLscWaJCF3UQZ06jDiIqB_A1OlBY6tfgVLnLfe2QRtXbmcQOl-aQSyu3QDMZ_Qc0fxrGfK4PhMrYOHwWniaptNXStr59EzeXGHVbkfasxu2ALhuS94SP0PsxMyicWiOWEZT34Tc1rS2g6YZQzrH0spsPDUES9nMnH-m-y7ZX8VDs7iVMbJ-0njR9KdvKMPjoZGicPYt54jDPiAy_5Ge_e9PxY3vpfiq2Ey7tdg4alhYhkVzPR6L6kqE3uunYSamkwuMo2VIj60S8rYol3sHmYR6ywaiZ-b9TjT_XI7LuPLeMgBlGBP7SOoCikpR0QuX6NBTPmvN1TCOpmuyrdyBHGAEhqCbqtB0Y6l5Y247DHU6ccKZi9n1L3WQ795GLBaayntvhlsNQSr667xlj0aNLe4wWjxEHDUI8o8XQRkTdXg457adL5ETFAR7_RcjVYjZW9Dk2fAo39pmOQhI8lYKdm2-epO8GLSz-T6AJrNqb2nI7dSDq2waY0NBLezQxZKXHXEoMGMsLp8NS7gtQT_zaoGYGZzlmxfZyFg-a8S6F_KIpTPYzvkzntr671Wz_EuPskyY7eDf4ziDDiN8tuo6lgEzKpwDgJDn8-6lD-8vb9gU52O9YhgsrFpbmWL8aMUOTaLE1sKIYCFZOoFfkW_zZ-gY8mjHtCZ3QUDGaVBb5a1lmdr-6k4XG4qk7IBrOjKTHVHH1sbgw76VHTFHH9v6r4ylFpB1LSY4Ce13nghSUDE_f15Xa2BfEUgFPPZhqyGVnSE_ITa1BNQ0ivQs7uacE2xKZaUxKTz-np2RIAgqERWdqAxChcoSvKAKOHipqGKyR8VVZbo5rHlN4Pt9Ng1UU651fLMaEW0Zh8R5bBBIAX-oH37VKn-m8b-7IVmlvcYfQkfT12pr1BpPConY1qLGZfsoptKfwhVDGioKz0VaGy--ksuaABNMi0DQG4BchJDORWR89TYRI-tFhA8oHVgEsq4ftdh-Awc1SNMjcGxeXAPvrudMzcy7VrPyMBacQyJ894XwZCJiWEjRfLJCRVQeUJrSuwDbnQ0VyNpwrAgEA65f8dEH_7UBvvXeCey5JgnJFkEmnfhVoh8i5cqcM9FwauzybHMHUwjxFlMbkmJTSLLKqX14tG7nMmYoThr4GxbscfDcPdvmvlTKIROaLeXhtekQR1rU_y2PMMBOwcSkbwa1N-_KxzcAjgxZr15tA65S-_w4RqP_1hUbsRc3cPoZ6WYuGqyQCoJp2jxqRdjl1TTlCut_vy8nLaJlWtfsu5Y3sBgN2qObegmTD6iodKuY6Rdbs0cMNYIXKQVmHvavfYtYwy8HOb3gXaZdCBxr9xHiUA5p1AMJoX9qdt31DQK1djOlwX-tICnShsw9_gEMhR2O3b9hRs7emCxmTh0ca2P15BMMZoNxgnpSk8MehX_eRK2ZT_zkYI8pRc74bvgMAfkH1NDm04gIutX8auk8a5SMZQy-hm7xtdwAfB6hPVVlMJ8Piv3Lcs2m2AicGTSynvw0cdAVlcCUU5pwcd-h69xIOef8yXApMp1hvzr2lQ-ZcNEoQcEGyNFefQ4nLmqjh2izO-G8SSVi-z99Jys35IqtHUMCE.SJLonvjMnBK6X9nxtOLo_Q\u0026state\u003dnRGsqMXISWqr6oaTcdGMcs6Oxt2vIOebYvUwd85BtLLk8d0vAgiy88kP3gBsr6xL")
                 .withStatus(302).withBody(jsonAuthenticationResponse)).build());
 
         byte[] jsonAuthenticationChallenge = getTextFixture("AuthenticationChallenge.json");
-        wiremock.addStubMapping(get(urlPathMatching("/idp/auth.*"))
+        idpWmServer.addStubMapping(get(urlPathMatching("/idp/auth.*"))
             .willReturn(aResponse().withStatus(200).withBody(jsonAuthenticationChallenge)).build());
     }
 
@@ -366,7 +409,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     }
 
     private VauServerStateMachine prepareVauServer() throws Exception {
-        Files.deleteIfExists(Path.of(makeSimplePath("target", "vau3traffic.tgr")));
+        Files.deleteIfExists(Path.of(makeOSPath("target", "vau3traffic.tgr")));
 
         KeyFactory keyFactory = KeyFactory.getInstance("EC");
         PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(Files.readAllBytes(getResourcePath(VAU, "vau-sig-key.der")));
@@ -384,6 +427,7 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         return new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     protected CardlinkClient receiveCardInsertedEvent(EpaFileDownloader mockDownloader, String kvnr) throws CetpFault {
         CardlinkClient cardlinkClient = mock(CardlinkClient.class);
         CETPEventHandler cetpServerHandler = eventHandlerProvider.get(mockDownloader, cardlinkClient, null);

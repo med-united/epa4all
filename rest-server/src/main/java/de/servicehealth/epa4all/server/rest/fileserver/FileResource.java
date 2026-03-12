@@ -22,13 +22,13 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy.Earliest;
 import static de.servicehealth.folder.WebdavConfig.RESOURCE_NAME;
 import static de.servicehealth.utils.MimeHelper.resolveMimeType;
 import static java.io.File.separator;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Dependent
 public class FileResource extends AbstractResource {
@@ -81,7 +81,7 @@ public class FileResource extends AbstractResource {
         URI uri = uriInfo.getBaseUri();
         String host = uri.getScheme() + "://" + uri.getHost() + "/" + RESOURCE_NAME + "/";
         String originalDestination = destination;
-        destination = URLDecoder.decode(destination, StandardCharsets.UTF_8);
+        destination = URLDecoder.decode(destination, UTF_8);
         destination = destination.replace(host, "");
 
         File destFile = new File(davFolder + separator + destination);

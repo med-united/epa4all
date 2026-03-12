@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import static de.servicehealth.epa4all.server.propsource.PropBuilder.SKIPPED_FILES;
-import static de.servicehealth.utils.ServerUtils.makePrefixPath;
 import static java.io.File.separator;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.jcr.query.Query.JCR_SQL2;
@@ -52,7 +51,7 @@ public class Workspace {
 
     private String getConfigElement(String name, String configName, String elementTemplate) {
         File configFile = new File(jcrConfig.getConfigPath(), configName);
-        URL configUrl = Workspace.class.getResource(makePrefixPath("jcr", configName));
+        URL configUrl = Workspace.class.getResource("/jcr/" + configName);
         String configElement = getConfigurationParam(elementTemplate, configFile, configUrl);
         log.info(String.format("%s config = '%s'", name, configElement));
         return configElement;

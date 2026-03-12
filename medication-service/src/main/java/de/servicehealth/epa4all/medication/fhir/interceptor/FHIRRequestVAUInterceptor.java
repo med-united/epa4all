@@ -30,7 +30,6 @@ import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.Base64;
 import java.util.stream.Collectors;
@@ -50,6 +49,7 @@ import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static de.servicehealth.vau.VauFacade.NO_USER_SESSION;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.ACCEPT_ENCODING;
 import static org.apache.http.HttpHeaders.CONNECTION;
@@ -134,7 +134,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         byte[] body = entity == null ? new byte[0] : entity.getContent().readAllBytes();
 
         String method = body.length == 0 ? "GET" : "POST"; // TODO enhance
-        String path = URLDecoder.decode(request.getRequestLine().getUri(), StandardCharsets.UTF_8);
+        String path = URLDecoder.decode(request.getRequestLine().getUri(), UTF_8);
 
         boolean api = path.contains("api");
         String additionalHeaders = Stream.of(request.getAllHeaders())

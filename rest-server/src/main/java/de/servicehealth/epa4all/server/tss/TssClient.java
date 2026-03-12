@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.tss;
 
+import de.servicehealth.epa4all.server.FeatureConfig;
 import de.servicehealth.epa4all.server.idp.TssConfig;
 import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
@@ -28,15 +29,20 @@ public class TssClient {
     @Inject
     TssConfig tssConfig;
 
-    Executor executor;
+    @Inject
+    FeatureConfig featureConfig;
+
+    private Executor executor;
 
     @PostConstruct
     public void init() throws Exception {
-        CloseableHttpClient httpclient = HttpClients.custom()
-            .setSSLHostnameVerifier((h, s) -> true)
-            .setSSLContext(createFakeSSLContext())
-            .build();
-        executor = Executor.newInstance(httpclient);
+        if (featureConfig.isTssEnabled()) {
+            CloseableHttpClient httpclient = HttpClients.custom()
+                .setSSLHostnameVerifier((h, s) -> true)
+                .setSSLContext(createFakeSSLContext())
+                .build();
+            executor = Executor.newInstance(httpclient);
+        }
     }
 
     public HttpResponse submit(String accessToken, byte[] payload) throws Exception {

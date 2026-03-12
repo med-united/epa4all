@@ -6,6 +6,7 @@ import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.upload.soap.RawSoapUtils;
+import de.servicehealth.utils.ServerUtils;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import io.quarkus.test.InjectMock;
@@ -25,7 +26,6 @@ import java.util.Map;
 
 import static de.servicehealth.epa4all.common.TestUtils.getStringFixture;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
-import static de.servicehealth.utils.ServerUtils.makeSimplePath;
 import static de.servicehealth.vau.VauClient.KVNR;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static io.restassured.RestAssured.given;
@@ -108,7 +108,8 @@ public class XDSDownloadIT extends AbstractWiremockTest {
     }
 
     private void checkPdfFiles(String telematikId, String kvnr) {
-        File otherFolder = new File(tempDir.toFile(), makeSimplePath("webdav", telematikId, kvnr, "other"));
+        String otherFolderPath = ServerUtils.makeOSPath("webdav", telematikId, kvnr, "other");
+        File otherFolder = new File(tempDir.toFile(), otherFolderPath);
         File[] pdfFiles = otherFolder.listFiles(name -> name.getName().endsWith(".pdf"));
         assertNotNull(pdfFiles);
         assertEquals(1, pdfFiles.length);

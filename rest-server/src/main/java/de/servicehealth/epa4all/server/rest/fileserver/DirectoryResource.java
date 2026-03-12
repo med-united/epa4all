@@ -5,23 +5,19 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.Providers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 
 import static de.servicehealth.folder.WebdavConfig.RESOURCE_NAME;
 import static java.io.File.separator;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Dependent
 public class DirectoryResource extends AbstractResource {
-
-    private static final Logger log = LoggerFactory.getLogger(DirectoryResource.class.getName());
 
     private String davFolder;
 
@@ -37,7 +33,7 @@ public class DirectoryResource extends AbstractResource {
         URI uri = uriInfo.getBaseUri();
         String host = uri.getScheme() + "://" + uri.getHost() + "/" + RESOURCE_NAME + "/";
         String originalDestination = destination;
-        destination = URLDecoder.decode(destination, StandardCharsets.UTF_8);
+        destination = URLDecoder.decode(destination, UTF_8);
         destination = destination.replace(host, "");
 
         File destFile = new File(davFolder + separator + destination);

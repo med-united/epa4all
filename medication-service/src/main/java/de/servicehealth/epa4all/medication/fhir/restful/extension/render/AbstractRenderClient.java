@@ -11,7 +11,6 @@ import org.apache.http.message.BasicHeader;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -20,6 +19,7 @@ import static de.servicehealth.utils.ServerUtils.APPLICATION_PDF;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static jakarta.ws.rs.core.HttpHeaders.USER_AGENT;
 import static jakarta.ws.rs.core.MediaType.WILDCARD;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpHeaders.CONNECTION;
 import static org.apache.http.HttpHeaders.UPGRADE;
@@ -65,7 +65,7 @@ public abstract class AbstractRenderClient implements IRenderClient {
     public byte[] getXhtmlDocument(Map<String, String> xHeaders) throws Exception {
         try (InputStream content = execute(XHTML_EXT, xHeaders)) {
             byte[] bytes = content.readAllBytes();
-            Log.info(new String(bytes, StandardCharsets.UTF_8));
+            Log.info(new String(bytes, UTF_8));
             return bytes;
         }
     }
