@@ -1,0 +1,1791 @@
+---
+openapi: 3.1.0
+paths:
+  /admin/shutdown:
+    post:
+      description: Shutdown epa4all service
+      responses:
+        "202":
+          description: Shutdown request accepted
+      summary: Shutdown
+      tags:
+      - Admin
+  /entitlements:
+    post:
+      summary: Set entitlement for Patient
+      parameters:
+      - description: Patient KVNR
+        name: x-insurantid
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Entitlement was successfully set
+        "204":
+          description: "Entitlement is expired or empty, unable to set it due to error"
+        "400":
+          description: x-insurantid was not specified
+        "403":
+          description: Patient did not give a consent
+        "404":
+          description: Patient is not found in any ePA
+        "409":
+          description: ePA error
+        "500":
+          description: Internal server error
+      tags:
+      - Entitlement
+    get:
+      summary: Get entitlements for Patient
+      parameters:
+      - description: Patient KVNR
+        name: x-insurantid
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Entitlement was successfully set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetEntitlements200Response"
+        "400":
+          description: x-insurantid was not specified
+        "404":
+          description: Patient is not found in any ePA
+        "409":
+          description: ePA error
+        "500":
+          description: Internal server error
+      tags:
+      - Entitlement
+  /entitlements/{actorId}:
+    get:
+      summary: Get entitlements for Patient
+      parameters:
+      - description: ActorId
+        name: actorId
+        required: true
+        in: path
+        schema:
+          type: string
+          pattern: \S
+      - description: Patient KVNR
+        name: x-insurantid
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Entitlement was successfully set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntitlementClaimsResponseType"
+        "400":
+          description: x-insurantid was not specified
+        "404":
+          description: Patient is not found in any ePA
+        "409":
+          description: ePA error
+        "500":
+          description: Internal server error
+      tags:
+      - Entitlement
+  /epa:
+    get:
+      summary: Check ePA for the KVNR
+      parameters:
+      - description: Patient KVNR
+        name: x-insurantid
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      responses:
+        "204":
+          description: The patient has ePA
+        "400":
+          description: x-insurantid was not specified
+        "404":
+          description: The patient has no ePA
+        "500":
+          description: Internal server error
+      tags:
+      - Epa
+  /equipment:
+    get:
+      summary: Return medical equipment list related to the search request
+      parameters:
+      - description: Search text
+        name: q
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      responses:
+        "200":
+          description: Search for medical equipment succeeded
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal server error
+      tags:
+      - Equipment
+  /event/cards:
+    get:
+      summary: Return cards attached to the Konnektor
+      parameters:
+      - description: "Type of the card to search, all types if skipped"
+        example: EGK/SMC-B/SMC-KT/etc
+        name: cardType
+        in: query
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Konnektor GetCardsResponse
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/GetCardsResponse"
+        "500":
+          description: Internal server error
+      tags:
+      - Event
+  /event/cardterminals:
+    get:
+      summary: Return card terminals attached to the Konnektor
+      parameters:
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Konnektor GetCardTerminalsResponse
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/GetCardTerminalsResponse"
+        "500":
+          description: Internal server error
+      tags:
+      - Event
+  /health:
+    get:
+      summary: Return epa4all health checks
+      responses:
+        "200":
+          description: epa4all HealthInfo response
+        "500":
+          description: Internal server error
+      tags:
+      - Health
+  /konnektor/configs:
+    get:
+      summary: Return current epa4all Konnektor configurations
+      parameters:
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List of Konnektor configurations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KonnektorUserConfig"
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KonnektorUserConfig"
+        "500":
+          description: Internal server error
+      tags:
+      - Konnektor
+  /prescription:
+    post:
+      summary: Send KIM email with prescription
+      parameters:
+      - description: Patient KVNR
+        name: x-insurantid
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrescriptionDto"
+        required: true
+      responses:
+        "200":
+          description: KIM email was sent
+        "400":
+          description: Some parameter is invalid
+        "500":
+          description: Internal server error
+      tags:
+      - Prescription
+  /telematik/id:
+    get:
+      summary: Return telematikId for given SMC-B card
+      parameters:
+      - description: SMC-B card ICCSN
+        name: iccsn
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: TelematikId string value
+        "400":
+          description: Some parameter is invalid
+        "500":
+          description: Internal server error
+      tags:
+      - Telematik
+  /tss:
+    post:
+      summary: Forward client's TSS POST request to TerminServer
+      parameters:
+      - description: "KV.digital supported scope, default is 'Abrechnungsinformation'"
+        name: scope
+        in: query
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/xml:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        "200":
+          description: TSS request was successfully forwarded
+          content:
+            '*/*':
+              schema:
+                type: string
+        "404":
+          description: TSS feature is disabled
+        "500":
+          description: Internal server error
+      tags:
+      - Tss
+  /tss/token:
+    get:
+      summary: Acquire access token for KV Appointment Service
+      parameters:
+      - description: "KV.digital supported scope, default is 'Abrechnungsinformation'"
+        name: scope
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: TSS accessToken is acquired
+          content:
+            text/plain:
+              schema:
+                type: string
+        "404":
+          description: TSS feature is disabled
+        "500":
+          description: Internal server error
+      tags:
+      - Tss
+  /vau/reload:
+    get:
+      summary: Force empty VAU sessions to reload
+      parameters:
+      - description: "The target ePA backend of the affected VAU sessions, all backends\
+          \ if skipped"
+        name: backends
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: VAU sessions reload status JSON
+        "500":
+          description: Internal server error
+      tags:
+      - Vau
+  /vsd/kvnr:
+    post:
+      summary: Create KVNR folder in the WebDav storage
+      parameters:
+      - description: Patient KVNR
+        name: x-insurantid
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "201":
+          description: The patient folder was successfully created
+        "400":
+          description: x-insurantid is invalid
+        "500":
+          description: Internal server error
+      tags:
+      - Vsd
+  /vsd/pnw:
+    post:
+      summary: Set entitlement for KVNR using PNW
+      parameters:
+      - description: Patient entitlement start date
+        name: startDate
+        required: true
+        in: query
+        schema:
+          type: string
+      - description: Patient street
+        name: street
+        required: true
+        in: query
+        schema:
+          type: string
+      - description: Length of the versicherungsdaten
+        name: versicherungsdatenLength
+        required: true
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - description: Patient KVNR
+        name: x-insurantid
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        "200":
+          description: The patient entitlement was successfully created
+        "400":
+          description: x-insurantid is invalid
+        "409":
+          description: ePA error
+        "500":
+          description: Internal server error
+      tags:
+      - Vsd
+  /webdav:
+    parameters:
+    - name: Content-Length
+      in: header
+      schema:
+        type: integer
+        format: int64
+    - name: Depth
+      in: header
+      schema:
+        type: string
+    - name: Destination
+      in: header
+      schema:
+        type: string
+    - name: Overwrite
+      in: header
+      schema:
+        type: string
+    put:
+      parameters:
+      - name: Content-Length
+        in: header
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        "200":
+          description: OK
+      summary: Put
+      tags:
+      - File Server Resource
+    post:
+      parameters:
+      - name: Content-Length
+        in: header
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        "200":
+          description: OK
+      summary: Post
+      tags:
+      - File Server Resource
+    options:
+      responses:
+        "200":
+          description: OK
+      summary: Options
+      tags:
+      - File Server Resource
+    get:
+      responses:
+        "200":
+          description: OK
+      summary: Get
+      tags:
+      - File Server Resource
+    delete:
+      responses:
+        "200":
+          description: OK
+      summary: Delete
+      tags:
+      - File Server Resource
+  /xds-document/change/raw:
+    post:
+      summary: Change document metadata in the XDS registry
+      parameters:
+      - description: Patient KVNR
+        name: kvnr
+        required: true
+        in: query
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      - description: Original filename of the document
+        example: medical-report.pdf
+        in: header
+        name: File-Name
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*':
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        "200":
+          description: Task uuid
+          content:
+            text/plain:
+              schema:
+                type: string
+        "500":
+          description: Internal server error
+      tags:
+      - Change
+  /xds-document/delete/raw:
+    post:
+      summary: Delete documents from the XDS registry
+      parameters:
+      - description: Patient KVNR
+        name: kvnr
+        required: true
+        in: query
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*':
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        "200":
+          description: Task uuid
+          content:
+            text/plain:
+              schema:
+                type: string
+        "500":
+          description: Internal server error
+      tags:
+      - Delete
+  /xds-document/download/{uniqueId}:
+    get:
+      summary: Download single document from the XDS registry
+      parameters:
+      - description: Document unique identifier from query response
+        example: 2.259532960832105435533.4853516939077959994
+        name: uniqueId
+        in: path
+        required: true
+        schema:
+          type: string
+      - description: Patient KVNR
+        name: kvnr
+        required: true
+        in: query
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: ePA XDS RetrieveDocumentSetResponseType
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetrieveDocumentSetResponseType"
+        "500":
+          description: Internal server error
+      tags:
+      - Download
+  /xds-document/downloadAll:
+    get:
+      summary: Download all documents of the patient from the XDS registry
+      parameters:
+      - description: Patient KVNR
+        name: kvnr
+        required: true
+        in: query
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Task uuid array
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "500":
+          description: Internal server error
+      tags:
+      - Download All
+  /xds-document/query:
+    get:
+      summary: Query information about patient's remote documents
+      parameters:
+      - description: Patient KVNR
+        name: kvnr
+        required: true
+        in: query
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: XDS AdhocQueryResponse
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/AdhocQueryResponse"
+        "500":
+          description: Internal server error
+      tags:
+      - Query
+  /xds-document/task/{taskId}:
+    get:
+      summary: Query information about task completion status
+      parameters:
+      - description: Task uuid
+        name: taskId
+        required: true
+        in: path
+        schema:
+          type: string
+      responses:
+        "200":
+          description: XDS RegistryResponseType
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/RegistryResponseType"
+        "500":
+          description: Internal server error
+      tags:
+      - Query
+  /xds-document/upload:
+    post:
+      summary: Upload single document XML/PDF/etc to the XDS registry
+      parameters:
+      - description: IG schema name
+        in: query
+        name: ig
+        schema:
+          type: string
+      - description: Patient KVNR
+        in: query
+        name: kvnr
+        required: true
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        in: query
+        name: x-konnektor
+        schema:
+          type: string
+      - description: Doctor first name
+        in: header
+        name: Author-FirstName
+        schema:
+          type: string
+      - example: Praxis Heider
+        in: header
+        name: Author-Institution
+        schema:
+          type: string
+      - description: https://de.wikipedia.org/wiki/Lebenslange_Arztnummer
+        example: 605095502
+        in: header
+        name: Author-Lanr
+        schema:
+          type: string
+      - description: Doctor last name
+        in: header
+        name: Author-LastName
+        schema:
+          type: string
+      - description: Doctor title
+        example: Dr. med.
+        in: header
+        name: Author-Title
+        schema:
+          type: string
+      - example: nodeRepresentation=ADM; name=Administratives Dokument
+        in: header
+        name: ClassCodeClassification
+        schema:
+          type: array
+          items:
+            type: string
+      - example: Naturheilverfahren
+        in: header
+        name: Fachrichtung
+        schema:
+          type: string
+        deprecated: true
+      - example: nodeRepresentation=PRA; name=Arztpraxis
+        in: header
+        name: FacilityTypeCodeClassification
+        schema:
+          type: array
+          items:
+            type: string
+      - description: Original filename of the document
+        example: medical-report.pdf
+        in: header
+        name: File-Name
+        schema:
+          type: string
+      - example: Format aus MIME Type ableitbar
+        in: header
+        name: Information
+        schema:
+          type: string
+        deprecated: true
+      - example: Format aus MIME Type ableitbar
+        in: header
+        name: Information2
+        schema:
+          type: string
+        deprecated: true
+      - description: Language code for the document
+        example: de-DE
+        in: header
+        name: Lang-Code
+        required: true
+        schema:
+          type: string
+      - example: nodeRepresentation=AUGE; name=Augenheilkunde
+        in: header
+        name: PracticeSettingClassification
+        schema:
+          type: array
+          items:
+            type: string
+      - example: Arztpraxis
+        in: header
+        name: Praxis
+        schema:
+          type: string
+        deprecated: true
+      - description: XDS title of the document
+        example: PDF-Arztbrief an  kv.digital-eArztbrief
+        in: header
+        name: Title
+        schema:
+          type: string
+      - example: nodeRepresentation=ADCH; name=Administrative Checklisten
+        in: header
+        name: TypeCodeClassification
+        schema:
+          type: array
+          items:
+            type: string
+      requestBody:
+        content:
+          '*':
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        "200":
+          description: Task uuid
+          content:
+            text/plain:
+              schema:
+                type: string
+        "500":
+          description: Internal server error
+      tags:
+      - Upload
+  /xds-document/upload/raw:
+    post:
+      summary: Upload single document XML/PDF/etc providing SOAP request to the XDS
+        registry
+      parameters:
+      - description: IG schema name
+        name: ig
+        in: query
+        schema:
+          type: string
+      - description: Patient KVNR
+        name: kvnr
+        required: true
+        in: query
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      - description: Language code for the document
+        example: de-DE
+        in: header
+        name: Lang-Code
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: Task uuid
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal server error
+      tags:
+      - Upload
+  /xds-document/uploadAll:
+    get:
+      summary: Upload all documents of the patient from webdav KVNR medication folders
+        to the XDS registry
+      parameters:
+      - description: Patient KVNR
+        name: kvnr
+        required: true
+        in: query
+        schema:
+          type: string
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      - name: Lang-Code
+        in: header
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Task uuid array
+          content:
+            text/plain:
+              schema:
+                type: array
+                items:
+                  type: string
+        "500":
+          description: Internal server error
+      tags:
+      - Upload All
+  /{adminPath}:
+    get:
+      description: Refresh VAU sessions
+      parameters:
+      - name: adminPath
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: vau-admin/.*
+      - description: The target ePA backend of the affected VAU sessions
+        name: x-backend
+        in: query
+        schema:
+          type: string
+      - description: "The identifier of the VAU session to reload, all sessions if\
+          \ skipped"
+        name: VAU_CLIENT_UUID
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Refresh status
+        "429":
+          description: duplicated call
+        "500":
+          description: Internal server error
+        default:
+          description: ePA response
+      summary: Forward client's Admin GET request to ePA
+      tags:
+      - Vau Admin
+  /{fhirPath}:
+    post:
+      summary: Forward client's FHIR POST request to ePA
+      parameters:
+      - allowReserved: true
+        description: ePA fhir path (doesn't work from swagger-ui)
+        example: pdf/xhtml/Medication?_count=10&_offset=0&_total=none
+        in: path
+        name: fhirPath
+        required: true
+        schema:
+          type: string
+          pattern: fhir/.*
+      - description: Patient KVNR (FHIR compatible)
+        name: subject
+        in: query
+        schema:
+          type: string
+      - description: "Flag of partial updates (JSON Patch) usage, true/false"
+        name: ui5
+        in: query
+        schema:
+          type: string
+      - description: Patient KVNR
+        name: x-insurantid
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        "200":
+          description: FHIR request was successfully forwarded
+        "400":
+          description: x-insurantid is missed
+        "404":
+          description: Patient is not found in any ePA
+        "429":
+          description: duplicated call
+        "500":
+          description: Internal server error
+      tags:
+      - Fhir
+    get:
+      summary: Forward client's FHIR GET request to ePA
+      parameters:
+      - allowReserved: true
+        description: ePA fhir path (doesn't work from swagger-ui)
+        example: pdf/xhtml/Medication
+        in: path
+        name: fhirPath
+        required: true
+        schema:
+          type: string
+          pattern: fhir/.*
+      - description: Patient KVNR (FHIR compatible)
+        name: subject
+        in: query
+        schema:
+          type: string
+      - description: "Flag of partial updates (JSON Patch) usage, true/false"
+        name: ui5
+        in: query
+        schema:
+          type: string
+      - description: Patient KVNR
+        name: x-insurantid
+        required: true
+        in: query
+        schema:
+          type: string
+          pattern: \S
+      - description: IP of the target Konnektor (can be skipped for single-tenancy)
+        name: x-konnektor
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: FHIR request was successfully forwarded
+        "400":
+          description: x-insurantid is missed
+        "404":
+          description: Patient is not found in any ePA
+        "429":
+          description: duplicated call
+        "500":
+          description: Internal server error
+      tags:
+      - Fhir
+components:
+  schemas:
+    ProductMiscellaneous:
+      type: object
+      properties:
+        productVendorName:
+          type: string
+          xml:
+            name: ProductVendorName
+        productName:
+          type: string
+          xml:
+            name: ProductName
+    CardVersion:
+      type: object
+      properties:
+        atrVersion:
+          $ref: "#/components/schemas/VersionInfoType"
+          type: object
+          xml:
+            name: ATRVersion
+        objectSystemVersion:
+          $ref: "#/components/schemas/VersionInfoType"
+          type: object
+          xml:
+            name: ObjectSystemVersion
+        dataStructureVersion:
+          $ref: "#/components/schemas/VersionInfoType"
+          type: object
+          xml:
+            name: DataStructureVersion
+        cardPTPersVersion:
+          $ref: "#/components/schemas/VersionInfoType"
+          type: object
+          xml:
+            name: CardPTPersVersion
+        loggingVersion:
+          $ref: "#/components/schemas/VersionInfoType"
+          type: object
+          xml:
+            name: LoggingVersion
+        cosVersion:
+          $ref: "#/components/schemas/VersionInfoType"
+          type: object
+          xml:
+            name: COSVersion
+        gdoVersion:
+          $ref: "#/components/schemas/VersionInfoType"
+          type: object
+          xml:
+            name: GDOVersion
+        keyInfoVersion:
+          $ref: "#/components/schemas/VersionInfoType"
+          type: object
+          xml:
+            name: KeyInfoVersion
+    KonnektorUserConfig:
+      type: object
+      xml:
+        name: KonnektorConfig
+      properties:
+        clientCertificate:
+          type: string
+        clientSystemId:
+          type: string
+        cardlinkServerURL:
+          type: string
+        workplaceId:
+          type: string
+        mandantId:
+          type: string
+        connectorBaseURL:
+          type: string
+        userId:
+          type: string
+        version:
+          type: string
+    CardTypeType:
+      type: string
+      enum:
+      - EGK
+      - HBA_Q_SIG
+      - HBA
+      - SMC_B
+      - HSM_B
+      - SMC_KT
+      - KVK
+      - ZOD_2_0
+      - UNKNOWN
+      - HB_AX
+      - SM_B
+    ProductVersionLocal:
+      type: object
+      properties:
+        fwVersion:
+          type: string
+          xml:
+            name: FWVersion
+        hwVersion:
+          type: string
+          xml:
+            name: HWVersion
+    ValueListType:
+      type: object
+      properties:
+        value:
+          type: array
+          xml:
+            name: Value
+          items:
+            type: string
+    WorkplaceIds:
+      type: object
+      properties:
+        workplaceId:
+          type: array
+          xml:
+            name: WorkplaceId
+          items:
+            type: string
+    CardTerminals:
+      type: object
+      properties:
+        cardTerminal:
+          type: array
+          xml:
+            name: CardTerminal
+          items:
+            $ref: "#/components/schemas/CardTerminalInfoType"
+    EntitlementClaimsResponseType:
+      type: object
+      properties:
+        actorId:
+          type: string
+        displayName:
+          type: string
+        oid:
+          type: string
+        issued:
+          $ref: "#/components/schemas/EntitlementClaimsResponseTypeIssued"
+        validTo:
+          $ref: "#/components/schemas/Date"
+    ProductVersion:
+      type: object
+      properties:
+        central:
+          type: string
+          xml:
+            name: Central
+        local:
+          $ref: "#/components/schemas/ProductVersionLocal"
+          type: object
+          xml:
+            name: Local
+    SlotListType:
+      type: object
+      properties:
+        slot:
+          type: array
+          xml:
+            name: Slot
+          items:
+            $ref: "#/components/schemas/SlotType1"
+    GetCardTerminalsResponse:
+      type: object
+      properties:
+        cardTerminals:
+          $ref: "#/components/schemas/CardTerminals"
+          type: object
+          xml:
+            name: CardTerminals
+        status:
+          $ref: "#/components/schemas/Status"
+          type: object
+          xml:
+            name: Status
+    ProductTypeInformation:
+      type: object
+      properties:
+        productTypeVersion:
+          type: string
+          xml:
+            name: ProductTypeVersion
+        productType:
+          type: string
+          xml:
+            name: ProductType
+    RegistryError:
+      type: object
+      properties:
+        severity:
+          type: string
+          xml:
+            attribute: true
+        codeContext:
+          type: string
+          xml:
+            attribute: true
+        errorCode:
+          type: string
+          xml:
+            attribute: true
+        location:
+          type: string
+          xml:
+            attribute: true
+        value:
+          type: string
+    CardInfoType:
+      type: object
+      properties:
+        insertTime:
+          $ref: "#/components/schemas/XMLGregorianCalendar"
+          type: object
+          xml:
+            name: InsertTime
+        iccsn:
+          type: string
+          xml:
+            name: Iccsn
+        ctId:
+          type: string
+          xml:
+            name: CtId
+        cardHolderName:
+          type: string
+          xml:
+            name: CardHolderName
+        cardType:
+          $ref: "#/components/schemas/CardTypeType"
+          type: string
+          xml:
+            name: CardType
+        cardHandle:
+          type: string
+          xml:
+            name: CardHandle
+        cardVersion:
+          $ref: "#/components/schemas/CardVersion"
+          type: object
+          xml:
+            name: CardVersion
+        slotId:
+          type: integer
+          xml:
+            name: SlotId
+        certificateExpirationDate:
+          $ref: "#/components/schemas/XMLGregorianCalendar"
+          type: object
+          xml:
+            name: CertificateExpirationDate
+        kvnr:
+          type: string
+          xml:
+            name: Kvnr
+    DocumentResponse:
+      type: object
+      properties:
+        homeCommunityId:
+          type: string
+          xml:
+            name: HomeCommunityId
+        repositoryUniqueId:
+          type: string
+          xml:
+            name: RepositoryUniqueId
+        documentUniqueId:
+          type: string
+          xml:
+            name: DocumentUniqueId
+        document:
+          type: string
+          xml:
+            name: Document
+          format: binary
+        newDocumentUniqueId:
+          type: string
+          xml:
+            name: NewDocumentUniqueId
+        mimeType:
+          type: string
+        newRepositoryUniqueId:
+          type: string
+          xml:
+            name: NewRepositoryUniqueId
+    GetCardsResponse:
+      type: object
+      properties:
+        cards:
+          $ref: "#/components/schemas/Cards"
+          type: object
+          xml:
+            name: Cards
+        status:
+          $ref: "#/components/schemas/Status"
+          type: object
+          xml:
+            name: Status
+    PrescriptionDto:
+      type: object
+      properties:
+        note:
+          type: string
+        phone:
+          type: string
+        namePrefix:
+          type: string
+        equipment:
+          type: string
+        lanr:
+          type: string
+        bsnr:
+          type: string
+    RegistryErrorList:
+      type: object
+      properties:
+        registryError:
+          type: array
+          xml:
+            name: RegistryError
+          items:
+            $ref: "#/components/schemas/RegistryError"
+        highestSeverity:
+          type: string
+          xml:
+            attribute: true
+    GetEntitlements200Response:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GetEntitlements200ResponseDataInner"
+    AdhocQueryResponse:
+      type: object
+      properties:
+        startIndex:
+          type: integer
+          xml:
+            attribute: true
+        registryErrorList:
+          $ref: "#/components/schemas/RegistryErrorList"
+          type: object
+          xml:
+            name: RegistryErrorList
+        totalResultCount:
+          type: integer
+          xml:
+            attribute: true
+        requestId:
+          type: string
+          xml:
+            attribute: true
+        registryObjectList:
+          $ref: "#/components/schemas/RegistryObjectListType"
+          type: object
+          xml:
+            name: RegistryObjectList
+        responseSlotList:
+          $ref: "#/components/schemas/SlotListType"
+          type: object
+          xml:
+            name: ResponseSlotList
+        status:
+          type: string
+          xml:
+            attribute: true
+    Cards:
+      type: object
+      properties:
+        card:
+          type: array
+          xml:
+            name: Card
+          items:
+            $ref: "#/components/schemas/CardInfoType"
+    RegistryObjectListType:
+      type: object
+      properties:
+        identifiable:
+          type: array
+          items:
+            type: object
+            properties:
+              nil:
+                type: boolean
+              typeSubstituted:
+                type: boolean
+              globalScope:
+                type: boolean
+              scope:
+                type: object
+              name:
+                $ref: "#/components/schemas/QName"
+              declaredType:
+                type: object
+              value:
+                $ref: "#/components/schemas/IdentifiableTypeExtendsIdentifiableType"
+    Status:
+      type: object
+      properties:
+        result:
+          type: string
+          xml:
+            name: Result
+        error:
+          $ref: "#/components/schemas/Error"
+          type: object
+          xml:
+            name: Error
+    RetrieveDocumentSetResponseType:
+      type: object
+      properties:
+        registryResponse:
+          $ref: "#/components/schemas/RegistryResponseType"
+          type: object
+          xml:
+            name: RegistryResponse
+        documentResponse:
+          type: array
+          xml:
+            name: DocumentResponse
+          items:
+            $ref: "#/components/schemas/DocumentResponse"
+    EntitlementClaimsResponseTypeIssued:
+      type: object
+      properties:
+        at:
+          $ref: "#/components/schemas/Date"
+        actorId:
+          type: string
+        displayName:
+          type: string
+    IdentifiableTypeExtendsIdentifiableType:
+      type: object
+      properties:
+        slot:
+          type: array
+          xml:
+            name: Slot
+          items:
+            $ref: "#/components/schemas/SlotType1"
+        id:
+          type: string
+          xml:
+            attribute: true
+        home:
+          type: string
+          xml:
+            attribute: true
+    QName:
+      type: object
+      properties:
+        localPart:
+          type: string
+        prefix:
+          type: string
+        namespaceURI:
+          type: string
+    Error:
+      type: object
+      properties:
+        trace:
+          type: array
+          xml:
+            name: Trace
+          items:
+            $ref: "#/components/schemas/Trace"
+        messageID:
+          type: string
+          xml:
+            name: MessageID
+        timestamp:
+          $ref: "#/components/schemas/XMLGregorianCalendar"
+          type: object
+          xml:
+            name: Timestamp
+    ProductInformation:
+      type: object
+      properties:
+        productMiscellaneous:
+          $ref: "#/components/schemas/ProductMiscellaneous"
+          type: object
+          xml:
+            name: ProductMiscellaneous
+        productTypeInformation:
+          $ref: "#/components/schemas/ProductTypeInformation"
+          type: object
+          xml:
+            name: ProductTypeInformation
+        productIdentification:
+          $ref: "#/components/schemas/ProductIdentification"
+          type: object
+          xml:
+            name: ProductIdentification
+        informationDate:
+          $ref: "#/components/schemas/XMLGregorianCalendar"
+          type: object
+          xml:
+            name: InformationDate
+    ProductIdentification:
+      type: object
+      properties:
+        productVersion:
+          $ref: "#/components/schemas/ProductVersion"
+          type: object
+          xml:
+            name: ProductVersion
+        productCode:
+          type: string
+          xml:
+            name: ProductCode
+        productVendorID:
+          type: string
+          xml:
+            name: ProductVendorID
+    Date:
+      type: string
+      format: date
+      examples:
+      - 2022-03-10
+    Trace:
+      type: object
+      properties:
+        severity:
+          type: string
+          xml:
+            name: Severity
+        eventID:
+          type: string
+          xml:
+            name: EventID
+        errorText:
+          type: string
+          xml:
+            name: ErrorText
+        logReference:
+          type: string
+          xml:
+            name: LogReference
+        instance:
+          type: string
+          xml:
+            name: Instance
+        compType:
+          type: string
+          xml:
+            name: CompType
+        code:
+          type: integer
+          xml:
+            name: Code
+        errorType:
+          type: string
+          xml:
+            name: ErrorType
+        detail:
+          $ref: "#/components/schemas/Detail"
+          type: object
+          xml:
+            name: Detail
+    XMLGregorianCalendar:
+      type: object
+      properties:
+        year:
+          type: integer
+        eon:
+          type: integer
+        timezone:
+          type: integer
+          format: int32
+        fractionalSecond:
+          type: number
+        xMLSchemaType:
+          $ref: "#/components/schemas/QName"
+        millisecond:
+          type: integer
+          format: int32
+        eonAndYear:
+          type: integer
+        minute:
+          type: integer
+          format: int32
+        second:
+          type: integer
+          format: int32
+        valid:
+          type: boolean
+        month:
+          type: integer
+          format: int32
+        hour:
+          type: integer
+          format: int32
+        day:
+          type: integer
+          format: int32
+    CardTerminalInfoType:
+      type: object
+      properties:
+        connected:
+          type: boolean
+          xml:
+            name: Connected
+        ctId:
+          type: string
+          xml:
+            name: CtId
+        macAddress:
+          type: string
+          xml:
+            name: MacAddress
+        slots:
+          type: integer
+          xml:
+            name: Slots
+        name:
+          type: string
+          xml:
+            name: Name
+        ipAddress:
+          $ref: "#/components/schemas/IPAddress"
+          type: object
+          xml:
+            name: IPAddress
+        isphysical:
+          type: boolean
+          xml:
+            name: IS_PHYSICAL
+        productInformation:
+          $ref: "#/components/schemas/ProductInformation"
+          type: object
+          xml:
+            name: ProductInformation
+        workplaceIds:
+          $ref: "#/components/schemas/WorkplaceIds"
+          type: object
+          xml:
+            name: WorkplaceIds
+    SlotType1:
+      type: object
+      properties:
+        slotType:
+          type: string
+          xml:
+            attribute: true
+        valueList:
+          $ref: "#/components/schemas/ValueListType"
+          type: object
+          xml:
+            name: ValueList
+        name:
+          type: string
+          xml:
+            attribute: true
+    IPAddress:
+      type: object
+      properties:
+        ipv6Address:
+          type: string
+          xml:
+            name: IPV6Address
+        ipv4Address:
+          type: string
+          xml:
+            name: IPV4Address
+    GetEntitlements200ResponseDataInner:
+      type: object
+      properties:
+        actorId:
+          type: string
+        displayName:
+          type: string
+        oid:
+          type: string
+        issued:
+          $ref: "#/components/schemas/EntitlementClaimsResponseTypeIssued"
+        validTo:
+          $ref: "#/components/schemas/Date"
+    Detail:
+      type: object
+      properties:
+        encoding:
+          type: string
+          xml:
+            attribute: true
+            name: Encoding
+        value:
+          type: string
+    RegistryResponseType:
+      type: object
+      properties:
+        registryErrorList:
+          $ref: "#/components/schemas/RegistryErrorList"
+          type: object
+          xml:
+            name: RegistryErrorList
+        requestId:
+          type: string
+          xml:
+            attribute: true
+        responseSlotList:
+          $ref: "#/components/schemas/SlotListType"
+          type: object
+          xml:
+            name: ResponseSlotList
+        status:
+          type: string
+          xml:
+            attribute: true
+    VersionInfoType:
+      type: object
+      properties:
+        major:
+          type: integer
+          xml:
+            name: Major
+          format: int32
+        minor:
+          type: integer
+          xml:
+            name: Minor
+          format: int32
+        revision:
+          type: integer
+          xml:
+            name: Revision
+          format: int32
+info:
+  title: rest-server API
+  version: 1.0.0-SNAPSHOT
