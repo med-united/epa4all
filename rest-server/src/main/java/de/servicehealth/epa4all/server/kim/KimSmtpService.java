@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class KimSmtpService {
     @Inject
     KimConfig kimConfig;
 
-    public String sendERezeptToKIMAddress(String prescription, String noteToPharmacy) {
+    public String sendERezept(Map<String, String> headers, String bundle, String noteToPharmacy) {
         try {
             Properties props = new Properties();
             props.put("mail.smtp.host", smtpConfig.getServer());
@@ -46,8 +47,9 @@ public class KimSmtpService {
                 }
             });
             MimeMessage msg = new MimeMessage(session);
-            msg.addHeader("X-KIM-Dienstkennung", kimConfig.getDienstkennungHeader());
-            msg.addHeader("X-KIM-Encounter-Id", UUID.randomUUID().toString());
+            for (Map.Entry<String, String> header: headers.entrySet()) {
+                msg.addHeader(header.getKey(), header.getValue());
+            }
 
             String fromKimAddress = kimConfig.getFromAddress();
             msg.setFrom(new InternetAddress(fromKimAddress));
@@ -58,7 +60,7 @@ public class KimSmtpService {
             textPart.setText((noteToPharmacy == null ? "Hello" : noteToPharmacy) + "\r\n\r\n\r\n", "utf-8");
 
             MimeBodyPart erezeptTokenPart = new MimeBodyPart();
-            erezeptTokenPart.setText(prescription, "utf8");
+            erezeptTokenPart.setText(bundle, "utf8");
 
             Multipart multiPart = new MimeMultipart();
             multiPart.addBodyPart(textPart); // <-- first

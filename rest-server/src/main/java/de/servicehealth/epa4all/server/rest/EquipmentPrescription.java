@@ -1,6 +1,8 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.servicehealth.epa4all.server.presription.PrescriptionService;
+import de.servicehealth.epa4all.server.kim.KimConfig;
+import de.servicehealth.epa4all.server.kim.KimSmtpService;
+import de.servicehealth.epa4all.server.presription.EquipmentBundleService;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import jakarta.enterprise.context.RequestScoped;
@@ -20,7 +22,9 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
@@ -30,10 +34,16 @@ import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 @SuppressWarnings("unused")
 @RequestScoped
 @Path("prescription")
-public class Prescription extends AbstractResource {
+public class EquipmentPrescription extends AbstractResource {
 
     @Inject
-    PrescriptionService prescriptionService;
+    EquipmentBundleService equipmentBundleService;
+
+    @Inject
+    KimSmtpService kimSmtpService;
+
+    @Inject
+    KimConfig kimConfig;
 
     @APIResponses({
         @APIResponse(responseCode = "200", description = "KIM email was sent"),
@@ -55,14 +65,19 @@ public class Prescription extends AbstractResource {
         PrescriptionDto request
     ) throws Exception {
         String equipment = request.getEquipment();
-        Integer hash = Objects.hash("prescription", equipment, insurantId);
+        Integer hash = Objects.hash("equipment-prescription", equipment, insurantId);
         return deduplicatedCall("prescription", equipment, hash, () -> {
-            String res = prescriptionService.sendKimEmail(
+            String bundle = equipmentBundleService.buildEquipmentBundle(
                 userRuntimeConfig, telematikId, smcbHandle, insurantId,
                 equipment, request.getLanr(), request.getNamePrefix(),
-                request.getBsnr(), request.getPhone(), request.getNote()
+                request.getBsnr(), request.getPhone()
             );
-            return Response.ok(res).build();
+            Map<String, String> headers = Map.of(
+                "X-KIM-Dienstkennung", kimConfig.getDienstkennungHeader(),
+                "X-KIM-Encounter-Id", UUID.randomUUID().toString()
+            );
+            String result = kimSmtpService.sendERezept(headers, bundle, request.getNote());
+            return Response.ok(result).build();
         });
     }
 

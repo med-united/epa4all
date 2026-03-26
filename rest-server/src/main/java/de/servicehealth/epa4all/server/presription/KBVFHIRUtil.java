@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-@SuppressWarnings("HttpUrlsUsage")
 public class KBVFHIRUtil {
 
     private static final Logger log = Logger.getLogger(KBVFHIRUtil.class.getName());
@@ -51,11 +50,11 @@ public class KBVFHIRUtil {
         coverage.getMeta()
             .addProfile("https://fhir.kbv.de/StructureDefinition/KBV_PR_FOR_Coverage|1.1.0");
 
-        Coding besonderePersonengruppe = new Coding("https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_KBV_PERSONENGRUPPE", String.format("%02d", versichungKennzeichen.getBesonderePersonengruppe() != null ? versichungKennzeichen.getBesonderePersonengruppe() : 0), null);
+        Coding besonderePersonengruppe = new Coding("https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_KBV_PERSONENGRUPPE", String.format("%02d", versichungKennzeichen.getBesonderePersonengruppe() != null ? versichungKennzeichen.getBesonderePersonengruppe().longValue() : 0), null);
         Extension besonderePersonengruppeEx = new Extension("http://fhir.de/StructureDefinition/gkv/besondere-personengruppe", besonderePersonengruppe);
         coverage.addExtension(besonderePersonengruppeEx);
 
-        Coding dmp = new Coding("https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_KBV_DMP", String.format("%02d", versichungKennzeichen.getDMPKennzeichnung() != null ? versichungKennzeichen.getDMPKennzeichnung() : 0), null);
+        Coding dmp = new Coding("https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_KBV_DMP", String.format("%02d", versichungKennzeichen.getDMPKennzeichnung() != null ? versichungKennzeichen.getDMPKennzeichnung().longValue() : 0), null);
         Extension dmpEx = new Extension("http://fhir.de/StructureDefinition/gkv/dmp-kennzeichen", dmp);
         coverage.addExtension(dmpEx);
 

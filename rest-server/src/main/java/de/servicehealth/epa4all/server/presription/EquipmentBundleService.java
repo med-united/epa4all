@@ -7,11 +7,9 @@ import de.gematik.ws.fa.vsdm.vsd.v5.UCAllgemeineVersicherungsdatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCGeschuetzteVersichertendatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.kim.KimSmtpService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -51,16 +49,12 @@ import static de.health.service.cetp.domain.eventservice.card.CardType.HBA;
 import static org.hl7.fhir.r4.model.Address.AddressType.BOTH;
 import static org.hl7.fhir.r4.model.ContactPoint.ContactPointSystem.PHONE;
 
-@SuppressWarnings("HttpUrlsUsage")
 @ApplicationScoped
-public class PrescriptionService {
+public class EquipmentBundleService {
 
     private final IParser fhirParser = FhirContext.forR4().newXmlParser();
 
     private static final Pattern STREET_AND_NUMBER = Pattern.compile("(.*) ([^ ]*)$");
-
-    @Inject
-    KimSmtpService kimSmtpService;
 
     @Inject
     IKonnektorClient konnektorClient;
@@ -68,7 +62,7 @@ public class PrescriptionService {
     @Inject
     InsuranceDataService insuranceDataService;
 
-    public String sendKimEmail(
+    public String buildEquipmentBundle(
         UserRuntimeConfig userRuntimeConfig,
         String telematikId,
         String smcbHandle,
@@ -77,8 +71,7 @@ public class PrescriptionService {
         String lanr,
         String namePrefix,
         String bsnr,
-        String phone,
-        String noteToPharmacy
+        String phone
     ) throws Exception {
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
         if (insuranceData == null) {
@@ -89,8 +82,7 @@ public class PrescriptionService {
         }
         Bundle bundle = getBundle(insuranceData, userRuntimeConfig, smcbHandle, selectedEquipment, lanr, namePrefix, bsnr, phone);
         fhirParser.setPrettyPrint(true);
-        String prescription = fhirParser.encodeResourceToString(bundle);
-        return kimSmtpService.sendERezeptToKIMAddress(prescription, noteToPharmacy);
+        return fhirParser.encodeResourceToString(bundle);
     }
 
     private Bundle getBundle(
