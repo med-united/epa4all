@@ -29,7 +29,7 @@ public class GetEntitlementsIT extends AbstractWiremockTest {
     public static final String ENTITLEMENTS_PATH = "/entitlements";
 
     @InjectMock
-    FileEventSender fileEventSender;
+    FileEventSender suppressJcrHandling;
 
     @Test
     public void getEntitlementsWorks() throws Exception {

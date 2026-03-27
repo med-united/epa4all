@@ -17,7 +17,7 @@ import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IUserConfigurations;
 import de.servicehealth.api.epa4all.annotation.KonnektorSoapFeatures;
 import de.servicehealth.startup.StartableService;
-import de.servicehealth.utils.SSLResult;
+import de.servicehealth.utils.SSLContextBundle;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -47,9 +47,10 @@ import java.util.Map;
 import java.util.Optional;
 
 import static de.health.service.cetp.config.KonnektorAuth.CERTIFICATE;
+import static de.servicehealth.utils.SSLUtils.KeyStoreType.PKCS12;
 import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.utils.SSLUtils.createSSLContext;
-import static de.servicehealth.utils.SSLUtils.initSSLContext;
+import static de.servicehealth.utils.SSLUtils.createSSLContextBundle;
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static jakarta.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
 import static jakarta.xml.ws.BindingProvider.PASSWORD_PROPERTY;
@@ -92,10 +93,10 @@ public class ServicePortProvider extends StartableService {
             && certAuthStoreFile.isPresent()
             && certAuthStoreFilePassword.isPresent()
         ) {
-            String certPass = certAuthStoreFilePassword.get();
-            try (FileInputStream certInputStream = new FileInputStream(certAuthStoreFile.get())) {
-                SSLResult sslResult = initSSLContext(certInputStream, certPass);
-                defaultSSLContext = sslResult.getSslContext();
+            String password = certAuthStoreFilePassword.get();
+            try (FileInputStream inputStream = new FileInputStream(certAuthStoreFile.get())) {
+                SSLContextBundle sslContextBundle = createSSLContextBundle(inputStream, password, PKCS12);
+                defaultSSLContext = sslContextBundle.getSslContext();
             } catch (Exception e) {
                 log.warn("There was a problem when creating the SSLContext: " + e.getMessage());
                 defaultSSLContext = createFakeDefaultSSLContext();

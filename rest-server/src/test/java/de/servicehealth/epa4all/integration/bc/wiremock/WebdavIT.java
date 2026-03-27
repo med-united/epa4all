@@ -62,7 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class WebdavIT extends AbstractWiremockTest {
 
     @InjectMock
-    FileEventSender fileEventSender;
+    FileEventSender suppressJcrHandling;
 
     @Inject
     FolderService folderService;

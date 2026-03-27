@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 public class ExternalPnwIT extends AbstractWiremockTest {
 
     @InjectMock
-    FileEventSender fileEventSender;
+    FileEventSender suppressJcrHandling;
 
     @Inject
     protected VsdConfig vsdConfig;
@@ -103,7 +103,7 @@ public class ExternalPnwIT extends AbstractWiremockTest {
 
         InsuranceDataService mockForced = mock(InsuranceDataService.class);
         QuarkusMock.installMockForType(mockForced, InsuranceDataService.class);
-        
+
         given()
             .queryParams(Map.of(
                 X_KONNEKTOR, "localhost",

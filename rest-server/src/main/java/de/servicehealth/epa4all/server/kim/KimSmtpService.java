@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.kim;
 
+import de.servicehealth.epa4all.server.presription.PrescriptionSendException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.mail.Authenticator;
@@ -18,7 +19,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
+
+import static jakarta.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 
 @ApplicationScoped
 public class KimSmtpService {
@@ -29,9 +31,14 @@ public class KimSmtpService {
     SmtpConfig smtpConfig;
 
     @Inject
-    KimConfig kimConfig;
+    KimSmtpConfig kimConfig;
 
-    public String sendERezept(Map<String, String> headers, String bundle, String noteToPharmacy) {
+    public String sendERezept(
+        Map<String, String> headers,
+        String kimAddress,
+        String bundle,
+        String noteToPharmacy
+    ) throws PrescriptionSendException {
         try {
             Properties props = new Properties();
             props.put("mail.smtp.host", smtpConfig.getServer());
@@ -47,7 +54,7 @@ public class KimSmtpService {
                 }
             });
             MimeMessage msg = new MimeMessage(session);
-            for (Map.Entry<String, String> header: headers.entrySet()) {
+            for (Map.Entry<String, String> header : headers.entrySet()) {
                 msg.addHeader(header.getKey(), header.getValue());
             }
 
@@ -69,15 +76,14 @@ public class KimSmtpService {
 
             msg.setSentDate(new Date());
 
-            String toKimAddress = kimConfig.getToAddress();
-            msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toKimAddress, false));
+            msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(kimAddress, false));
             Transport.send(msg);
 
-            log.info("E-Mail sent successfully to: " + toKimAddress);
+            log.info("E-Mail sent successfully to: " + kimAddress);
             return "OK";
         } catch (Exception e) {
             log.error("Error during sending E-Prescription", e);
-            return e.getMessage();
+            throw new PrescriptionSendException(e.getMessage(), SERVICE_UNAVAILABLE);
         }
     }
 }

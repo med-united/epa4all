@@ -1,10 +1,10 @@
 package de.servicehealth.epa4all.server.presription;
 
 import ca.uhn.fhir.context.FhirContext;
-import de.servicehealth.epa4all.server.presription.requestdata.MedicationData;
+import ca.uhn.fhir.parser.IParser;
+import de.servicehealth.epa4all.server.presription.requestdata.EPrescriptionRequest;
 import de.servicehealth.epa4all.server.presription.requestdata.OrganizationData;
 import de.servicehealth.epa4all.server.presription.requestdata.PatientData;
-import de.servicehealth.epa4all.server.presription.requestdata.PractitionerData;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.hl7.fhir.r4.model.Address;
 import org.hl7.fhir.r4.model.BooleanType;
@@ -28,15 +28,15 @@ import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ServiceRequest;
 import org.hl7.fhir.r4.model.StringType;
 
+import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
+import static jakarta.ws.rs.core.Response.Status.CONFLICT;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Builds a UC1-1-Prescription-Request-To-Prescriber Bundle per gematik spec-E-Rezept-ServiceRequest.
- *
- * <p>The resulting Bundle is a FHIR message (type: message) conforming to
- * {@code erp-service-request-message-container} and contains 6 entries:
- * MessageHeader, Organization, ServiceRequest, Patient, MedicationRequest, Medication.
  *
  * @see <a href="https://github.com/gematik/spec-E-Rezept-ServiceRequest/blob/master/fsh-generated/resources/Bundle-UC1-1-Prescription-Request-To-Prescriber.json">UC1-1 Bundle reference</a>
  */
@@ -64,73 +64,66 @@ public class PrescriptionBundleService {
 
     private static final FhirContext FHIR_CTX = FhirContext.forR4();
 
-    /**
-     * Builds a UC1-1-Prescription-Request Bundle from a raw ePA Medication JSON.
-     */
-    public String buildPrescriptionRequestBundleFromEpa(
-        String epaMedicationJson,
-        String dosage,
-        PatientData patientData,
-        OrganizationData organizationData,
-        PractitionerData practitionerData
-    ) {
-        Medication epaMed = FHIR_CTX.newJsonParser().parseResource(Medication.class, epaMedicationJson);
+    public String buildPrescriptionRequestBundle(
+        EPrescriptionRequest request,
+        String kimAddress
+    ) throws PrescriptionSendException {
+        IParser parser = FHIR_CTX.newJsonParser();
+        MedicationRequest medicationRequest = decodeResource(parser, request.getEpaMedicationRequestBase64(), MedicationRequest.class);
+        Medication medication = decodeResource(parser, request.getEpaMedicationBase64(), Medication.class);
 
-        String pzn = extractPzn(epaMed);
-        String name = epaMed.hasCode() && epaMed.getCode().hasText() ? epaMed.getCode().getText() : "";
-        String formCode = extractFormCode(epaMed);
-        String normgroesse = extractExtensionCode(epaMed);
+        String medRefInRequest = medicationRequest.getMedicationReference().getReference();
+        String medicationId = medication.getIdElement().getIdPart();
 
+        if (!medRefInRequest.endsWith(medicationId)) {
+            String msg = "MedicationRequest references " + medRefInRequest + " but received Medication/" + medicationId;
+            throw new PrescriptionSendException(msg, CONFLICT);
+        }
+
+        String pzn = extractPzn(medication);
+        String medName = medication.hasCode() && medication.getCode().hasText() ? medication.getCode().getText() : "";
+        String formCode = extractFormCode(medication);
+        String normgroesse = extractExtensionCode(medication);
+
+        String dosage = medicationRequest.hasDosageInstruction() ? medicationRequest.getDosageInstructionFirstRep().getText() : null;
         int quantity = 1;
         String quantityUnit = "{Package}";
-        if (epaMed.hasAmount() && epaMed.getAmount().hasNumerator() && epaMed.getAmount().getNumerator().hasCode()) {
-            quantityUnit = epaMed.getAmount().getNumerator().getCode();
-        }
-        if (epaMed.hasAmount() && epaMed.getAmount().hasDenominator() && epaMed.getAmount().getDenominator().hasValue()) {
-            quantity = epaMed.getAmount().getDenominator().getValue().intValue();
+        if (medicationRequest.hasDispenseRequest() && medicationRequest.getDispenseRequest().hasQuantity()) {
+            Quantity q = medicationRequest.getDispenseRequest().getQuantity();
+            quantity = q.hasValue() ? q.getValue().intValue() : 1;
+            quantityUnit = q.hasCode() ? q.getCode() : "{Package}";
         }
 
-        MedicationData medicationData = new MedicationData(
-            pzn, name, formCode, normgroesse, dosage, quantity, quantityUnit
-        );
-        return buildPrescriptionRequestBundle(medicationData, patientData, organizationData, practitionerData);
-    }
+        PatientData pat = request.getPatientData();
+        OrganizationData org = request.getOrganizationData();
 
-    public String buildPrescriptionRequestBundle(
-        MedicationData medicationData,
-        PatientData patientData,
-        OrganizationData organizationData,
-        PractitionerData practitionerData
-    ) {
-        String hdrId = randomId();
-        String orgId = randomId();
-        String srId = randomId();
-        String mrId = randomId();
-        String medId = randomId();
-        String patientId = randomId();
+        String hdrId = sid(), orgId = sid(), srId = sid();
+        String patId = sid(), mrId = sid(), medId = sid();
 
         MessageHeader header = createMessageHeader(
-            hdrId, orgId, srId, organizationData.getTelematikId(), organizationData.getOrgName(),
-            practitionerData.getName(), practitionerData.getKimAddress()
+            hdrId, orgId, srId, org.getTelematikId(), org.getOrgName(),
+            request.getPractitionerName(), kimAddress
         );
-        Organization org = createOrganization(
-            orgId, organizationData.getTelematikId(), organizationData.getOrgName(), organizationData.getOrgTypeCode()
-        );
-        ServiceRequest sr = createServiceRequest(srId, orgId, patientId, mrId);
-        Patient patient = createPatient(patientId, patientData);
-        MedicationRequest medReq = createMedicationRequest(mrId, medId, patientId, medicationData);
-        Medication med = createMedication(medId, medicationData);
+        Organization organization = createOrganization(orgId, org);
+        ServiceRequest sr = createServiceRequest(srId, orgId, patId, mrId);
+        Patient patient = createPatient(patId, pat);
+        MedicationRequest medReq = createMedicationRequest(mrId, medId, patId, dosage, quantity, quantityUnit);
+        Medication med = createMedication(medId, pzn, medName, formCode, normgroesse);
 
-        Bundle bundle = assembleUC1Bundle(header, org, sr, patient, medReq, med);
+        Bundle bundle = assembleUC1Bundle(header, organization, sr, patient, medReq, med);
+
         return FHIR_CTX.newXmlParser().setPrettyPrint(true).encodeResourceToString(bundle);
     }
 
-    private static String randomId() {
-        return UUID.randomUUID().toString();
+    private <T extends Resource> T decodeResource(IParser parser, String base64, Class<T> type) {
+        String json = new String(Base64.getDecoder().decode(base64), UTF_8);
+        return parser.parseResource(type, json);
     }
 
     /**
      * Assembles the UC1-1 message Bundle from pre-built resources.
+     * Entry order follows the gematik spec: MessageHeader, Organization,
+     * ServiceRequest, Patient, MedicationRequest, Medication.
      */
     Bundle assembleUC1Bundle(
         MessageHeader header,
@@ -141,7 +134,7 @@ public class PrescriptionBundleService {
         Medication medication
     ) {
         Bundle bundle = new Bundle();
-        bundle.setId(randomId());
+        bundle.setId(UUID.randomUUID().toString());
         bundle.getMeta().addProfile(PROFILE_MESSAGE_CONTAINER);
         bundle.setType(BundleType.MESSAGE);
         bundle.setIdentifier(new Identifier()
@@ -168,7 +161,7 @@ public class PrescriptionBundleService {
     MessageHeader createMessageHeader(
         String id, String orgId, String serviceRequestId,
         String senderTelematikId, String senderName,
-        String destName, String destEndpoint
+        String destName, String destKimAddress
     ) {
         MessageHeader h = new MessageHeader();
         h.setId(id);
@@ -186,22 +179,22 @@ public class PrescriptionBundleService {
             .setIdentifier(new Identifier().setSystem(CS_TELEMATIK_ID).setValue(senderTelematikId))
             .setDisplay(senderName));
         h.addDestination(new MessageHeader.MessageDestinationComponent()
-            .setName(destName).setEndpoint(destEndpoint));
+            .setName(destName).setEndpoint("mailto:" + destKimAddress));
         h.addFocus(new Reference("ServiceRequest/" + serviceRequestId));
         h.setResponsible(new Reference("Organization/" + orgId));
 
         return h;
     }
 
-    Organization createOrganization(String id, String telematikId, String name, String typeCode) {
+    Organization createOrganization(String id, OrganizationData data) {
         Organization org = new Organization();
         org.setId(id);
         org.getMeta().addProfile(PROFILE_ORGANIZATION);
-        org.addIdentifier().setSystem(CS_TELEMATIK_ID).setValue(telematikId);
-        if (typeCode != null && !typeCode.isBlank()) {
-            org.addType().addCoding().setSystem(CS_ORG_PROFESSION_OID).setCode(typeCode);
+        org.addIdentifier().setSystem(CS_TELEMATIK_ID).setValue(data.getTelematikId());
+        if (data.getOrgTypeCode() != null && !data.getOrgTypeCode().isBlank()) {
+            org.addType().addCoding().setSystem(CS_ORG_PROFESSION_OID).setCode(data.getOrgTypeCode());
         }
-        org.setName(name);
+        org.setName(data.getOrgName());
         return org;
     }
 
@@ -209,8 +202,8 @@ public class PrescriptionBundleService {
         ServiceRequest sr = new ServiceRequest();
         sr.setId(id);
         sr.getMeta().addProfile(PROFILE_PRESCRIPTION_REQUEST);
-        sr.addIdentifier().setSystem(NS_REQUEST_ID).setValue(randomId());
-        sr.setRequisition(new Identifier().setSystem(NS_PROCEDURE_ID).setValue("GroupID-" + UUID.randomUUID()));
+        sr.addIdentifier().setSystem(NS_REQUEST_ID).setValue(sid());
+        sr.setRequisition(new Identifier().setSystem(NS_PROCEDURE_ID).setValue("GroupID-" + sid()));
         sr.setStatus(ServiceRequest.ServiceRequestStatus.ACTIVE);
         sr.setIntent(ServiceRequest.ServiceRequestIntent.ORDER);
         sr.setPriority(ServiceRequest.ServiceRequestPriority.ROUTINE);
@@ -222,39 +215,40 @@ public class PrescriptionBundleService {
         return sr;
     }
 
-    Patient createPatient(String id, PatientData patientData) {
+    Patient createPatient(String id, PatientData data) {
         Patient patient = new Patient();
         patient.setId(id);
         patient.getMeta().addProfile(PROFILE_PATIENT);
-        patient.addIdentifier().setSystem(CS_KVID).setValue(patientData.getKvnr());
+        patient.addIdentifier().setSystem(CS_KVID).setValue(data.getKvnr());
 
         HumanName humanName = patient.addName();
         humanName.setUse(HumanName.NameUse.OFFICIAL);
-        humanName.addGiven(patientData.getGiven());
+        humanName.addGiven(data.getGiven());
         StringType familyElement = humanName.getFamilyElement();
-        familyElement.setValue(patientData.getFamily());
+        familyElement.setValue(data.getFamily());
         familyElement.addExtension(
-            "http://hl7.org/fhir/StructureDefinition/humanname-own-name", new StringType(patientData.getFamily()));
+            "http://hl7.org/fhir/StructureDefinition/humanname-own-name", new StringType(data.getFamily()));
 
-        if (patientData.getBirthDate() != null && !patientData.getBirthDate().isBlank()) {
-            patient.setBirthDateElement(new DateType(patientData.getBirthDate()));
+        if (data.getBirthDate() != null && !data.getBirthDate().isBlank()) {
+            patient.setBirthDateElement(new DateType(data.getBirthDate()));
         }
 
         patient.addAddress()
             .setType(Address.AddressType.BOTH)
-            .setCity(patientData.getCity())
-            .setPostalCode(patientData.getPostalCode())
-            .addLine(patientData.getStreet() + " " + patientData.getHouseNumber());
+            .setCity(data.getCity())
+            .setPostalCode(data.getPostalCode())
+            .addLine(data.getStreet() + " " + data.getHouseNumber());
 
         StringType line = patient.getAddress().getFirst().getLine().getFirst();
-        line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName", new StringType(patientData.getStreet()));
-        line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber", new StringType(patientData.getHouseNumber()));
+        line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName", new StringType(data.getStreet()));
+        line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber", new StringType(data.getHouseNumber()));
 
         return patient;
     }
 
     MedicationRequest createMedicationRequest(
-        String id, String medicationId, String patientId, MedicationData medicationData
+        String id, String medicationId, String patientId,
+        String dosage, int quantity, String quantityUnit
     ) {
         MedicationRequest mr = new MedicationRequest();
         mr.setId(id);
@@ -264,21 +258,21 @@ public class PrescriptionBundleService {
         mr.getMedicationReference().setReference("Medication/" + medicationId);
         mr.getSubject().setReference("Patient/" + patientId);
 
-        if (medicationData.getDosage() != null && !medicationData.getDosage().isBlank()) {
-            mr.addDosageInstruction().setText(medicationData.getDosage());
+        if (dosage != null && !dosage.isBlank()) {
+            mr.addDosageInstruction().setText(dosage);
         }
 
         Quantity qty = new Quantity();
-        qty.setValue(medicationData.getQuantity());
+        qty.setValue(quantity);
         qty.setUnit("Packung");
         qty.setSystem("http://unitsofmeasure.org");
-        qty.setCode(medicationData.getQuantityUnit() != null ? medicationData.getQuantityUnit() : "{Package}");
+        qty.setCode(quantityUnit != null ? quantityUnit : "{Package}");
         mr.getDispenseRequest().setQuantity(qty);
 
         return mr;
     }
 
-    Medication createMedication(String id, MedicationData medicationData) {
+    Medication createMedication(String id, String pzn, String name, String formCode, String normgroesse) {
         Medication med = new Medication();
         med.setId(id);
         med.getMeta().addProfile(PROFILE_KBV_MEDICATION_PZN);
@@ -299,13 +293,13 @@ public class PrescriptionBundleService {
 
         med.addExtension(new Extension(
             "http://fhir.de/StructureDefinition/normgroesse",
-            new CodeType(medicationData.getNormgroesse() != null ? medicationData.getNormgroesse() : "N1")));
+            new CodeType(normgroesse != null ? normgroesse : "N1")));
 
-        med.getCode().addCoding().setSystem(CS_PZN).setCode(medicationData.getPzn() != null ? medicationData.getPzn() : "");
-        med.getCode().setText(medicationData.getName() != null ? medicationData.getName() : "");
+        med.getCode().addCoding().setSystem(CS_PZN).setCode(pzn != null ? pzn : "");
+        med.getCode().setText(name != null ? name : "");
 
-        if (medicationData.getFormCode() != null && !medicationData.getFormCode().isBlank()) {
-            med.setForm(new CodeableConcept().addCoding(new Coding(CS_DARREICHUNGSFORM, medicationData.getFormCode(), "")));
+        if (formCode != null && !formCode.isBlank()) {
+            med.setForm(new CodeableConcept().addCoding(new Coding(CS_DARREICHUNGSFORM, formCode, "")));
         }
 
         return med;
@@ -338,5 +332,9 @@ public class PrescriptionBundleService {
             .filter(e -> e.getValue() instanceof CodeType)
             .map(e -> ((CodeType) e.getValue()).getValue())
             .findFirst().orElse(null);
+    }
+
+    private static String sid() {
+        return UUID.randomUUID().toString();
     }
 }

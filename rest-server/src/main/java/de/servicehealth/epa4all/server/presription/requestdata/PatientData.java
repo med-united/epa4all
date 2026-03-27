@@ -1,12 +1,16 @@
 package de.servicehealth.epa4all.server.presription.requestdata;
 
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class PatientData {
 
-    @ApiModelProperty(value = "Patient KVNR (health insurance number)", example = "X234567890")
+    @ApiModelProperty(value = "Patient KVNR (health insurance number)", example = "X110624006")
     String kvnr;
 
     @ApiModelProperty(value = "Patient family name", example = "Königsstein")
@@ -29,15 +33,4 @@ public class PatientData {
 
     @ApiModelProperty(value = "Postal code", example = "10623")
     String postalCode;
-
-    public PatientData(String kvnr, String family, String given, String birthDate, String street, String houseNumber, String city, String postalCode) {
-        this.kvnr = kvnr;
-        this.family = family;
-        this.given = given;
-        this.birthDate = birthDate;
-        this.street = street;
-        this.houseNumber = houseNumber;
-        this.city = city;
-        this.postalCode = postalCode;
-    }
 }

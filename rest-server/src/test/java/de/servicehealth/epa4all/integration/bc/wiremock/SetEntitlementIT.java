@@ -36,9 +36,9 @@ import static org.mockito.Mockito.when;
 public class SetEntitlementIT extends AbstractWiremockTest {
 
     public static final String ENTITLEMENTS_PATH = "/entitlements";
-    
+
     @InjectMock
-    FileEventSender fileEventSender;
+    FileEventSender suppressJcrHandling;
 
     @Inject
     protected VsdConfig vsdConfig;

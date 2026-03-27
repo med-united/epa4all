@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.server.rest;
 
-import de.servicehealth.epa4all.server.kim.KimConfig;
+import de.servicehealth.epa4all.server.kim.KimSmtpConfig;
 import de.servicehealth.epa4all.server.kim.KimSmtpService;
 import de.servicehealth.epa4all.server.presription.EquipmentBundleService;
 import io.swagger.annotations.ApiModel;
@@ -43,12 +43,13 @@ public class EquipmentPrescription extends AbstractResource {
     KimSmtpService kimSmtpService;
 
     @Inject
-    KimConfig kimConfig;
+    KimSmtpConfig kimConfig;
 
     @APIResponses({
         @APIResponse(responseCode = "200", description = "KIM email was sent"),
         @APIResponse(responseCode = "400", description = "Some parameter is invalid"),
-        @APIResponse(responseCode = "500", description = "Internal server error")
+        @APIResponse(responseCode = "500", description = "Internal server error"),
+        @APIResponse(responseCode = "503", description = "Error while sending  KIM email")
     })
     @POST
     @Produces(TEXT_PLAIN)
@@ -73,10 +74,11 @@ public class EquipmentPrescription extends AbstractResource {
                 request.getBsnr(), request.getPhone()
             );
             Map<String, String> headers = Map.of(
-                "X-KIM-Dienstkennung", kimConfig.getDienstkennungHeader(),
+                kimConfig.getKimEquipmentHeaderName(), kimConfig.getKimEquipmentHeaderValue(),
                 "X-KIM-Encounter-Id", UUID.randomUUID().toString()
             );
-            String result = kimSmtpService.sendERezept(headers, bundle, request.getNote());
+            String kimAddress = kimConfig.getToAddress();
+            String result = kimSmtpService.sendERezept(headers, kimAddress, bundle, request.getNote());
             return Response.ok(result).build();
         });
     }
@@ -84,7 +86,7 @@ public class EquipmentPrescription extends AbstractResource {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    @ApiModel(description="Prescription DTO")
+    @ApiModel(description = "Prescription DTO")
     public static class PrescriptionDto {
         @ApiModelProperty(value = "Selected equipment", required = true)
         String equipment;

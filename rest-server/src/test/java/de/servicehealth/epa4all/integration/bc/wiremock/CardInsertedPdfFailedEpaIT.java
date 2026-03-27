@@ -50,7 +50,7 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
     private final JsonbBuilder jsonbBuilder = new JsonBindingBuilder();
 
     @InjectMock
-    FileEventSender fileEventSender;
+    FileEventSender suppressJcrHandling;
 
     @TestHTTPResource("/ws/cetp")
     URI uri;

@@ -19,8 +19,10 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 
+import static de.servicehealth.setup.SystemPropertyService.isProdProfile;
 import static de.servicehealth.utils.SSLUtils.KeyStoreType.PKCS12;
 import static de.servicehealth.utils.SSLUtils.SslContextType.TLS;
+import static javax.net.ssl.KeyManagerFactory.getDefaultAlgorithm;
 
 public class SSLUtils {
 
@@ -33,28 +35,29 @@ public class SSLUtils {
     }
 
     public static SSLContext createSSLContext(String certificate, String password, SSLContext defaultSSLContext) {
-        byte[] clientCertificateBytes = getClientCertificateBytes(certificate);
-        try (ByteArrayInputStream certInputStream = new ByteArrayInputStream(clientCertificateBytes)) {
-            SSLResult sslResult = initSSLContext(certInputStream, password);
-            return sslResult.getSslContext();
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(getClientCertificateBytes(certificate))) {
+            SSLContextBundle sslContextBundle = createSSLContextBundle(inputStream, password, PKCS12);
+            return sslContextBundle.getSslContext();
         } catch (Exception e) {
             return defaultSSLContext;
         }
     }
 
-    public static SSLResult initSSLContext(InputStream certInputStream, String certPass) throws Exception {
+    public static SSLContextBundle createSSLContextBundle(
+        InputStream inputStream,
+        String password,
+        KeyStoreType ksType
+    ) throws Exception {
         SSLContext sslContext = SSLContext.getInstance(TLS.name());
 
-        KeyStore ks = KeyStore.getInstance(PKCS12.name());
-        ks.load(certInputStream, certPass.toCharArray());
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(ks, certPass.toCharArray());
-        sslContext.init(keyManagerFactory.getKeyManagers(), getFakeTrustManagers(), null);
+        KeyStore keyStore = KeyStore.getInstance(ksType.name());
+        keyStore.load(inputStream, password.toCharArray());
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(getDefaultAlgorithm());
+        keyManagerFactory.init(keyStore, password.toCharArray());
+        var trustManagers = isProdProfile() ? null : getFakeTrustManagers();
+        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers, null);
 
-        System.setProperty("javax.xml.accessExternalDTD", "all");
-        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
-
-        return new SSLResult(sslContext, keyManagerFactory);
+        return new SSLContextBundle(sslContext, keyManagerFactory);
     }
 
     public static byte[] getClientCertificateBytes(String base64UrlCertificate) {

@@ -1,12 +1,10 @@
 package de.servicehealth.epa4all.server.rest;
 
+import de.servicehealth.epa4all.server.kim.KimLdapService;
+import de.servicehealth.epa4all.server.kim.KimSmtpConfig;
 import de.servicehealth.epa4all.server.kim.KimSmtpService;
 import de.servicehealth.epa4all.server.presription.PrescriptionBundleService;
-import de.servicehealth.epa4all.server.presription.requestdata.OrganizationData;
-import de.servicehealth.epa4all.server.presription.requestdata.PatientData;
-import de.servicehealth.epa4all.server.presription.requestdata.PractitionerData;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import de.servicehealth.epa4all.server.presription.requestdata.EPrescriptionRequest;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotBlank;
@@ -16,15 +14,11 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -47,10 +41,19 @@ public class EPrescription extends AbstractResource {
     @Inject
     KimSmtpService kimSmtpService;
 
+    @Inject
+    KimLdapService kimLdapService;
+
+    @Inject
+    KimSmtpConfig kimConfig;
+
     @APIResponses({
         @APIResponse(responseCode = "200", description = "KIM email was sent"),
         @APIResponse(responseCode = "400", description = "Some parameter is invalid"),
-        @APIResponse(responseCode = "500", description = "Internal server error")
+        @APIResponse(responseCode = "404", description = "KIM address not found"),
+        @APIResponse(responseCode = "409", description = "MedicationRequest doesn't match Medication"),
+        @APIResponse(responseCode = "500", description = "Internal server error"),
+        @APIResponse(responseCode = "503", description = "Error while sending  KIM email")
     })
     @POST
     @Produces(TEXT_PLAIN)
@@ -64,41 +67,18 @@ public class EPrescription extends AbstractResource {
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
         @NotBlank @QueryParam(X_INSURANT_ID) String insurantId,
-        EPrescriptionDto request
+        EPrescriptionRequest request
     ) throws Exception {
         Integer hash = Objects.hash("eprescription", request);
         return deduplicatedCall("e-prescription-kim-sender", null, hash, () -> {
-            String epaMedicationJson = new String(Base64.getDecoder().decode(request.getEpaMedicationBase64()), UTF_8);
-            String bundle = prescriptionBundleService.buildPrescriptionRequestBundleFromEpa(
-                epaMedicationJson,
-                request.getDosage(),
-                request.getPatientData(),
-                request.getOrganizationData(),
-                request.getPractitionerData()
-            );
+            String kimAddress = kimLdapService.searchKimAddress(userRuntimeConfig, request.getPractitionerName());
+            String bundle = prescriptionBundleService.buildPrescriptionRequestBundle(request, kimAddress);
             Map<String, String> headers = Map.of(
-                "Dienstkennung", "eRezept;Rezeptanforderung;1.0",
+                kimConfig.getKimEprescriptionHeaderName(), kimConfig.getKimEprescriptionHeaderValue(),
                 "X-KIM-Encounter-Id", UUID.randomUUID().toString()
             );
-            String result = kimSmtpService.sendERezept(headers, bundle, null);
+            String result = kimSmtpService.sendERezept(headers, kimAddress, bundle, null);
             return Response.ok(result).build();
         });
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @ApiModel(description = "EPrescription DTO")
-    public static class EPrescriptionDto {
-
-        @ApiModelProperty(value = "epaMedicationBase64", required = true)
-        String epaMedicationBase64;
-
-        @ApiModelProperty(value = "Dosage instruction text", example = "1-0-1-0")
-        String dosage;
-
-        PatientData patientData;
-        OrganizationData organizationData;
-        PractitionerData practitionerData;
     }
 }

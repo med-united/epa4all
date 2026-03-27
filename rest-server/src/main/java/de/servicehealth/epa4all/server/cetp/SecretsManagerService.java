@@ -5,7 +5,7 @@ import de.health.service.cetp.config.KonnektorAuth;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IUserConfigurations;
-import de.servicehealth.utils.SSLResult;
+import de.servicehealth.utils.SSLContextBundle;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -17,8 +17,9 @@ import java.io.FileInputStream;
 import java.util.Optional;
 
 import static de.health.service.cetp.config.KonnektorAuth.BASIC;
+import static de.servicehealth.utils.SSLUtils.KeyStoreType.PKCS12;
+import static de.servicehealth.utils.SSLUtils.createSSLContextBundle;
 import static de.servicehealth.utils.SSLUtils.getClientCertificateBytes;
-import static de.servicehealth.utils.SSLUtils.initSSLContext;
 
 @ApplicationScoped
 public class SecretsManagerService implements ISecretsManager {
@@ -36,10 +37,10 @@ public class SecretsManagerService implements ISecretsManager {
         Optional<String> certAuthStoreFile = konnektorDefaultConfig.getCertAuthStoreFile();
         Optional<String> certAuthStoreFilePassword = konnektorDefaultConfig.getCertAuthStoreFilePassword();
         if (certAuthStoreFile.isPresent() && certAuthStoreFilePassword.isPresent()) {
-            String certAuthStorePass = certAuthStoreFilePassword.get();
-            try (FileInputStream certInputStream = new FileInputStream(certAuthStoreFile.get())) {
-                SSLResult sslResult = initSSLContext(certInputStream, certAuthStorePass);
-                keyManagerFactory = sslResult.getKeyManagerFactory();
+            String password = certAuthStoreFilePassword.get();
+            try (FileInputStream inputStream = new FileInputStream(certAuthStoreFile.get())) {
+                SSLContextBundle sslContextBundle = createSSLContextBundle(inputStream, password, PKCS12);
+                keyManagerFactory = sslContextBundle.getKeyManagerFactory();
             } catch (Exception e) {
                 log.error("There was a problem when creating the SSLContext", e);
             }
@@ -49,14 +50,14 @@ public class SecretsManagerService implements ISecretsManager {
     @Override
     public KeyManagerFactory getKeyManagerFactory(KonnektorConfig config) {
         IUserConfigurations userConfigurations = config.getUserConfigurations();
-        String clientCertificate = userConfigurations.getClientCertificate();
-        if (KonnektorAuth.from(userConfigurations.getAuth()) == BASIC || clientCertificate == null) {
+        String certificate = userConfigurations.getClientCertificate();
+        String password = userConfigurations.getClientCertificatePassword();
+        if (KonnektorAuth.from(userConfigurations.getAuth()) == BASIC || certificate == null) {
             return keyManagerFactory;
         } else {
-            byte[] clientCertificateBytes = getClientCertificateBytes(clientCertificate);
-            try (ByteArrayInputStream certInputStream = new ByteArrayInputStream(clientCertificateBytes)) {
-                SSLResult sslResult = initSSLContext(certInputStream, userConfigurations.getClientCertificatePassword());
-                return sslResult.getKeyManagerFactory();
+            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(getClientCertificateBytes(certificate))) {
+                SSLContextBundle sslContextBundle = createSSLContextBundle(inputStream, password, PKCS12);
+                return sslContextBundle.getKeyManagerFactory();
             } catch (Exception e) {
                 log.error("Could not create keyManagerFactory", e);
             }
