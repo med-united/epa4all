@@ -2,13 +2,11 @@ package de.servicehealth.epa4all.server.presription;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
-import de.servicehealth.epa4all.server.presription.requestdata.EPrescriptionRequest;
-import de.servicehealth.epa4all.server.presription.requestdata.OrganizationData;
-import de.servicehealth.epa4all.server.presription.requestdata.PatientData;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.hl7.fhir.r4.model.Address;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -22,6 +20,8 @@ import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.MessageHeader;
 import org.hl7.fhir.r4.model.Organization;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Practitioner;
+import org.hl7.fhir.r4.model.PractitionerRole;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
@@ -32,7 +32,8 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
-import static jakarta.ws.rs.core.Response.Status.CONFLICT;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -64,74 +65,218 @@ public class PrescriptionBundleService {
 
     private static final FhirContext FHIR_CTX = FhirContext.forR4();
 
+    /**
+     * Builds a UC1-1-Prescription-Request Bundle from a full ePA $medication-list Bundle.
+     * Extracts all related resources by following the reference chain starting from
+     * the selected Medication ID, transforms ePA profiles to ServiceRequest profiles.
+     */
     public String buildPrescriptionRequestBundle(
-        EPrescriptionRequest request,
+        String epaBundleBase64,
+        String selectedMedicationId,
         String kimAddress
     ) throws PrescriptionSendException {
-        IParser parser = FHIR_CTX.newJsonParser();
-        MedicationRequest medicationRequest = decodeResource(parser, request.getEpaMedicationRequestBase64(), MedicationRequest.class);
-        Medication medication = decodeResource(parser, request.getEpaMedicationBase64(), Medication.class);
+        IParser jsonParser = FHIR_CTX.newJsonParser();
+        String bundleJson = new String(Base64.getDecoder().decode(epaBundleBase64), UTF_8);
+        Bundle epaBundle = jsonParser.parseResource(Bundle.class, bundleJson);
 
-        String medRefInRequest = medicationRequest.getMedicationReference().getReference();
-        String medicationId = medication.getIdElement().getIdPart();
+        Medication epaMedication = findResourceById(epaBundle, Medication.class, selectedMedicationId);
+        MedicationRequest epaMedRequest = findMedicationRequestByMedRef(epaBundle, selectedMedicationId);
+        Patient epaPatient = findResourceByType(epaBundle, Patient.class);
 
-        if (!medRefInRequest.endsWith(medicationId)) {
-            String msg = "MedicationRequest references " + medRefInRequest + " but received Medication/" + medicationId;
-            throw new PrescriptionSendException(msg, CONFLICT);
+        PractitionerRole epaRole = resolveReference(epaBundle, epaMedRequest.getRequester(), PractitionerRole.class);
+        Practitioner epaPractitioner = resolveReference(epaBundle, epaRole.getPractitioner(), Practitioner.class);
+        Organization epaOrganization = resolveReference(epaBundle, epaRole.getOrganization(), Organization.class);
+
+        String practitionerName = extractPractitionerName(epaPractitioner);
+
+        String senderTelematikId = extractTelematikId(epaOrganization);
+        String senderOrgName = epaOrganization.hasName() ? epaOrganization.getName() : "";
+        String senderOrgTypeCode = extractOrgTypeCode(epaOrganization);
+
+        String kvnr = extractKvnr(epaPatient);
+        String patientFamily = extractFamily(epaPatient);
+        String patientGiven = extractGiven(epaPatient);
+        String birthDate = epaPatient.hasBirthDate() ? epaPatient.getBirthDateElement().getValueAsString() : null;
+        String street = "", houseNumber = "", city = "", postalCode = "";
+        if (epaPatient.hasAddress()) {
+            Address addr = epaPatient.getAddressFirstRep();
+            city = addr.hasCity() ? addr.getCity() : "";
+            postalCode = addr.hasPostalCode() ? addr.getPostalCode() : "";
+            if (addr.hasLine()) {
+                String fullLine = addr.getLine().getFirst().getValue();
+                int lastSpace = fullLine.lastIndexOf(' ');
+                if (lastSpace > 0) {
+                    street = fullLine.substring(0, lastSpace);
+                    houseNumber = fullLine.substring(lastSpace + 1);
+                } else {
+                    street = fullLine;
+                }
+            }
         }
 
-        String pzn = extractPzn(medication);
-        String medName = medication.hasCode() && medication.getCode().hasText() ? medication.getCode().getText() : "";
-        String formCode = extractFormCode(medication);
-        String normgroesse = extractExtensionCode(medication);
+        String pzn = extractPzn(epaMedication);
+        String medName = epaMedication.hasCode() && epaMedication.getCode().hasText() ? epaMedication.getCode().getText() : "";
+        String formCode = extractFormCode(epaMedication);
+        String normgroesse = extractExtensionCode(epaMedication);
 
-        String dosage = medicationRequest.hasDosageInstruction() ? medicationRequest.getDosageInstructionFirstRep().getText() : null;
+        String dosage = epaMedRequest.hasDosageInstruction() ? epaMedRequest.getDosageInstructionFirstRep().getText() : null;
         int quantity = 1;
         String quantityUnit = "{Package}";
-        if (medicationRequest.hasDispenseRequest() && medicationRequest.getDispenseRequest().hasQuantity()) {
-            Quantity q = medicationRequest.getDispenseRequest().getQuantity();
+        if (epaMedRequest.hasDispenseRequest() && epaMedRequest.getDispenseRequest().hasQuantity()) {
+            Quantity q = epaMedRequest.getDispenseRequest().getQuantity();
             quantity = q.hasValue() ? q.getValue().intValue() : 1;
             quantityUnit = q.hasCode() ? q.getCode() : "{Package}";
         }
 
-        PatientData pat = request.getPatientData();
-        OrganizationData org = request.getOrganizationData();
-
         String hdrId = sid(), orgId = sid(), srId = sid();
         String patId = sid(), mrId = sid(), medId = sid();
 
-        MessageHeader header = createMessageHeader(
-            hdrId, orgId, srId, org.getTelematikId(), org.getOrgName(),
-            request.getPractitionerName(), kimAddress
-        );
-        Organization organization = createOrganization(orgId, org);
+        MessageHeader header = createMessageHeader(hdrId, orgId, srId, senderTelematikId, senderOrgName, practitionerName, kimAddress);
+        Organization organization = createOrganization(orgId, senderTelematikId, senderOrgName, senderOrgTypeCode);
         ServiceRequest sr = createServiceRequest(srId, orgId, patId, mrId);
-        Patient patient = createPatient(patId, pat);
+        Patient patient = createPatient(patId, kvnr, patientFamily, patientGiven, birthDate, street, houseNumber, city, postalCode);
         MedicationRequest medReq = createMedicationRequest(mrId, medId, patId, dosage, quantity, quantityUnit);
         Medication med = createMedication(medId, pzn, medName, formCode, normgroesse);
 
         Bundle bundle = assembleUC1Bundle(header, organization, sr, patient, medReq, med);
-
         return FHIR_CTX.newXmlParser().setPrettyPrint(true).encodeResourceToString(bundle);
     }
 
-    private <T extends Resource> T decodeResource(IParser parser, String base64, Class<T> type) {
-        String json = new String(Base64.getDecoder().decode(base64), UTF_8);
-        return parser.parseResource(type, json);
+    @SuppressWarnings("unchecked")
+    private <T extends Resource> T findResourceById(Bundle bundle, Class<T> type, String id) throws PrescriptionSendException {
+        return bundle.getEntry().stream()
+            .map(BundleEntryComponent::getResource)
+            .filter(type::isInstance)
+            .map(r -> (T) r)
+            .filter(r -> r.getIdElement().getIdPart().equals(id))
+            .findFirst()
+            .orElseThrow(() -> new PrescriptionSendException(
+                type.getSimpleName() + "/" + id + " not found in ePA Bundle", NOT_FOUND));
     }
 
-    /**
-     * Assembles the UC1-1 message Bundle from pre-built resources.
-     * Entry order follows the gematik spec: MessageHeader, Organization,
-     * ServiceRequest, Patient, MedicationRequest, Medication.
-     */
+    @SuppressWarnings("unchecked")
+    private <T extends Resource> T findResourceByType(Bundle bundle, Class<T> type) throws PrescriptionSendException {
+        return bundle.getEntry().stream()
+            .map(BundleEntryComponent::getResource)
+            .filter(type::isInstance)
+            .map(r -> (T) r)
+            .findFirst()
+            .orElseThrow(() -> new PrescriptionSendException(
+                type.getSimpleName() + " not found in ePA Bundle", NOT_FOUND));
+    }
+
+    private MedicationRequest findMedicationRequestByMedRef(Bundle bundle, String medicationId) throws PrescriptionSendException {
+        return bundle.getEntry().stream()
+            .map(BundleEntryComponent::getResource)
+            .filter(MedicationRequest.class::isInstance)
+            .map(MedicationRequest.class::cast)
+            .filter(mr -> mr.hasMedicationReference()
+                && mr.getMedicationReference().getReference().endsWith(medicationId))
+            .findFirst()
+            .orElseThrow(() -> new PrescriptionSendException(
+                "No MedicationRequest referencing Medication/" + medicationId + " in ePA Bundle", NOT_FOUND));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends Resource> T resolveReference(Bundle bundle, Reference ref, Class<T> type) throws PrescriptionSendException {
+        if (ref == null || !ref.hasReference()) {
+            throw new PrescriptionSendException(
+                "Missing reference to " + type.getSimpleName(), BAD_REQUEST);
+        }
+        String refValue = ref.getReference();
+        return bundle.getEntry().stream()
+            .map(BundleEntryComponent::getResource)
+            .filter(type::isInstance)
+            .map(r -> (T) r)
+            .filter(r -> refValue.endsWith(r.getIdElement().getIdPart()))
+            .findFirst()
+            .orElseThrow(() -> new PrescriptionSendException(
+                type.getSimpleName() + " referenced by " + refValue + " not found in ePA Bundle", NOT_FOUND));
+    }
+
+    private String extractPractitionerName(Practitioner practitioner) {
+        if (practitioner.hasName()) {
+            HumanName name = practitioner.getNameFirstRep();
+            if (name.hasText()) return name.getText();
+            String given = name.hasGiven() ? name.getGivenAsSingleString() : "";
+            String family = name.hasFamily() ? name.getFamily() : "";
+            return (given + " " + family).trim();
+        }
+        return "";
+    }
+
+    private String extractTelematikId(Organization org) {
+        return org.getIdentifier().stream()
+            .filter(id -> CS_TELEMATIK_ID.equals(id.getSystem()))
+            .map(Identifier::getValue)
+            .findFirst().orElse("");
+    }
+
+    private String extractOrgTypeCode(Organization org) {
+        if (org.hasType()) {
+            return org.getTypeFirstRep().getCoding().stream()
+                .filter(c -> CS_ORG_PROFESSION_OID.equals(c.getSystem()))
+                .map(Coding::getCode)
+                .findFirst().orElse("");
+        }
+        return "";
+    }
+
+    private String extractKvnr(Patient patient) {
+        return patient.getIdentifier().stream()
+            .filter(id -> CS_KVID.equals(id.getSystem()))
+            .map(Identifier::getValue)
+            .findFirst().orElse("");
+    }
+
+    private String extractFamily(Patient patient) {
+        if (patient.hasName()) {
+            HumanName name = patient.getNameFirstRep();
+            return name.hasFamily() ? name.getFamily() : "";
+        }
+        return "";
+    }
+
+    private String extractGiven(Patient patient) {
+        if (patient.hasName()) {
+            HumanName name = patient.getNameFirstRep();
+            return name.hasGiven() ? name.getGivenAsSingleString() : "";
+        }
+        return "";
+    }
+
+    private String extractPzn(Medication med) {
+        if (med.hasCode() && med.getCode().hasCoding()) {
+            return med.getCode().getCoding().stream()
+                .filter(c -> CS_PZN.equals(c.getSystem()))
+                .map(Coding::getCode)
+                .findFirst().orElse("");
+        }
+        return "";
+    }
+
+    private String extractFormCode(Medication med) {
+        if (med.hasForm() && med.getForm().hasCoding()) {
+            return med.getForm().getCoding().stream()
+                .filter(c -> CS_DARREICHUNGSFORM.equals(c.getSystem()))
+                .map(Coding::getCode)
+                .findFirst()
+                .orElse(med.getForm().getCodingFirstRep().getCode());
+        }
+        return "";
+    }
+
+    private String extractExtensionCode(Medication med) {
+        return med.getExtension().stream()
+            .filter(e -> "http://fhir.de/StructureDefinition/normgroesse".equals(e.getUrl()))
+            .filter(e -> e.getValue() instanceof CodeType)
+            .map(e -> ((CodeType) e.getValue()).getValue())
+            .findFirst().orElse(null);
+    }
+
     Bundle assembleUC1Bundle(
-        MessageHeader header,
-        Organization organization,
-        ServiceRequest serviceRequest,
-        Patient patient,
-        MedicationRequest medicationRequest,
-        Medication medication
+        MessageHeader header, Organization organization, ServiceRequest serviceRequest,
+        Patient patient, MedicationRequest medicationRequest, Medication medication
     ) {
         Bundle bundle = new Bundle();
         bundle.setId(UUID.randomUUID().toString());
@@ -186,15 +331,15 @@ public class PrescriptionBundleService {
         return h;
     }
 
-    Organization createOrganization(String id, OrganizationData data) {
+    Organization createOrganization(String id, String telematikId, String name, String typeCode) {
         Organization org = new Organization();
         org.setId(id);
         org.getMeta().addProfile(PROFILE_ORGANIZATION);
-        org.addIdentifier().setSystem(CS_TELEMATIK_ID).setValue(data.getTelematikId());
-        if (data.getOrgTypeCode() != null && !data.getOrgTypeCode().isBlank()) {
-            org.addType().addCoding().setSystem(CS_ORG_PROFESSION_OID).setCode(data.getOrgTypeCode());
+        org.addIdentifier().setSystem(CS_TELEMATIK_ID).setValue(telematikId);
+        if (typeCode != null && !typeCode.isBlank()) {
+            org.addType().addCoding().setSystem(CS_ORG_PROFESSION_OID).setCode(typeCode);
         }
-        org.setName(data.getOrgName());
+        org.setName(name);
         return org;
     }
 
@@ -215,33 +360,38 @@ public class PrescriptionBundleService {
         return sr;
     }
 
-    Patient createPatient(String id, PatientData data) {
+    Patient createPatient(
+        String id, String kvnr, String family, String given, String birthDate,
+        String street, String houseNumber, String city, String postalCode
+    ) {
         Patient patient = new Patient();
         patient.setId(id);
         patient.getMeta().addProfile(PROFILE_PATIENT);
-        patient.addIdentifier().setSystem(CS_KVID).setValue(data.getKvnr());
+        patient.addIdentifier().setSystem(CS_KVID).setValue(kvnr);
 
         HumanName humanName = patient.addName();
         humanName.setUse(HumanName.NameUse.OFFICIAL);
-        humanName.addGiven(data.getGiven());
+        humanName.addGiven(given);
         StringType familyElement = humanName.getFamilyElement();
-        familyElement.setValue(data.getFamily());
+        familyElement.setValue(family);
         familyElement.addExtension(
-            "http://hl7.org/fhir/StructureDefinition/humanname-own-name", new StringType(data.getFamily()));
+            "http://hl7.org/fhir/StructureDefinition/humanname-own-name", new StringType(family));
 
-        if (data.getBirthDate() != null && !data.getBirthDate().isBlank()) {
-            patient.setBirthDateElement(new DateType(data.getBirthDate()));
+        if (birthDate != null && !birthDate.isBlank()) {
+            patient.setBirthDateElement(new DateType(birthDate));
         }
 
-        patient.addAddress()
-            .setType(Address.AddressType.BOTH)
-            .setCity(data.getCity())
-            .setPostalCode(data.getPostalCode())
-            .addLine(data.getStreet() + " " + data.getHouseNumber());
+        if (street != null && !street.isBlank()) {
+            patient.addAddress()
+                .setType(Address.AddressType.BOTH)
+                .setCity(city)
+                .setPostalCode(postalCode)
+                .addLine(street + " " + houseNumber);
 
-        StringType line = patient.getAddress().getFirst().getLine().getFirst();
-        line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName", new StringType(data.getStreet()));
-        line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber", new StringType(data.getHouseNumber()));
+            StringType line = patient.getAddress().getFirst().getLine().getFirst();
+            line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName", new StringType(street));
+            line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber", new StringType(houseNumber));
+        }
 
         return patient;
     }
@@ -303,35 +453,6 @@ public class PrescriptionBundleService {
         }
 
         return med;
-    }
-
-    private String extractPzn(Medication med) {
-        if (med.hasCode() && med.getCode().hasCoding()) {
-            return med.getCode().getCoding().stream()
-                .filter(c -> CS_PZN.equals(c.getSystem()))
-                .map(Coding::getCode)
-                .findFirst().orElse("");
-        }
-        return "";
-    }
-
-    private String extractFormCode(Medication med) {
-        if (med.hasForm() && med.getForm().hasCoding()) {
-            return med.getForm().getCoding().stream()
-                .filter(c -> CS_DARREICHUNGSFORM.equals(c.getSystem()))
-                .map(Coding::getCode)
-                .findFirst()
-                .orElse(med.getForm().getCodingFirstRep().getCode());
-        }
-        return "";
-    }
-
-    private String extractExtensionCode(Medication med) {
-        return med.getExtension().stream()
-            .filter(e -> "http://fhir.de/StructureDefinition/normgroesse".equals(e.getUrl()))
-            .filter(e -> e.getValue() instanceof CodeType)
-            .map(e -> ((CodeType) e.getValue()).getValue())
-            .findFirst().orElse(null);
     }
 
     private static String sid() {

@@ -38,9 +38,7 @@ public class KimLdapService {
             try (LDAPConnection connection = new LDAPConnection(
                 sslContext.getSocketFactory(), runtimeConfig.getKonnektorHost(), ldapConfig.getLdapPort()
             )) {
-                String filter = String.format(
-                    "(&(professionOID=%s)(displayName=*%s*))", ldapConfig.getProfessionOid(), name
-                );
+                String filter = String.format("(displayName=*%s*)", name);
                 String baseDN = "dc=data,dc=vzd";
                 SearchResult searchResult = connection.search(baseDN, SUB, filter, "rfc822mailbox", "displayName");
                 for (SearchResultEntry entry : searchResult.getSearchEntries()) {

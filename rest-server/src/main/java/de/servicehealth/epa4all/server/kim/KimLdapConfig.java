@@ -10,7 +10,4 @@ public class KimLdapConfig {
 
     @ConfigProperty(name = "kim.ldap.port", defaultValue = "636")
     int ldapPort;
-
-    @ConfigProperty(name = "kim.ldap.profession.oid", defaultValue = "1.2.276.0.76.4.54")
-    String professionOid;
 }
