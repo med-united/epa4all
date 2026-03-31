@@ -37,6 +37,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.UnaryOperator;
 
 import static de.servicehealth.epa4all.server.idp.utils.IdpUtils.getSignedJwt;
+import static de.servicehealth.utils.ServerUtils.getOriginalCause;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @ApplicationScoped
@@ -86,10 +87,14 @@ public class IdpClient extends StartableService {
     public void doStart() throws Exception {
         System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
         BrainpoolCurves.init();
-        retrieveDiscoveryDocument();
+        if (this instanceof TSSIdpClient && !featureConfig.isTssEnabled()) {
+            log.warn("TSS feature is disabled");
+            return;
+        }
+        retrieveDiscoveryDocument(new DiscoveryDocFile<>(configDirectory, getFileName()));
     }
 
-    public DiscoveryDocumentResponse retrieveDocument()  {
+    public DiscoveryDocumentResponse retrieveDocument() {
         log.info("Downloading: " + idpConfig.getDiscoveryDocumentUrl());
         return authenticatorClient.retrieveDiscoveryDocument(idpConfig.getDiscoveryDocumentUrl(), Optional.empty());
     }
@@ -98,25 +103,22 @@ public class IdpClient extends StartableService {
         return DISCOVERY_DOC_FILE_NAME_EPA;
     }
 
-    private void retrieveDiscoveryDocument() throws Exception {
-        if (this instanceof TSSIdpClient && !featureConfig.isTssEnabled()) {
-            log.warn("TSS feature is disabled");
-            return;
-        }
-        String fileName = getFileName();
-        DiscoveryDocumentFile<DiscoveryDocumentWrapper> documentFile = new DiscoveryDocumentFile<>(configDirectory, fileName);
-        DiscoveryDocumentWrapper documentWrapper = documentFile.load();
+    public void reloadDiscoveryDocument() throws Exception {
+        retrieveDiscoveryDocument(new DiscoveryDocFile<DiscoveryDocumentWrapper>(configDirectory, getFileName()).erase());
+    }
+
+    private void retrieveDiscoveryDocument(DiscoveryDocFile<DiscoveryDocumentWrapper> file) {
+        DiscoveryDocumentWrapper documentWrapper = file.load();
         if (documentWrapper != null) {
             discoveryDocumentResponse = documentWrapper.toDiscoveryDocumentResponse();
             return;
         }
-
         boolean worked = false;
         while (!worked) {
             try {
                 discoveryDocumentResponse = retrieveDocument();
                 DiscoveryDocumentWrapper wrapper = new DiscoveryDocumentWrapper(discoveryDocumentResponse);
-                new DiscoveryDocumentFile<>(configDirectory, fileName).store(wrapper);
+                file.store(wrapper);
                 worked = true;
             } catch (Exception ex) {
                 log.error("Could not read discovery document. Trying again in 10 seconds.", ex);
@@ -203,7 +205,7 @@ public class IdpClient extends StartableService {
                         challengeResponse.getBody()
                     );
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException(getOriginalCause(e));
                 }
             }
         );
