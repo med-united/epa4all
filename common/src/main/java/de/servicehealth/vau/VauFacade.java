@@ -2,6 +2,7 @@ package de.servicehealth.vau;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Streams;
+import de.servicehealth.commands.ReloadEmptySessions;
 import de.servicehealth.registry.BeanRegistry;
 import io.vertx.core.impl.ConcurrentHashSet;
 import jakarta.annotation.PreDestroy;
@@ -16,14 +17,18 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static de.servicehealth.utils.ServerUtils.createObjectNode;
+import static de.servicehealth.vau.VauErrors.Idp2030;
+import static de.servicehealth.vau.VauErrors.UnverifiedPIN;
 import static java.util.stream.Collectors.toMap;
 
 @SuppressWarnings("CdiInjectionPointsInspection")
@@ -123,6 +128,30 @@ public class VauFacade {
     void cleanup() {
         registry.unregister(this);
         vauClients.clear();
+    }
+
+    public Set<VauErrors> getErrors() {
+        return getEmptyClients().stream()
+            .map(VauClient::getException)
+            .filter(Objects::nonNull)
+            .map(t -> {
+                String message = t.getMessage();
+                if (message != null) {
+                    boolean invalidRequest = message.contains("invalid_request");
+                    boolean gematikCode = message.contains("gematik_code");
+                    boolean code2030 = message.contains("2030");
+                    if (invalidRequest && gematikCode && code2030) {
+                        return Idp2030;
+                    }
+                    boolean unverifiedPin = message.contains("Zugriffsbedingungen nicht erfüllt");
+                    if (unverifiedPin) {
+                        return UnverifiedPIN;
+                    }
+                }
+                return null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
     }
 
     public List<VauClient> getSessionClients() {

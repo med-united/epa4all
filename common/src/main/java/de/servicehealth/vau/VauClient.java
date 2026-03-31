@@ -62,6 +62,10 @@ public class VauClient {
     private String vauNp;
 
     @Getter
+    @Setter
+    private Throwable exception;
+
+    @Getter
     private final String uuid;
 
     @Getter

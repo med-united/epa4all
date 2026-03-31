@@ -1,4 +1,4 @@
-package de.servicehealth.vau;
+package de.servicehealth.commands;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

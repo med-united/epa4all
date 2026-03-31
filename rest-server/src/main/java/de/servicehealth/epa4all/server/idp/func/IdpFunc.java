@@ -31,7 +31,7 @@ public class IdpFunc {
                 try {
                     return servicePorts.getAuthSignatureService().externalAuthenticate(externalAuthenticate);
                 } catch (FaultMessage e) {
-                    throw new RuntimeException("Could not external authenticate", e);
+                    throw new RuntimeException("Could not external authenticate: " + e.getMessage(), e);
                 }
             }
         );

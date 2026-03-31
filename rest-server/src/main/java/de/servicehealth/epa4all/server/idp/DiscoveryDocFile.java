@@ -9,18 +9,26 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class DiscoveryDocumentFile<T extends Serializable> {
+public class DiscoveryDocFile<T extends Serializable> {
 
-    private static final Logger log = LoggerFactory.getLogger(DiscoveryDocumentFile.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(DiscoveryDocFile.class.getName());
+
+    private static class Empty implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 5487165324856467227L;
+    }
+
+    private static final Empty empty = new Empty();
 
     private final ReentrantReadWriteLock lock;
     private final String fileName;
     private final File file;
 
-    public DiscoveryDocumentFile(File configFolder, String fileName) throws IOException {
+    public DiscoveryDocFile(File configFolder, String fileName) throws IOException {
         this.fileName = fileName;
         lock = new ReentrantReadWriteLock();
         if (configFolder == null) {
@@ -38,13 +46,25 @@ public class DiscoveryDocumentFile<T extends Serializable> {
     public T load() {
         lock.readLock().lock();
         try (ObjectInputStream is = new ObjectInputStream(new FileInputStream(file))) {
-            return (T) is.readObject();
+            Object object = is.readObject();
+            return object instanceof Empty ? null : (T) object;
         } catch (Exception e) {
             log.error(String.format("Unable to read '%s' file: %s", fileName, e.getMessage()));
         } finally {
             lock.readLock().unlock();
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public DiscoveryDocFile<T> erase() {
+        lock.writeLock().lock();
+        try {
+            store((T) empty);
+        } finally {
+            lock.writeLock().unlock();
+        }
+        return this;
     }
 
     public void store(T serializable) {

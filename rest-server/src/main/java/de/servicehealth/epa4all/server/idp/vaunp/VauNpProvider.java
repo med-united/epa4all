@@ -16,9 +16,11 @@ import de.servicehealth.logging.LogField;
 import de.servicehealth.model.SendAuthCodeSC200Response;
 import de.servicehealth.model.SendAuthCodeSCtype;
 import de.servicehealth.startup.StartableService;
+import de.servicehealth.utils.actions.VoidActionEx;
 import de.servicehealth.vau.Konnektors;
-import de.servicehealth.vau.ReloadEmptySessions;
+import de.servicehealth.commands.ReloadEmptySessions;
 import de.servicehealth.vau.VauClient;
+import de.servicehealth.vau.VauErrors;
 import de.servicehealth.vau.VauFacade;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
@@ -51,6 +53,8 @@ import static de.servicehealth.logging.LogField.SMCB_HANDLE;
 import static de.servicehealth.logging.LogField.WORKPLACE;
 import static de.servicehealth.utils.ServerUtils.createObjectNode;
 import static de.servicehealth.utils.ServerUtils.extractJsonNode;
+import static de.servicehealth.utils.ServerUtils.getOriginalCause;
+import static de.servicehealth.vau.VauErrors.Idp2030;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SuppressWarnings("CdiInjectionPointsInspection")
@@ -60,6 +64,7 @@ public class VauNpProvider extends StartableService {
     private static final Logger log = LoggerFactory.getLogger(VauNpProvider.class.getName());
 
     private final Map<String, Semaphore> reloadMap = new HashMap<>();
+    private final Map<VauErrors, VoidActionEx> fallbackActions = new HashMap<>();
 
     private final IdpConfig idpConfig;
     private final IdpClient idpClient;
@@ -111,7 +116,12 @@ public class VauNpProvider extends StartableService {
 
     @Override
     public void doStart() throws Exception {
+        registerFallbacks();
         reload(Set.of());
+    }
+
+    private void registerFallbacks() {
+        fallbackActions.put(Idp2030, idpClient::reloadDiscoveryDocument);
     }
 
     public void onSessionReload(@ObservesAsync ReloadEmptySessions sessionReload) {
@@ -126,7 +136,7 @@ public class VauNpProvider extends StartableService {
 
     public JsonNode reload(Set<String> backendsToReload) throws Exception {
         List<JsonNode> reloading = new ArrayList<>();
-
+        Set<VauErrors> vauErrors = new HashSet<>();
         AtomicBoolean reloadHappened = new AtomicBoolean(false);
         Set<JsonNode> statuses = new HashSet<>();
         epaMultiService.getEpaBackendMap().entrySet().stream()
@@ -179,6 +189,7 @@ public class VauNpProvider extends StartableService {
                                 "clients", vauFacade.getStatus()
                             )
                         ));
+                        vauErrors.addAll(vauFacade.getErrors());
                     } finally {
                         epaCallGuard.setBlocked(backend, false);
                         reloadMap.get(backend).release();
@@ -187,6 +198,17 @@ public class VauNpProvider extends StartableService {
                     reloading.add(createObjectNode(Map.of(backend, "Reload is in progress, try later")));
                 }
             });
+
+        vauErrors.forEach(ve -> {
+            try {
+                VoidActionEx action = fallbackActions.get(ve);
+                if (action != null) {
+                    action.execute();
+                }
+            } catch (Exception e) {
+                log.error("Error while execute fallback action", e);
+            }
+        });
 
         statuses.addAll(reloading);
         JsonNode jsonNode = extractJsonNode(statuses);
@@ -228,10 +250,11 @@ public class VauNpProvider extends StartableService {
                     }
                 }
             });
-        } catch (Throwable e) {
+        } catch (Exception e) {
             log.error("Error while reloadVauClient, vauClient=%s".formatted(vauClient.getUuid()), e);
             vauClient.setVauInfo(null);
             vauClient.setVauNp(null);
+            vauClient.setException(getOriginalCause(e));
         }
     }
 
@@ -254,7 +277,7 @@ public class VauNpProvider extends StartableService {
             vauClient.setVauNp(sc200Response.getVauNp());
         } catch (Exception e) {
             log.error("Error while sendAuthCodeSC", e);
-            throw new Fault(e);
+            throw new RuntimeException(e);
         }
     }
 
