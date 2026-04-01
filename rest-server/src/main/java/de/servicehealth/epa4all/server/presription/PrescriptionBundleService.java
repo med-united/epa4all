@@ -1,8 +1,10 @@
 package de.servicehealth.epa4all.server.presription;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
+import de.health.service.config.api.UserRuntimeConfig;
+import de.servicehealth.epa4all.server.kim.KimLdapService;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.hl7.fhir.r4.model.Address;
 import org.hl7.fhir.r4.model.BooleanType;
 import org.hl7.fhir.r4.model.Bundle;
@@ -28,13 +30,11 @@ import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ServiceRequest;
 import org.hl7.fhir.r4.model.StringType;
 
-import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Builds a UC1-1-Prescription-Request-To-Prescriber Bundle per gematik spec-E-Rezept-ServiceRequest.
@@ -65,35 +65,36 @@ public class PrescriptionBundleService {
 
     private static final FhirContext FHIR_CTX = FhirContext.forR4();
 
+    @Inject
+    KimLdapService kimLdapService;
+
     /**
-     * Builds a UC1-1-Prescription-Request Bundle from a full ePA $medication-list Bundle.
-     * Extracts all related resources by following the reference chain starting from
-     * the selected Medication ID, transforms ePA profiles to ServiceRequest profiles.
+     * Builds a UC1-1-Prescription-Request Bundle from a raw ePA Bundle JSON.
      */
-    public String buildPrescriptionRequestBundle(
-        String epaBundleBase64,
-        String selectedMedicationId,
-        String kimAddress
+    public KimContext buildPrescriptionRequestBundle(
+        UserRuntimeConfig userRuntimeConfig,
+        String epaBundleJson
     ) throws PrescriptionSendException {
-        IParser jsonParser = FHIR_CTX.newJsonParser();
-        String bundleJson = new String(Base64.getDecoder().decode(epaBundleBase64), UTF_8);
-        Bundle epaBundle = jsonParser.parseResource(Bundle.class, bundleJson);
+        Bundle epaBundle = FHIR_CTX.newJsonParser().parseResource(Bundle.class, epaBundleJson);
 
-        Medication epaMedication = findResourceById(epaBundle, Medication.class, selectedMedicationId);
-        MedicationRequest epaMedRequest = findMedicationRequestByMedRef(epaBundle, selectedMedicationId);
-        Patient epaPatient = findResourceByType(epaBundle, Patient.class);
-
-        PractitionerRole epaRole = resolveReference(epaBundle, epaMedRequest.getRequester(), PractitionerRole.class);
-        Practitioner epaPractitioner = resolveReference(epaBundle, epaRole.getPractitioner(), Practitioner.class);
-        Organization epaOrganization = resolveReference(epaBundle, epaRole.getOrganization(), Organization.class);
-
+        MedicationRequest epaMedRequest = findSingleResource(epaBundle, MedicationRequest.class);
+        Medication epaMedication = resolveReference(epaBundle, epaMedRequest.getMedicationReference(), Medication.class);
+        Patient epaPatient = findPatient(epaBundle, epaMedRequest);
+        Practitioner epaPractitioner = findPractitioner(epaBundle, epaMedRequest);
         String practitionerName = extractPractitionerName(epaPractitioner);
+        String kimAddress = kimLdapService.searchKimAddress(userRuntimeConfig, practitionerName);
 
-        String senderTelematikId = extractTelematikId(epaOrganization);
-        String senderOrgName = epaOrganization.hasName() ? epaOrganization.getName() : "";
-        String senderOrgTypeCode = extractOrgTypeCode(epaOrganization);
+        String senderTelematikId = "";
+        String senderOrgName = practitionerName;
+        String senderOrgTypeCode = "";
+        Organization epaOrganization = findOrganizationOptional(epaBundle, epaMedRequest);
+        if (epaOrganization != null) {
+            senderTelematikId = extractIdentifierValue(epaOrganization, CS_TELEMATIK_ID);
+            senderOrgName = epaOrganization.hasName() ? epaOrganization.getName() : practitionerName;
+            senderOrgTypeCode = extractOrgTypeCode(epaOrganization);
+        }
 
-        String kvnr = extractKvnr(epaPatient);
+        String kvnr = extractIdentifierValue(epaPatient, CS_KVID);
         String patientFamily = extractFamily(epaPatient);
         String patientGiven = extractGiven(epaPatient);
         String birthDate = epaPatient.hasBirthDate() ? epaPatient.getBirthDateElement().getValueAsString() : null;
@@ -115,11 +116,15 @@ public class PrescriptionBundleService {
         }
 
         String pzn = extractPzn(epaMedication);
-        String medName = epaMedication.hasCode() && epaMedication.getCode().hasText() ? epaMedication.getCode().getText() : "";
+        String medName = epaMedication.hasCode() && epaMedication.getCode().hasText()
+            ? epaMedication.getCode().getText()
+            : "";
         String formCode = extractFormCode(epaMedication);
         String normgroesse = extractExtensionCode(epaMedication);
 
-        String dosage = epaMedRequest.hasDosageInstruction() ? epaMedRequest.getDosageInstructionFirstRep().getText() : null;
+        String dosage = epaMedRequest.hasDosageInstruction()
+            ? epaMedRequest.getDosageInstructionFirstRep().getText()
+            : null;
         int quantity = 1;
         String quantityUnit = "{Package}";
         if (epaMedRequest.hasDispenseRequest() && epaMedRequest.getDispenseRequest().hasQuantity()) {
@@ -131,31 +136,70 @@ public class PrescriptionBundleService {
         String hdrId = sid(), orgId = sid(), srId = sid();
         String patId = sid(), mrId = sid(), medId = sid();
 
-        MessageHeader header = createMessageHeader(hdrId, orgId, srId, senderTelematikId, senderOrgName, practitionerName, kimAddress);
+        MessageHeader header = createMessageHeader(
+            hdrId, orgId, srId, senderTelematikId, senderOrgName, practitionerName, kimAddress
+        );
         Organization organization = createOrganization(orgId, senderTelematikId, senderOrgName, senderOrgTypeCode);
         ServiceRequest sr = createServiceRequest(srId, orgId, patId, mrId);
-        Patient patient = createPatient(patId, kvnr, patientFamily, patientGiven, birthDate, street, houseNumber, city, postalCode);
+        Patient patient = createPatient(
+            patId, kvnr, patientFamily, patientGiven, birthDate, street, houseNumber, city, postalCode
+        );
         MedicationRequest medReq = createMedicationRequest(mrId, medId, patId, dosage, quantity, quantityUnit);
         Medication med = createMedication(medId, pzn, medName, formCode, normgroesse);
 
         Bundle bundle = assembleUC1Bundle(header, organization, sr, patient, medReq, med);
-        return FHIR_CTX.newXmlParser().setPrettyPrint(true).encodeResourceToString(bundle);
+        String bundleStringValue = FHIR_CTX.newXmlParser().setPrettyPrint(true).encodeResourceToString(bundle);
+        return new KimContext(bundleStringValue, kimAddress);
+    }
+
+    private Practitioner findPractitioner(
+        Bundle bundle,
+        MedicationRequest medRequest
+    ) throws PrescriptionSendException {
+        Reference requesterRef = medRequest.getRequester();
+        if (requesterRef == null || !requesterRef.hasReference()) {
+            throw new PrescriptionSendException("MedicationRequest.requester is missing", BAD_REQUEST);
+        }
+        String ref = requesterRef.getReference();
+        if (ref.startsWith("Practitioner/")) {
+            return resolveReference(bundle, requesterRef, Practitioner.class);
+        }
+        if (ref.startsWith("PractitionerRole/")) {
+            PractitionerRole role = resolveReference(bundle, requesterRef, PractitionerRole.class);
+            return resolveReference(bundle, role.getPractitioner(), Practitioner.class);
+        }
+        throw new PrescriptionSendException("Unsupported requester reference type: " + ref, BAD_REQUEST);
+    }
+
+    private Patient findPatient(Bundle bundle, MedicationRequest medRequest) throws PrescriptionSendException {
+        Reference subjectRef = medRequest.getSubject();
+        if (subjectRef != null && subjectRef.hasReference()) {
+            return resolveReference(bundle, subjectRef, Patient.class);
+        }
+        return findSingleResource(bundle, Patient.class);
+    }
+
+    private Organization findOrganizationOptional(Bundle bundle, MedicationRequest medRequest) {
+        try {
+            Reference requesterRef = medRequest.getRequester();
+            if (requesterRef != null && requesterRef.hasReference()
+                && requesterRef.getReference().startsWith("PractitionerRole/")) {
+                PractitionerRole role = resolveReference(bundle, requesterRef, PractitionerRole.class);
+                if (role.hasOrganization()) {
+                    return resolveReference(bundle, role.getOrganization(), Organization.class);
+                }
+            }
+        } catch (PrescriptionSendException ignored) {
+        }
+        try {
+            return findSingleResource(bundle, Organization.class);
+        } catch (PrescriptionSendException ignored) {
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends Resource> T findResourceById(Bundle bundle, Class<T> type, String id) throws PrescriptionSendException {
-        return bundle.getEntry().stream()
-            .map(BundleEntryComponent::getResource)
-            .filter(type::isInstance)
-            .map(r -> (T) r)
-            .filter(r -> r.getIdElement().getIdPart().equals(id))
-            .findFirst()
-            .orElseThrow(() -> new PrescriptionSendException(
-                type.getSimpleName() + "/" + id + " not found in ePA Bundle", NOT_FOUND));
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T extends Resource> T findResourceByType(Bundle bundle, Class<T> type) throws PrescriptionSendException {
+    private <T extends Resource> T findSingleResource(Bundle bundle, Class<T> type) throws PrescriptionSendException {
         return bundle.getEntry().stream()
             .map(BundleEntryComponent::getResource)
             .filter(type::isInstance)
@@ -165,23 +209,12 @@ public class PrescriptionBundleService {
                 type.getSimpleName() + " not found in ePA Bundle", NOT_FOUND));
     }
 
-    private MedicationRequest findMedicationRequestByMedRef(Bundle bundle, String medicationId) throws PrescriptionSendException {
-        return bundle.getEntry().stream()
-            .map(BundleEntryComponent::getResource)
-            .filter(MedicationRequest.class::isInstance)
-            .map(MedicationRequest.class::cast)
-            .filter(mr -> mr.hasMedicationReference()
-                && mr.getMedicationReference().getReference().endsWith(medicationId))
-            .findFirst()
-            .orElseThrow(() -> new PrescriptionSendException(
-                "No MedicationRequest referencing Medication/" + medicationId + " in ePA Bundle", NOT_FOUND));
-    }
-
     @SuppressWarnings("unchecked")
-    private <T extends Resource> T resolveReference(Bundle bundle, Reference ref, Class<T> type) throws PrescriptionSendException {
+    private <T extends Resource> T resolveReference(
+        Bundle bundle, Reference ref, Class<T> type
+    ) throws PrescriptionSendException {
         if (ref == null || !ref.hasReference()) {
-            throw new PrescriptionSendException(
-                "Missing reference to " + type.getSimpleName(), BAD_REQUEST);
+            throw new PrescriptionSendException("Missing reference to " + type.getSimpleName(), BAD_REQUEST);
         }
         String refValue = ref.getReference();
         return bundle.getEntry().stream()
@@ -191,66 +224,57 @@ public class PrescriptionBundleService {
             .filter(r -> refValue.endsWith(r.getIdElement().getIdPart()))
             .findFirst()
             .orElseThrow(() -> new PrescriptionSendException(
-                type.getSimpleName() + " referenced by " + refValue + " not found in ePA Bundle", NOT_FOUND));
+                type.getSimpleName() + " referenced by " + refValue + " not found", NOT_FOUND));
     }
 
     private String extractPractitionerName(Practitioner practitioner) {
         if (practitioner.hasName()) {
             HumanName name = practitioner.getNameFirstRep();
             if (name.hasText()) return name.getText();
+            String prefix = name.hasPrefix() ? name.getPrefix().getFirst().getValue() + " " : "";
             String given = name.hasGiven() ? name.getGivenAsSingleString() : "";
             String family = name.hasFamily() ? name.getFamily() : "";
-            return (given + " " + family).trim();
+            return (prefix + given + " " + family).trim();
         }
         return "";
     }
 
-    private String extractTelematikId(Organization org) {
-        return org.getIdentifier().stream()
-            .filter(id -> CS_TELEMATIK_ID.equals(id.getSystem()))
-            .map(Identifier::getValue)
-            .findFirst().orElse("");
+    private String extractIdentifierValue(Resource resource, String system) {
+        if (resource instanceof Patient p) {
+            return p.getIdentifier().stream()
+                .filter(id -> system.equals(id.getSystem()))
+                .map(Identifier::getValue).findFirst().orElse("");
+        }
+        if (resource instanceof Organization o) {
+            return o.getIdentifier().stream()
+                .filter(id -> system.equals(id.getSystem()))
+                .map(Identifier::getValue).findFirst().orElse("");
+        }
+        return "";
     }
 
     private String extractOrgTypeCode(Organization org) {
         if (org.hasType()) {
             return org.getTypeFirstRep().getCoding().stream()
                 .filter(c -> CS_ORG_PROFESSION_OID.equals(c.getSystem()))
-                .map(Coding::getCode)
-                .findFirst().orElse("");
+                .map(Coding::getCode).findFirst().orElse("");
         }
         return "";
     }
 
-    private String extractKvnr(Patient patient) {
-        return patient.getIdentifier().stream()
-            .filter(id -> CS_KVID.equals(id.getSystem()))
-            .map(Identifier::getValue)
-            .findFirst().orElse("");
+    private String extractFamily(Patient p) {
+        return p.hasName() && p.getNameFirstRep().hasFamily() ? p.getNameFirstRep().getFamily() : "";
     }
 
-    private String extractFamily(Patient patient) {
-        if (patient.hasName()) {
-            HumanName name = patient.getNameFirstRep();
-            return name.hasFamily() ? name.getFamily() : "";
-        }
-        return "";
-    }
-
-    private String extractGiven(Patient patient) {
-        if (patient.hasName()) {
-            HumanName name = patient.getNameFirstRep();
-            return name.hasGiven() ? name.getGivenAsSingleString() : "";
-        }
-        return "";
+    private String extractGiven(Patient p) {
+        return p.hasName() && p.getNameFirstRep().hasGiven() ? p.getNameFirstRep().getGivenAsSingleString() : "";
     }
 
     private String extractPzn(Medication med) {
         if (med.hasCode() && med.getCode().hasCoding()) {
             return med.getCode().getCoding().stream()
                 .filter(c -> CS_PZN.equals(c.getSystem()))
-                .map(Coding::getCode)
-                .findFirst().orElse("");
+                .map(Coding::getCode).findFirst().orElse("");
         }
         return "";
     }
@@ -259,8 +283,7 @@ public class PrescriptionBundleService {
         if (med.hasForm() && med.getForm().hasCoding()) {
             return med.getForm().getCoding().stream()
                 .filter(c -> CS_DARREICHUNGSFORM.equals(c.getSystem()))
-                .map(Coding::getCode)
-                .findFirst()
+                .map(Coding::getCode).findFirst()
                 .orElse(med.getForm().getCodingFirstRep().getCode());
         }
         return "";
@@ -286,14 +309,12 @@ public class PrescriptionBundleService {
             .setSystem("urn:ietf:rfc:3986")
             .setValue("urn:uuid:" + UUID.randomUUID()));
         bundle.setTimestamp(new Date());
-
         addEntry(bundle, header);
         addEntry(bundle, organization);
         addEntry(bundle, serviceRequest);
         addEntry(bundle, patient);
         addEntry(bundle, medicationRequest);
         addEntry(bundle, medication);
-
         return bundle;
     }
 
@@ -312,14 +333,12 @@ public class PrescriptionBundleService {
         h.setId(id);
         h.getMeta().addProfile(PROFILE_REQUEST_HEADER);
         h.setEvent(new Coding().setSystem(CS_SERVICE_IDENTIFIER).setCode(EVENT_CODE));
-
         MessageHeader.MessageSourceComponent source = new MessageHeader.MessageSourceComponent();
         source.setName("HealthCare-Source");
         source.setSoftware("HealthCare-Software");
         source.setVersion("1.0.0");
         source.setEndpoint("https://healthcare-software.example.de/endpoint");
         h.setSource(source);
-
         h.setSender(new Reference()
             .setIdentifier(new Identifier().setSystem(CS_TELEMATIK_ID).setValue(senderTelematikId))
             .setDisplay(senderName));
@@ -327,7 +346,6 @@ public class PrescriptionBundleService {
             .setName(destName).setEndpoint("mailto:" + destKimAddress));
         h.addFocus(new Reference("ServiceRequest/" + serviceRequestId));
         h.setResponsible(new Reference("Organization/" + orgId));
-
         return h;
     }
 
@@ -368,7 +386,6 @@ public class PrescriptionBundleService {
         patient.setId(id);
         patient.getMeta().addProfile(PROFILE_PATIENT);
         patient.addIdentifier().setSystem(CS_KVID).setValue(kvnr);
-
         HumanName humanName = patient.addName();
         humanName.setUse(HumanName.NameUse.OFFICIAL);
         humanName.addGiven(given);
@@ -376,23 +393,19 @@ public class PrescriptionBundleService {
         familyElement.setValue(family);
         familyElement.addExtension(
             "http://hl7.org/fhir/StructureDefinition/humanname-own-name", new StringType(family));
-
         if (birthDate != null && !birthDate.isBlank()) {
             patient.setBirthDateElement(new DateType(birthDate));
         }
-
         if (street != null && !street.isBlank()) {
             patient.addAddress()
                 .setType(Address.AddressType.BOTH)
                 .setCity(city)
                 .setPostalCode(postalCode)
                 .addLine(street + " " + houseNumber);
-
             StringType line = patient.getAddress().getFirst().getLine().getFirst();
             line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-streetName", new StringType(street));
             line.addExtension("http://hl7.org/fhir/StructureDefinition/iso21090-ADXP-houseNumber", new StringType(houseNumber));
         }
-
         return patient;
     }
 
@@ -407,18 +420,15 @@ public class PrescriptionBundleService {
         mr.setIntent(MedicationRequest.MedicationRequestIntent.ORDER);
         mr.getMedicationReference().setReference("Medication/" + medicationId);
         mr.getSubject().setReference("Patient/" + patientId);
-
         if (dosage != null && !dosage.isBlank()) {
             mr.addDosageInstruction().setText(dosage);
         }
-
         Quantity qty = new Quantity();
         qty.setValue(quantity);
         qty.setUnit("Packung");
         qty.setSystem("http://unitsofmeasure.org");
         qty.setCode(quantityUnit != null ? quantityUnit : "{Package}");
         mr.getDispenseRequest().setQuantity(qty);
-
         return mr;
     }
 
@@ -426,32 +436,25 @@ public class PrescriptionBundleService {
         Medication med = new Medication();
         med.setId(id);
         med.getMeta().addProfile(PROFILE_KBV_MEDICATION_PZN);
-
         Coding medicationType = new Coding("http://snomed.info/sct", "763158003", "Medicinal product (product)");
         medicationType.setVersion("http://snomed.info/sct/900000000000207008/version/20220331");
         med.addExtension(new Extension(
             "https://fhir.kbv.de/StructureDefinition/KBV_EX_Base_Medication_Type",
             new CodeableConcept(medicationType)));
-
         med.addExtension(new Extension(
             "https://fhir.kbv.de/StructureDefinition/KBV_EX_ERP_Medication_Category",
             new Coding("https://fhir.kbv.de/CodeSystem/KBV_CS_ERP_Medication_Category", "00", null)));
-
         med.addExtension(new Extension(
             "https://fhir.kbv.de/StructureDefinition/KBV_EX_ERP_Medication_Vaccine",
             new BooleanType(false)));
-
         med.addExtension(new Extension(
             "http://fhir.de/StructureDefinition/normgroesse",
             new CodeType(normgroesse != null ? normgroesse : "N1")));
-
         med.getCode().addCoding().setSystem(CS_PZN).setCode(pzn != null ? pzn : "");
         med.getCode().setText(name != null ? name : "");
-
         if (formCode != null && !formCode.isBlank()) {
             med.setForm(new CodeableConcept().addCoding(new Coding(CS_DARREICHUNGSFORM, formCode, "")));
         }
-
         return med;
     }
 
