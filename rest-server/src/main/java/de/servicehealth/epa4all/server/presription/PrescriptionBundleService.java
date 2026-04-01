@@ -71,12 +71,10 @@ public class PrescriptionBundleService {
     /**
      * Builds a UC1-1-Prescription-Request Bundle from a raw ePA Bundle JSON.
      */
-    public KimContext buildPrescriptionRequestBundle(
+    public KimContext prepareKimContextWithBundle(
         UserRuntimeConfig userRuntimeConfig,
-        String epaBundleJson
+        Bundle epaBundle
     ) throws PrescriptionSendException {
-        Bundle epaBundle = FHIR_CTX.newJsonParser().parseResource(Bundle.class, epaBundleJson);
-
         MedicationRequest epaMedRequest = findSingleResource(epaBundle, MedicationRequest.class);
         Medication epaMedication = resolveReference(epaBundle, epaMedRequest.getMedicationReference(), Medication.class);
         Patient epaPatient = findPatient(epaBundle, epaMedRequest);

@@ -16,6 +16,7 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+import org.hl7.fhir.r4.model.Bundle;
 
 import java.util.Map;
 import java.util.Objects;
@@ -55,12 +56,12 @@ public class EPrescriptionKimSender extends AbstractResource {
             description = "IP of the target Konnektor (can be skipped for single-tenancy)"
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
-        String epaBundleJson
+        Bundle epaBundle
     ) throws Exception {
-        Integer hash = Objects.hash("eprescription", konnektor, epaBundleJson);
+        Integer hash = Objects.hash("eprescription", konnektor, epaBundle);
         return deduplicatedCall("e-prescription-kim-sender", konnektor, hash, () -> {
-            KimContext kimContext = prescriptionBundleService.buildPrescriptionRequestBundle(
-                userRuntimeConfig, epaBundleJson
+            KimContext kimContext = prescriptionBundleService.prepareKimContextWithBundle(
+                userRuntimeConfig, epaBundle
             );
             Map<String, String> headers = Map.of(
                 kimConfig.getKimEprescriptionHeaderName(), kimConfig.getKimEprescriptionHeaderValue(),
