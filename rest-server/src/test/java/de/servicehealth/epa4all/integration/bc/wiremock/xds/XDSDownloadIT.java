@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
 public class XDSDownloadIT extends AbstractWiremockTest {
 
     @InjectMock
-    FileEventSender fileEventSender;
+    FileEventSender suppressJcrHandling;
 
     @Inject
     IDocumentManagementPortTypeProvider portTypeProvider;

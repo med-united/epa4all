@@ -68,7 +68,6 @@ public class JcrService extends StartableService {
 
     @Override
     public void doStart() throws Exception {
-        System.setProperty("disableCheckForReferencesInContentException", "true");
         File repositoryHome = jcrConfig.getRepositoryHome();
         String repositoryPath = repositoryHome.getAbsolutePath();
         try {

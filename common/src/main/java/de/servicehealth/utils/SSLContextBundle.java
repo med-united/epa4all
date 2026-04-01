@@ -8,7 +8,7 @@ import javax.net.ssl.SSLContext;
 
 @Getter
 @AllArgsConstructor
-public class SSLResult {
+public class SSLContextBundle {
 
     private final SSLContext sslContext;
     private final KeyManagerFactory keyManagerFactory;

@@ -7,11 +7,9 @@ import de.gematik.ws.fa.vsdm.vsd.v5.UCAllgemeineVersicherungsdatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCGeschuetzteVersichertendatenXML;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.domain.eventservice.card.CardType;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
-import de.servicehealth.epa4all.server.kim.KimSmtpService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -48,19 +46,17 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static de.health.service.cetp.domain.eventservice.card.CardType.HBA;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 import static org.hl7.fhir.r4.model.Address.AddressType.BOTH;
 import static org.hl7.fhir.r4.model.ContactPoint.ContactPointSystem.PHONE;
 
-@SuppressWarnings("HttpUrlsUsage")
 @ApplicationScoped
-public class PrescriptionService {
+public class EquipmentBundleService {
 
     private final IParser fhirParser = FhirContext.forR4().newXmlParser();
 
     private static final Pattern STREET_AND_NUMBER = Pattern.compile("(.*) ([^ ]*)$");
-
-    @Inject
-    KimSmtpService kimSmtpService;
 
     @Inject
     IKonnektorClient konnektorClient;
@@ -68,7 +64,7 @@ public class PrescriptionService {
     @Inject
     InsuranceDataService insuranceDataService;
 
-    public String sendKimEmail(
+    public String buildEquipmentBundle(
         UserRuntimeConfig userRuntimeConfig,
         String telematikId,
         String smcbHandle,
@@ -77,20 +73,18 @@ public class PrescriptionService {
         String lanr,
         String namePrefix,
         String bsnr,
-        String phone,
-        String noteToPharmacy
-    ) throws Exception {
+        String phone
+    ) throws PrescriptionSendException {
         InsuranceData insuranceData = insuranceDataService.getData(telematikId, insurantId);
         if (insuranceData == null) {
             insuranceData = insuranceDataService.loadInsuranceData(userRuntimeConfig, smcbHandle, telematikId, insurantId);
         }
         if (insuranceData == null) {
-            throw new IllegalStateException("[%s] Insurance data not found".formatted(insurantId));
+            throw new PrescriptionSendException("[%s] Insurance data not found".formatted(insurantId), NOT_FOUND);
         }
         Bundle bundle = getBundle(insuranceData, userRuntimeConfig, smcbHandle, selectedEquipment, lanr, namePrefix, bsnr, phone);
         fhirParser.setPrettyPrint(true);
-        String prescription = fhirParser.encodeResourceToString(bundle);
-        return kimSmtpService.sendERezeptToKIMAddress(prescription, noteToPharmacy);
+        return fhirParser.encodeResourceToString(bundle);
     }
 
     private Bundle getBundle(
@@ -102,31 +96,35 @@ public class PrescriptionService {
         String namePrefix,
         String bsnr,
         String phone
-    ) throws Exception {
-        String hbaHandle = konnektorClient.getCards(userRuntimeConfig, HBA).getFirst().getCardHandle();
+    ) throws PrescriptionSendException {
+        try {
+            String hbaHandle = konnektorClient.getCards(userRuntimeConfig, HBA).getFirst().getCardHandle();
 
-        UCPersoenlicheVersichertendatenXML schaumberg = insuranceData.getPersoenlicheVersichertendaten();
-        Patient patient = KBVFHIRUtil.UCPersoenlicheVersichertendatenXML2Patient(schaumberg);
-        UCAllgemeineVersicherungsdatenXML versicherung = insuranceData.getAllgemeineVersicherungsdaten();
-        UCGeschuetzteVersichertendatenXML versichungKennzeichen = insuranceData.getGeschuetzteVersichertendaten();
-        Coverage coverage = KBVFHIRUtil.UCAllgemeineVersicherungsdatenXML2Coverage(
-            versicherung, patient.getIdElement().getIdPart(), versichungKennzeichen
-        );
+            UCPersoenlicheVersichertendatenXML schaumberg = insuranceData.getPersoenlicheVersichertendaten();
+            Patient patient = KBVFHIRUtil.UCPersoenlicheVersichertendatenXML2Patient(schaumberg);
+            UCAllgemeineVersicherungsdatenXML versicherung = insuranceData.getAllgemeineVersicherungsdaten();
+            UCGeschuetzteVersichertendatenXML versichungKennzeichen = insuranceData.getGeschuetzteVersichertendaten();
+            Coverage coverage = KBVFHIRUtil.UCAllgemeineVersicherungsdatenXML2Coverage(
+                versicherung, patient.getIdElement().getIdPart(), versichungKennzeichen
+            );
 
-        Practitioner practitioner = hbaHandle2Practitioner(userRuntimeConfig, hbaHandle, lanr, namePrefix);
-        Organization organization = smcbHandle2Organization(userRuntimeConfig, smcbHandle, bsnr, phone);
-        Medication medication = createMedicationResource();
+            Practitioner practitioner = hbaHandle2Practitioner(userRuntimeConfig, hbaHandle, lanr, namePrefix);
+            Organization organization = smcbHandle2Organization(userRuntimeConfig, smcbHandle, bsnr, phone);
+            Medication medication = createMedicationResource();
 
-        MedicationRequest medicationRequest = createMedicationRequest(
-            selectedEquipment,
-            medication.getIdElement().getIdPart(),
-            patient.getIdElement().getIdPart(),
-            practitioner.getIdElement().getIdPart(),
-            coverage.getIdElement().getIdPart()
-        );
-        return KBVFHIRUtil.assembleBundle(
-            practitioner, organization, patient, coverage, medication, medicationRequest, null, null
-        );
+            MedicationRequest medicationRequest = createMedicationRequest(
+                selectedEquipment,
+                medication.getIdElement().getIdPart(),
+                patient.getIdElement().getIdPart(),
+                practitioner.getIdElement().getIdPart(),
+                coverage.getIdElement().getIdPart()
+            );
+            return KBVFHIRUtil.assembleBundle(
+                practitioner, organization, patient, coverage, medication, medicationRequest, null, null
+            );
+        } catch (Exception e) {
+            throw new PrescriptionSendException(e.getMessage(), SERVICE_UNAVAILABLE);
+        }
     }
 
     private Organization smcbHandle2Organization(

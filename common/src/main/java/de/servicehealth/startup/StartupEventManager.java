@@ -1,6 +1,7 @@
 package de.servicehealth.startup;
 
 import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Any;
@@ -20,7 +21,7 @@ public class StartupEventManager {
     @Inject
     Instance<StartupEventListener> listeners;
 
-    public void onStart(@Observes StartupEvent ev) {
+    public void onStart(@Observes @Priority(50) StartupEvent ev) {
         listeners.stream()
             .sorted(Comparator.comparingInt(StartupEventListener::getPriority))
             .forEach(listener -> {
