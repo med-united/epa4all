@@ -8,6 +8,7 @@ import de.servicehealth.epa4all.server.pnw.PnwException;
 import de.servicehealth.epa4all.server.pnw.PnwResponse;
 import de.servicehealth.epa4all.server.presription.PrescriptionSendException;
 import de.servicehealth.epa4all.server.tss.TssException;
+import de.servicehealth.epa4all.xds.structure.XdsException;
 import io.quarkus.security.AuthenticationFailedException;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.core.Response;
@@ -77,7 +78,9 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
             case ConsentException consentEx -> new ErrorStatus(consentEx.getMessage(), FORBIDDEN);
             case TssException tssEx -> new ErrorStatus(tssEx.getMessage(), tssEx.getStatus());
             case BadRequestException badRequestEx -> new ErrorStatus(badRequestEx.getMessage(), BAD_REQUEST);
-            case XdsException xdsException -> new ErrorStatus(null, null, xdsException.getRegistryResponse(), CONFLICT);
+            case XdsException xdsException -> new ErrorStatus(
+                null, null, xdsException.getMessage(), xdsException.getStatus()
+            );
             case PrescriptionSendException psException -> new ErrorStatus(
                 psException.getMessage(), psException.getResponseStatus()
             );

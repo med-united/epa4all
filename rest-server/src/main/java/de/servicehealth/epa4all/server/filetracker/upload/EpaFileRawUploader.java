@@ -11,13 +11,11 @@ public class EpaFileRawUploader extends EpaFileTracker<FileRawUpload> {
 
     @Override
     protected RegistryResponseType handleTransfer(FileRawUpload fileUpload, IDocumentManagementPortType documentPortType) throws Exception {
-        String contentType = fileUpload.getContentType();
-        byte[] documentBytes = fileUpload.getDocumentBytes();
         StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(
-            fileUpload.getIg(), contentType, documentBytes
+            fileUpload.getTaskId(), fileUpload.getIg(), fileUpload.getExtrinsicContext()
         );
         RegistryResponseType response = documentPortType.documentRepositoryProvideAndRegisterDocumentSetB(fileUpload.getRequest());
-        handleUploadResponse(fileUpload, fileUpload.getFolderName(), fileUpload.getDocumentBytes(), response, structureDefinition);
+        handleUploadResponse(fileUpload, fileUpload.getDocumentBytes(), response, structureDefinition);
         return response;
     }
 }

@@ -9,27 +9,24 @@ import ihe.iti.xds_b._2007.IDocumentManagementPortType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import jakarta.enterprise.context.ApplicationScoped;
 import oasis.names.tc.ebxml_regrep.xsd.rs._3.RegistryResponseType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class EpaFileUploader extends EpaFileTracker<FileUpload> {
 
-    private static final Logger log = LoggerFactory.getLogger(EpaFileUploader.class.getName());
-
     @Override
-    protected RegistryResponseType handleTransfer(FileUpload fileUpload, IDocumentManagementPortType documentPortType) throws Exception {
-        String contentType = fileUpload.getContentType();
+    protected RegistryResponseType handleTransfer(
+        FileUpload fileUpload,
+        IDocumentManagementPortType documentPortType
+    ) throws Exception {
         EpaContext epaContext = fileUpload.getEpaContext();
-        byte[] documentBytes = fileUpload.getDocumentBytes();
         StructureDefinition structureDefinition = structureDefinitionService.getStructureDefinition(
-            fileUpload.getIg(), contentType, documentBytes
+            fileUpload.getTaskId(), fileUpload.getIg(), fileUpload.getExtrinsicContext()
         );
         ProvideAndRegisterDocumentSetRequestType request = prepareProvideAndRegisterDocumentSetRequest(
             fileUpload, epaContext, structureDefinition
         );
         RegistryResponseType response = documentPortType.documentRepositoryProvideAndRegisterDocumentSetB(request);
-        handleUploadResponse(fileUpload, fileUpload.getFolderName(), fileUpload.getDocumentBytes(), response, structureDefinition);
+        handleUploadResponse(fileUpload, fileUpload.getDocumentBytes(), response, structureDefinition);
         return response;
     }
 

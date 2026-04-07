@@ -10,6 +10,8 @@ import de.servicehealth.epa4all.server.idp.IdpClient;
 import de.servicehealth.epa4all.server.idp.IdpConfig;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,15 +19,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static de.health.service.cetp.domain.eventservice.card.CardType.SMC_B;
 
 @ApplicationScoped
 public class StatusService {
 
-    private static final Logger log = Logger.getLogger(StatusService.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(StatusService.class.getName());
 
     private final ExecutorService scheduledThreadPool = Executors.newFixedThreadPool(5);
 
@@ -43,7 +43,7 @@ public class StatusService {
 
     @Inject
     IdpConfig idpConfig;
-    
+
 
     public ServerStatus getStatus() {
         ServerStatus status = new ServerStatus();
@@ -102,7 +102,7 @@ public class StatusService {
             try {
                 future.get(10, TimeUnit.SECONDS);
             } catch (Exception e) {
-                log.log(Level.SEVERE, "Error while building status", e);
+                log.error("Error while building status", e);
             }
         }
         return status;

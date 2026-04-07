@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.filetracker.upload;
 
 import de.servicehealth.epa4all.server.filetracker.FileAction;
 import de.servicehealth.epa4all.server.rest.EpaContext;
+import de.servicehealth.epa4all.xds.structure.ExtrinsicContext;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,7 +21,7 @@ public class FileRawUpload implements FileAction {
     private String telematikId;
     private String kvnr;
     private String fileName;
-    private String folderName;
     private ProvideAndRegisterDocumentSetRequestType request;
+    private ExtrinsicContext extrinsicContext;
     private byte[] documentBytes;
 }

@@ -64,7 +64,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
     }
 
     public void onTransfer(@ObservesAsync T fileAction) {
-    	// this is already in an own thread to technically no need to start an own
+        // this is already in an own thread to technically no need to start an own
         filesTransferExecutor.submit(() -> transferFile(fileAction));
     }
 
@@ -103,7 +103,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
     @SuppressWarnings("unchecked")
     protected String getFolderCode(StructureDefinition structureDefinition) {
         Map<String, String> map = (Map<String, String>) structureDefinition.getMetadata().getValue();
-        return map.get("code");
+        return map.get("code").toLowerCase();
     }
 
     private RegistryResponseType prepareInProgressResponse(String taskId) {
@@ -130,7 +130,6 @@ public abstract class EpaFileTracker<T extends FileAction> {
 
     protected void handleUploadResponse(
         FileAction fileUpload,
-        String folderName,
         byte[] documentBytes,
         RegistryResponseType registryResponse,
         StructureDefinition structureDefinition
@@ -146,7 +145,7 @@ public abstract class EpaFileTracker<T extends FileAction> {
             String telematikId = fileUpload.getTelematikId();
             String insurantId = fileUpload.getKvnr();
 
-            String folderCode = folderName == null ? getFolderCode(structureDefinition) : folderName;
+            String folderCode = getFolderCode(structureDefinition);
             folderService.storeNewFile(fileName, folderCode, telematikId, insurantId, documentBytes);
             log.info(String.format("[%s/%s] uploaded successfully", folderCode, fileName));
         }

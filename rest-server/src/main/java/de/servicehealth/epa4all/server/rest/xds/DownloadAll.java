@@ -5,9 +5,7 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
-import jakarta.xml.bind.JAXBElement;
 import oasis.names.tc.ebxml_regrep.xsd.query._3.AdhocQueryResponse;
-import oasis.names.tc.ebxml_regrep.xsd.rim._3.IdentifiableType;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -42,9 +40,8 @@ public class DownloadAll extends XdsResource {
     ) throws Exception {
         EpaContext epaContext = prepareEpaContext(kvnr);
         AdhocQueryResponse adhocQueryResponse = getAdhocQueryResponse(kvnr, epaContext);
-        List<JAXBElement<? extends IdentifiableType>> jaxbElements = adhocQueryResponse.getRegistryObjectList().getIdentifiable();
         return bulkTransfer.downloadInsurantFiles(
-            epaContext, telematikId, kvnr, jaxbElements
+            epaContext, telematikId, kvnr, adhocQueryResponse.getRegistryObjectList().getIdentifiable()
         );
     }
 }

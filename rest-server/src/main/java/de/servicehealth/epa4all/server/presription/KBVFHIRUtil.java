@@ -26,6 +26,8 @@ import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.PractitionerRole;
 import org.hl7.fhir.r4.model.StringType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -33,11 +35,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 public class KBVFHIRUtil {
 
-    private static final Logger log = Logger.getLogger(KBVFHIRUtil.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(KBVFHIRUtil.class.getName());
 
     public static Coverage UCAllgemeineVersicherungsdatenXML2Coverage(
         UCAllgemeineVersicherungsdatenXML versicherung,
@@ -98,7 +99,7 @@ public class KBVFHIRUtil {
                 // coverage.getPeriod().setStart(start, TemporalPrecisionEnum.DAY);
                 coverage.getPeriod().setEnd(end, TemporalPrecisionEnum.DAY);
             } catch (ParseException e) {
-                log.warning("Could not parse versicherungsschutz beginn or ende");
+                log.warn("Could not parse versicherungsschutz beginn or ende");
             }
         }
 
@@ -167,7 +168,7 @@ public class KBVFHIRUtil {
                 .parse(patientBirthDate);
             patient.setBirthDate(birthdate);
         } catch (ParseException e) {
-            log.warning("Could not parse this birthdate when creating the bundle:" + patientBirthDate);
+            log.warn("Could not parse this birthdate when creating the bundle:" + patientBirthDate);
         }
 
         patient.addAddress()

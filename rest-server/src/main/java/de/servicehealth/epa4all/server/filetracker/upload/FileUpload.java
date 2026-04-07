@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.filetracker.upload;
 import de.servicehealth.epa4all.server.filetracker.FileAction;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import de.servicehealth.epa4all.xds.CustomCodingScheme;
+import de.servicehealth.epa4all.xds.structure.ExtrinsicContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -32,7 +33,7 @@ public class FileUpload implements FileAction {
     private String practiceSetting;
     private String information;
     private String information2;
-    private String folderName;
     private List<CustomCodingScheme> customCodingSchemes;
+    private ExtrinsicContext extrinsicContext;
     private byte[] documentBytes;
 }

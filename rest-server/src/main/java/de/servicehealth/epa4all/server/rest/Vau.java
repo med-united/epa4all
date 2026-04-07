@@ -7,7 +7,6 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -17,6 +16,8 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @RequestScoped
 @Path("vau")
@@ -30,7 +31,7 @@ public class Vau {
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
     @Path("reload")
     @Operation(summary = "Force empty VAU sessions to reload")
     public Response reload(
