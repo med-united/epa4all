@@ -2,6 +2,7 @@ package de.servicehealth.epa4all.server.filetracker.download;
 
 import de.servicehealth.epa4all.server.filetracker.FileAction;
 import de.servicehealth.epa4all.server.rest.EpaContext;
+import de.servicehealth.epa4all.xds.structure.ExtrinsicContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -11,10 +12,10 @@ import lombok.ToString;
 @ToString
 public class FileDownload implements FileAction {
 
-    private EpaContext epaContext;
     private String taskId;
-    private String fileName;
     private String telematikId;
     private String kvnr;
-    private String repositoryUniqueId;
+    private String fileName;
+    private EpaContext epaContext;
+    private ExtrinsicContext extrinsicContext;
 }

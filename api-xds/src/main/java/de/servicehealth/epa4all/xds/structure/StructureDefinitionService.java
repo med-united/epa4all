@@ -1,127 +1,83 @@
 package de.servicehealth.epa4all.xds.structure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.servicehealth.epa4all.xds.ebrim.DocumentDefinition;
-import de.servicehealth.epa4all.xds.ebrim.FolderDefinition;
 import de.servicehealth.epa4all.xds.ebrim.StructureDefinition;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
-import lombok.Setter;
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
-import java.io.StringReader;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Logger;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
-import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
+import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 @ApplicationScoped
 public class StructureDefinitionService {
-	
-	private static final Logger log = Logger.getLogger(StructureDefinitionService.class.getName());
 
-    private static final DocumentBuilderFactory DOCUMENT_BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
+    private static final Logger log = LoggerFactory.getLogger(StructureDefinitionService.class.getName());
 
-    static {
-        DOCUMENT_BUILDER_FACTORY.setNamespaceAware(true);
-    }
-
-    @Setter
     @ConfigProperty(name = "ig.schema.folder.path")
     String schemasFolderPath;
 
-    @ConfigProperty(name = "ig.schema.xml")
-    Map<String, String> xmlSchemasMap;
-
-    @ConfigProperty(name = "ig.schema.pdf")
-    Map<String, String> pdfSchemasMap;
+    @ConfigProperty(name = "ig.schema.default")
+    String defaultSchema;
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private StructureDefinition emptyStructureDefinition;
 
-    private List<File> igSchemaFiles = new ArrayList<>();
+    private Map<String, StructureDefinition> structureDefinitions = new HashMap<>();
+    private Map.Entry<String, StructureDefinition> defaultStructureDefinitionEntry;
 
     public void onStart(@Observes StartupEvent ev) {
-        emptyStructureDefinition = new StructureDefinition();
-
-        FolderDefinition rootMetadata = new FolderDefinition();
-        rootMetadata.setValue(Map.of(
-            "code", "other"
-        ));
-        emptyStructureDefinition.setMetadata(rootMetadata);
-
-        ArrayList<DocumentDefinition> elements = new ArrayList<>();
-        DocumentDefinition documentDefinition = new DocumentDefinition();
-        ArrayList<FolderDefinition> metadata = new ArrayList<>();
-        documentDefinition.setMetadata(metadata);
-        elements.add(documentDefinition);
-        emptyStructureDefinition.setElements(elements);
-
         File schemaFolder = new File(schemasFolderPath);
         if (schemaFolder.exists()) {
-            File[] files = schemaFolder.listFiles();
-            if (files == null || files.length == 0) {
-                throw new IllegalStateException("IG-Schema files not found");
+            File[] files = schemaFolder.listFiles((dir, name) -> name.endsWith(".json"));
+            if (files != null) {
+                structureDefinitions = Arrays.stream(files).map(file -> {
+                    try {
+                        StructureDefinition structureDefinition = mapper.readValue(
+                            Files.readString(file.toPath()), StructureDefinition.class
+                        );
+                        return Pair.of(file.getName(), structureDefinition);
+                    } catch (Exception e) {
+                        log.error("Unable to load ig-schema file %s".formatted(file.getAbsolutePath()), e);
+                        return null;
+                    }
+                }).filter(Objects::nonNull).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
             }
-            igSchemaFiles = Arrays.asList(files);
         }
+        if (structureDefinitions.isEmpty()) {
+            throw new Error("Unable to load ig-schema files from %s".formatted(schemaFolder.getAbsolutePath()));
+        }
+        defaultStructureDefinitionEntry = structureDefinitions.entrySet().stream()
+            .filter(e -> e.getKey().equals(defaultSchema))
+            .findFirst().orElseThrow(() ->
+                new Error("IG SCHEMA configuration error - default schema not found"));
     }
 
-    public StructureDefinition getStructureDefinition(String ig, String contentType, byte[] documentBytes) throws Exception {
-        String schemaFileName = extractSchemaFileName(ig, contentType, documentBytes);
-        Optional<File> igSchemaFile = igSchemaFiles.stream().filter(f -> f.getName().equalsIgnoreCase(schemaFileName)).findFirst();
-        if (igSchemaFile.isPresent()) {
-            log.info("%s IG schema was selected".formatted(igSchemaFile.get().getName()));
-            return mapper.readValue(Files.readString(igSchemaFile.get().toPath()), StructureDefinition.class);
-        } else {
-            log.warning("Empty structure definition was selected");
-            return emptyStructureDefinition;
-        }
-    }
+    public StructureDefinition getStructureDefinition(String taskId, String igFileName, ExtrinsicContext extrinsicContext) {
+        Set<Map.Entry<String, StructureDefinition>> entries = structureDefinitions.entrySet();
+        Optional<Map.Entry<String, StructureDefinition>> targetEntryOpt = entries.stream()
+            .filter(e -> igFileName != null && e.getKey().contains(igFileName))
+            .findFirst()
+            .or(() -> entries.stream()
+                .filter(e -> extrinsicContext.match(e.getValue()))
+                .findFirst().or(() -> Optional.of(defaultStructureDefinitionEntry)));
 
-    private String extractSchemaFileName(String ig, String contentType, byte[] documentBytes) throws Exception {
-        if (ig != null && !ig.isEmpty()) {
-            return "ig-" + ig + ".json";
-        }
-        if (isXmlCompliant(contentType)) {
-            String xmlSource = new String(documentBytes);
-            Optional<Map.Entry<String, String>> entryOpt = xmlSchemasMap.entrySet().stream()
-                .filter(e -> xmlSource.contains(e.getKey()))
-                .findFirst();
-            if (entryOpt.isPresent()) {
-                return entryOpt.get().getValue();
-            }
-            Document xmlDocument = toXmlDocument(xmlSource);
-            NodeList documentTypeCd = xmlDocument.getElementsByTagName("document_type_cd");
-            if (documentTypeCd.getLength() > 0) {
-                Element element = (Element) documentTypeCd.item(0);
-                return xmlSchemasMap.get(element.getAttribute("V"));
-            } else {
-                return null;
-            }
-        } else if(isPdfCompliant(contentType)) {
-            return pdfSchemasMap.get("fallback");
-        } else {
-            return null;
-        }
-    }
+        Map.Entry<String, StructureDefinition> targetEntry = targetEntryOpt.orElseThrow(() ->
+            new XdsException("IG SCHEMA configuration error", INTERNAL_SERVER_ERROR));
 
-    public static Document toXmlDocument(String xml) throws Exception {
-        DocumentBuilder builder = DOCUMENT_BUILDER_FACTORY.newDocumentBuilder();
-        return builder.parse(new InputSource(new StringReader(xml)));
+        log.info("[%s] IG Schema '%s' was selected".formatted(taskId, targetEntry.getKey()));
+        return targetEntry.getValue();
     }
 }

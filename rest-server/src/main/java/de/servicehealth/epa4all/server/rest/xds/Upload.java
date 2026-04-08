@@ -4,6 +4,8 @@ import de.servicehealth.epa4all.server.filetracker.upload.FileRawUpload;
 import de.servicehealth.epa4all.server.filetracker.upload.FileUpload;
 import de.servicehealth.epa4all.server.rest.EpaContext;
 import de.servicehealth.epa4all.xds.CustomCodingScheme;
+import de.servicehealth.epa4all.xds.structure.ClassificationContext;
+import de.servicehealth.epa4all.xds.structure.ExtrinsicContext;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType;
 import ihe.iti.xds_b._2007.ProvideAndRegisterDocumentSetRequestType.Document;
 import jakarta.enterprise.context.RequestScoped;
@@ -13,9 +15,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.xml.bind.JAXBElement;
 import oasis.names.tc.ebxml_regrep.xsd.rim._3.ExtrinsicObjectType;
-import oasis.names.tc.ebxml_regrep.xsd.rim._3.IdentifiableType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -39,8 +39,11 @@ import static de.servicehealth.epa4all.xds.CodingScheme.ClassCodeClassification;
 import static de.servicehealth.epa4all.xds.CodingScheme.FacilityTypeCodeClassification;
 import static de.servicehealth.epa4all.xds.CodingScheme.PracticeSettingClassification;
 import static de.servicehealth.epa4all.xds.CodingScheme.TypeCodeClassification;
+import static de.servicehealth.epa4all.xds.XDSUtils.generateOID;
 import static de.servicehealth.epa4all.xds.XDSUtils.isPdfCompliant;
 import static de.servicehealth.epa4all.xds.XDSUtils.isXmlCompliant;
+import static de.servicehealth.epa4all.xds.structure.ExtrinsicHelper.buildExtrinsicContext;
+import static de.servicehealth.epa4all.xds.structure.ExtrinsicHelper.getExtrinsicObject;
 import static de.servicehealth.vau.VauClient.KVNR;
 import static de.servicehealth.vau.VauClient.UPLOAD_CONTENT_TYPE;
 import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
@@ -106,11 +109,13 @@ public class Upload extends XdsResource {
         InputPart soapPart = input.getFormDataMap().get("raw_soap").getFirst();
         String xmlElement = soapPart.getBody(String.class, null);
         ProvideAndRegisterDocumentSetRequestType request = deserializeRegisterElement(xmlElement);
+        ExtrinsicObjectType extrinsicObject = getExtrinsicObject(request);
         Document document = new Document();
         document.setValue(documentBytes);
-        document.setId(getDocumentId(request));
+        document.setId(extrinsicObject.getId());
         request.getDocument().add(document);
 
+        ExtrinsicContext extrinsicContext = buildExtrinsicContext(extrinsicObject);
         String taskId = UUID.randomUUID().toString();
         FileRawUpload fileUpload = new FileRawUpload(
             epaContext,
@@ -121,25 +126,16 @@ public class Upload extends XdsResource {
             telematikId,
             kvnr,
             fileName,
-            "other",
             request,
+            extrinsicContext,
             documentBytes
         );
         fileActionEvent.fireAsync(fileUpload);
         return taskId;
     }
 
-    private String getDocumentId(ProvideAndRegisterDocumentSetRequestType request) {
-        Optional<? extends IdentifiableType> extrinsicObjectTypeOpt = request.getSubmitObjectsRequest().getRegistryObjectList().getIdentifiable().stream().filter(idt -> {
-            IdentifiableType identifiableType = idt.getValue();
-            return identifiableType instanceof ExtrinsicObjectType;
-        }).map(JAXBElement::getValue).findFirst();
-
-        ExtrinsicObjectType extrinsicObjectType = (ExtrinsicObjectType) extrinsicObjectTypeOpt.get();
-        return extrinsicObjectType.getId();
-    }
-
     // Based on: https://github.com/gematik/api-ePA/blob/ePA-2.6/samples/ePA%201%20Beispielnachrichten%20PS%20-%20Konnektor/Requests/provideandregister.xml
+    @SuppressWarnings("ConstantValue")
     @APIResponses({
         @APIResponse(responseCode = "200", description = "Task uuid"),
         @APIResponse(responseCode = "500", description = "Internal server error")
@@ -254,6 +250,13 @@ public class Upload extends XdsResource {
             practiceSettingClassification, facilityTypeCodeClassification, classCodeClassification, typeCodeClassification
         );
 
+        ClassificationContext typeCode = getClassificationContext(customCodingSchemes, TypeCodeClassification.getCode());
+        ClassificationContext formatCode = null;
+        ClassificationContext eventCodeList = null;
+        ExtrinsicContext extrinsicContext = new ExtrinsicContext(
+            null, generateOID(), null, null, contentType, formatCode, typeCode, eventCodeList
+        );
+
         String taskId = UUID.randomUUID().toString();
         FileUpload fileUpload = new FileUpload(
             epaContext,
@@ -274,12 +277,20 @@ public class Upload extends XdsResource {
             practiceSetting,
             information,
             information2,
-            "other",
             customCodingSchemes,
+            extrinsicContext,
             is.readAllBytes()
         );
         fileActionEvent.fireAsync(fileUpload);
         return taskId;
+    }
+
+    private ClassificationContext getClassificationContext(List<CustomCodingScheme> customCodingSchemes, String code) {
+        Optional<String> nodeRepresentation = customCodingSchemes.stream()
+            .filter(cs -> cs.getCodingScheme().getCode().equals(code))
+            .findFirst().map(cs -> cs.getNodeRepresentationOrDefault(""));
+
+        return new ClassificationContext(nodeRepresentation.orElse(""), code);
     }
 
     private List<CustomCodingScheme> extractCustomCodingSchemes(

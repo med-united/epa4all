@@ -8,11 +8,12 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+
+import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @RequestScoped
 @Path("health")
@@ -29,7 +30,7 @@ public class Health extends AbstractResource {
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces(APPLICATION_JSON)
     @Operation(summary = "Return epa4all health checks")
     public Response health() {
         return Response.ok(healthChecker.getHealthInfo(null)).build();

@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -91,7 +92,7 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
             String kvnr = "X110587452";
             EpaFileDownloader mockDownloader = mock(EpaFileDownloader.class);
             receiveCardInsertedEvent(mockDownloader, kvnr);
-            verify(mockDownloader, never()).handleDownloadResponse(any(), any());
+            verify(mockDownloader, never()).handleDownloadResponse(any(), any(), anyBoolean());
 
             String msg = MESSAGES.poll(20, TimeUnit.SECONDS);
             assertNotNull(msg);

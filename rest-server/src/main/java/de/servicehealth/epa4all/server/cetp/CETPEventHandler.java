@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
 import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
+import static de.servicehealth.epa4all.xds.structure.ExtrinsicContext.defaultExtrinsicContext;
 import static de.servicehealth.logging.LogContext.voidMdc;
 import static de.servicehealth.logging.LogContext.voidMdcEx;
 import static de.servicehealth.logging.LogField.CT_ID;
@@ -223,7 +224,9 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
     ) throws Exception {
         String taskId = UUID.randomUUID().toString();
         String fileName = UUID.randomUUID() + ".pdf";
-        FileDownload fileDownload = new FileDownload(epaContext, taskId, fileName, telematikId, kvnr, null);
+
+        // Default StructureDefinition will be used
+        FileDownload fileDownload = new FileDownload(taskId, telematikId, kvnr, fileName, epaContext, defaultExtrinsicContext);
 
         webSocketPayloadEvent.fireAsync(new WebSocketPayload(ctId, telematikId, kvnr, Base64.getEncoder().encodeToString(bytes)));
 
@@ -232,6 +235,6 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         documentResponse.setMimeType(APPLICATION_PDF);
         documentResponse.setDocumentUniqueId(fileName);
 
-        epaFileDownloader.handleDownloadResponse(fileDownload, documentResponse);
+        epaFileDownloader.handleDownloadResponse(fileDownload, documentResponse, false);
     }
 }
