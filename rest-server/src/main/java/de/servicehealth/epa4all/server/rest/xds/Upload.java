@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -320,7 +321,14 @@ public class Upload extends XdsResource {
             .flatMap(values -> Arrays.stream(values.split("[;,]")))
             .map(String::trim)
             .map(kv -> kv.split("="))
-            .map(kvArr -> Pair.of(kvArr[0], kvArr[1]))
+            .map(kvArr -> {
+                try {
+                    return Pair.of(kvArr[0], kvArr[1]);
+                } catch (IndexOutOfBoundsException e) {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
             .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
