@@ -105,7 +105,8 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
         String dePatientId = UUID.randomUUID().toString();
         String deUniqueId = UUID.randomUUID().toString(); // TODO perhaps we could store id for further document lookup
 
-        String uniqueIdValue = generateOID(); // TODO verify
+        String uniqueIdValue = generateOID();
+        String submissionSetUniqueIdValue = generateOID();
 
         String patientExternalIdValue = kvnr + "^^^&1.2.276.0.76.4.8&ISO";
         RegistryPackageType registryPackageType = registryPackageBuilder
@@ -115,7 +116,7 @@ public class ProvideAndRegisterSingleDocumentTypeBuilder extends ProvideAndRegis
             .withAuthorInstitution(authorInstitution)
             .withExternalIdentifiers(
                 new SSPatientIdExternalIdentifierBuilder(ssPatientId).withRegistryObject(submissionSetId).withValue(patientExternalIdValue).build(),
-                new SSUniqueIdExternalIdentifierBuilder(ssUniqueId).withValue(uniqueIdValue).withRegistryObject(submissionSetId).build()
+                new SSUniqueIdExternalIdentifierBuilder(ssUniqueId).withValue(submissionSetUniqueIdValue).withRegistryObject(submissionSetId).build()
             )
             .build();
 
