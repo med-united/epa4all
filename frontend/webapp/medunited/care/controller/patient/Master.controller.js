@@ -552,6 +552,39 @@ sap.ui.define([
                 console.error("Navigation failed: router is missing.");
                 BusyIndicator.hide();
             }
+        },
+        onCreatePatientFromUSBCardViaPoPP: function() {
+            fetch("http://localhost:8081/token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "communicationType": "contact-standard"
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        MessageToast.show(`Server responded with status ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    MessageToast.show(this.translate("msgCreatePatientFromUSBCardViaPoPPSuccess"));
+                    fetch("/popp/token", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: data.token
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            MessageToast.show(`Server responded with status ${response.status} when creating patient`);
+                        }
+                        return response.json();
+                    });
+                    console.log("Patient created from USB card via PoPP:", data);
+                    this._refreshPatientList();
+                });
         }
     });
 }, true);

@@ -14,6 +14,7 @@
 					<Title text="{i18n>pageTitlePatients}" />
 				</f:heading>
 				<f:actions>
+					<Button type="Emphasized" text="{i18n>CreatePatientFromUSBCardViaPoPP}" press="onCreatePatientFromUSBCardViaPoPP" />
 					<Button type="Emphasized" text="{i18n>CreatePatientFromKVNR}" press="onAdd" />
 				</f:actions>
 			</f:DynamicPageTitle>
