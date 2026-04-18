@@ -10,6 +10,7 @@ import io.swagger.annotations.ApiResponses;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 
 import static de.servicehealth.vau.VauClient.X_BACKEND;
@@ -20,6 +21,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 public interface EntitlementsAPI extends EntitlementsApi {
 
     @POST
+    @Path("/v1/ps/entitlements")
     @Consumes({ APPLICATION_JSON })
     @Produces({ APPLICATION_JSON })
     @ApiOperation(value = "(setEntitlementPs) Set a single entitlement with proof of audit evidence", tags={  })
