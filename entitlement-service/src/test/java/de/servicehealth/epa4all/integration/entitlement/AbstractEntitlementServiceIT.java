@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -65,7 +66,7 @@ public abstract class AbstractEntitlementServiceIT {
 
             Exception ex = null;
             try {
-                api.setEntitlementPs("Z123456789", "CLIENTID1234567890AB/2.1.12-45", requestType);
+                api.setEntitlementPs("Z123456789", "CLIENTID1234567890AB/2.1.12-45", requestType, UUID.randomUUID());
             } catch (BadRequestException | ForbiddenException e) {
                 ex = e;
                 assertTrue(getPayload(e).contains("AUT Certificate is invalid"));
@@ -80,7 +81,7 @@ public abstract class AbstractEntitlementServiceIT {
             UserBlockingApi api = buildApi(vauFacade, UserBlockingApi.class, entitlementServiceUrl);
             Exception ex = null;
             try {
-                api.deleteBlockedUserPolicyAssignment("Z123456789", "2-883110000118994", "CLIENTID1234567890AB/2.1.12-45");
+                api.deleteBlockedUserPolicyAssignment("Z123456789", "2-883110000118994", "CLIENTID1234567890AB/2.1.12-45", UUID.randomUUID());
             } catch (NotAllowedException | ForbiddenException e) {
                 ex = e;
                 String payload = getPayload(e);
@@ -99,7 +100,7 @@ public abstract class AbstractEntitlementServiceIT {
             UserBlockingApi api = buildApi(vauFacade, UserBlockingApi.class, entitlementServiceUrl);
             Exception ex = null;
             try {
-                api.getBlockedUserPolicyAssignment("Z123456789", "2-883110000118994", "CLIENTID1234567890AB/2.1.12-45");
+                api.getBlockedUserPolicyAssignment("Z123456789", "2-883110000118994", "CLIENTID1234567890AB/2.1.12-45", UUID.randomUUID());
             } catch (NotAllowedException | ForbiddenException e) {
                 ex = e;
                 String payload = getPayload(e);
@@ -117,7 +118,7 @@ public abstract class AbstractEntitlementServiceIT {
         runWithDocker(() -> {
             EntitlementsEPaFdVApi api = buildApi(vauFacade, EntitlementsEPaFdVApi.class, entitlementServiceUrl);
             try {
-                GetEntitlements200Response response = api.getEntitlements("Z123456789", "CLIENTID1234567890AB/2.1.12-45");
+                GetEntitlements200Response response = api.getEntitlements("Z123456789", "CLIENTID1234567890AB/2.1.12-45", UUID.randomUUID());
                 assertFalse(response.getData().isEmpty());
             } catch (ForbiddenException e) {
                 String payload = getPayload(e);
