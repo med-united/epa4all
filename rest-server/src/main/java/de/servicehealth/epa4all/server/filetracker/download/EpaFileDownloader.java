@@ -21,7 +21,7 @@ public class EpaFileDownloader extends EpaFileTracker<FileDownload> {
         FileDownload fileAction,
         IDocumentManagementPortType documentPortType
     ) throws Exception {
-        String uniqueId = fileAction.getFileName().replace(".xml", "").replace(".pdf", "");
+        String uniqueId = fileAction.getExtrinsicContext().uniqueId(); //fileAction.getFileName().replace(".xml", "").replace(".pdf", "");
 
         RetrieveDocumentSetRequestType requestType = xdsDocumentService.get().prepareRetrieveDocumentSetRequestType(
             uniqueId, fileAction.getExtrinsicContext().repositoryUniqueId()
