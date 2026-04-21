@@ -384,6 +384,45 @@ else
 	echo "EPA4All: Watchtower disabled"
 fi
 
+# Step 8: Import Konnektor certificate into container truststore (prod/REF only)
+if [[ "$quarkus_profile" == "prod" || "$quarkus_profile" == "REF" ]]; then
+	echo
+	print_step "EPA4All: STEP 8: Importing Konnektor certificate"
+
+	command -v openssl >/dev/null || {
+		echo "EPA4All: ERROR: openssl is required on the host"
+		exit 1
+	}
+
+	konnektor_url=$(get_config_param 'konnektor.default.url')
+	konnektor_host=$(echo "$konnektor_url" | sed 's|https://||' | cut -d':' -f1)
+	konnektor_port=$(echo "$konnektor_url" | sed 's|https://||' | cut -d':' -f2 | cut -d'/' -f1)
+	konnektor_port=${konnektor_port:-443}
+
+	echo "EPA4All: Fetching cert from $konnektor_host:$konnektor_port ..."
+	cert_file="./konnektor-$konnektor_host.pem"
+	openssl s_client -connect "$konnektor_host:$konnektor_port" -servername "$konnektor_host" </dev/null 2>/dev/null |
+		openssl x509 -outform PEM >"$cert_file"
+
+	docker cp "$cert_file" epa4all:/tmp/konnektor.pem >/dev/null
+
+	# Remove existing alias if present (makes re-runs idempotent)
+	docker exec --user root epa4all keytool -delete \
+		-alias "konnektor-$konnektor_host" \
+		-cacerts -storepass changeit >/dev/null 2>&1 || true
+
+	docker exec --user root epa4all keytool -importcert -noprompt \
+		-file /tmp/konnektor.pem \
+		-alias "konnektor-$konnektor_host" \
+		-cacerts \
+		-storepass changeit >/dev/null 2>&1
+	echo "EPA4All: Imported Konnektor cert for $konnektor_host"
+
+	rm -f "$cert_file"
+	docker restart epa4all >/dev/null
+	echo "EPA4All: Restarted epa4all to load updated truststore"
+fi
+
 echo
 http_port=$(get_config_param 'quarkus.http.port')
 echo "EPA4All: EPA4All is running at: http://localhost:$http_port"
