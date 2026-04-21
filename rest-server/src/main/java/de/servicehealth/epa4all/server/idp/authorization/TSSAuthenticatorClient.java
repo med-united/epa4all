@@ -50,7 +50,7 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 public class TSSAuthenticatorClient extends AuthenticatorClient {
 
-    private static final String UserAgent = "IdP-Client";
+    private static final String UserAgent = "ere.health/1.0.0 IncentergyGmbH/GEMIncenereS2QmFN83P";
 
     private final UnirestInstance unirestInstance;
 
