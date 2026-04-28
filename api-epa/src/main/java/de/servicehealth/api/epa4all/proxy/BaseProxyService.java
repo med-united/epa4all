@@ -89,7 +89,7 @@ public abstract class BaseProxyService {
             return List.of();
         } else {
             return List.of(
-                Pair.of(CONTENT_TYPE, "application/json; charset=UTF-8"),
+                Pair.of(CONTENT_TYPE, "application/json; charset=utf-8"),
                 Pair.of(CONTENT_LENGTH, String.valueOf(body.length))
             );
         }

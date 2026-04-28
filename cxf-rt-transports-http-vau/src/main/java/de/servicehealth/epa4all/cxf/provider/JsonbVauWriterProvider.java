@@ -104,6 +104,9 @@ public class JsonbVauWriterProvider implements MessageBodyWriter, VauHeaders {
             List<Pair<String, String>> innerHeaders = prepareInnerHeaders(httpHeaders, backend, vauNp);
             innerHeaders.addAll(prepareAcceptHeaders(obj));
             innerHeaders.addAll(prepareContentHeaders(obj, payload));
+            if (obj instanceof ForwardRequest forwardRequest) {
+                innerHeaders.addAll(forwardRequest.getAdditionalHeaders());
+            }
 
             httpHeaders.remove(X_INSURANT_ID);
             httpHeaders.remove(VAU_NP);
