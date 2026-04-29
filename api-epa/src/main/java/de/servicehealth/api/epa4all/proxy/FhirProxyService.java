@@ -16,6 +16,7 @@ import org.apache.cxf.jaxrs.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -106,7 +107,8 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
             );
         }
         List<Pair<String, String>> contentHeaders = buildContentHeaders(body);
-        ForwardRequest forwardRequest = new ForwardRequest(isGet, acceptHeaders, contentHeaders, body);
+        List<Pair<String, String>> additionalHeaders = extractAdditionalHeaders(headers);
+        ForwardRequest forwardRequest = new ForwardRequest(isGet, acceptHeaders, contentHeaders, additionalHeaders, body);
         epaMXBeanRegistry.registerRequest(backend);
         FhirResponse response = webClient
             .headers(map)
@@ -126,13 +128,29 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
         return builder.build();
     }
 
+    private static final Set<String> FORWARDED_HEADERS = Set.of(
+        "x-requesting-organization"
+    );
+
+    private List<Pair<String, String>> extractAdditionalHeaders(HttpHeaders headers) {
+        List<Pair<String, String>> result = new ArrayList<>();
+        if (headers != null) {
+            headers.getRequestHeaders().forEach((name, values) -> {
+                if (FORWARDED_HEADERS.contains(name.toLowerCase())) {
+                    values.forEach(value -> result.add(Pair.of(name, value)));
+                }
+            });
+        }
+        return result;
+    }
+
     @Override
     protected List<Pair<String, String>> buildContentHeaders(byte[] body) {
         if (body == null || body.length == 0) {
             return List.of();
         } else {
             return List.of(
-                Pair.of(CONTENT_TYPE, "application/fhir+json; charset=UTF-8"),
+                Pair.of(CONTENT_TYPE, "application/fhir+json; charset=utf-8"),
                 Pair.of(CONTENT_LENGTH, String.valueOf(body.length))
             );
         }

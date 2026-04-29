@@ -152,7 +152,7 @@ public class FHIRRequestVAUInterceptor implements HttpRequestInterceptor {
         request.removeHeader(request.getFirstHeader(X_BACKEND));
         String contentType = body.length == 0
             ? "\r\n" // extra blank line
-            : "Content-Type: application/fhir+json; charset=UTF-8\r\nContent-Length: " + body.length + "\r\n\r\n";
+            : "Content-Type: application/fhir+json; charset=utf-8\r\nContent-Length: " + body.length + "\r\n\r\n";
 
         byte[] httpRequest = (method + " " + path + " HTTP/1.1\r\n"
             + "Host: " + backend + "\r\n"
