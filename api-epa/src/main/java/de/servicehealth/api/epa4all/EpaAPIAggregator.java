@@ -7,6 +7,7 @@ import de.servicehealth.api.epa4all.entitlement.EntitlementsAPI;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsFdvAPI;
 import de.servicehealth.api.epa4all.proxy.IAdminProxy;
 import de.servicehealth.api.epa4all.proxy.IFhirProxy;
+import de.servicehealth.api.epa4all.proxy.RenderProxyService;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
@@ -30,6 +31,7 @@ public class EpaAPIAggregator implements EpaAPI {
     private final EntitlementsAPI entitlementsApi;
     private final IAdminProxy adminProxy;
     private final IFhirProxy fhirProxy;
+    private final RenderProxyService renderProxy;
 
     public EpaAPIAggregator(
         String backend,
@@ -42,7 +44,8 @@ public class EpaAPIAggregator implements EpaAPI {
         EntitlementsFdvAPI entitlementsFdvApi,
         EntitlementsAPI entitlementsApi,
         IAdminProxy adminProxy,
-        IFhirProxy fhirProxy
+        IFhirProxy fhirProxy,
+        RenderProxyService renderProxy
     ) {
         this.backend = backend;
         this.vauFacade = vauFacade;
@@ -55,6 +58,7 @@ public class EpaAPIAggregator implements EpaAPI {
         this.entitlementsApi = entitlementsApi;
         this.adminProxy = adminProxy;
         this.fhirProxy = fhirProxy;
+        this.renderProxy = renderProxy;
     }
 
     @Override
@@ -118,5 +122,10 @@ public class EpaAPIAggregator implements EpaAPI {
     @Override
     public IFhirProxy getFhirProxy() {
         return fhirProxy;
+    }
+
+    @Override
+    public RenderProxyService getRenderProxy() {
+        return renderProxy;
     }
 }
