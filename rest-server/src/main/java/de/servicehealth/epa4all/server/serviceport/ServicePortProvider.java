@@ -13,13 +13,12 @@ import de.gematik.ws.conn.eventservice.wsdl.v7_2.EventServicePortType;
 import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDService;
 import de.gematik.ws.conn.vsds.vsdservice.v5_2.VSDServicePortType;
 import de.health.service.cetp.config.KonnektorAuth;
-import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.config.api.IUserConfigurations;
 import de.servicehealth.api.epa4all.annotation.KonnektorSoapFeatures;
 import de.servicehealth.startup.StartableService;
-import de.servicehealth.utils.SSLContextBundle;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.client.Invocation.Builder;
@@ -37,20 +36,18 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509TrustManager;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
-import static de.health.service.cetp.config.KonnektorAuth.CERTIFICATE;
-import static de.servicehealth.utils.SSLUtils.KeyStoreType.PKCS12;
-import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.utils.SSLUtils.createSSLContext;
-import static de.servicehealth.utils.SSLUtils.createSSLContextBundle;
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static jakarta.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
 import static jakarta.xml.ws.BindingProvider.PASSWORD_PROPERTY;
@@ -61,7 +58,9 @@ public class ServicePortProvider extends StartableService {
 
     private static final Logger log = LoggerFactory.getLogger(ServicePortProvider.class.getName());
 
-    private SSLContext defaultSSLContext;
+    private static final Pattern IP_V4_REGEXP = Pattern.compile(
+        "^(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}$"
+    );
 
     @Setter
     Map<String, Map<String, String>> konnektorsEndpoints = new HashMap<>();
@@ -69,6 +68,24 @@ public class ServicePortProvider extends StartableService {
     @Inject
     @KonnektorSoapFeatures
     List<WebServiceFeature> konnektorSoapFeatures;
+
+    @Inject
+    @Named("konnektorDefaultSSLContext")
+    SSLContext konnektorDefaultSSLContext;
+
+    @Inject
+    X509TrustManager trustManager;
+
+    /**
+     * Optional dedicated trust store for Konnektoren that present a self-signed (or
+     * private-CA-signed) TLS certificate not anchored in the Gematik TSL. When present,
+     * this trust manager is used in place of {@link #trustManager} for Konnektor
+     * connections only — narrowing the trust set rather than disabling verification.
+     * See {@link de.servicehealth.epa4all.server.cdi.KonnektorSelfSignedTrustManagerProvider}.
+     */
+    @Inject
+    @Named("konnektorSelfSignedTrustManager")
+    Optional<X509TrustManager> konnektorSelfSignedTrustManager;
 
     // this must be started after EpaMultiService
     public void doStart() throws Exception {
@@ -80,37 +97,6 @@ public class ServicePortProvider extends StartableService {
             new ServicePortFile(configDirectory).overwrite(konnektorsEndpoints);
         } catch (Exception e) {
             log.error("Error while saving service-ports file", e);
-        }
-    }
-
-    @Inject
-    public ServicePortProvider(KonnektorDefaultConfig konnektorDefaultConfig) {
-        Optional<KonnektorAuth> auth = konnektorDefaultConfig.getAuth();
-        Optional<String> certAuthStoreFile = konnektorDefaultConfig.getCertAuthStoreFile();
-        Optional<String> certAuthStoreFilePassword = konnektorDefaultConfig.getCertAuthStoreFilePassword();
-        if (auth.isPresent()
-            && auth.get() == CERTIFICATE
-            && certAuthStoreFile.isPresent()
-            && certAuthStoreFilePassword.isPresent()
-        ) {
-            String password = certAuthStoreFilePassword.get();
-            try (FileInputStream inputStream = new FileInputStream(certAuthStoreFile.get())) {
-                SSLContextBundle sslContextBundle = createSSLContextBundle(inputStream, password, PKCS12);
-                defaultSSLContext = sslContextBundle.getSslContext();
-            } catch (Exception e) {
-                log.warn("There was a problem when creating the SSLContext: " + e.getMessage());
-                defaultSSLContext = createFakeDefaultSSLContext();
-            }
-        } else {
-            defaultSSLContext = createFakeDefaultSSLContext();
-        }
-    }
-
-    private SSLContext createFakeDefaultSSLContext() {
-        try {
-            return createFakeSSLContext();
-        } catch (Exception e) {
-            return null;
         }
     }
 
@@ -163,15 +149,20 @@ public class ServicePortProvider extends StartableService {
     private void initServicePort(IUserConfigurations userConfigurations, BindingProvider servicePort, String endpointKey) {
         String certificate = userConfigurations.getClientCertificate();
         String password = userConfigurations.getClientCertificatePassword();
-        SSLContext sslContext = certificate == null
-            ? defaultSSLContext
-            : createSSLContext(certificate, password, defaultSSLContext);
+        X509TrustManager effectiveTm = konnektorSelfSignedTrustManager.orElse(trustManager);
+        SSLContext sslContext = createSSLContext(certificate, password, effectiveTm, konnektorDefaultSSLContext);
 
         lookupWebServiceURLsIfNecessary(sslContext, userConfigurations, endpointKey);
 
         String connectorBaseURL = userConfigurations.getConnectorBaseURL();
         String url = konnektorsEndpoints.get(connectorBaseURL).get(endpointKey);
         setEndpointAddress(servicePort, url, sslContext, userConfigurations);
+    }
+
+    private boolean isLocalhostOrIPv4(String url) {
+        URI uri = URI.create(url);
+        String host = uri.getHost();
+        return "localhost".equalsIgnoreCase(host) || IP_V4_REGEXP.matcher(host).matches();
     }
 
     private void setEndpointAddress(
@@ -183,7 +174,18 @@ public class ServicePortProvider extends StartableService {
         bindingProvider.getRequestContext().put(ENDPOINT_ADDRESS_PROPERTY, url);
 
         TLSClientParameters tlsParams = new TLSClientParameters();
-        tlsParams.setDisableCNCheck(true);  // Disable hostname verification
+        if (isLocalhostOrIPv4(url)) {
+            // The Konnektor is addressed by IP on the praxis LAN, while its certificate usually
+            // contains a DNS SAN such as "konnektor.konlan" rather than the configured IP address.
+            // Therefore, standard hostname verification would fail.
+            //
+            // We still keep full certificate path validation enabled via the TrustManager built
+            // from the Gematik TSL / TI trust anchors. Only the endpoint name check is disabled.
+            //
+            // Security assumption: the praxis LAN and Konnektor IP configuration are trusted and
+            // protected. Do not use this as a general TLS policy for arbitrary remote endpoints.
+            tlsParams.setDisableCNCheck(true);
+        }
 
         switch (KonnektorAuth.from(userConfigurations.getAuth())) {
             case BASIC -> {
@@ -212,13 +214,22 @@ public class ServicePortProvider extends StartableService {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder();
         clientBuilder.sslContext(sslContext);
 
-        // disable hostname verification
-        clientBuilder = clientBuilder.hostnameVerifier((h, s) -> true);
         if (connectorBaseURL == null) {
             log.warn("ConnectorBaseURL is null, won't read connector.sds");
             return;
         }
-
+        if (isLocalhostOrIPv4(connectorBaseURL)) {
+            // The Konnektor is addressed by IP on the praxis LAN, while its certificate usually
+            // contains a DNS SAN such as "konnektor.konlan" rather than the configured IP address.
+            // Therefore, standard hostname verification would fail.
+            //
+            // We still keep full certificate path validation enabled via the TrustManager built
+            // from the Gematik TSL / TI trust anchors. Only the endpoint name check is disabled.
+            //
+            // Security assumption: the praxis LAN and Konnektor IP configuration are trusted and
+            // protected. Do not use this as a general TLS policy for arbitrary remote endpoints.
+            clientBuilder = clientBuilder.hostnameVerifier((h, s) -> true);
+        }
         Builder builder = clientBuilder.build()
             .target(connectorBaseURL)
             .path("/connector.sds")
@@ -256,7 +267,6 @@ public class ServicePortProvider extends StartableService {
                 }
 
                 // TODO move needed servicePorts to config
-                
                 switch (node.getAttributes().getNamedItem("Name").getTextContent()) {
                     case "AuthSignatureService": {
                         endpointMap.put("authSignatureServiceEndpointAddress", getEndpoint(node, userConfigurations));

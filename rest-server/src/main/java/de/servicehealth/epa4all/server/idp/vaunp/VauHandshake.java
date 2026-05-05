@@ -49,11 +49,13 @@ public class VauHandshake {
 
     List<CborWriterProvider> providers = List.of(new CborWriterProvider());
 
+    private final ClientFactory clientFactory;
     private final int connectionTimeoutMs;
     private final String epaUserAgent;
 
     @Inject
-    public VauHandshake(VauConfig vauConfig, EpaConfig epaConfig) {
+    public VauHandshake(ClientFactory clientFactory, VauConfig vauConfig, EpaConfig epaConfig) {
+        this.clientFactory = clientFactory;
         connectionTimeoutMs = vauConfig.getConnectionTimeoutMs();
         epaUserAgent = epaConfig.getEpaUserAgent();
     }
@@ -129,10 +131,10 @@ public class VauHandshake {
         String uri,
         String baseAddress,
         int messageLength
-    ) throws Exception {
+    ) {
         WebClient wc = WebClient.create(baseAddress, providers);
         ClientConfiguration configuration = wc.getConfiguration();
-        ClientFactory.initClient(configuration, connectionTimeoutMs, List.of(), List.of());
+        clientFactory.initClient(configuration, connectionTimeoutMs, List.of(), List.of());
         wc.headers(prepareVauOutboundHeaders(epaUserAgent, uri, messageLength));
         return wc;
     }

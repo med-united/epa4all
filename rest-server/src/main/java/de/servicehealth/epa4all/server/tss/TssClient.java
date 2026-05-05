@@ -15,7 +15,6 @@ import org.apache.http.message.BasicHeader;
 
 import java.net.URI;
 
-import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -34,13 +33,14 @@ public class TssClient {
 
     private Executor executor;
 
+    // The TSS endpoint (kv-telematik.de) is operated by KBV on the public internet and uses a
+    // commercial DV certificate (Certum). It is not part of TI-PKI, so the Gematik TSL trust set
+    // does not apply — the JDK default truststore (cacerts) validates the chain, and
+    // DefaultHostnameVerifier validates the hostname.
     @PostConstruct
-    public void init() throws Exception {
+    public void init() {
         if (featureConfig.isTssEnabled()) {
-            CloseableHttpClient httpclient = HttpClients.custom()
-                .setSSLHostnameVerifier((h, s) -> true)
-                .setSSLContext(createFakeSSLContext())
-                .build();
+            CloseableHttpClient httpclient = HttpClients.custom().build();
             executor = Executor.newInstance(httpclient);
         }
     }

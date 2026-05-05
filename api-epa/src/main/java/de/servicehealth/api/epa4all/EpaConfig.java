@@ -4,14 +4,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.util.Set;
+import java.util.List;
 
 @Getter
 @ApplicationScoped
 public class EpaConfig {
 
     @ConfigProperty(name = "epa.backend")
-    Set<String> epaBackends;
+    List<String> epaBackends;
 
     @ConfigProperty(name = "authorization-service.url")
     String authorizationServiceUrl;

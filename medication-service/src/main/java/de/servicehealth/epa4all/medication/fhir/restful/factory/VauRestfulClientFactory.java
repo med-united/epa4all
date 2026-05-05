@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
-
 @Getter
 public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
 
@@ -33,10 +31,9 @@ public class VauRestfulClientFactory extends ApacheRestfulClientFactory {
         super(ctx);
     }
 
-    public void init(VauFacade vauFacade, String epaUserAgent, String medicationServiceBaseUrl) throws Exception {
+    public void init(VauFacade vauFacade, SSLContext sslContext, String epaUserAgent, String medicationServiceBaseUrl) {
         getFhirContext().setRestfulClientFactory(this);
 
-        SSLContext sslContext = createFakeSSLContext();
         URI medicationBaseUri = URI.create(medicationServiceBaseUrl);
 
         FHIRRequestVAUInterceptor requestInterceptor = new FHIRRequestVAUInterceptor(

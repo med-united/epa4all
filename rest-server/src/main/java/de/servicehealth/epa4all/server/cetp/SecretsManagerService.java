@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.util.Optional;
@@ -26,10 +27,15 @@ public class SecretsManagerService implements ISecretsManager {
 
     private static final Logger log = LoggerFactory.getLogger(SecretsManagerService.class.getName());
 
+    private final X509TrustManager trustManager;
     private KeyManagerFactory keyManagerFactory;
 
     @Inject
-    public SecretsManagerService(KonnektorDefaultConfig konnektorDefaultConfig) {
+    public SecretsManagerService(
+        KonnektorDefaultConfig konnektorDefaultConfig,
+        X509TrustManager trustManager
+    ) {
+        this.trustManager = trustManager;
         initFromConfig(konnektorDefaultConfig);
     }
 
@@ -39,7 +45,7 @@ public class SecretsManagerService implements ISecretsManager {
         if (certAuthStoreFile.isPresent() && certAuthStoreFilePassword.isPresent()) {
             String password = certAuthStoreFilePassword.get();
             try (FileInputStream inputStream = new FileInputStream(certAuthStoreFile.get())) {
-                SSLContextBundle sslContextBundle = createSSLContextBundle(inputStream, password, PKCS12);
+                SSLContextBundle sslContextBundle = createSSLContextBundle(inputStream, password, trustManager, PKCS12);
                 keyManagerFactory = sslContextBundle.getKeyManagerFactory();
             } catch (Exception e) {
                 log.error("There was a problem when creating the SSLContext", e);
@@ -56,7 +62,7 @@ public class SecretsManagerService implements ISecretsManager {
             return keyManagerFactory;
         } else {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(getClientCertificateBytes(certificate))) {
-                SSLContextBundle sslContextBundle = createSSLContextBundle(inputStream, password, PKCS12);
+                SSLContextBundle sslContextBundle = createSSLContextBundle(inputStream, password, trustManager, PKCS12);
                 return sslContextBundle.getKeyManagerFactory();
             } catch (Exception e) {
                 log.error("Could not create keyManagerFactory", e);

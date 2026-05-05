@@ -15,6 +15,7 @@ import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
@@ -34,11 +35,11 @@ import org.apache.cxf.transport.DestinationFactoryManager;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
+import javax.net.ssl.SSLContext;
 import java.util.List;
 import java.util.Set;
 
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
-import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static java.lang.Boolean.TRUE;
 
 @ApplicationScoped
@@ -46,6 +47,10 @@ public class ClientFactory extends StartableService {
 
     @Inject
     VauConfig vauConfig;
+
+    @Inject
+    @Named("gematikSSLContext")
+    SSLContext gematikSslContext;
 
     @Override
     public int getPriority() {
@@ -114,19 +119,19 @@ public class ClientFactory extends StartableService {
         return api;
     }
 
-    public static void initClient(
+    public void initClient(
         ClientConfiguration config,
         int connectionTimeoutMs,
         List<Interceptor<? extends Message>> outInterceptors,
         List<Interceptor<? extends Message>> inInterceptors
-    ) throws Exception {
+    ) {
         config.getOutInterceptors().addAll(outInterceptors);
         config.getInInterceptors().addAll(inInterceptors);
 
         initConduit((HTTPConduit) config.getConduit(), connectionTimeoutMs);
     }
 
-    public static void initConduit(HTTPConduit conduit, int connectionTimeoutMs) throws Exception {
+    public void initConduit(HTTPConduit conduit, int connectionTimeoutMs) {
         HTTPClientPolicy clientPolicy = conduit.getClient();
         clientPolicy.setVersion("1.1");
         clientPolicy.setAutoRedirect(false);
@@ -137,8 +142,7 @@ public class ClientFactory extends StartableService {
         TLSClientParameters tlsParams = new TLSClientParameters();
         // setDisableCNCheck and setHostnameVerifier should not be set
         // to stick to HttpClientHTTPConduit (see HttpClientHTTPConduit.setupConnection)
-        // tlsParams.setHostnameVerifier((hostname, session) -> true);
-        tlsParams.setSslContext(createFakeSSLContext());
+        tlsParams.setSslContext(gematikSslContext);
         conduit.setTlsClientParameters(tlsParams);
     }
 }

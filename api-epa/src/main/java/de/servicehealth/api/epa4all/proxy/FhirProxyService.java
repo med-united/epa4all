@@ -2,6 +2,7 @@ package de.servicehealth.api.epa4all.proxy;
 
 import de.servicehealth.api.epa4all.EpaConfig;
 import de.servicehealth.api.epa4all.jmx.EpaMXBeanRegistry;
+import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.model.FhirResponse;
 import de.servicehealth.epa4all.cxf.model.ForwardRequest;
 import de.servicehealth.vau.VauConfig;
@@ -47,6 +48,7 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
         EpaConfig epaConfig,
         VauConfig vauConfig,
         VauFacade vauFacade,
+        ClientFactory clientFactory,
         EpaMXBeanRegistry epaMXBeanRegistry,
         Set<String> maskedHeaders,
         Set<String> maskedAttributes,
@@ -57,7 +59,7 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
         this.backend = backend;
         this.epaMXBeanRegistry = epaMXBeanRegistry;
 
-        apiClient = setup(apiUrl, vauConfig, vauFacade, maskedHeaders, maskedAttributes, true, features);
+        apiClient = setup(apiUrl, clientFactory, vauConfig, vauFacade, maskedHeaders, maskedAttributes, true, features);
     }
 
     public Response forward(

@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static de.servicehealth.epa4all.common.TestUtils.isDockerContainerRunning;
-import static de.servicehealth.utils.SSLUtils.createFakeSSLContext;
 import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -75,7 +74,7 @@ public class MedicationServicePlainIT extends AbstractMedicationServiceIT {
                 }
             };
 
-            Executor executor = Executor.newInstance(HttpClients.custom().setSSLContext(createFakeSSLContext()).build());
+            Executor executor = Executor.newInstance(HttpClients.custom().setSSLContext(createTestSSLContext()).build());
             IRenderClient renderClient = new PlainRenderClient(executor, epaUserAgent, medicationServiceRenderUrl, folderService);
 
             Map<String, String> xHeaders = Map.of(X_INSURANT_ID, "Z123456789", X_USER_AGENT, "CLIENTID1234567890AB/2.1.12-45");

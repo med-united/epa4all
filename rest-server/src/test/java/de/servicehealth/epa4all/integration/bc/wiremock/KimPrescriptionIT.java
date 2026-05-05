@@ -6,6 +6,7 @@ import com.unboundid.ldap.listener.InMemoryDirectoryServer;
 import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.ldap.sdk.Entry;
+import de.servicehealth.epa4all.common.TestTrustStore;
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
@@ -73,7 +74,12 @@ public class KimPrescriptionIT extends AbstractWiremockTest {
 
     private InMemoryDirectoryServer startLdapServer(boolean positiveFlow, String practitionerName) throws Exception {
         URL resource = getResource(KimPrescriptionIT.class, "keystore");
-        SSLContext sslContext = SSLUtils.createSSLContextBundle(resource.openStream(), "password", JKS).getSslContext();
+        // Pass the bundled non-TSL test trust manager so the LDAP server validates client certs
+        // against the wiremock CA. Previously this was `null`, which used to silently fall back
+        // to a trust-all manager via SSLUtils; that fallback has been removed.
+        SSLContext sslContext = SSLUtils.createSSLContextBundle(
+            resource.openStream(), "password", TestTrustStore.trustManager(), JKS
+        ).getSslContext();
         InMemoryListenerConfig listenerConfig = InMemoryListenerConfig.createLDAPSConfig(
             "test-ssl",
             InetAddress.getByName("localhost"),

@@ -1,6 +1,7 @@
 package de.servicehealth.api.epa4all;
 
 import de.servicehealth.api.epa4all.annotation.EpaSoapFeatures;
+import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauReadSoapInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauSetupInterceptor;
 import de.servicehealth.epa4all.cxf.interceptor.CxfVauWriteSoapInterceptor;
@@ -25,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static de.servicehealth.epa4all.cxf.client.ClientFactory.initConduit;
 import static de.servicehealth.epa4all.cxf.transport.HTTPVauTransportFactory.TRANSPORT_IDENTIFIER;
 import static de.servicehealth.utils.ServerUtils.getBackendUrl;
 import static jakarta.xml.ws.soap.SOAPBinding.SOAP12HTTP_BINDING;
@@ -40,6 +40,9 @@ public class IDocumentManagementPortTypeProvider {
 
     @Inject
     EpaConfig epaConfig;
+
+    @Inject
+    ClientFactory clientFactory;
 
     @Inject
     @EpaSoapFeatures
@@ -107,7 +110,7 @@ public class IDocumentManagementPortTypeProvider {
         );
         T portType = soapProxyFactory.create(clazz);
         Client client = ClientProxy.getClient(portType);
-        initConduit((HTTPConduit) client.getConduit(), vauConfig.getConnectionTimeoutMs());
+        clientFactory.initConduit((HTTPConduit) client.getConduit(), vauConfig.getConnectionTimeoutMs());
         return portType;
     }
 }

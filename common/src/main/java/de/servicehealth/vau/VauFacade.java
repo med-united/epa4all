@@ -3,6 +3,8 @@ package de.servicehealth.vau;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Streams;
 import de.servicehealth.commands.ReloadEmptySessions;
+import de.servicehealth.gematik.A24624Verifier;
+import de.servicehealth.gematik.VauAutCertSupplier;
 import de.servicehealth.registry.BeanRegistry;
 import io.vertx.core.impl.ConcurrentHashSet;
 import jakarta.annotation.PreDestroy;
@@ -89,6 +91,8 @@ public class VauFacade {
     public VauFacade(
         VauConfig vauConfig,
         BeanRegistry registry,
+        A24624Verifier a24624Verifier,
+        VauAutCertSupplier autCertSupplier,
         @Konnektors Set<String> konnektors
     ) {
         this.registry = registry;
@@ -99,7 +103,8 @@ public class VauFacade {
         konnektors.forEach(konnektorWorkplace -> {
             for (int i = 0; i < vauConfig.getVauPoolSize(); i++) {
                 vauClients.add(new VauClient(
-                    vauConfig.isPu(), vauConfig.isMock(), vauConfig.getVauReadTimeoutMs(), konnektorWorkplace
+                    vauConfig.isPu(), vauConfig.isMock(), vauConfig.getVauReadTimeoutMs(), konnektorWorkplace,
+                    a24624Verifier, (certHash, cdv) -> autCertSupplier.get(this.backend, certHash, cdv)
                 ));
             }
         });

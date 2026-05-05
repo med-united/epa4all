@@ -50,7 +50,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
         if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
             VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(ctx);
-            apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationServiceApiUrl));
+            apiClientFactory.init(vauFacade, createTestSSLContext(), epaUserAgent, getBaseUrl(medicationServiceApiUrl));
 
             String kvnr = "X110485291";
 
@@ -102,7 +102,7 @@ public class MedicationServiceVauIT extends AbstractMedicationServiceIT {
         if (isDockerContainerRunning(MEDICATION_SERVICE)) {
             FhirContext ctx = FhirContext.forR4();
             VauRestfulClientFactory apiClientFactory = new VauRestfulClientFactory(ctx);
-            apiClientFactory.init(vauFacade, epaUserAgent, getBaseUrl(medicationServiceRenderUrl));
+            apiClientFactory.init(vauFacade, createTestSSLContext(), epaUserAgent, getBaseUrl(medicationServiceRenderUrl));
 
             IFolderService folderService = new IFolderService() {
                 @Override
