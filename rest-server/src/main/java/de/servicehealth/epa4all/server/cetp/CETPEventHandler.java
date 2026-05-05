@@ -166,7 +166,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                     String backend = epaApi.getBackend();
                     Map<String, String> xHeaders = prepareXHeaders(epaApi, insurantId, konnektorHost, workplaceId);
                     try (Response response = epaCallGuard.callAndRetry(backend, () ->
-                        epaApi.getFhirProxy().forwardGet("fhir/pdf", xHeaders)
+                        epaApi.getRenderProxy().getEmlPdf(xHeaders)
                     )) {
                         byte[] bytes = response.readEntity(byte[].class);
                         EpaContext epaContext = new EpaContext(insurantId, backend, entitlementExpiry, insuranceData, Map.of());

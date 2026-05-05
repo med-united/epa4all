@@ -7,6 +7,7 @@ import de.servicehealth.api.epa4all.entitlement.EntitlementsAPI;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsFdvAPI;
 import de.servicehealth.api.epa4all.proxy.IAdminProxy;
 import de.servicehealth.api.epa4all.proxy.IFhirProxy;
+import de.servicehealth.api.epa4all.proxy.RenderProxyService;
 import de.servicehealth.vau.VauFacade;
 import ihe.iti.xds_b._2007.IDocumentManagementInsurantPortType;
 import ihe.iti.xds_b._2007.IDocumentManagementPortType;
@@ -36,4 +37,6 @@ public interface EpaAPI {
     IAdminProxy getAdminProxy();
 
     IFhirProxy getFhirProxy();
+
+    RenderProxyService getRenderProxy();
 }
