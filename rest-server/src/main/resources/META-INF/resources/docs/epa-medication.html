@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ePA Medication — Render API &amp; FHIR Operations</title>
+<style>
+  :root {
+    --signal-yellow: #F7EA5A;
+    --electric-violet: #5F29EF;
+    --deep-space: #100030;
+    --violet-700: #350791;
+    --violet-300: #AE8DF5;
+    --violet-100: #EBE3FC;
+    --ink: #18181B;
+    --neutral-700: #5D5D63;
+    --silver: #C7C7CC;
+    --mist: #F2F2F7;
+    --white: #FFFFFF;
+    --bg: var(--white);
+    --surface: var(--mist);
+    --text: var(--ink);
+    --muted: var(--neutral-700);
+    --border: var(--silver);
+    --code-bg: var(--violet-100);
+    --code-text: var(--deep-space);
+    --code-dark-bg: var(--deep-space);
+    --code-dark-text: var(--mist);
+    --error: #B91C1C;
+    --font-heading: "TWK Everett", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    --font-body: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    --font-mono: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    margin: 0; line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem 1.5rem; }
+  h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 700; color: var(--deep-space); margin: 0; letter-spacing: -0.005em; }
+  h1 { font-size: 1.5rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--electric-violet); margin: 1.75rem 0 0.6rem 0; padding-bottom: 0.3rem; border-bottom: 1.5px solid var(--electric-violet); }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin: 0.2rem 0 1rem 0; }
+  .brand-mark { font-family: var(--font-heading); font-weight: 700; color: var(--deep-space); }
+  .brand-mark .dot { color: var(--electric-violet); margin: 0 0.05em; }
+  a { color: var(--electric-violet); text-decoration: none; }
+  a:hover { color: var(--violet-700); text-decoration: underline; }
+  code {
+    background: var(--code-bg); padding: 1px 5px; border-radius: 3px;
+    font-family: var(--font-mono); font-size: 0.82rem; color: var(--code-text);
+  }
+  .config {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.75rem 1rem; margin: 1rem 0;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.6rem;
+  }
+  .config label { display: block; color: var(--muted); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em; margin-bottom: 0.15rem; text-transform: uppercase; }
+  .config input, .config textarea {
+    width: 100%; padding: 0.4rem 0.5rem; background: var(--white); color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px;
+    font-family: var(--font-mono); font-size: 0.78rem;
+  }
+  .config input:focus, .config textarea:focus { outline: 2px solid var(--electric-violet); outline-offset: -1px; border-color: var(--electric-violet); }
+  .config .full-width { grid-column: 1 / -1; }
+  .config textarea { resize: vertical; min-height: 44px; }
+  .config-note {
+    grid-column: 1 / -1; font-size: 0.74rem; color: var(--muted);
+    border-top: 1px dashed var(--border); padding-top: 0.5rem; margin: 0;
+  }
+  .config-note strong { color: var(--deep-space); }
+  .filter-bar { margin: 0.75rem 0 1rem 0; }
+  .filter-bar input {
+    width: 100%; padding: 0.5rem 0.75rem; background: var(--white); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-family: var(--font-body); font-size: 0.88rem;
+  }
+  .filter-bar input:focus { outline: 2px solid var(--electric-violet); outline-offset: -1px; border-color: var(--electric-violet); }
+  .endpoint {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.65rem 0.85rem; margin: 0.4rem 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .endpoint:hover { border-color: var(--violet-300); box-shadow: 0 2px 6px rgba(95, 41, 239, 0.05); }
+  .endpoint-header {
+    display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  }
+  .method {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-family: var(--font-heading); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em;
+    min-width: 50px; text-align: center;
+  }
+  .method.get { background: var(--electric-violet); color: var(--white); }
+  .method.post { background: var(--deep-space); color: var(--signal-yellow); }
+  .write-tag {
+    display: inline-block; padding: 1px 6px; border-radius: 3px;
+    background: var(--signal-yellow); color: var(--deep-space);
+    font-family: var(--font-heading); font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .path { font-family: var(--font-mono); color: var(--electric-violet); font-size: 0.85rem; font-weight: 600; word-break: break-all; flex: 1; }
+  .summary { color: var(--text); font-size: 0.85rem; margin: 0.25rem 0 0.15rem 0; }
+  .summary .de { color: var(--deep-space); font-weight: 600; }
+  .ig-link { font-size: 0.72rem; color: var(--muted); margin: 0.15rem 0 0.3rem 0; }
+  .ig-link a { font-weight: 600; }
+  .ig-link a::after { content: " ↗"; }
+  button.send {
+    background: var(--electric-violet); color: var(--white); border: none;
+    padding: 0.35rem 0.95rem; border-radius: 4px; cursor: pointer;
+    font-family: var(--font-heading); font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; transition: background 0.15s;
+  }
+  button.send:hover { background: var(--violet-700); }
+  button.send:disabled { opacity: 0.5; cursor: wait; }
+  .copy-btn {
+    background: var(--white); color: var(--electric-violet);
+    border: 1px solid var(--electric-violet);
+    padding: 1px 7px; border-radius: 3px; cursor: pointer;
+    font-family: var(--font-heading); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    transition: background 0.12s, color 0.12s;
+  }
+  .copy-btn:hover { background: var(--electric-violet); color: var(--white); }
+  .params-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.4rem; margin: 0.4rem 0 0.3rem 0;
+  }
+  .param label { display: block; color: var(--muted); font-size: 0.7rem; font-weight: 600; margin-bottom: 0.1rem; }
+  .param-in { color: var(--electric-violet); font-size: 0.62rem; font-weight: 600; }
+  .param input {
+    width: 100%; padding: 0.3rem 0.5rem; background: var(--white); color: var(--text);
+    border: 1px solid var(--border); border-radius: 3px;
+    font-family: var(--font-mono); font-size: 0.76rem;
+  }
+  .param input:focus { outline: 2px solid var(--electric-violet); outline-offset: -1px; border-color: var(--electric-violet); }
+  details.body-section {
+    margin: 0.4rem 0 0 0; border: 1px solid var(--violet-700);
+    border-radius: 4px; background: var(--code-dark-bg); overflow: hidden;
+  }
+  details.body-section summary {
+    padding: 0.35rem 0.6rem; cursor: pointer; color: var(--mist);
+    font-size: 0.72rem; user-select: none; font-weight: 600;
+  }
+  details.body-section summary:hover { color: var(--signal-yellow); }
+  details[open] summary { border-bottom: 1px solid var(--violet-700); }
+  details.body-section textarea {
+    width: 100%; border: none; background: var(--code-dark-bg); color: var(--mist);
+    padding: 0.6rem; font-family: var(--font-mono); font-size: 0.72rem;
+    min-height: 160px; resize: vertical; outline: none;
+  }
+  .response { margin-top: 0.4rem; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; display: none; }
+  .response.visible { display: block; }
+  .response-header { background: var(--surface); padding: 0.4rem 0.7rem; font-size: 0.78rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+  .response-header.ok { border-left: 3px solid var(--electric-violet); }
+  .response-header.err { border-left: 3px solid var(--error); }
+  .response-header.pending { border-left: 3px solid var(--signal-yellow); }
+  .response-status.ok { color: var(--electric-violet); font-weight: 700; }
+  .response-status.err { color: var(--error); font-weight: 700; }
+  .response-meta { color: var(--muted); font-size: 0.68rem; font-family: var(--font-mono); }
+  .response-body {
+    background: var(--code-dark-bg); color: var(--code-dark-text); padding: 0.6rem;
+    font-family: var(--font-mono); font-size: 0.72rem;
+    white-space: pre-wrap; word-break: break-all;
+    max-height: 360px; overflow: auto; margin: 0;
+  }
+  footer.brand-footer {
+    margin-top: 2.5rem; padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.74rem; color: var(--muted);
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    flex-wrap: wrap;
+  }
+  details.org-howto { margin-top: 0.5rem; font-size: 0.78rem; color: var(--text); }
+  details.org-howto summary {
+    cursor: pointer; color: var(--electric-violet);
+    font-weight: 600; font-size: 0.74rem;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 0.25rem 0; user-select: none;
+  }
+  details.org-howto summary:hover { color: var(--violet-700); }
+  details.org-howto ol { margin: 0.4rem 0 0.4rem 1.2rem; padding: 0; }
+  details.org-howto li { margin-bottom: 0.2rem; }
+  pre.org-howto-snippet {
+    background: var(--code-dark-bg); color: var(--code-dark-text);
+    padding: 0.6rem; border-radius: 4px; font-family: var(--font-mono);
+    font-size: 0.72rem; overflow: auto; margin: 0.3rem 0 0 0;
+    white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+<main>
+<h1>ePA Medication — Render API &amp; FHIR Operations</h1>
+<p class="subtitle">12 endpoints required for eML / eMP, targeting gematik IG <code>epa-medication 1.3.1</code>. Brought to you by <span class="brand-mark">service<span class="dot">·</span>health</span>.</p>
+
+<div class="config">
+  <div>
+    <label>Gateway URL</label>
+    <input id="cfg-gw" value="http://localhost:8090">
+  </div>
+  <div>
+    <label>Patient KVNR</label>
+    <input id="cfg-kvnr" value="X110674241">
+  </div>
+  <div>
+    <label>SMC-B Telematik-ID</label>
+    <input id="cfg-tid" value="1-SMC-B-Testkarte-883110000141773">
+  </div>
+  <div>
+    <label>Organization Name</label>
+    <input id="cfg-org-name" value="Praxis Lukas Freiherr Hünsch TEST-ONLY">
+  </div>
+  <div class="full-width">
+    <label>Computed <code>X-Requesting-Organization</code> (base64)
+      <button class="copy-btn" onclick="recomputeOrg()">Recompute</button>
+      <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('cfg-org-b64').value)">Copy</button>
+    </label>
+    <textarea id="cfg-org-b64" readonly></textarea>
+    <details class="org-howto">
+      <summary>How is this header computed?</summary>
+      <ol>
+        <li>Build a FHIR <code>Organization</code> resource carrying the SMC-B Telematik-ID and the practice name.</li>
+        <li>Serialize to JSON and UTF-8 encode the bytes.</li>
+        <li>Base64-encode the UTF-8 bytes and send the result as the <code>X-Requesting-Organization</code> request header.</li>
+      </ol>
+      <p style="margin: 0.6rem 0 0.2rem 0; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">FHIR Organization payload</p>
+      <pre class="org-howto-snippet">{
+  "resourceType": "Organization",
+  "identifier": [{
+    "system": "https://gematik.de/fhir/sid/telematik-id",
+    "value": "&lt;SMC-B Telematik-ID&gt;"
+  }],
+  "name": "&lt;Organization Name&gt;"
+}</pre>
+      <p style="margin: 0.6rem 0 0.2rem 0; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;">Shell equivalent (Ubuntu defaults — printf + base64)</p>
+      <pre class="org-howto-snippet">TID="1-SMC-B-Testkarte-883110000141773"
+ORG="Praxis Lukas Freiherr Hünsch TEST-ONLY"
+
+printf '{"resourceType":"Organization","identifier":[{"system":"https://gematik.de/fhir/sid/telematik-id","value":"%s"}],"name":"%s"}' \
+  "$TID" "$ORG" | base64 -w0</pre>
+      <p style="margin: 0.4rem 0 0 0; color: var(--muted); font-size: 0.72rem;">
+        Recomputes automatically when SMC-B Telematik-ID or Organization Name changes above.
+      </p>
+    </details>
+  </div>
+  <p class="config-note">
+    <strong>Auto-injected.</strong> Every card sends <code>x-insurantid</code> from KVNR. Cards tagged <span class="write-tag">write</span> additionally attach <code>X-Requesting-Organization</code> built from SMC-B + Organization.
+  </p>
+</div>
+
+<div class="filter-bar">
+  <input id="filter" placeholder="Filter endpoints…" oninput="applyFilter()">
+</div>
+
+<h2>Render API</h2>
+
+<div class="endpoint" id="ep-GET-render-eml-pdf">
+  <div class="endpoint-header">
+    <span class="method get">GET</span>
+    <span class="path">/render/v1/eml/pdf</span>
+    <button class="send" onclick="runCard('GET-render-eml-pdf', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eML als PDF</span> — rendered medication list as <code>application/pdf</code>.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/render-api-eml.html" target="_blank" rel="noopener">gematik IG · render-api-eml</a></p>
+  <div class="response" id="GET-render-eml-pdf-response"></div>
+</div>
+
+<div class="endpoint" id="ep-GET-render-eml-xhtml">
+  <div class="endpoint-header">
+    <span class="method get">GET</span>
+    <span class="path">/render/v1/eml/xhtml</span>
+    <button class="send" onclick="runCard('GET-render-eml-xhtml', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eML als XHTML</span> — inline rendering for embedding in a portal (<code>application/xhtml+xml</code>).</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/render-api-eml.html" target="_blank" rel="noopener">gematik IG · render-api-eml</a></p>
+  <div class="response" id="GET-render-eml-xhtml-response"></div>
+</div>
+
+<div class="endpoint" id="ep-GET-render-emp-pdf">
+  <div class="endpoint-header">
+    <span class="method get">GET</span>
+    <span class="path">/render/v1/emp/pdf</span>
+    <button class="send" onclick="runCard('GET-render-emp-pdf', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eMP als PDF</span> — rendered medication plan as <code>application/pdf</code>.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/render-api-emp.html" target="_blank" rel="noopener">gematik IG · render-api-emp</a></p>
+  <div class="response" id="GET-render-emp-pdf-response"></div>
+</div>
+
+<h2>FHIR Operations — eML</h2>
+
+<div class="endpoint" id="ep-GET-medication-list">
+  <div class="endpoint-header">
+    <span class="method get">GET</span>
+    <span class="path">/fhir/$medication-list</span>
+    <button class="send" onclick="runCard('GET-medication-list', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eML abrufen</span> — returns the patient's medication list as a FHIR <code>Bundle</code>.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/op-get-medication-list.html" target="_blank" rel="noopener">gematik IG · op-get-medication-list</a></p>
+  <div class="params-grid">
+    <div class="param">
+      <label for="GET-medication-list-param-date">date <span class="param-in">(query)</span></label>
+      <input id="GET-medication-list-param-date" data-pname="date" data-pin="query" placeholder="ge2026-01-01">
+    </div>
+    <div class="param">
+      <label for="GET-medication-list-param-count">_count <span class="param-in">(query)</span></label>
+      <input id="GET-medication-list-param-count" data-pname="_count" data-pin="query" placeholder="10">
+    </div>
+  </div>
+  <div class="response" id="GET-medication-list-response"></div>
+</div>
+
+<div class="endpoint" id="ep-POST-add-eml-entry">
+  <div class="endpoint-header">
+    <span class="method post">POST</span>
+    <span class="path">/fhir/MedicationStatement/$add-eml-entry</span>
+    <button class="send" onclick="runCard('POST-add-eml-entry', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eML hinzufügen</span> — append a self-reported or external <code>MedicationStatement</code> to the eML.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/op-add-eml-entry.html" target="_blank" rel="noopener">gematik IG · op-add-eml-entry</a></p>
+  <details class="body-section"><summary>Request body</summary><textarea id="POST-add-eml-entry-body" data-needs-substitute="yes" spellcheck="false">{
+  "resourceType": "Parameters",
+  "id": "example-epa-op-add-eml-entry-input-parameters-1",
+  "meta": {
+    "profile": [
+      "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-add-eml-entry-input-parameters|1.3.0"
+    ]
+  },
+  "parameter": [
+    {
+      "name": "medicationStatement",
+      "resource": {
+        "resourceType": "MedicationStatement",
+        "id": "STMT_ID_PLACEHOLDER",
+        "meta": {
+          "profile": [
+            "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication-statement|1.3.0"
+          ]
+        },
+        "extension": [
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/context-extension",
+            "valueCode": "MANUAL"
+          },
+          {
+            "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationStatement.renderedDosageInstruction",
+            "valueMarkdown": "1-0-1-0 Stück"
+          },
+          {
+            "extension": [
+              {
+                "url": "algorithmVersion",
+                "valueString": "1.0.1"
+              },
+              {
+                "url": "language",
+                "valueCode": "de-DE"
+              }
+            ],
+            "url": "http://ig.fhir.de/igs/medication/StructureDefinition/GeneratedDosageInstructionsMeta"
+          }
+        ],
+        "status": "unknown",
+        "medicationReference": {
+          "reference": "Medication/MED_ID_PLACEHOLDER"
+        },
+        "subject": {
+          "identifier": {
+            "system": "http://fhir.de/sid/gkv/kvid-10",
+            "value": "KVNR_PLACEHOLDER"
+          }
+        },
+        "effectivePeriod": {
+          "start": "DATE_PLACEHOLDER"
+        },
+        "dosage": [
+          {
+            "timing": {
+              "repeat": {
+                "frequency": 2,
+                "period": 1,
+                "periodUnit": "d",
+                "when": [
+                  "MORN",
+                  "EVE"
+                ]
+              }
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "Stück",
+                  "system": "https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_BMP_DOSIEREINHEIT",
+                  "code": "1"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "medication",
+      "resource": {
+        "resourceType": "Medication",
+        "id": "MED_ID_PLACEHOLDER",
+        "meta": {
+          "profile": [
+            "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication|1.3.0"
+          ]
+        },
+        "extension": [
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication-type-extension",
+            "valueCoding": {
+              "system": "http://snomed.info/sct",
+              "code": "781405001"
+            }
+          },
+          {
+            "url": "http://fhir.de/StructureDefinition/normgroesse",
+            "valueCode": "N1"
+          }
+        ],
+        "code": {
+          "coding": [
+            {
+              "system": "http://fhir.de/CodeSystem/ifa/pzn",
+              "code": "14170042",
+              "display": "Diclo-ratiopharm® bei Schmerzen und Fieber 25 mg Filmtabletten"
+            }
+          ],
+          "text": "Diclo-ratiopharm® bei Schmerzen und Fieber 25 mg Filmtabletten"
+        },
+        "status": "active",
+        "form": {
+          "coding": [
+            {
+              "system": "https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_KBV_DARREICHUNGSFORM",
+              "code": "TAB"
+            }
+          ]
+        },
+        "amount": {
+          "numerator": {
+            "extension": [
+              {
+                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-total-quantity-formulation-extension",
+                "valueString": "20 St."
+              }
+            ],
+            "value": 20,
+            "unit": "St"
+          },
+          "denominator": {
+            "value": 1
+          }
+        }
+      }
+    }
+  ]
+}</textarea></details>
+  <div class="response" id="POST-add-eml-entry-response"></div>
+</div>
+
+<div class="endpoint" id="ep-POST-cancel-eml-entry">
+  <div class="endpoint-header">
+    <span class="method post">POST</span>
+    <span class="path">/fhir/MedicationStatement/{id}/$cancel-eml-entry</span>
+    <button class="send" onclick="runCard('POST-cancel-eml-entry', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eML stornieren</span> — withdraw a previously added <code>MedicationStatement</code>. The resource then reads as <code>410</code> on direct GET but stays visible via <code>_history</code>.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/op-cancel-eml-entry.html" target="_blank" rel="noopener">gematik IG · op-cancel-eml-entry</a></p>
+  <div class="params-grid">
+    <div class="param">
+      <label for="POST-cancel-eml-entry-param-id">id <span class="param-in">(path)</span> *</label>
+      <input id="POST-cancel-eml-entry-param-id" data-pname="id" data-pin="path" placeholder="MedicationStatement.id">
+    </div>
+  </div>
+  <details class="body-section"><summary>Request body <span style="color:var(--violet-300);font-weight:400;">(empty Parameters)</span></summary><textarea id="POST-cancel-eml-entry-body" data-needs-substitute="no" spellcheck="false">{
+  "resourceType": "Parameters",
+  "meta": {
+    "profile": ["https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-cancel-eml-entry-input-parameters|1.3.0"]
+  },
+  "parameter": []
+}</textarea></details>
+  <div class="response" id="POST-cancel-eml-entry-response"></div>
+</div>
+
+<h2>FHIR Operations — eMP</h2>
+
+<div class="endpoint" id="ep-GET-medication-plan">
+  <div class="endpoint-header">
+    <span class="method get">GET</span>
+    <span class="path">/fhir/$medication-plan</span>
+    <button class="send" onclick="runCard('GET-medication-plan', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eMP abrufen</span> — returns the current medication plan and its chronology Provenance as a <code>Bundle</code>.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/op-get-medication-plan.html" target="_blank" rel="noopener">gematik IG · op-get-medication-plan</a></p>
+  <div class="response" id="GET-medication-plan-response"></div>
+</div>
+
+<div class="endpoint" id="ep-GET-medication-plan-log">
+  <div class="endpoint-header">
+    <span class="method get">GET</span>
+    <span class="path">/fhir/$medication-plan-log</span>
+    <button class="send" onclick="runCard('GET-medication-plan-log', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eMP Chronologie abrufen</span> — full version log of the eMP for audit and change tracking.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/op-medication-plan-log.html" target="_blank" rel="noopener">gematik IG · op-medication-plan-log</a></p>
+  <div class="params-grid">
+    <div class="param">
+      <label for="GET-medication-plan-log-param-count">_count <span class="param-in">(query)</span></label>
+      <input id="GET-medication-plan-log-param-count" data-pname="_count" data-pin="query" placeholder="20">
+    </div>
+    <div class="param">
+      <label for="GET-medication-plan-log-param-offset">_offset <span class="param-in">(query)</span></label>
+      <input id="GET-medication-plan-log-param-offset" data-pname="_offset" data-pin="query" placeholder="0">
+    </div>
+  </div>
+  <div class="response" id="GET-medication-plan-log-response"></div>
+</div>
+
+<div class="endpoint" id="ep-POST-add-emp-entry">
+  <div class="endpoint-header">
+    <span class="method post">POST</span>
+    <span class="path">/fhir/$add-emp-entry</span>
+    <button class="send" onclick="runCard('POST-add-emp-entry', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eMP anlegen</span> — append a new entry to the medication plan. Requires the latest <code>acknowledgedChronologyId</code>.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/op-add-emp-entry.html" target="_blank" rel="noopener">gematik IG · op-add-emp-entry</a></p>
+  <details class="body-section"><summary>Request body <button class="copy-btn" type="button" onclick="event.stopPropagation(); fetchAndPatchChronology('POST-add-emp-entry')">Fetch chronology ID</button></summary><textarea id="POST-add-emp-entry-body" data-needs-substitute="yes" spellcheck="false">{
+  "resourceType": "Parameters",
+  "id": "example-epa-op-add-emp-entry-input-parameters-1",
+  "meta": {
+    "profile": [
+      "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-add-emp-entry-input-parameters|1.3.0"
+    ]
+  },
+  "parameter": [
+    {
+      "name": "acknowledgedChronologyId",
+      "valueId": "CHRONO_ID_PLACEHOLDER"
+    },
+    {
+      "name": "medication",
+      "part": [
+        {
+          "name": "resource",
+          "resource": {
+            "resourceType": "Medication",
+            "id": "MED_ID_PLACEHOLDER",
+            "meta": {
+              "profile": [
+                "https://gematik.de/fhir/epa-medication/StructureDefinition/emp-medication|1.3.0"
+              ]
+            },
+            "extension": [
+              {
+                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/context-extension",
+                "valueCode": "EMP"
+              },
+              {
+                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-medication-type-extension",
+                "valueCoding": {
+                  "system": "http://snomed.info/sct",
+                  "code": "763158003"
+                }
+              },
+              {
+                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/drug-category-extension",
+                "valueCoding": {
+                  "system": "https://gematik.de/fhir/epa-medication/CodeSystem/epa-drug-category-cs",
+                  "code": "00"
+                }
+              },
+              {
+                "url": "http://fhir.de/StructureDefinition/normgroesse",
+                "valueCode": "N3"
+              },
+              {
+                "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-id-vaccine-extension",
+                "valueBoolean": false
+              }
+            ],
+            "code": {
+              "coding": [
+                {
+                  "system": "http://fhir.de/CodeSystem/ifa/pzn",
+                  "code": "04351736",
+                  "display": "Benazepril AL 20mg 98 Filmtabletten N3"
+                }
+              ],
+              "text": "Benazepril AL 20mg 98 Filmtabletten N3"
+            },
+            "status": "active",
+            "form": {
+              "coding": [
+                {
+                  "system": "https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_KBV_DARREICHUNGSFORM",
+                  "code": "FTA"
+                }
+              ]
+            },
+            "amount": {
+              "numerator": {
+                "extension": [
+                  {
+                    "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/medication-total-quantity-formulation-extension",
+                    "valueString": "98"
+                  }
+                ],
+                "unit": "Stück"
+              },
+              "denominator": {
+                "value": 1
+              }
+            },
+            "ingredient": [
+              {
+                "itemCodeableConcept": {
+                  "coding": [
+                    {
+                      "system": "http://fhir.de/CodeSystem/ask",
+                      "code": "23413"
+                    }
+                  ],
+                  "text": "Benazepril hydrochlorid"
+                },
+                "strength": {
+                  "numerator": {
+                    "value": 20,
+                    "unit": "mg"
+                  },
+                  "denominator": {
+                    "value": 1,
+                    "unit": "Filmtbl."
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "empEntry",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "id": "REQ_ID_PLACEHOLDER",
+        "meta": {
+          "profile": [
+            "https://gematik.de/fhir/epa-medication/StructureDefinition/emp-medication-request|1.3.1"
+          ]
+        },
+        "extension": [
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/context-extension",
+            "valueCode": "EMP"
+          },
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/reason-patient-instruction-extension",
+            "valueString": "Bluthochdruck"
+          },
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/patient-note-extension",
+            "valueAnnotation": {
+              "text": "Benazepril kann anfangs Schwindel verursachen - daher zuerst in Ruhe einnehmen und Autofahren vermeiden."
+            }
+          },
+          {
+            "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.effectiveDosePeriod",
+            "valuePeriod": {
+              "start": "DATE_PLACEHOLDER"
+            }
+          },
+          {
+            "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/emp-origin-medication-extension",
+            "valueReference": {
+              "reference": "Medication/13c66845-d0ce-43e1-9b0b-884cbbe8df7f"
+            }
+          },
+          {
+            "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.renderedDosageInstruction",
+            "valueMarkdown": "1-0-1-0 Stück"
+          },
+          {
+            "extension": [
+              {
+                "url": "algorithmVersion",
+                "valueString": "1.0.1"
+              },
+              {
+                "url": "language",
+                "valueCode": "de-DE"
+              }
+            ],
+            "url": "http://ig.fhir.de/igs/medication/StructureDefinition/GeneratedDosageInstructionsMeta"
+          }
+        ],
+        "status": "active",
+        "intent": "plan",
+        "medicationReference": {
+          "reference": "Medication/MED_ID_PLACEHOLDER"
+        },
+        "subject": {
+          "identifier": {
+            "system": "http://fhir.de/sid/gkv/kvid-10",
+            "value": "KVNR_PLACEHOLDER"
+          }
+        },
+        "authoredOn": "DATE_PLACEHOLDER",
+        "note": [
+          {
+            "text": "Hinweis für den LE"
+          }
+        ],
+        "dosageInstruction": [
+          {
+            "timing": {
+              "repeat": {
+                "frequency": 2,
+                "period": 1,
+                "periodUnit": "d",
+                "when": [
+                  "MORN",
+                  "EVE"
+                ]
+              }
+            },
+            "doseAndRate": [
+              {
+                "doseQuantity": {
+                  "value": 1,
+                  "unit": "Stück",
+                  "system": "https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_BMP_DOSIEREINHEIT",
+                  "code": "1"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}</textarea></details>
+  <div class="response" id="POST-add-emp-entry-response"></div>
+</div>
+
+<div class="endpoint" id="ep-POST-update-emp-entry">
+  <div class="endpoint-header">
+    <span class="method post">POST</span>
+    <span class="path">/fhir/$update-emp-entry</span>
+    <button class="send" onclick="runCard('POST-update-emp-entry', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eMP aktualisieren</span> — modify an existing eMP entry. Requires the latest <code>acknowledgedChronologyId</code>.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/op-update-emp-entry.html" target="_blank" rel="noopener">gematik IG · op-update-emp-entry</a></p>
+  <details class="body-section"><summary>Request body <button class="copy-btn" type="button" onclick="event.stopPropagation(); fetchAndPatchChronology('POST-update-emp-entry')">Fetch chronology ID</button></summary><textarea id="POST-update-emp-entry-body" data-needs-substitute="yes" spellcheck="false">{
+  "resourceType": "Parameters",
+  "meta": {
+    "profile": ["https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-update-emp-entry-input-parameters|1.3.0"]
+  },
+  "parameter": [
+    { "name": "acknowledgedChronologyId", "valueId": "CHRONO_ID_PLACEHOLDER" },
+    {
+      "name": "empEntry",
+      "resource": {
+        "resourceType": "MedicationRequest",
+        "id": "REQ_ID_PLACEHOLDER",
+        "meta": {
+          "profile": ["https://gematik.de/fhir/epa-medication/StructureDefinition/emp-medication-request|1.3.0"]
+        },
+        "extension": [
+          { "url": "https://gematik.de/fhir/epa-medication/StructureDefinition/context-extension", "valueCode": "EMP" }
+        ],
+        "status": "active",
+        "intent": "plan",
+        "medicationReference": { "reference": "Medication/MED_ID_PLACEHOLDER" },
+        "subject": {
+          "identifier": { "system": "http://fhir.de/sid/gkv/kvid-10", "value": "KVNR_PLACEHOLDER" }
+        },
+        "authoredOn": "DATE_PLACEHOLDER",
+        "dosageInstruction": [
+          { "text": "1-1-1-0 Stück" }
+        ]
+      }
+    }
+  ]
+}</textarea></details>
+  <div class="response" id="POST-update-emp-entry-response"></div>
+</div>
+
+<h2>FHIR Operations — eML ⇄ eMP Verknüpfung</h2>
+
+<div class="endpoint" id="ep-POST-link-emp">
+  <div class="endpoint-header">
+    <span class="method post">POST</span>
+    <span class="path">/fhir/MedicationStatement/{id}/$link-emp</span>
+    <button class="send" onclick="runCard('POST-link-emp', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eML-eMP-Verknüpfung anlegen</span> — link a <code>MedicationStatement</code> to an existing eMP <code>MedicationRequest</code>.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/op-link-emp.html" target="_blank" rel="noopener">gematik IG · op-link-emp</a></p>
+  <div class="params-grid">
+    <div class="param">
+      <label for="POST-link-emp-param-id">id <span class="param-in">(path)</span> *</label>
+      <input id="POST-link-emp-param-id" data-pname="id" data-pin="path" placeholder="MedicationStatement.id">
+    </div>
+  </div>
+  <details class="body-section"><summary>Request body</summary><textarea id="POST-link-emp-body" data-needs-substitute="yes" spellcheck="false">{
+  "resourceType": "Parameters",
+  "meta": {
+    "profile": ["https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-link-emp-input-parameters|1.3.0"]
+  },
+  "parameter": [
+    {
+      "name": "empEntryReference",
+      "valueReference": { "reference": "MedicationRequest/REQ_ID_PLACEHOLDER" }
+    }
+  ]
+}</textarea></details>
+  <div class="response" id="POST-link-emp-response"></div>
+</div>
+
+<div class="endpoint" id="ep-POST-unlink-emp">
+  <div class="endpoint-header">
+    <span class="method post">POST</span>
+    <span class="path">/fhir/MedicationStatement/{id}/$unlink-emp</span>
+    <button class="send" onclick="runCard('POST-unlink-emp', this)">Send</button>
+  </div>
+  <p class="summary"><span class="de">eML-eMP-Verknüpfung entfernen</span> — detach a <code>MedicationStatement</code> from its linked eMP entry.</p>
+  <p class="ig-link"><a href="https://gemspec.gematik.de/ig/fhir/epa-medication/1.3.1/op-unlink-emp.html" target="_blank" rel="noopener">gematik IG · op-unlink-emp</a></p>
+  <div class="params-grid">
+    <div class="param">
+      <label for="POST-unlink-emp-param-id">id <span class="param-in">(path)</span> *</label>
+      <input id="POST-unlink-emp-param-id" data-pname="id" data-pin="path" placeholder="MedicationStatement.id">
+    </div>
+  </div>
+  <details class="body-section"><summary>Request body <span style="color:var(--violet-300);font-weight:400;">(empty Parameters)</span></summary><textarea id="POST-unlink-emp-body" data-needs-substitute="no" spellcheck="false">{
+  "resourceType": "Parameters",
+  "meta": {
+    "profile": ["https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-unlink-emp-input-parameters|1.3.0"]
+  },
+  "parameter": []
+}</textarea></details>
+  <div class="response" id="POST-unlink-emp-response"></div>
+</div>
+
+<footer class="brand-footer">
+  <span><span class="brand-mark">service<span class="dot">·</span>health</span> erx GmbH — ePA Medication Reference</span>
+  <span>gematik IG <code>epa-medication 1.3.1</code></span>
+</footer>
+
+</main>
+
+<script>
+const ENDPOINTS = {
+  "GET-render-eml-pdf":      { method: "GET",  path: "/render/v1/eml/pdf",  params: [], needsOrg: false, hasBody: false, opensInNewTab: true },
+  "GET-render-eml-xhtml":    { method: "GET",  path: "/render/v1/eml/xhtml", params: [], needsOrg: false, hasBody: false, opensInNewTab: true },
+  "GET-render-emp-pdf":      { method: "GET",  path: "/render/v1/emp/pdf",  params: [], needsOrg: false, hasBody: false, opensInNewTab: true },
+
+  "GET-medication-list":     { method: "GET",  path: "/fhir/$medication-list",
+    params: [{ name: "date", in: "query" }, { name: "_count", in: "query" }],
+    needsOrg: false, hasBody: false },
+
+  "POST-add-eml-entry":      { method: "POST", path: "/fhir/MedicationStatement/$add-eml-entry",
+    params: [], needsOrg: true, hasBody: true },
+
+  "POST-cancel-eml-entry":   { method: "POST", path: "/fhir/MedicationStatement/{id}/$cancel-eml-entry",
+    params: [{ name: "id", in: "path", required: true }],
+    needsOrg: true, hasBody: true },
+
+  "GET-medication-plan":     { method: "GET",  path: "/fhir/$medication-plan",     params: [], needsOrg: false, hasBody: false },
+  "GET-medication-plan-log": { method: "GET",  path: "/fhir/$medication-plan-log",
+    params: [{ name: "_count", in: "query" }, { name: "_offset", in: "query" }],
+    needsOrg: false, hasBody: false },
+
+  "POST-add-emp-entry":      { method: "POST", path: "/fhir/$add-emp-entry",       params: [], needsOrg: true, hasBody: true },
+  "POST-update-emp-entry":   { method: "POST", path: "/fhir/$update-emp-entry",    params: [], needsOrg: true, hasBody: true },
+
+  "POST-link-emp":           { method: "POST", path: "/fhir/MedicationStatement/{id}/$link-emp",
+    params: [{ name: "id", in: "path", required: true }],
+    needsOrg: true, hasBody: true },
+
+  "POST-unlink-emp":         { method: "POST", path: "/fhir/MedicationStatement/{id}/$unlink-emp",
+    params: [{ name: "id", in: "path", required: true }],
+    needsOrg: true, hasBody: true },
+};
+
+function cfg(id) { return document.getElementById(id).value.trim(); }
+function $(id) { return document.getElementById(id); }
+
+function recomputeOrg() {
+  const json = JSON.stringify({
+    resourceType: "Organization",
+    identifier: [{ system: "https://gematik.de/fhir/sid/telematik-id", value: cfg('cfg-tid') }],
+    name: cfg('cfg-org-name')
+  });
+  const bytes = new TextEncoder().encode(json);
+  const b64 = btoa(String.fromCharCode(...bytes));
+  $('cfg-org-b64').value = b64;
+}
+['cfg-tid', 'cfg-org-name'].forEach(id => $(id).addEventListener('input', recomputeOrg));
+recomputeOrg();
+
+// Tag write-cards with a WRITE badge so the implicit X-Requesting-Organization
+// injection is visible.
+Object.entries(ENDPOINTS).forEach(([cardId, meta]) => {
+  if (!meta.needsOrg) return;
+  const header = document.querySelector('#ep-' + cardId + ' .endpoint-header');
+  if (!header) return;
+  const tag = document.createElement('span');
+  tag.className = 'write-tag';
+  tag.textContent = 'Write';
+  tag.title = 'Requires X-Requesting-Organization (auto-injected)';
+  header.insertBefore(tag, header.querySelector('.send'));
+});
+
+function uuid() { return crypto.randomUUID(); }
+
+function substitutePlaceholders(raw) {
+  const today = new Date().toISOString().slice(0, 10);
+  return raw
+    .replace(/MED_ID_PLACEHOLDER/g, uuid())
+    .replace(/REQ_ID_PLACEHOLDER/g, uuid())
+    .replace(/STMT_ID_PLACEHOLDER/g, uuid())
+    .replace(/KVNR_PLACEHOLDER/g, cfg('cfg-kvnr'))
+    .replace(/DATE_PLACEHOLDER/g, today);
+}
+
+async function fetchAndPatchChronology(cardId) {
+  const ta = $(cardId + '-body');
+  if (!ta) return;
+  const url = cfg('cfg-gw') + '/fhir/$medication-plan?x-insurantid=' + encodeURIComponent(cfg('cfg-kvnr'));
+  try {
+    const resp = await fetch(url);
+    const json = await resp.json();
+    const chronoEntry = (json.entry || []).find(e => {
+      if (e.resource?.resourceType !== 'Provenance') return false;
+      return (e.resource.extension || []).some(x =>
+        x.url === 'https://gematik.de/fhir/epa-medication/StructureDefinition/is-emp-chronology-extension'
+        && x.valueBoolean === true
+      );
+    });
+    if (!chronoEntry) {
+      alert('No chronology Provenance found in current eMP. The plan may be empty — try $add-emp-entry first.');
+      return;
+    }
+    const newId = chronoEntry.resource.id;
+    let body;
+    try { body = JSON.parse(ta.value); } catch(e) { alert('Body is not valid JSON'); return; }
+    let found = false;
+    if (Array.isArray(body.parameter)) {
+      for (const p of body.parameter) {
+        if (p.name === 'acknowledgedChronologyId') { p.valueId = newId; found = true; break; }
+      }
+      if (!found) body.parameter.unshift({ name: 'acknowledgedChronologyId', valueId: newId });
+    }
+    ta.value = JSON.stringify(body, null, 2);
+    flashMessage(cardId, 'Chronology id set to ' + newId);
+  } catch(e) {
+    alert('Failed to fetch chronology id: ' + e.message);
+  }
+}
+
+function flashMessage(cardId, msg) {
+  const responseEl = $(cardId + '-response');
+  responseEl.classList.add('visible');
+  responseEl.innerHTML = '<div class="response-header pending"><span>' + msg + '</span></div>';
+  setTimeout(() => { responseEl.classList.remove('visible'); }, 2000);
+}
+
+document.querySelectorAll('details.body-section').forEach(d => {
+  d.addEventListener('toggle', () => {
+    const ta = d.querySelector('textarea');
+    if (ta && ta.dataset.expanded !== 'yes' && ta.dataset.needsSubstitute === 'yes') {
+      ta.value = substitutePlaceholders(ta.value);
+      ta.dataset.expanded = 'yes';
+    }
+  });
+});
+
+function slugifyParam(s) {
+  let out = '';
+  for (const c of s) {
+    if (/[a-zA-Z0-9]/.test(c)) out += c;
+    else if ('/{}$-_.'.includes(c)) out += '-';
+  }
+  return out.replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+
+function buildRequest(cardId) {
+  const meta = ENDPOINTS[cardId];
+  if (!meta) throw new Error('Unknown card: ' + cardId);
+
+  let path = meta.path;
+  const queryParams = new URLSearchParams();
+  queryParams.set('x-insurantid', cfg('cfg-kvnr'));
+
+  for (const p of (meta.params || [])) {
+    const input = $(cardId + '-param-' + slugifyParam(p.name));
+    if (!input) continue;
+    const val = input.value.trim();
+    if (!val) continue;
+    if (p.in === 'path') path = path.replace('{' + p.name + '}', encodeURIComponent(val));
+    else if (p.in === 'query') queryParams.set(p.name, val);
+  }
+
+  const headers = {};
+  let body;
+  if (meta.hasBody) {
+    const ta = $(cardId + '-body');
+    if (ta) {
+      let raw = ta.value;
+      if (ta.dataset.expanded !== 'yes' && ta.dataset.needsSubstitute === 'yes') {
+        raw = substitutePlaceholders(raw);
+        ta.value = raw;
+        ta.dataset.expanded = 'yes';
+      }
+      body = raw;
+      headers['Content-Type'] = 'application/fhir+json';
+    }
+  }
+  if (meta.needsOrg) headers['X-Requesting-Organization'] = cfg('cfg-org-b64');
+
+  const url = cfg('cfg-gw') + path + '?' + queryParams.toString();
+  return { url, init: { method: meta.method, headers, body } };
+}
+
+async function runCard(cardId, btn) {
+  const epMeta = ENDPOINTS[cardId];
+  if (epMeta && epMeta.opensInNewTab) {
+    const { url } = buildRequest(cardId);
+    window.open(url, '_blank', 'noopener');
+    return;
+  }
+  const responseEl = $(cardId + '-response');
+  responseEl.classList.add('visible');
+  responseEl.innerHTML = '<div class="response-header pending"><span>Sending…</span></div>';
+  btn.disabled = true;
+  try {
+    const { url, init } = buildRequest(cardId);
+    const t0 = performance.now();
+    const resp = await fetch(url, init);
+    const ms = Math.round(performance.now() - t0);
+    const text = await resp.text();
+    let pretty = text;
+    try { pretty = JSON.stringify(JSON.parse(text), null, 2); } catch(e) {}
+
+    const ok = resp.ok;
+    responseEl.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'response-header ' + (ok ? 'ok' : 'err');
+    const status = document.createElement('span');
+    status.className = 'response-status ' + (ok ? 'ok' : 'err');
+    status.textContent = resp.status + ' ' + resp.statusText;
+    const meta = document.createElement('span');
+    meta.className = 'response-meta';
+    meta.textContent = ms + ' ms — ' + init.method + ' ' + url;
+    header.appendChild(status);
+    header.appendChild(meta);
+    responseEl.appendChild(header);
+    const pre = document.createElement('pre');
+    pre.className = 'response-body';
+    pre.textContent = pretty || '(empty body)';
+    responseEl.appendChild(pre);
+  } catch (e) {
+    responseEl.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'response-header err';
+    const status = document.createElement('span');
+    status.className = 'response-status err';
+    status.textContent = 'Network error';
+    header.appendChild(status);
+    responseEl.appendChild(header);
+    const pre = document.createElement('pre');
+    pre.className = 'response-body';
+    pre.textContent = e.message;
+    responseEl.appendChild(pre);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function applyFilter() {
+  const q = $('filter').value.trim().toLowerCase();
+  document.querySelectorAll('.endpoint').forEach(card => {
+    if (!q) { card.style.display = ''; return; }
+    const path = card.querySelector('.path').textContent.toLowerCase();
+    const sum  = card.querySelector('.summary').textContent.toLowerCase();
+    card.style.display = (path.includes(q) || sum.includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('main h2').forEach(h => {
+    let next = h.nextElementSibling;
+    let anyVisible = false;
+    while (next && next.tagName !== 'H2') {
+      if (next.classList && next.classList.contains('endpoint') && next.style.display !== 'none') {
+        anyVisible = true; break;
+      }
+      next = next.nextElementSibling;
+    }
+    h.style.display = (anyVisible || !q) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

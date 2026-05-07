@@ -13,6 +13,7 @@ import de.servicehealth.api.epa4all.proxy.AdminProxyService;
 import de.servicehealth.api.epa4all.proxy.FhirProxyService;
 import de.servicehealth.api.epa4all.proxy.IAdminProxy;
 import de.servicehealth.api.epa4all.proxy.IFhirProxy;
+import de.servicehealth.api.epa4all.proxy.RenderProxyService;
 import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.startup.StartableService;
 import de.servicehealth.vau.VauConfig;
@@ -132,6 +133,9 @@ public class EpaMultiService extends StartableService {
                     IFhirProxy fhirProxy = new FhirProxyService(
                         backend, epaConfig, vauConfig, vauFacade, epaMXBeanRegistry, maskedHeaders, maskedAttributes, epaRestFeatures
                     );
+                    RenderProxyService renderProxy = new RenderProxyService(
+                        backend, epaConfig, vauConfig, vauFacade, epaMXBeanRegistry, maskedHeaders, maskedAttributes, epaRestFeatures
+                    );
                     IAdminProxy adminProxy = new AdminProxyService(
                         backend, epaConfig, vauConfig, vauFacade, maskedHeaders, maskedAttributes
                     );
@@ -147,7 +151,8 @@ public class EpaMultiService extends StartableService {
                         entitlementsFdvApi,
                         entitlementsApi,
                         adminProxy,
-                        fhirProxy
+                        fhirProxy,
+                        renderProxy
                     );
                 } catch (Exception e) {
                     log.error("Error while instantiating EPA API", e);

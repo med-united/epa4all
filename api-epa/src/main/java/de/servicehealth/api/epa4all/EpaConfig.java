@@ -28,8 +28,11 @@ public class EpaConfig {
     @ConfigProperty(name = "medication-service.api.url")
     String medicationServiceApiUrl;
 
-    @ConfigProperty(name = "medication-service.render.url")
-    String medicationServiceRenderUrl;
+    @ConfigProperty(name = "medication-service.render.emp.url")
+    String medicationServiceRenderEmpUrl;
+
+    @ConfigProperty(name = "medication-service.render.eml.url")
+    String medicationServiceRenderEmlUrl;
 
     @ConfigProperty(name = "document-management-service.url")
     String documentManagementServiceUrl;

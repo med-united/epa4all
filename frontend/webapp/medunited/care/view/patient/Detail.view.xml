@@ -9,6 +9,8 @@
                     <Button text="{i18n>btnDownloadDocuments}" type="Emphasized" press="onDownloadDocuments" />
                     <!--  <uxap:ObjectPageHeaderActionButton text="{i18n>btnCreateMedicationplan}" hideText="false" hideIcon="true" press="onCreateMedicationPlan" /> -->
                     <Button text="{i18n>btnSeeMedicationplan}" type="Emphasized" press="onSeeMedicationPlan" />
+                    <Button text="{i18n>btnSeeMedicationPlanEmp}" type="Emphasized" press="onSeeMedicationPlanEmp" />
+                    <Button text="{i18n>btnSeeMedicationListXhtml}" type="Emphasized" press="onSeeMedicationListXhtml" />
 
                     <Button icon="sap-icon://full-screen" type="Transparent" press="handleFullScreen" tooltip="Enter Full Screen Mode" visible="{= ${Layout>/actionButtonsInfo/midColumn/fullScreen} !== null }" />
                     <Button icon="sap-icon://exit-full-screen" type="Transparent" press="handleExitFullScreen" tooltip="Exit Full Screen Mode" visible="{= ${Layout>/actionButtonsInfo/midColumn/exitFullScreen} !== null }" />

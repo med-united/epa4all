@@ -536,8 +536,20 @@ sap.ui.define([
 			this.oRouter.navTo(this.getEntityName().toLowerCase() + "-detail", {
 				"patient" : this._entity,
 				"layout": "ThreeColumnsEndExpanded",
-				"document": encodeURIComponent("/fhir/pdf?x-insurantid="+sPatientId)
+				"document": encodeURIComponent("/render/v1/eml/pdf?x-insurantid="+sPatientId)
 			});
+		},
+		onSeeMedicationPlanEmp: function(oEvent) {
+			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
+			this.oRouter.navTo(this.getEntityName().toLowerCase() + "-detail", {
+				"patient" : this._entity,
+				"layout": "ThreeColumnsEndExpanded",
+				"document": encodeURIComponent("/render/v1/emp/pdf?x-insurantid="+sPatientId)
+			});
+		},
+		onSeeMedicationListXhtml: function(oEvent) {
+			const sPatientId = this.getView().getBindingContext().getProperty("propstat/prop/displayname");
+			window.open("/render/v1/eml/xhtml?x-insurantid=" + encodeURIComponent(sPatientId), "_blank", "noopener");
 		},
 		onUploadDocuments: function () {
         	const oView = this.getView();

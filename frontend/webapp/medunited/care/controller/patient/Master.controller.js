@@ -508,7 +508,7 @@ sap.ui.define([
                 }
             });
 
-            const sPdfUrl = `/fhir/pdf?x-insurantid=${kvnr}`;
+            const sPdfUrl = `/render/v1/eml/pdf?x-insurantid=${kvnr}`;
 
             if (sPatientIndex === -1) {
                 console.warn(`Patient with KVNR '${kvnr}' is NOT currently displayed in the table. No navigation.`);
