@@ -8,10 +8,12 @@ server:
       afterMiddleware: compression
 framework:
   name: OpenUI5
-  version: 1.101.0
+  version: 1.131.11
   libraries:
     - name: sap.ui.core
     - name: sap.m
+    - name: sap.f
+    - name: sap.ui.layout
     - name: themelib_sap_fiori_3
     - name: sap.tnt
 ---
