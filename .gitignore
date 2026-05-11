@@ -69,3 +69,6 @@ node_modules/
 rest-server/frontend/
 rest-server/config/repository/
 rest-server/config/backup/
+
+# Runtime environment
+/rest-server/src/main/resources/webdav/
