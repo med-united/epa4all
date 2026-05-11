@@ -9,6 +9,8 @@ import jakarta.enterprise.event.Observes;
 public class StaticResourceHandler {
 
     void setupRoutes(@Observes Router router) {
-        router.route("/frontend/*").handler(StaticHandler.create("frontend").setIndexPage("index.html"));
+        router.route("/frontend/*").handler(
+            StaticHandler.create("frontend").setIndexPage("index.html").setMaxAgeSeconds(0)
+        );
     }
 }

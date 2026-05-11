@@ -10,17 +10,17 @@
     </parent>
 
     <artifactId>frontend</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
 
     <properties>
         <frontend.out.path>${project.basedir}/../rest-server/frontend</frontend.out.path>
+        <openui5.version>1.136.11</openui5.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.webjars</groupId>
-            <artifactId>openui5</artifactId>	
-            <version>1.115.0</version>
+            <artifactId>openui5</artifactId>
+            <version>${openui5.version}</version>
         </dependency>
     </dependencies>
 
@@ -84,14 +84,16 @@
                                 <artifactItem>
                                     <groupId>org.webjars</groupId>
                                     <artifactId>openui5</artifactId>
-                                    <version>1.115.0</version>
+                                    <version>${openui5.version}</version>
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${frontend.out.path}/webjars/openui5/1.115.0</outputDirectory>
-                                    <includes>META-INF/resources/webjars/openui5/1.115.0/**</includes>
+                                    <outputDirectory>${frontend.out.path}</outputDirectory>
+                                    <includes>META-INF/resources/webjars/openui5/${openui5.version}/resources/**
+                                    </includes>
                                     <fileMappers>
                                         <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
-                                            <pattern>^META-INF/resources/webjars/openui5/1.115.0/(.*)$</pattern>
+                                            <pattern>^META-INF/resources/webjars/openui5/${openui5.version}/(.*)$
+                                            </pattern>
                                             <replacement>$1</replacement>
                                         </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
                                     </fileMappers>
