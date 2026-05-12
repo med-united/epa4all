@@ -373,6 +373,10 @@
                                         <argument>--java-options</argument>
                                         <argument>-Dquarkus.profile=desktop</argument>
 
+                                        <!-- socat (localhost:4560) is a Docker-only sidecar; disable socket logging. -->
+                                        <argument>--java-options</argument>
+                                        <argument>-Dquarkus.log.socket.enable=false</argument>
+
                                         <argument>--java-options</argument>
                                         <argument>-Xms128m</argument>
 
