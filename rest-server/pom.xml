@@ -8,7 +8,6 @@
     </parent>
 
     <artifactId>rest-server</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
 
     <name>rest-server</name>
 
@@ -236,6 +235,187 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <!--
+                Produces a self-contained JPackage app-image for the Tauri desktop sidecar.
+                Usage: mvn package -Pdesktop
+                Output: target/rest-server/ (Linux/Windows) or target/rest-server.app/ (macOS)
+                Launcher: target/rest-server/bin/rest-server[.exe]
+
+                Does NOT affect the default build used for Docker (mvn clean install).
+            -->
+            <id>desktop</id>
+
+            <properties>
+                <!-- Ensure fast-jar packaging; native mode must not be activated together. -->
+                <quarkus.package.type>fast-jar</quarkus.package.type>
+                <!--
+                    Overridable app version for jpackage (must be numeric, e.g. 1.0.0).
+                    In CI, pass -Djpackage.app.version=X.Y.Z derived from the git tag.
+                -->
+                <jpackage.app.version>1.0.0</jpackage.app.version>
+                <!-- Overridden to jpackage.exe by the desktop-windows profile on Windows. -->
+                <jpackage.executable>${java.home}/bin/jpackage</jpackage.executable>
+            </properties>
+
+            <build>
+                <plugins>
+                    <!--
+                        Step 1 — embed frontend/ into the application classpath.
+
+                        Copying to target/classes/frontend/ before the package phase causes
+                        Quarkus to include the files in the application thin-jar (lib/main/).
+                        StaticHandler.create("frontend") then resolves them from the classpath
+                        inside the jpackage app-image without needing any filesystem path.
+                    -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>copy-frontend-for-jpackage</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.outputDirectory}/frontend</outputDirectory>
+                                    <overwrite>true</overwrite>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.basedir}/frontend</directory>
+                                            <filtering>false</filtering>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!--
+                        Step 2 — assemble the JPackage app-image.
+
+                        Uses exec-maven-plugin to invoke jpackage directly, avoiding
+                        enum-conversion bugs in the akman wrapper plugin.
+
+                        Platform notes:
+                          Linux — target/rest-server/  launcher at bin/rest-server
+                          macOS — target/rest-server.app/  launcher at Contents/MacOS/rest-server
+                          Windows — target/rest-server/  launcher at rest-server.exe
+
+                        jlink module set validated against Quarkus + Apache CXF + HAPI FHIR +
+                        BouncyCastle + UnboundID LDAP. Refine with:
+                          jdeps \-\-multi-release 21 - -ignore-missing-deps \
+                                \-\-print-module-deps \
+                                target/quarkus-app/quarkus-run.jar
+                    -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.3.0</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage-desktop</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <!--
+                                        ${jpackage.executable} defaults to ${java.home}/bin/jpackage.
+                                        On Windows the desktop-windows profile sets it to
+                                        ${java.home}/bin/jpackage.exe (sibling profile below).
+                                    -->
+                                    <executable>${jpackage.executable}</executable>
+                                    <arguments>
+                                        <!-- Produce a directory image; installers are built by Tauri -->
+                                        <argument>--type</argument>
+                                        <argument>app-image</argument>
+
+                                        <argument>--name</argument>
+                                        <argument>rest-server</argument>
+
+                                        <argument>--app-version</argument>
+                                        <argument>${jpackage.app.version}</argument>
+
+                                        <argument>--vendor</argument>
+                                        <argument>service health erx GmbH</argument>
+
+                                        <argument>--dest</argument>
+                                        <argument>${project.build.directory}</argument>
+
+                                        <!--
+                                            \-\-input: the Quarkus fast-jar output directory.
+                                            Contents are placed into the app-image's app/ subdirectory.
+                                            Includes quarkus-run.jar, lib/{boot,main}/, quarkus/,
+                                            and the frontend/ directory copied in Step 1.
+                                        -->
+                                        <argument>--input</argument>
+                                        <argument>${project.build.directory}/quarkus-app</argument>
+
+                                        <argument>--main-jar</argument>
+                                        <argument>quarkus-run.jar</argument>
+
+                                        <argument>--main-class</argument>
+                                        <argument>io.quarkus.bootstrap.runner.QuarkusEntryPoint</argument>
+
+                                        <!--
+                                            JVM options baked into the app-image launcher.
+                                            quarkus.profile=desktop activates application-desktop.properties
+                                            which disables Promtail/JMX/socket-log stack.
+                                            frontend/ is bundled in the application thin-jar (classpath),
+                                            so StaticHandler.create("frontend") resolves it without any
+                                            filesystem path.
+                                        -->
+                                        <argument>--java-options</argument>
+                                        <argument>-Dquarkus.profile=desktop</argument>
+
+                                        <argument>--java-options</argument>
+                                        <argument>-Xms128m</argument>
+
+                                        <argument>--java-options</argument>
+                                        <argument>-Xmx512m</argument>
+
+                                        <!--
+                                            jlink module set for JRE trimming.
+                                            jdk.unsupported   - sun.misc.Unsafe; required by Netty/Vert.x
+                                            java.xml.crypto   - XML Digital Signature; required by CXF WS-Security
+                                            jdk.crypto.ec     - ECDSA; required for mTLS to EPA backend
+                                            jdk.localedata    - de_DE locale; required for German healthcare data
+                                            java.desktop      - AWT font metrics; required by HAPI FHIR paths
+                                            java.security.jgss / jdk.security.jgss - Kerberos; required by LDAP
+                                            jdk.zipfs         - jar/zip FileSystemProvider; required by ClassPathUtils static init
+                                        -->
+                                        <argument>--add-modules</argument>
+                                        <argument>java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.management.rmi,java.naming,java.net.http,java.rmi,java.scripting,java.security.jgss,java.security.sasl,java.sql,java.transaction.xa,java.xml,java.xml.crypto,jdk.crypto.cryptoki,jdk.crypto.ec,jdk.httpserver,jdk.localedata,jdk.naming.dns,jdk.net,jdk.security.auth,jdk.security.jgss,jdk.unsupported,jdk.xml.dom,jdk.zipfs</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+            Auto-activated on Windows to override jpackage.executable with the .exe extension.
+            Active whenever the desktop profile is also active on a Windows build agent.
+        -->
+        <profile>
+            <id>desktop-windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <jpackage.executable>${java.home}/bin/jpackage.exe</jpackage.executable>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
