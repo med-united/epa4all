@@ -154,3 +154,7 @@ jcr.mixin.config."nt\:file"=epa:custom
   legacy cms has `/webdav` path and jcr repository has `/webdav2` path.
 
 - Since the Undertow servlet container was added to the project, It has no longer been able to support the WebJars approach for the frontend module. Its import was removed from the REST server, and the frontend module with UI5-related JavaScript sources was extracted to the static folder. Thus, Quarkus now handles it using the Vert.x StaticHandler. Please check frontend/pom.xml; everything is now extracted to the `/rest-server/frontend` folder. We need to adapt this approach for Docker deployment.
+
+## Desktop application
+
+The `desktop/` module contains a [Tauri v2](https://v2.tauri.app/) project that wraps the application into a native desktop shell for Windows, macOS, and Linux. See [`desktop/README.md`](desktop/README.md) for prerequisites and dev instructions.
