@@ -85,23 +85,76 @@ If you want to build an _über-jar_, execute the following command:
 
 The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
 
-## Creating a native executable
+## Building and running the desktop app (JPackage)
 
-You can create a native executable using:
+The `rest-server` module ships a `desktop` Maven profile that produces a self-contained
+app-image bundling a trimmed JRE 21 (via jlink). 
+
+### Prerequisites
+
+- JDK 21 (must include `jpackage` — standard in JDK 21 distributions)
 
 ```shell script
-./mvnw package -Dnative
+# If the frontend module has not been built yet, build it first:
+./mvnw -DskipTests -pl frontend install
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+### Build
+
+Run from the repository root. The `-Pdesktop` profile activates the jpackage step
+automatically after `quarkus:build` (fast-jar mode).
 
 ```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
+./mvnw -DskipTests -pl rest-server -am package -Pdesktop
 ```
 
-You can then execute your native executable with: `./target/epa-connector-1.0.0-SNAPSHOT-runner`
+To override the app version (required for CI release tagging):
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
+```shell script
+./mvnw -DskipTests -pl rest-server -am package -Pdesktop -Djpackage.app.version=1.2.3
+```
+
+### Output
+
+| Platform | App-image directory | Launcher |
+|----------|--------------------|-----------------------------|
+| Linux | `rest-server/target/rest-server/` | `bin/rest-server` |
+| macOS | `rest-server/target/rest-server.app/` | `Contents/MacOS/rest-server` |
+| Windows | `rest-server\target\rest-server\` | `rest-server.exe` |
+
+### Running the app-image directly
+
+The bundled JRE is used automatically — no `java` on PATH is needed.
+Two environment variables must be set before launching:
+
+**Linux**
+
+```shell script
+rest-server/target/rest-server/bin/rest-server
+```
+
+**macOS**
+
+```shell script
+rest-server/target/rest-server.app/Contents/MacOS/rest-server
+```
+
+**Windows (PowerShell)**
+
+```powershell
+& "rest-server\target\rest-server\rest-server.exe"
+```
+
+Once started, the UI is available at <http://localhost:8090/frontend/>.
+
+
+### Quarkus profile
+
+The app-image launcher bakes in `-Dquarkus.profile=desktop`, which activates
+`application-desktop.properties`. Create that file under
+`rest-server/src/main/resources/` to disable Promtail / JMX / socket logging for the
+desktop target without touching the Docker configuration.
+
 
 ## Related Guides
 
