@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static de.servicehealth.setup.SystemPropertyService.isPuProfile;
 import static de.servicehealth.setup.SystemPropertyService.isPuRuRefProfile;
 
 /**
@@ -68,6 +69,7 @@ public class CertDataVauAutCertSupplier implements VauAutCertSupplier {
     private final EpaConfig epaConfig;
     private final Optional<List<Boolean>> skipPerBackendConfig;
     private final boolean enabled;
+    private final boolean puProfile;
     private final ConcurrentMap<String, X509Certificate> cache = new ConcurrentHashMap<>();
     private final Map<String, Boolean> skipByBackend = new HashMap<>();
     private HttpClient httpClient;
@@ -82,6 +84,7 @@ public class CertDataVauAutCertSupplier implements VauAutCertSupplier {
         this.epaConfig = epaConfig;
         this.skipPerBackendConfig = skipPerBackendConfig;
         this.enabled = isPuRuRefProfile();
+        this.puProfile = isPuProfile();
     }
 
     @PostConstruct
@@ -115,6 +118,11 @@ public class CertDataVauAutCertSupplier implements VauAutCertSupplier {
         while (backendIter.hasNext() && flagIter.hasNext()) {
             skipByBackend.put(backendIter.next(), flagIter.next());
         }
+        if (puProfile && skipByBackend.containsValue(Boolean.TRUE)) {
+            log.warn("gematik.vau.skip-aut-cert-checks has true entries but the profile is PU "
+                + "(production): these are IGNORED. CertData is always fetched and the A_24624-01 "
+                + "cert-dependent checks always run under PU (fail-closed). Skip flags: {}", skipByBackend);
+        }
     }
 
     @Override
@@ -122,9 +130,10 @@ public class CertDataVauAutCertSupplier implements VauAutCertSupplier {
         if (!enabled) {
             return null;
         }
-        if (Boolean.TRUE.equals(skipByBackend.get(backend))) {
+        if (!puProfile && Boolean.TRUE.equals(skipByBackend.get(backend))) {
             log.warn("Skipping AUT cert fetch for backend {} (gematik.vau.skip-aut-cert-checks=true). "
-                + "Cert-dependent A_24624 checks will be bypassed.", backend);
+                + "Cert-dependent A_24624 checks will be bypassed. Honored only because the profile "
+                + "is not PU (ru/ref test environment).", backend);
             return null;
         }
         if (backend == null || certHash == null || certHash.length == 0) {

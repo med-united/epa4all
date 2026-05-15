@@ -52,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static de.servicehealth.setup.SystemPropertyService.isPuProfile;
 import static de.servicehealth.setup.SystemPropertyService.isPuRuRefProfile;
 
 /**
@@ -89,6 +90,7 @@ public class A24624Verifier {
     private final X509TrustManager trustManager;
     private final String oidEpaVau;
     private boolean enabled;
+    private boolean puProfile;
 
     @Inject
     public A24624Verifier(
@@ -105,7 +107,8 @@ public class A24624Verifier {
             Security.addProvider(new BouncyCastleProvider());
         }
         enabled = isPuRuRefProfile();
-        log.info("A_24624-01 verification enabled={} role-oid={}", enabled, oidEpaVau);
+        puProfile = isPuProfile();
+        log.info("A_24624-01 verification enabled={} puProfile={} role-oid={}", enabled, puProfile, oidEpaVau);
     }
 
     /**
@@ -119,6 +122,14 @@ public class A24624Verifier {
      * is the policy gate — it returns null for backends explicitly opted out via
      * {@code gematik.vau.skip-aut-cert-checks[i]=true}, and only ever throws on real fetch
      * failures. So a null {@code autCert} here means "intentional skip", logged as WARN.
+     * <p>
+     * <b>Fail-closed under the production profile.</b> Under {@code pu} a null
+     * {@code autCert} is never accepted: the cert-dependent checks authenticate the
+     * server, so skipping them would reduce the connection to a TLS-pinning attack.
+     * The skip flag is honored only under {@code ru}/{@code ref} (test environments
+     * where the operator-side CertData endpoint may not yet be deployed). This is the
+     * security boundary itself — it does not trust the supplier or config to have
+     * gated correctly, so a bypass flag accidentally carried into PU config has no effect.
      */
     public void verify(SignedPublicVauKeys signedKeys, X509Certificate autCert) {
         if (!enabled) {
@@ -135,8 +146,18 @@ public class A24624Verifier {
         verifyExpInFuture(signedKeys);
 
         if (autCert == null) {
+            if (puProfile) {
+                throw new A24624VerificationException(
+                    "A_24624-01 cert-dependent checks cannot be skipped under the PU (production) "
+                        + "profile: no AUT certificate is available for this backend, so the server "
+                        + "cannot be authenticated. Refusing the VAU session (fail-closed). Resolve by "
+                        + "deploying the backend's CertData endpoint (gemSpec_ePA_FdV §6.1.3 / A_24957) "
+                        + "or supplying a pinned AUT certificate out-of-band. "
+                        + "gematik.vau.skip-aut-cert-checks is ignored under PU by design.");
+            }
             log.warn("A_24624-01 cert-dependent checks SKIPPED — supplier returned no autCert "
-                + "(gematik.vau.skip-aut-cert-checks for this backend).");
+                + "(gematik.vau.skip-aut-cert-checks for this backend). Honored only because the "
+                + "profile is not PU (ru/ref test environment).");
             return;
         }
 

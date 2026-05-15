@@ -67,7 +67,11 @@ public class SystemPropertyService {
         return PURUREF_PROFILES.contains(getQuarkusProfile());
     }
 
+    public static boolean isPuProfile() {
+        return "pu".equals(getQuarkusProfile());
+    }
+
     public static String getQuarkusProfile() {
-        return ConfigProvider.getConfig().getValue("quarkus.profile", String.class).toLowerCase();
+        return ConfigProvider.getConfig().getValue("quarkus.profile", String.class).trim().toLowerCase();
     }
 }
