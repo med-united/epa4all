@@ -15,13 +15,12 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
 import static de.servicehealth.epa4all.common.TestUtils.runWithEpaBackends;
-import static de.servicehealth.folder.IFolderService.LOCAL_FOLDER;
 import static de.servicehealth.epa4all.server.rest.xds.XdsResource.XDS_DOCUMENT_PATH;
+import static de.servicehealth.folder.IFolderService.LOCAL_FOLDER;
 import static de.servicehealth.vau.VauClient.KVNR;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -49,7 +48,7 @@ public class DownloadAllEpaIT extends AbstractVsdTest {
         File[] files = TEST_FOLDER.listFiles();
         assertNotNull(files);
         assertEquals(0, files.length);
-        Set<String> epaBackends = epaConfig.getEpaBackends();
+        List<String> epaBackends = epaConfig.getEpaBackends();
         runWithEpaBackends(epaBackends, () -> {
             webdavConfig.setRootFolder(TEST_FOLDER.getAbsolutePath());
 

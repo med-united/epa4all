@@ -131,13 +131,15 @@ public class EpaMultiService extends StartableService {
                     Set<String> maskedHeaders = servicehealthConfig.getSafeMaskedHeaders();
                     Set<String> maskedAttributes = servicehealthConfig.getSafeMaskedAttributes();
                     IFhirProxy fhirProxy = new FhirProxyService(
-                        backend, epaConfig, vauConfig, vauFacade, epaMXBeanRegistry, maskedHeaders, maskedAttributes, epaRestFeatures
+                        backend, epaConfig, vauConfig, vauFacade, clientFactory, epaMXBeanRegistry,
+                        maskedHeaders, maskedAttributes, epaRestFeatures
                     );
                     RenderProxyService renderProxy = new RenderProxyService(
-                        backend, epaConfig, vauConfig, vauFacade, epaMXBeanRegistry, maskedHeaders, maskedAttributes, epaRestFeatures
+                        backend, epaConfig, vauConfig, vauFacade, clientFactory, epaMXBeanRegistry,
+                        maskedHeaders, maskedAttributes, epaRestFeatures
                     );
                     IAdminProxy adminProxy = new AdminProxyService(
-                        backend, epaConfig, vauConfig, vauFacade, maskedHeaders, maskedAttributes
+                        backend, epaConfig, vauConfig, vauFacade, clientFactory, maskedHeaders, maskedAttributes
                     );
 
                     return new EpaAPIAggregator(

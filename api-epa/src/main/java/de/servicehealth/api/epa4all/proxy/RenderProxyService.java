@@ -2,6 +2,7 @@ package de.servicehealth.api.epa4all.proxy;
 
 import de.servicehealth.api.epa4all.EpaConfig;
 import de.servicehealth.api.epa4all.jmx.EpaMXBeanRegistry;
+import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.model.FhirResponse;
 import de.servicehealth.epa4all.cxf.model.ForwardRequest;
 import de.servicehealth.vau.VauConfig;
@@ -40,6 +41,7 @@ public class RenderProxyService extends BaseProxyService {
         EpaConfig epaConfig,
         VauConfig vauConfig,
         VauFacade vauFacade,
+        ClientFactory clientFactory,
         EpaMXBeanRegistry epaMXBeanRegistry,
         Set<String> maskedHeaders,
         Set<String> maskedAttributes,
@@ -50,8 +52,8 @@ public class RenderProxyService extends BaseProxyService {
 
         String empUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderEmpUrl());
         String emlUrl = getBackendUrl(backend, epaConfig.getMedicationServiceRenderEmlUrl());
-        empClient = setup(empUrl, vauConfig, vauFacade, maskedHeaders, maskedAttributes, true, features);
-        emlClient = setup(emlUrl, vauConfig, vauFacade, maskedHeaders, maskedAttributes, true, features);
+        empClient = setup(empUrl, clientFactory, vauConfig, vauFacade, maskedHeaders, maskedAttributes, true, features);
+        emlClient = setup(emlUrl, clientFactory, vauConfig, vauFacade, maskedHeaders, maskedAttributes, true, features);
     }
 
     public Response getEmpPdf(Map<String, String> xHeaders) {

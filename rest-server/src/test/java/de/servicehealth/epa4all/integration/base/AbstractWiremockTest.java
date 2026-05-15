@@ -160,7 +160,8 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     public static void beforeAll() throws Exception {
         tempDir = Files.createTempDirectory(UUID.randomUUID().toString());
 
-        // System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+        // todo: generate wiremock cert with SAN
+        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
         System.setProperty("javax.xml.accessExternalDTD", "all");
         System.setProperty(
             "javax.xml.transform.TransformerFactory",

@@ -1,12 +1,20 @@
 package de.servicehealth.vau;
 
+import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import de.gematik.vau.lib.VauClientStateMachine;
+import de.gematik.vau.lib.crypto.KEM;
+import de.gematik.vau.lib.data.KdfKey1;
 import de.gematik.vau.lib.data.KdfKey2;
+import de.gematik.vau.lib.data.SignedPublicVauKeys;
+import de.gematik.vau.lib.data.VauMessage2;
+import de.servicehealth.gematik.A24624VerificationException;
+import de.servicehealth.gematik.A24624Verifier;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.cert.X509Certificate;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
@@ -47,8 +55,11 @@ public class VauClient {
     public static final String CLIENT_ID = "ClientID";
 
     private static final int PERMITS = 1;
+    private static final CBORMapper CBOR_MAPPER = new CBORMapper();
 
     private VauClientStateMachine vauStateMachine;
+    private final A24624Verifier a24624Verifier;
+    private final VauAutCertFetcher autCertFetcher;
 
     @Getter
     private final boolean mock;
@@ -75,11 +86,14 @@ public class VauClient {
     private final Semaphore semaphore;
     private final boolean pu;
 
-    public VauClient(boolean pu, boolean mock, int readTimeoutMs, String konnektorWorkplace) {
+    public VauClient(boolean pu, boolean mock, int readTimeoutMs, String konnektorWorkplace,
+                     A24624Verifier a24624Verifier, VauAutCertFetcher autCertFetcher) {
         this.konnektorWorkplace = konnektorWorkplace;
         this.readTimeoutMs = readTimeoutMs;
         this.mock = mock;
         this.pu = pu;
+        this.a24624Verifier = a24624Verifier;
+        this.autCertFetcher = autCertFetcher == null ? (certHash, cdv) -> null : autCertFetcher;
 
         uuid = UUID.randomUUID().toString();
         vauStateMachine = new VauClientStateMachine(pu);
@@ -129,7 +143,38 @@ public class VauClient {
     }
 
     public byte[] receiveMessage2(byte[] message2) {
-        return vauStateMachine.receiveMessage2(message2);
+        byte[] m3 = vauStateMachine.receiveMessage2(message2);
+        if (a24624Verifier != null && !mock) {
+            SignedPublicVauKeys signedKeys = extractSignedPublicVauKeys(message2);
+            X509Certificate autCert = autCertFetcher.fetch(signedKeys.getCertHash(), signedKeys.getCdv());
+            a24624Verifier.verify(signedKeys, autCert);
+        }
+        return m3;
+    }
+
+    /**
+     * Re-derive the SignedPublicVauKeys carried inside the M2 AEAD payload.
+     * lib-vau parses & decrypts these internally but does not expose them, so we
+     * repeat the AEAD decrypt using the {@link KdfKey1} that the state machine
+     * just produced. The double-decrypt is microseconds; cleaner than reaching
+     * into vendor upstream state.
+     */
+    private SignedPublicVauKeys extractSignedPublicVauKeys(byte[] message2) {
+        try {
+            VauMessage2 vauMessage2 = CBOR_MAPPER.readerFor(VauMessage2.class).readValue(message2);
+            KdfKey1 kdfKey1 = vauStateMachine.getKdfClientKey1();
+            if (kdfKey1 == null) {
+                throw new A24624VerificationException(
+                    "VauClientStateMachine.kdfClientKey1 is null after receiveMessage2 — cannot decrypt M2 AEAD payload"
+                );
+            }
+            byte[] inner = KEM.decryptAead(kdfKey1.getServerToClient(), vauMessage2.getAeadCt());
+            return CBOR_MAPPER.readerFor(SignedPublicVauKeys.class).readValue(inner);
+        } catch (A24624VerificationException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new A24624VerificationException("Failed to extract SignedPublicVauKeys from M2 AEAD payload", e);
+        }
     }
 
     public void receiveMessage4(byte[] message4) {

@@ -21,7 +21,6 @@ import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +31,7 @@ public abstract class BaseProxyService {
 
     protected WebClient setup(
         String url,
+        ClientFactory clientFactory,
         VauConfig vauConfig,
         VauFacade vauFacade,
         Set<String> maskedHeaders,
@@ -62,7 +62,7 @@ public abstract class BaseProxyService {
         List<Interceptor<? extends Message>> inInterceptors = includeLogging
             ? List.of(new LoggingInInterceptor(), new CxfVauReadInterceptor(vauFacade))
             : List.of(new CxfVauReadInterceptor(vauFacade));
-        ClientFactory.initClient(
+        clientFactory.initClient(
             webClient.getConfiguration(),
             connectionTimeoutMs,
             outInterceptors,

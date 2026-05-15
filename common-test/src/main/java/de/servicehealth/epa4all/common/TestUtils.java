@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -115,7 +116,7 @@ public class TestUtils {
         });
     }
 
-    public static void runWithEpaBackends(Set<String> backends, ITAction action) throws Exception {
+    public static void runWithEpaBackends(Collection<String> backends, ITAction action) throws Exception {
         timed("ePA backends", "run test", () -> {
             if (backends.parallelStream().allMatch(TestUtils::isBackendReachable)) {
                 backends.forEach(b -> log.info(String.format("[%s] Connected", b)));

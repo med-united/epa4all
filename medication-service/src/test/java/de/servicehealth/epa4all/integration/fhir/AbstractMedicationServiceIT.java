@@ -10,11 +10,18 @@ import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Ratio;
 import org.junit.jupiter.api.BeforeEach;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.SecureRandom;
 import java.util.Objects;
 import java.util.stream.Stream;
 
 import static de.servicehealth.epa4all.medication.fhir.restful.extension.render.AbstractRenderClient.PDF_EXT;
+import static de.servicehealth.utils.SSLUtils.SslContextType.TLS;
 
 public abstract class AbstractMedicationServiceIT {
 
@@ -49,5 +56,27 @@ public abstract class AbstractMedicationServiceIT {
         medication.setText(new Narrative().setStatus(Narrative.NarrativeStatus.ADDITIONAL));
         medication.setStatus(Medication.MedicationStatus.INACTIVE);
         return medication;
+    }
+
+    /**
+     * SSL context backed by the bundled wiremock self-signed CA — replaces the previous
+     * trust-all helper. The truststore lives in {@code common-test} resources so any module
+     * with that test dep can reach wiremock TLS without needing an in-codebase trust-all path.
+     */
+    protected SSLContext createTestSSLContext() throws Exception {
+        SSLContext sslContext = SSLContext.getInstance(TLS.name());
+        try (InputStream in = Thread.currentThread().getContextClassLoader()
+            .getResourceAsStream("test-truststore/test-truststore.p12")) {
+            if (in == null) {
+                throw new IllegalStateException("test-truststore/test-truststore.p12 not on classpath "
+                    + "(common-test must be a test-scope dependency)");
+            }
+            KeyStore ks = KeyStore.getInstance("PKCS12");
+            ks.load(in, "password".toCharArray());
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(ks);
+            sslContext.init(null, tmf.getTrustManagers(), new SecureRandom());
+            return sslContext;
+        }
     }
 }

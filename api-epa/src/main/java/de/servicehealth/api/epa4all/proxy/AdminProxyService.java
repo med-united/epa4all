@@ -3,6 +3,7 @@ package de.servicehealth.api.epa4all.proxy;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.servicehealth.api.epa4all.EpaConfig;
+import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.cxf.model.ForwardRequest;
 import de.servicehealth.vau.VauConfig;
 import de.servicehealth.vau.VauFacade;
@@ -37,11 +38,12 @@ public class AdminProxyService extends BaseProxyService implements IAdminProxy {
         EpaConfig epaConfig,
         VauConfig vauConfig,
         VauFacade vauFacade,
+        ClientFactory clientFactory,
         Set<String> maskedHeaders,
         Set<String> maskedAttributes
     ) throws Exception {
         String adminServiceUrl = getBackendUrl(backend, epaConfig.getAdminServiceUrl());
-        adminClient = setup(adminServiceUrl, vauConfig, vauFacade, maskedHeaders, maskedAttributes, false, List.of());
+        adminClient = setup(adminServiceUrl, clientFactory, vauConfig, vauFacade, maskedHeaders, maskedAttributes, false, List.of());
     }
 
     @Override

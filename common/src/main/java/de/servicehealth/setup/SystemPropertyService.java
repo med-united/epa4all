@@ -17,7 +17,7 @@ public class SystemPropertyService {
 
     private static final Logger log = LoggerFactory.getLogger(SystemPropertyService.class.getName());
 
-    private static final Set<String> PROD_PROFILES = Set.of("prod", "pu");
+    private static final Set<String> PURUREF_PROFILES = Set.of("pu", "ru", "ref");
 
     private static final String ALL = "all";
     private static final String NONE = "none";
@@ -29,7 +29,15 @@ public class SystemPropertyService {
 
         String dtdAccess = ConfigProvider.getConfig().getValue("access.external.dtd", String.class).toLowerCase();
         setPropertyVerbose("javax.xml.accessExternalDTD", normalize(dtdAccess));
-        setPropertyVerbose("jdk.internal.httpclient.disableHostnameVerification", String.valueOf(!isProdProfile()));
+
+        setPropertyVerbose(
+            "javax.xml.parsers.DocumentBuilderFactory",
+            "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl"
+        );
+        setPropertyVerbose(
+            "javax.xml.parsers.SAXParserFactory",
+            "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl"
+        );
     }
 
     private void setPropertyVerbose(String name, String value) {
@@ -55,11 +63,15 @@ public class SystemPropertyService {
         };
     }
 
-    public static boolean isProdProfile() {
-        return PROD_PROFILES.contains(getQuarkusProfile());
+    public static boolean isPuRuRefProfile() {
+        return PURUREF_PROFILES.contains(getQuarkusProfile());
+    }
+
+    public static boolean isPuProfile() {
+        return "pu".equals(getQuarkusProfile());
     }
 
     public static String getQuarkusProfile() {
-        return ConfigProvider.getConfig().getValue("quarkus.profile", String.class).toLowerCase();
+        return ConfigProvider.getConfig().getValue("quarkus.profile", String.class).trim().toLowerCase();
     }
 }

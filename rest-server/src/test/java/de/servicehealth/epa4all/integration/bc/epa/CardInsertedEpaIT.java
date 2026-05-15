@@ -33,7 +33,6 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
@@ -97,7 +96,7 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
 
     @Test
     public void epaPdfDocumentIsSentToCardlink() throws Exception {
-        Set<String> epaBackends = epaConfig.getEpaBackends();
+        List<String> epaBackends = epaConfig.getEpaBackends();
         runWithEpaBackends(epaBackends, () -> {
             try (Session session = ContainerProvider.getWebSocketContainer().connectToServer(Client.class, uri)) {
 
