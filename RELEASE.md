@@ -11,9 +11,9 @@ version, the Docker image tag, and the GitHub Release name.
 
 ## Cutting a release
 
-1. Land the change on `main` via the normal PR flow. Day-to-day builds
-   (local, CI, PRs) carry the **last released** date (the committed
-   `<revision>` default) — nothing is published until a tag is pushed.
+1. Land the change on `main` via the normal PR flow. **No POM edits** — the
+   committed `<revision>` is only a static fallback for local/CI/PR builds;
+   nothing is published until a tag is pushed.
 2. Tag the commit with **today's date** (derived automatically, never typed):
 
    ```bash
@@ -38,18 +38,21 @@ version, the Docker image tag, and the GitHub Release name.
   `manual-<short-sha>`. Pushes **only** `epa4all:manual-<sha>`; does **not**
   move `:latest`, create a Release, or touch submodules.
 
-Every build resolves `${revision}` to a concrete value — local/CI/PR → last
-released date, date tag → that date, manual → `manual-<sha>`. No image ever
-ships the literal `${revision}`.
+Every build resolves `${revision}` to a concrete value — local/CI/PR → the
+static committed fallback, date tag → that date (build-time `-Drevision`
+override, POMs untouched), manual → `manual-<sha>`. No image ever ships the
+literal `${revision}`. The date lives **only in built artifacts**, never
+committed back to the epa4all POMs.
 
 ## How it works under the hood
 
 ### Maven (`${revision}`)
 
-Every POM uses the CI-friendly `${revision}` property. Default = the last
-released date, set in the root `pom.xml` and — for the parent-less modules
-`lib-jcr`, `lib-cetp`, `lib-vau`, `api-telematik` — also locally. The workflow
-overrides it with `-Drevision=<tag>`; each release bumps the committed default.
+Every POM uses the CI-friendly `${revision}` property. Its committed value is a
+**static fallback** for local/CI/PR builds, set in the root `pom.xml` and — for
+the parent-less modules `lib-jcr`, `lib-cetp`, `lib-vau`, `api-telematik` —
+also locally. A release **overrides it at build time** with `-Drevision=<tag>`;
+the committed POMs are never modified by the workflow.
 
 `flatten-maven-plugin` (`resolveCiFriendliesOnly`) rewrites each installed /
 deployed POM so it carries the **resolved** version instead of the literal

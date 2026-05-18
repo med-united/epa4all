@@ -11,8 +11,8 @@
 
     <properties>
         <!-- No epa4all parent here; the release workflow's reactor-wide
-             -Drevision=<date tag> still overrides this default. Last released
-             version (date); bumped each release. -->
+             -Drevision=<date tag> still overrides this at build time.
+             Static fallback for local/CI/PR builds; never auto-committed. -->
         <revision>2026-05-18</revision>
 
         <java.version>21</java.version>

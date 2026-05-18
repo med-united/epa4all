@@ -10,9 +10,9 @@
     <version>${revision}</version>
 
     <properties>
-        <!-- Last released version (date). Day-to-day/local/PR builds carry this;
-             the release workflow overrides it with -Drevision=<date tag>, and
-             each release bumps this default to the new date. -->
+        <!-- Static fallback for local/CI/PR builds only. A release overrides it
+             at build time via -Drevision=<date tag>; the workflow never edits
+             or commits this value (the release date lives only in artifacts). -->
         <revision>2026-05-18</revision>
         <!-- Effective versions of the git-submodule libraries. Independent of
              ${revision}: the release workflow overrides each with the submodule's
