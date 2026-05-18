@@ -28,6 +28,10 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # `secrets` cannot be referenced in a step-level `if:`, so surface its
+    # presence as a job env that the stamping step can test.
+    env:
+      HAS_SUBMODULE_PAT: ${{ secrets.SUBMODULE_PAT != '' }}
 
     steps:
     - name: Checkout (full history + submodules)
@@ -62,6 +66,11 @@ jobs:
         echo "Mode: ${MODE} | Version: ${VERSION}"
         echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
         echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+    - name: Fetch submodule tags
+      # change-detection in the next step compares against each submodule's
+      # own <revision> tag, which a recursive checkout does not always fetch.
+      run: git submodule foreach --quiet 'git fetch --tags --quiet origin || true'
 
     - name: Compute effective submodule versions
       id: subver
@@ -144,7 +153,7 @@ jobs:
       # that changed this release (effective version == release version), bump
       # its committed <revision> and create the matching tag in its own repo,
       # so external consumers and the next release's detection see it.
-      if: ${{ steps.ver.outputs.mode == 'release' && secrets.SUBMODULE_PAT != '' }}
+      if: ${{ steps.ver.outputs.mode == 'release' && env.HAS_SUBMODULE_PAT == 'true' }}
       env:
         SUBMODULE_PAT: ${{ secrets.SUBMODULE_PAT }}
         VERSION: ${{ steps.ver.outputs.version }}
