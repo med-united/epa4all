@@ -68,13 +68,15 @@ properties.
 ### Submodules — change-gated independent versions
 
 `lib-cetp`, `lib-vau`, `api-telematik` are git submodules (separate
-`med-united` repos). The **source of truth for a submodule's version is its own
-committed `<revision>` plus a matching tag in its own repo**. Per release the
-workflow, for each submodule:
+`med-united` repos). They are always built at the **pinned gitlink SHA** that
+the tagged epa4all commit points to — never `main`/HEAD of the submodule. The
+**source of truth for a submodule's version is its own committed `<revision>`
+plus a matching tag in its own repo**. Per release the workflow, for each
+submodule:
 
-1. reads its `<revision>` (e.g. `2026-05-18`);
-2. if the submodule's checked-out tree still matches that `<revision>` tag's
-   tree → **unchanged**, keeps that version;
+1. reads its `<revision>` (e.g. `2026-05-18`) from the pinned commit;
+2. if the pinned tree still matches that `<revision>` tag's tree →
+   **unchanged**, keeps that version;
 3. otherwise → **changed**, adopts the current release version, and (when
    `SUBMODULE_PAT` is set) commits the `<revision>` bump + creates the matching
    tag in the submodule's own repo;
@@ -85,6 +87,31 @@ workflow, for each submodule:
 So an unchanged submodule **retains its previous date**; a changed one moves to
 the release date and is stamped back for external consumers.
 
+### When `SUBMODULE_PAT` is not set
+
+The epa4all release still succeeds and is internally consistent. The only thing
+skipped is the cross-repo write-back. Consequences:
+
+- **Unchanged submodule** — no impact; it correctly keeps its `<revision>`
+  version every release.
+- **Changed submodule** — it builds at the release date *this* time, but its
+  own repo's `<revision>`/tag is never advanced. So **every subsequent release
+  also sees it as "changed"** and re-versions it to that release's date, until
+  someone advances its baseline manually. The "unchanged ⇒ retain previous
+  version" guarantee only holds once the baseline is current.
+
+Manual baseline bump (do this in the submodule's own repo after it changed, if
+`SUBMODULE_PAT` is unset), using the date of the release that shipped it:
+
+```bash
+cd lib-cetp                       # or lib-vau / api-telematik
+sed -i 's:<revision>[^<]*</revision>:<revision>2026-05-25</revision>:' pom.xml
+git commit -am "Release 2026-05-25"
+git tag 2026-05-25
+git push origin HEAD:main 2026-05-25      # api-telematik: HEAD:OPB5
+cd .. && git add lib-cetp && git commit -m "Bump lib-cetp pointer"
+```
+
 **Baseline:** all three submodules were seeded at `<revision>2026-05-18</revision>`
 with a matching `2026-05-18` tag in each repo (`lib-cetp`/`lib-vau` on `main`,
 `api-telematik` on `OPB5`).
@@ -94,7 +121,7 @@ with a matching `2026-05-18` tag in each repo (`lib-cetp`/`lib-vau` on `main`,
 | Secret | Required | Purpose |
 |--------|----------|---------|
 | `DOCKERHUB` | yes | Docker Hub password for `servicehealtherxgmbh` (image push) |
-| `SUBMODULE_PAT` | optional | PAT with write access to `med-united/{lib-cetp,lib-vau,api-telematik}`. Enables automatic submodule `<revision>` bump + tag on releases that changed a submodule. Unset → that step is skipped; do it manually. |
+| `SUBMODULE_PAT` | optional | PAT (Contents: read/write on `med-united/{lib-cetp,lib-vau,api-telematik}`). Enables automatic submodule `<revision>` bump + tag on releases that changed a submodule. Unset → step skipped; a changed submodule then re-versions every release until its baseline is bumped manually (see "When `SUBMODULE_PAT` is not set"). |
 
 `GITHUB_TOKEN` (auto, `permissions: contents: write`) creates the GitHub
 Release. It **cannot** write to the submodule repos — hence the separate
