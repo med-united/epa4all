@@ -6,11 +6,10 @@
     <parent>
         <groupId>de.servicehealth.epa4all</groupId>
         <artifactId>epa4all</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>medication-service</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
 
     <name>medication-service</name>
 
@@ -22,12 +21,12 @@
         <dependency>
             <groupId>de.servicehealth.epa4all.libvau</groupId>
             <artifactId>lib-vau</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${lib-vau.version}</version>
         </dependency>
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>common</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -132,7 +131,7 @@
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>common-test</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 

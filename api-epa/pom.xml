@@ -6,11 +6,10 @@
     <parent>
         <groupId>de.servicehealth.epa4all</groupId>
         <artifactId>epa4all</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>api-epa</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
 
     <name>api-epa</name>
 
@@ -18,27 +17,27 @@
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>cxf-rt-transports-http-vau</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>information-service</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>authorization-service</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>entitlement-service</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>de.servicehealth</groupId>
             <artifactId>api-telematik</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${api-telematik.version}</version>
         </dependency>
 		<dependency>
 		    <groupId>com.google.guava</groupId>

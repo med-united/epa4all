@@ -6,11 +6,10 @@
     <parent>
         <groupId>de.servicehealth.epa4all</groupId>
         <artifactId>epa4all</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>information-service</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
 
     <name>information-service</name>
 
@@ -50,7 +49,7 @@
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>cxf-rt-transports-http-vau</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
@@ -82,7 +81,7 @@
         <dependency>
             <groupId>de.servicehealth.epa4all</groupId>
             <artifactId>common-test</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 

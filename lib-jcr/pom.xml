@@ -6,10 +6,15 @@
 
     <groupId>de.servicehealth.epa4all</groupId>
     <artifactId>lib-jcr</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <properties>
+        <!-- No epa4all parent here; the release workflow's reactor-wide
+             -Drevision=<date tag> still overrides this default. Last released
+             version (date); bumped each release. -->
+        <revision>2026-05-18</revision>
+
         <java.version>21</java.version>
         <quarkus.platform.version>3.17.2</quarkus.platform.version>
     </properties>
@@ -21,6 +26,33 @@
 
     <build>
         <plugins>
+            <plugin>
+                <!-- Resolves ${revision} in the installed/deployed POMs of
+                     lib-jcr and its modules (inherited by jcr-runtime/jcr-deployment). -->
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

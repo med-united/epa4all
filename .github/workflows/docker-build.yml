@@ -1,17 +1,112 @@
-name: Build and Push Docker Image
+name: Release (date tag → Maven artifacts + Docker image)
 
+# Fires when a date-version tag is pushed, e.g.:
+#   git tag 2026-05-07   && git push origin 2026-05-07     # first release of the day
+#   git tag 2026-05-07-2 && git push origin 2026-05-07-2   # 2nd, 3rd, ... same day
+#
+# The glob matches both the bare date and the -N same-day suffix.
+#
+# workflow_dispatch supports two manual modes:
+#   * tag given      -> re-run the release for that existing date tag
+#   * tag left blank -> ad-hoc image build of the selected ref at version
+#                       manual-<short-sha>; pushes ONLY :manual-<sha>
+#                       (never :latest), no GitHub Release, no submodule stamp.
 on:
+  push:
+    tags:
+      - '20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing date tag to re-release. Leave blank for an ad-hoc manual build.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write   # create the GitHub Release
 
 jobs:
-  build-and-push:
+  release:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
+    - name: Checkout (full history + submodules)
       uses: actions/checkout@v4
       with:
+        # Full history and all tags are required to walk previous date tags
+        # and read each submodule's gitlink SHA at those tags.
+        fetch-depth: 0
         submodules: recursive
+
+    - name: Resolve version and mode
+      id: ver
+      # mode=release : tag push, or manual dispatch with an existing tag
+      # mode=manual  : manual dispatch with no tag (ad-hoc build, not a release)
+      run: |
+        set -euo pipefail
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          IN_TAG="${{ github.event.inputs.tag }}"
+          if [ -n "$IN_TAG" ]; then
+            MODE="release"
+            VERSION="$IN_TAG"
+            git checkout --quiet "refs/tags/${VERSION}"
+            git submodule update --init --recursive
+          else
+            MODE="manual"
+            VERSION="manual-$(git rev-parse --short HEAD)"
+          fi
+        else
+          MODE="release"
+          VERSION="${GITHUB_REF_NAME}"
+        fi
+        echo "Mode: ${MODE} | Version: ${VERSION}"
+        echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
+        echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+    - name: Compute effective submodule versions
+      id: subver
+      # Source of truth = each submodule's own committed <revision> plus a
+      # matching tag in its own repo (useful for other projects consuming it).
+      # If the submodule's checked-out tree still matches that <revision> tag it
+      # is unchanged and keeps that version; otherwise it changed and adopts the
+      # current epa4all release version (and is bumped/tagged back by the
+      # "Stamp changed submodules" step when SUBMODULE_PAT is configured).
+      run: |
+        set -euo pipefail
+        VERSION="${{ steps.ver.outputs.version }}"
+
+        revision_of() {
+          # <revision> from the submodule's pom at the pinned commit
+          sed -n 's:.*<revision>\(.*\)</revision>.*:\1:p' "$1/pom.xml" | head -1
+        }
+
+        eff_for() {
+          local sub="$1" rev
+          rev="$(revision_of "$sub")"
+          if [ -z "$rev" ]; then echo "$VERSION"; return; fi
+          # Does the submodule repo have a tag named after its <revision>?
+          if git -C "$sub" rev-parse -q --verify "refs/tags/${rev}^{tree}" >/dev/null 2>&1; then
+            if [ "$(git -C "$sub" rev-parse 'HEAD^{tree}')" = "$(git -C "$sub" rev-parse "refs/tags/${rev}^{tree}")" ]; then
+              echo "$rev"          # unchanged since its recorded version
+            else
+              echo "$VERSION"      # changed -> adopt this release's version
+            fi
+          else
+            echo "$VERSION"        # no baseline tag yet -> treat as changed/new
+          fi
+        }
+
+        EFF_CETP="$(eff_for lib-cetp)"
+        EFF_VAU="$(eff_for lib-vau)"
+        EFF_TEL="$(eff_for api-telematik)"
+        echo "lib-cetp      -> ${EFF_CETP}"
+        echo "lib-vau       -> ${EFF_VAU}"
+        echo "api-telematik -> ${EFF_TEL}"
+        {
+          echo "cetp=${EFF_CETP}"
+          echo "vau=${EFF_VAU}"
+          echo "tel=${EFF_TEL}"
+        } >> "$GITHUB_OUTPUT"
 
     - name: Set up JDK 21
       uses: actions/setup-java@v4
@@ -20,8 +115,80 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Build with Maven
-      run: ./mvnw -DskipTests -T1C clean install
+    - name: Build submodules at their effective versions
+      # Each submodule has no epa4all dependencies, so it builds in isolation
+      # with its own -Drevision and installs to the local repo. An unchanged
+      # submodule is rebuilt from an identical source under its previous date —
+      # equivalent bytes, prior coordinates retained.
+      run: |
+        set -euo pipefail
+        ./mvnw -B -ntp -DskipTests -Drevision="${{ steps.subver.outputs.cetp }}" -pl lib-cetp      clean install
+        ./mvnw -B -ntp -DskipTests -Drevision="${{ steps.subver.outputs.vau  }}" -pl lib-vau       clean install
+        ./mvnw -B -ntp -DskipTests -Drevision="${{ steps.subver.outputs.tel  }}" -pl api-telematik clean install
+
+    - name: Build the rest of the reactor at the release version
+      # Submodules are excluded (already installed above) and referenced via
+      # their effective-version properties.
+      run: |
+        set -euo pipefail
+        ./mvnw -B -ntp -DskipTests \
+          -Drevision="${{ steps.ver.outputs.version }}" \
+          -Dlib-cetp.version="${{ steps.subver.outputs.cetp }}" \
+          -Dlib-vau.version="${{ steps.subver.outputs.vau }}" \
+          -Dapi-telematik.version="${{ steps.subver.outputs.tel }}" \
+          -pl '!lib-cetp,!lib-vau,!api-telematik' \
+          -T1C clean install
+
+    - name: Stamp changed submodules back to their repos (optional)
+      # Only runs if a cross-repo write token is configured. For each submodule
+      # that changed this release (effective version == release version), bump
+      # its committed <revision> and create the matching tag in its own repo,
+      # so external consumers and the next release's detection see it.
+      if: ${{ steps.ver.outputs.mode == 'release' && secrets.SUBMODULE_PAT != '' }}
+      env:
+        SUBMODULE_PAT: ${{ secrets.SUBMODULE_PAT }}
+        VERSION: ${{ steps.ver.outputs.version }}
+        EFF_CETP: ${{ steps.subver.outputs.cetp }}
+        EFF_VAU: ${{ steps.subver.outputs.vau }}
+        EFF_TEL: ${{ steps.subver.outputs.tel }}
+      run: |
+        set -euo pipefail
+        git config --global user.name  "epa4all-release[bot]"
+        git config --global user.email "release@epa4all.noreply"
+
+        stamp() {
+          local sub="$1" eff="$2" repo="$3"
+          if [ "$eff" != "$VERSION" ]; then
+            echo "$sub unchanged ($eff) - no stamp"; return
+          fi
+          local branch
+          branch="$(git config -f .gitmodules "submodule.${sub}.branch")"
+          ( cd "$sub"
+            sed -i "s:<revision>[^<]*</revision>:<revision>${VERSION}</revision>:" pom.xml
+            git add pom.xml
+            git commit -m "Release ${VERSION} (version bumped by epa4all)"
+            git tag "$VERSION"
+            git push "https://x-access-token:${SUBMODULE_PAT}@github.com/${repo}.git" \
+              "HEAD:${branch}" "refs/tags/${VERSION}"
+          )
+          echo "$sub stamped & tagged ${VERSION} on ${branch}"
+        }
+
+        stamp lib-cetp      "$EFF_CETP" med-united/lib-cetp
+        stamp lib-vau       "$EFF_VAU"  med-united/lib-vau
+        stamp api-telematik "$EFF_TEL"  med-united/api-telematik
+
+    - name: Compute image tags
+      id: tags
+      # release -> :latest + :<version> ; manual -> :<version> only (no :latest)
+      run: |
+        set -euo pipefail
+        V="${{ steps.ver.outputs.version }}"
+        if [ "${{ steps.ver.outputs.mode }}" = "release" ]; then
+          printf 'list<<EOF\nservicehealtherxgmbh/epa4all:latest\nservicehealtherxgmbh/epa4all:%s\nEOF\n' "$V" >> "$GITHUB_OUTPUT"
+        else
+          printf 'list<<EOF\nservicehealtherxgmbh/epa4all:%s\nEOF\n' "$V" >> "$GITHUB_OUTPUT"
+        fi
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -32,17 +199,33 @@ jobs:
         username: servicehealtherxgmbh
         password: ${{ secrets.DOCKERHUB }}
 
-    - name: Generate timestamp
-      id: timestamp
-      run: echo "value=$(TZ=Europe/Berlin date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
-
     - name: Build and push Docker image
       uses: docker/build-push-action@v6
       with:
         context: .
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: |
-          servicehealtherxgmbh/epa4all:latest
-          servicehealtherxgmbh/epa4all:${{ steps.timestamp.outputs.value }}
         no-cache: true
+        tags: ${{ steps.tags.outputs.list }}
+        labels: |
+          org.opencontainers.image.version=${{ steps.ver.outputs.version }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+    - name: Create GitHub Release
+      if: ${{ steps.ver.outputs.mode == 'release' }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        VERSION="${{ steps.ver.outputs.version }}"
+        if gh release view "$VERSION" >/dev/null 2>&1; then
+          echo "Release $VERSION already exists; skipping."
+        else
+          # --generate-notes derives the changelog from commits since the
+          # previous release (EPA-XXX-prefixed messages).
+          gh release create "$VERSION" \
+            --title "$VERSION" \
+            --generate-notes \
+            --target "${{ github.sha }}"
+        fi
