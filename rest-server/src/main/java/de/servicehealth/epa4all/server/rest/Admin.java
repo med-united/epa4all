@@ -20,7 +20,8 @@ public class Admin {
     @Path("shutdown")
     @Operation(description = "Shutdown epa4all service")
     public Response shutdown() {
-        Quarkus.asyncExit();
+        // do not shutdown system
+        // Quarkus.asyncExit();
         return Response.accepted().build();
     }
 }
