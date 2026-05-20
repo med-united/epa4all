@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.nio.file.Path;
 import java.util.Date;
 
 import static de.servicehealth.epa4all.server.rest.fileserver.paging.SortBy.Earliest;
@@ -85,6 +86,17 @@ public class FileResource extends AbstractResource {
         destination = destination.replace(host, "");
 
         File destFile = new File(davFolder + separator + destination);
+
+        // EPA-535 Path Traversal Check
+        Path davPath  = new File(davFolder).toPath().toAbsolutePath().normalize();
+        Path destPath = destFile.toPath().toAbsolutePath().normalize();
+        
+        if (!destPath.startsWith(davPath)) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity("Destination outside of allowed folder")
+                    .build();
+        }
+
         boolean overwrite = overwriteStr.equalsIgnoreCase("T");
 
         return logResponse("MOVE", uriInfo, move(originalDestination, destFile, overwrite));
