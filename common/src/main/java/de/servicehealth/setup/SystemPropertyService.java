@@ -29,15 +29,6 @@ public class SystemPropertyService {
 
         String dtdAccess = ConfigProvider.getConfig().getValue("access.external.dtd", String.class).toLowerCase();
         setPropertyVerbose("javax.xml.accessExternalDTD", normalize(dtdAccess));
-
-        setPropertyVerbose(
-            "javax.xml.parsers.DocumentBuilderFactory",
-            "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl"
-        );
-        setPropertyVerbose(
-            "javax.xml.parsers.SAXParserFactory",
-            "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl"
-        );
     }
 
     private void setPropertyVerbose(String name, String value) {
