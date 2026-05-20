@@ -347,7 +347,6 @@ if docker run \
 	--name epa4all \
 	--publish 8090:8090 \
 	$port_mappings \
-	--publish 5005:5005 \
 	--publish 3102:3102 \
 	--publish 20001:20001 \
 	--publish 8787:8787 \

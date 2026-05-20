@@ -59,7 +59,7 @@ COPY --chown=1001 rest-server/src/main/resources/jcr/ /opt/epa4all/jcr/
 COPY --chown=1001 rest-server/config/konnektoren/8588/user.properties /opt/epa4all/config/konnektoren/8588/user.properties
 COPY --chown=1001 production_deployment/promtail.yaml /opt/epa4all/promtail
 
-ENV JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5045"
+ENV JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 ENV QUARKUS_CONFIG_LOCATIONS=/opt/epa4all/config
 
 RUN chmod "+x" /opt/epa4all/run.sh
