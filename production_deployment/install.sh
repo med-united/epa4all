@@ -349,7 +349,6 @@ if docker run \
 	$port_mappings \
 	--publish 3102:3102 \
 	--publish 20001:20001 \
-	--publish 8787:8787 \
 	--volume "$SECRET_VOLUME" \
 	--volume "$CONFIG_VOLUME" \
 	--volume epa4all-webdav:/opt/epa4all/webdav \
