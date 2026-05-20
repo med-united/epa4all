@@ -50,7 +50,7 @@ public class Konnektor extends AbstractResource {
                 IUserConfigurations userConfigurations = kc.getUserConfigurations();
                 // TODO username/password?
                 return new KonnektorUserConfig(
-                    userConfigurations.getClientCertificate(),
+                    /* userConfigurations.getClientCertificate() */"**********",
                     userConfigurations.getClientSystemId(),
                     userConfigurations.getConnectorBaseURL(),
                     userConfigurations.getMandantId(),
