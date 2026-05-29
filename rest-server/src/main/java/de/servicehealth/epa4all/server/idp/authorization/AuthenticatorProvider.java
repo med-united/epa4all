@@ -25,22 +25,28 @@ public class AuthenticatorProvider {
 
     @Produces
     @Singleton
-    AuthenticatorClient getAuthenticatorClient(@ConfigProperty(name = "idp.kind", defaultValue = "epa") String kind) {
+    AuthenticatorClient getAuthenticatorClient(
+        @ConfigProperty(name = "idp.kind", defaultValue = "epa") String kind,
+        @ConfigProperty(name = "idp.client.id", defaultValue = "GEMIncenereSud1PErUR") String idpClientId,
+        @ConfigProperty(name = "tss.idp.client.id", defaultValue = "116117TerminserviceApp") String tssIdpClientId
+    ) {
         UnirestInstance unirestInstance = getUnirestInstance();
 
         if ("tss".equals(kind)) {
-            return new TSSAuthenticatorClient(unirestInstance);
+            return new TSSAuthenticatorClient(unirestInstance, tssIdpClientId);
         } else {
-            return new AuthenticatorClient(unirestInstance);
+            return new EpaAuthenticatorClient(unirestInstance, idpClientId);
         }
     }
 
     @Produces
     @Singleton
     @TSSClient
-    AuthenticatorClient produce() {
+    AuthenticatorClient produce(
+        @ConfigProperty(name = "tss.idp.client.id", defaultValue = "116117TerminserviceApp") String tssIdpClientId
+    ) {
         UnirestInstance unirestInstance = getUnirestInstance();
-        return new TSSAuthenticatorClient(unirestInstance);
+        return new TSSAuthenticatorClient(unirestInstance, tssIdpClientId);
     }
 
     private UnirestInstance getUnirestInstance() {
