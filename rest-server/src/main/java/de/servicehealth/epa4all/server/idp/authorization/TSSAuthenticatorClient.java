@@ -50,13 +50,13 @@ import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 
 public class TSSAuthenticatorClient extends AuthenticatorClient {
 
-    private static final String UserAgent = "ere.health/1.0.0 IncentergyGmbH/GEMIncenereS2QmFN83P";
-
     private final UnirestInstance unirestInstance;
+    private final String userAgent;
 
-    public TSSAuthenticatorClient(UnirestInstance unirestInstance) {
+    public TSSAuthenticatorClient(UnirestInstance unirestInstance, String userAgent) {
         super(unirestInstance);
         this.unirestInstance = unirestInstance;
+        this.userAgent = userAgent;
     }
 
     @Override
@@ -80,7 +80,7 @@ public class TSSAuthenticatorClient extends AuthenticatorClient {
                 .field("key_verifier", keyVerifierToken.getRawString())
                 .field("redirect_uri", tokenRequest.getRedirectUrl())
                 .contentType(APPLICATION_FORM_URLENCODED)
-                .header(USER_AGENT, UserAgent)
+                .header(USER_AGENT, userAgent)
                 .header(ACCEPT, APPLICATION_JSON);
 
         final HttpResponse<JsonNode> tokenResponse = beforeTokenCallback.apply(request).asJson();
@@ -172,7 +172,7 @@ public class TSSAuthenticatorClient extends AuthenticatorClient {
     ) {
         final HttpResponse<String> discoveryDocumentResponse =
             Unirest.get(discoveryDocumentUrl)
-                .header(USER_AGENT, UserAgent)
+                .header(USER_AGENT, userAgent)
                 .asString();
         final JsonWebToken discoveryDocument = new JsonWebToken(discoveryDocumentResponse.getBody());
 
@@ -210,7 +210,7 @@ public class TSSAuthenticatorClient extends AuthenticatorClient {
 
     private X509Certificate retrieveServerCertFromLocation(final String uri) {
         final HttpResponse<JsonNode> pukAuthResponse =
-            Unirest.get(uri).header(USER_AGENT, UserAgent).asJson();
+            Unirest.get(uri).header(USER_AGENT, userAgent).asJson();
         final JSONObject keyObject = pukAuthResponse.getBody().getObject();
         final String verificationCertificate =
             keyObject.getJSONArray(X509_CERTIFICATE_CHAIN.getJoseName()).getString(0);
@@ -219,7 +219,7 @@ public class TSSAuthenticatorClient extends AuthenticatorClient {
 
     private PublicKey retrieveServerPuKFromLocation(final String uri) {
         final HttpResponse<JsonNode> pukAuthResponse =
-            Unirest.get(uri).header(USER_AGENT, UserAgent).asJson();
+            Unirest.get(uri).header(USER_AGENT, userAgent).asJson();
         final JSONObject keyObject = pukAuthResponse.getBody().getObject();
         try {
             return getPublicKey(keyObject);
