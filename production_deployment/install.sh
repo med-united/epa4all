@@ -162,10 +162,6 @@ command -v openssl >/dev/null || {
 	echo "EPA4All: ERROR: openssl is required on the host"
 	exit 1
 }
-command -v keytool >/dev/null || {
-	echo "EPA4All: ERROR: keytool is required on the host"
-	exit 1
-}
 
 konnektor_url=$(get_config_param 'konnektor.default.url')
 konnektor_host=$(echo "$konnektor_url" | sed 's|https://||' | cut -d':' -f1)
@@ -189,12 +185,11 @@ if [[ ! -s "$cert_pem" ]]; then
 fi
 
 rm -f "$CONFIG_DIR/secret/truststore.p12"
-if keytool -importcert -trustcacerts -noprompt \
-	-alias "konnektor-$konnektor_host" \
-	-file "$cert_pem" \
-	-keystore "$CONFIG_DIR/secret/truststore.p12" \
-	-storetype PKCS12 \
-	-storepass "$truststore_pass" >/dev/null 2>&1; then
+if openssl pkcs12 -export -nokeys \
+	-in "$cert_pem" \
+	-caname "konnektor-$konnektor_host" \
+	-out "$CONFIG_DIR/secret/truststore.p12" \
+	-passout pass:"$truststore_pass" 2>/dev/null; then
 	echo "EPA4All: Created truststore.p12 in secret directory"
 else
 	echo "EPA4All: ERROR: Failed to create truststore.p12"
