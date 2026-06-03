@@ -171,7 +171,7 @@ konnektor_url=$(get_config_param 'konnektor.default.url')
 konnektor_host=$(echo "$konnektor_url" | sed 's|https://||' | cut -d':' -f1)
 konnektor_port=$(echo "$konnektor_url" | sed 's|https://||' | cut -d':' -f2 | cut -d'/' -f1)
 konnektor_port=${konnektor_port:-443}
-truststore_pass=$(get_config_param 'konnektor.truststore.password')
+truststore_pass=$(get_config_param 'konnektor.self-signed.truststore.password')
 truststore_pass=${truststore_pass:-changeit}
 
 echo "EPA4All: Fetching certificate from $konnektor_host:$konnektor_port ..."
