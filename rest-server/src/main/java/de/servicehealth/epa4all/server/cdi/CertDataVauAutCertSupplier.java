@@ -164,6 +164,7 @@ public class CertDataVauAutCertSupplier implements VauAutCertSupplier {
         try {
             HttpResponse<byte[]> resp = httpClient.send(
                 HttpRequest.newBuilder(URI.create(url))
+                    .header("x-useragent", epaConfig.getEpaUserAgent())
                     .timeout(HTTP_TIMEOUT)
                     .GET()
                     .build(),

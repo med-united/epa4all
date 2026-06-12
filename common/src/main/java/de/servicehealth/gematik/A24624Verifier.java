@@ -219,11 +219,31 @@ public class A24624Verifier {
             throw new A24624VerificationException("Failed to build expected OCSP CertificateID", e);
         }
         for (SingleResp sr : basicOcsp.getResponses()) {
-            if (!expected.equals(sr.getCertID())) {
+            CertificateID got = sr.getCertID();
+            // Compare CertID components, not CertificateID.equals(). BC's equals() compares the
+            // DER-encoded ASN.1 of the whole CertID including the AlgorithmIdentifier; SHA-1 can
+            // legally be encoded as `AlgorithmIdentifier(1.3.14.3.2.26, NULL)` or with parameters
+            // absent. Both forms hash identically but are not byte-equal, so equals() returns false
+            // on a fully-conformant response from an operator that uses the other form (observed
+            // against BITMARCK ePA in 2026-06). RFC 6960 / TUC_PKI_006 require matching the
+            // (hashAlg, issuerNameHash, issuerKeyHash, serial) tuple, which is what we do here.
+            boolean match = expected.getHashAlgOID().equals(got.getHashAlgOID())
+                && expected.getSerialNumber().equals(got.getSerialNumber())
+                && Arrays.equals(expected.getIssuerNameHash(), got.getIssuerNameHash())
+                && Arrays.equals(expected.getIssuerKeyHash(), got.getIssuerKeyHash());
+            if (!match) {
                 throw new A24624VerificationException(
-                    "OCSP SingleResponse CertID does not match AUT cert (serial=" + autCert.getSerialNumber() + ")");
+                    "OCSP SingleResponse CertID does not match AUT cert (serial=" + autCert.getSerialNumber()
+                        + ", expected=" + describeCertId(expected)
+                        + ", got=" + describeCertId(got) + ")");
             }
         }
+    }
+
+    private static String describeCertId(CertificateID id) {
+        return "serial=" + id.getSerialNumber()
+            + " issuerNameHash=" + java.util.HexFormat.of().formatHex(id.getIssuerNameHash())
+            + " issuerKeyHash=" + java.util.HexFormat.of().formatHex(id.getIssuerKeyHash());
     }
 
     private X509CertificateHolder findIssuerHolder(BasicOCSPResp basicOcsp, X509Certificate autCert) {
