@@ -56,11 +56,6 @@ import static de.servicehealth.setup.SystemPropertyService.isPuRuRefProfile;
  * as defence in depth.
  * <p>
  * No-op in non-PU/RU/REF profiles ({@link A24624Verifier} is also off there).
- * <p>
- * <b>EPA-529:</b> a backend whose {@code gematik.vau.skip-aut-cert-checks[i]=true} returns
- * {@code null} (no fetch) in EVERY profile, including pu. Under pu this is a deliberate,
- * dangerous bypass — the VAU server is left unauthenticated and advisory GHSA-vvh7-x6c7-46gh
- * is re-opened for that backend. See the WARN logs in {@code get()} / {@code loadSkipMap()}.
  */
 @ApplicationScoped
 public class CertDataVauAutCertSupplier implements VauAutCertSupplier {
@@ -124,11 +119,9 @@ public class CertDataVauAutCertSupplier implements VauAutCertSupplier {
             skipByBackend.put(backendIter.next(), flagIter.next());
         }
         if (puProfile && skipByBackend.containsValue(Boolean.TRUE)) {
-            log.warn("DANGER (EPA-529): gematik.vau.skip-aut-cert-checks has true entries AND the "
-                + "profile is PU (production). As of EPA-529 these ARE HONORED under PU: the A_24624-01 "
-                + "cert-dependent checks are bypassed and the VAU server is NOT authenticated for the "
-                + "affected backend(s). This re-opens advisory GHSA-vvh7-x6c7-46gh (server-auth bypass) "
-                + "for those backends. Skip flags: {}", skipByBackend);
+            log.warn("gematik.vau.skip-aut-cert-checks has true entries but the profile is PU "
+                + "(production): these are IGNORED. CertData is always fetched and the A_24624-01 "
+                + "cert-dependent checks always run under PU (fail-closed). Skip flags: {}", skipByBackend);
         }
     }
 
@@ -137,16 +130,10 @@ public class CertDataVauAutCertSupplier implements VauAutCertSupplier {
         if (!enabled) {
             return null;
         }
-        if (Boolean.TRUE.equals(skipByBackend.get(backend))) {
-            if (puProfile) {
-                log.warn("DANGER (EPA-529): skipping AUT cert fetch for backend {} under the PU "
-                    + "(production) profile (gematik.vau.skip-aut-cert-checks=true). The VAU server is "
-                    + "NOT cryptographically authenticated for this backend — a network MITM can hijack "
-                    + "the session (see advisory GHSA-vvh7-x6c7-46gh). Only OCSP/exp checks run.", backend);
-            } else {
-                log.warn("Skipping AUT cert fetch for backend {} (gematik.vau.skip-aut-cert-checks=true). "
-                    + "Cert-dependent A_24624 checks will be bypassed (ru/ref test environment).", backend);
-            }
+        if (!puProfile && Boolean.TRUE.equals(skipByBackend.get(backend))) {
+            log.warn("Skipping AUT cert fetch for backend {} (gematik.vau.skip-aut-cert-checks=true). "
+                + "Cert-dependent A_24624 checks will be bypassed. Honored only because the profile "
+                + "is not PU (ru/ref test environment).", backend);
             return null;
         }
         if (backend == null || certHash == null || certHash.length == 0) {
