@@ -19,6 +19,9 @@ public class FeatureConfig implements IFeatureConfig, EpaFeatureConfig {
     @ConfigProperty(name = "feature.cetp.enabled", defaultValue = "true")
     boolean cetpEnabled;
 
+    @ConfigProperty(name = "feature.popp.enabled", defaultValue = "false")
+    boolean poppEnabled;
+
     @ConfigProperty(name = "feature.cardlink.enabled", defaultValue = "false")
     boolean cardlinkEnabled;
 

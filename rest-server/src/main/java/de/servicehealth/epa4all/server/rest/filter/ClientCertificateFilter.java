@@ -2,27 +2,22 @@ package de.servicehealth.epa4all.server.rest.filter;
 
 import de.servicehealth.epa4all.server.cdi.TelematikIdLiteral;
 import de.servicehealth.feature.EpaFeatureConfig;
-import io.quarkus.resteasy.runtime.standalone.QuarkusResteasySecurityContext;
 import io.quarkus.security.AuthenticationFailedException;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.ext.Provider;
-import org.jboss.resteasy.core.interception.jaxrs.PostMatchContainerRequestContext;
-import org.jboss.resteasy.core.interception.jaxrs.PreMatchContainerRequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLSession;
-import java.lang.reflect.Field;
 import java.security.cert.X509Certificate;
-import java.util.Map;
 import java.util.stream.Stream;
 
-@SuppressWarnings("rawtypes")
 @Provider
 @ApplicationScoped
 public class ClientCertificateFilter implements ContainerRequestFilter {
@@ -32,23 +27,15 @@ public class ClientCertificateFilter implements ContainerRequestFilter {
     @Inject
     EpaFeatureConfig featureConfig;
 
+    @Inject
+    RoutingContext routingContext;
+
     @Override
     public void filter(ContainerRequestContext requestContext) {
-        if (!featureConfig.isMutualTlsEnabled()) {
-            return;
-        }
-        if (requestContext instanceof PostMatchContainerRequestContext postContext) {
+        if (featureConfig.isMutualTlsEnabled()) {
             AuthenticationFailedException unauthorized = new AuthenticationFailedException("Unauthorized");
             try {
-                Field contextDataMap = PreMatchContainerRequestContext.class.getDeclaredField("contextDataMap");
-                contextDataMap.setAccessible(true);
-                Map map = (Map) contextDataMap.get(postContext);
-                QuarkusResteasySecurityContext context = (QuarkusResteasySecurityContext) map.get(jakarta.ws.rs.core.SecurityContext.class);
-
-                Field request = QuarkusResteasySecurityContext.class.getDeclaredField("request");
-                request.setAccessible(true);
-                HttpServerRequest httpRequest = (HttpServerRequest) request.get(context);
-
+                HttpServerRequest httpRequest = routingContext.request();
                 SSLSession sslSession = httpRequest.sslSession();
                 X509Certificate[] clientCerts = (X509Certificate[]) sslSession.getPeerCertificates();
                 if (clientCerts != null && clientCerts.length > 0) {
