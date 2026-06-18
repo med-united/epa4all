@@ -354,6 +354,7 @@ print_step "EPA4All: STEP 7: Running EPA4All container"
 quarkus_profile=$(get_config_param 'quarkus.profile')
 mask_sensitive=$(get_config_param 'mask.sensitive')
 vsd_test_mode=$(get_config_param 'vsd.test.mode')
+popp_authorization_filter_enabled=$(get_config_param 'popp.authorization.filter.enabled')
 if [[ -z "$docker_tag" ]]; then
 	echo "EPA4All: ERROR: docker.tag not found in epa4all.properties"
 	exit 1
@@ -396,6 +397,7 @@ if docker run \
 	--env QUARKUS_PROFILE="$quarkus_profile" \
 	--env MASK_SENSITIVE="$mask_sensitive" \
 	--env VSD_TEST_MODE="$vsd_test_mode" \
+	--env POPP_AUTHORIZATION_FILTER_ENABLED="$popp_authorization_filter_enabled" \
 	servicehealtherxgmbh/epa4all:"$docker_tag" >/dev/null; then
 	echo "EPA4All: EPA4All container started"
 else

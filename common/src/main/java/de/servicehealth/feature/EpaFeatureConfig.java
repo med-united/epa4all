@@ -6,8 +6,6 @@ public interface EpaFeatureConfig {
 
     boolean isCetpEnabled();
 
-    boolean isPoppEnabled();
-
     boolean isCardlinkEnabled();
 
     boolean isNativeFhirEnabled();

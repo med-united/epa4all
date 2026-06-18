@@ -1,6 +1,6 @@
 package de.servicehealth.epa4all.server.rest.filter;
 
-import de.servicehealth.feature.EpaFeatureConfig;
+import de.servicehealth.epa4all.server.popp.PoppConfig;
 import io.quarkus.security.AuthenticationFailedException;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
@@ -25,14 +25,14 @@ import static de.servicehealth.vau.VauClient.X_INSURANT_ID;
 public class PoppValidationFilter implements ContainerRequestFilter {
 
     @Inject
-    EpaFeatureConfig featureConfig;
+    PoppConfig poppConfig;
 
     @Inject
     RoutingContext routingContext;
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
-        if (featureConfig.isPoppEnabled()) {
+        if (poppConfig.isPoppAuthorizationFilterEnabled()) {
             try {
                 HttpServerRequest httpRequest = routingContext.request();
                 String insurantId = httpRequest.getParam(X_INSURANT_ID);

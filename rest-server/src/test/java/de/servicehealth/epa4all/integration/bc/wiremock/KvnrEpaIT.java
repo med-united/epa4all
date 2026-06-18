@@ -2,7 +2,7 @@ package de.servicehealth.epa4all.integration.bc.wiremock;
 
 import de.servicehealth.epa4all.common.profile.WireMockProfile;
 import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
-import de.servicehealth.epa4all.server.FeatureConfig;
+import de.servicehealth.epa4all.server.popp.PoppConfig;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -26,11 +26,11 @@ import static org.mockito.Mockito.when;
 public class KvnrEpaIT extends AbstractWiremockTest {
 
     @Inject
-    protected FeatureConfig featureConfig;
+    protected PoppConfig poppConfig;
 
     @AfterEach
     public void afterEachEx() {
-        QuarkusMock.installMockForType(featureConfig, FeatureConfig.class);
+        QuarkusMock.installMockForType(poppConfig, PoppConfig.class);
     }
 
     @Test
@@ -56,9 +56,9 @@ public class KvnrEpaIT extends AbstractWiremockTest {
 
     @SuppressWarnings("SameParameterValue")
     private void enablePoppFeature(boolean enabled) {
-        FeatureConfig featureConfig = mock(FeatureConfig.class);
-        when(featureConfig.isPoppEnabled()).thenReturn(enabled);
-        QuarkusMock.installMockForType(featureConfig, FeatureConfig.class);
+        PoppConfig poppConfig = mock(PoppConfig.class);
+        when(poppConfig.isPoppAuthorizationFilterEnabled()).thenReturn(enabled);
+        QuarkusMock.installMockForType(poppConfig, PoppConfig.class);
     }
 
     @Test
