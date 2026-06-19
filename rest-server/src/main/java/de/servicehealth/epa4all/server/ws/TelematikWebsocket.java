@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.ws;
 
+import de.servicehealth.epa4all.server.ws.payload.WsTelematikPayload;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.websocket.OnClose;
@@ -26,10 +27,10 @@ public class TelematikWebsocket {
 
     Map<String, Session> sessions = new ConcurrentHashMap<>();
 
-    public void onTransfer(@ObservesAsync WebSocketPayload webSocketPayload) {
-        String telematikId = webSocketPayload.getTelematikId();
+    public void onTransfer(@ObservesAsync WsTelematikPayload wsTelematikPayload) {
+        String telematikId = wsTelematikPayload.getTelematikId();
         Session session = sessions.get(telematikId);
-        sendMessage(session, telematikId, webSocketPayload);
+        sendMessage(session, telematikId, wsTelematikPayload);
     }
 
     private <T> void sendMessage(Session session, String telematikId, T message) {

@@ -1,5 +1,6 @@
 package de.servicehealth.epa4all.server.ws;
 
+import de.servicehealth.epa4all.server.ws.payload.WsCetpPayload;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.websocket.OnClose;
@@ -17,13 +18,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unused")
 @ServerEndpoint(value = "/ws/cetp", encoders = {JsonEncoder.class})
 @ApplicationScoped
-public class CETPWebsocket {
+public class CetpWebsocket {
 
     private static final Logger log = LoggerFactory.getLogger(TelematikWebsocket.class.getName());
 
     Map<Session, Boolean> sessions = new ConcurrentHashMap<>();
 
-    public void onTransfer(@ObservesAsync CETPPayload cetpPayload) {
+    public void onTransfer(@ObservesAsync WsCetpPayload cetpPayload) {
         sendMessage(cetpPayload);
     }
 

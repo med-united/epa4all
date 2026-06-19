@@ -53,12 +53,11 @@ public class CETPDecoder extends ByteToMessageDecoder {
             throw new IllegalArgumentException("Invalid CETP header");
         }
 
-        int lengthOfMessage = in.readInt();
-        String message = in.readCharSequence(lengthOfMessage, UTF_8).toString();
-        log.info(message);
+        String eventXml = in.readCharSequence(in.readInt(), UTF_8).toString();
+        log.info(eventXml);
         try {
-            Event eventType = (Event) jaxbContext.createUnmarshaller().unmarshal(new StringReader(message));
-            out.add(new DecodeResult(eventMapper.toDomain(eventType), configurations));
+            Event eventType = (Event) jaxbContext.createUnmarshaller().unmarshal(new StringReader(eventXml));
+            out.add(new DecodeResult(eventMapper.toDomain(eventType), configurations, eventXml));
         } catch (JAXBException e) {
             log.error("Failed to unmarshal CETP message", e);
         }

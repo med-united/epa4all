@@ -11,7 +11,7 @@ import de.gematik.vau.lib.data.VauPublicKeys;
 import de.gematik.ws.conn.eventservice.v7.Event;
 import de.gematik.ws.fa.vsdm.vsd.v5.UCPersoenlicheVersichertendatenXML;
 import de.health.service.cetp.IKonnektorClient;
-import de.health.service.cetp.cardlink.CardlinkClient;
+import de.health.service.cetp.AbstractCETPEventHandler;
 import de.health.service.cetp.config.KonnektorConfig;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
 import de.health.service.cetp.domain.cardterminal.EgkHandle;
@@ -23,7 +23,6 @@ import de.servicehealth.epa4all.cxf.client.ClientFactory;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.VauMessage1Transformer;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.VauMessage3Transformer;
-import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
@@ -45,12 +44,15 @@ import de.servicehealth.vau.VauFacade;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusMock;
 import jakarta.inject.Inject;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
+import java.io.StringWriter;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,7 +82,6 @@ import static de.servicehealth.utils.ServerUtils.makeOSPath;
 import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
 import static wiremock.com.google.common.net.HttpHeaders.CONTENT_TYPE;
 
 public abstract class AbstractWiremockTest extends AbstractWebdavIT {
@@ -428,10 +429,8 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         return new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    protected CardlinkClient receiveCardInsertedEvent(EpaFileDownloader mockDownloader, String kvnr) throws CetpFault {
-        CardlinkClient cardlinkClient = mock(CardlinkClient.class);
-        CETPEventHandler cetpServerHandler = eventHandlerProvider.get(mockDownloader, cardlinkClient, null);
+    protected void receiveCardInsertedEvent(EpaFileDownloader mockDownloader, String kvnr) throws CetpFault {
+        AbstractCETPEventHandler cetpServerHandler = eventHandlerProvider.get(mockDownloader, null);
         EmbeddedChannel channel = new EmbeddedChannel(cetpServerHandler);
 
         String slotIdValue = "3";
@@ -441,7 +440,6 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         EgkHandle egkHandle = konnektorClient.getEgkHandle(defaultUserConfig, kvnr);
         channel.writeOneInbound(decode(konnektorConfig, slotIdValue, ctIdValue, egkHandle.cardHandle()));
         channel.pipeline().fireChannelReadComplete();
-        return cardlinkClient;
     }
 
     protected DecodeResult decode(
@@ -471,6 +469,18 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         message.getParameter().add(parameterCtId);
         message.getParameter().add(parameterCardType);
         event.setMessage(message);
-        return new DecodeResult(eventMapper.toDomain(event), konnektorConfig.getUserConfigurations());
+        return new DecodeResult(
+            eventMapper.toDomain(event), konnektorConfig.getUserConfigurations(), marshalEvent(event)
+        );
+    }
+
+    private String marshalEvent(Event event) {
+        try {
+            StringWriter sw = new StringWriter();
+            JAXBContext.newInstance(Event.class).createMarshaller().marshal(event, sw);
+            return sw.toString();
+        } catch (JAXBException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
