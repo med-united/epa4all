@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.ws;
+package de.servicehealth.epa4all.server.ws.payload;
 
 import jakarta.json.bind.annotation.JsonbProperty;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import java.util.Map;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CETPPayload {
+public class WsCetpPayload {
 
     @JsonbProperty("smcbHandle")
     String smcbHandle;

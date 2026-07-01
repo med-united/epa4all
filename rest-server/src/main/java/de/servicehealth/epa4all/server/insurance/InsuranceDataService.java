@@ -1,6 +1,5 @@
 package de.servicehealth.epa4all.server.insurance;
 
-import de.gematik.ws.conn.cardterminalservice.v1.Slot;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.domain.cardterminal.EgkHandle;
 import de.health.service.config.api.UserRuntimeConfig;
@@ -15,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.math.BigInteger;
 import java.time.Instant;
 
 import static de.servicehealth.folder.IFolderService.LOCAL_FOLDER;

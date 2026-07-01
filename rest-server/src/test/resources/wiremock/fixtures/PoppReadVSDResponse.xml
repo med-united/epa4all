@@ -1,0 +1,16 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+   <SOAP-ENV:Header/>
+   <SOAP-ENV:Body>
+      <ns2:ReadVSDResponse xmlns:ns2="http://ws.gematik.de/conn/vsds/VSDService/v5.2">
+         <ns2:PersoenlicheVersichertendaten>H4sIAAAAAAAAAI1STU/DMAz9K1Xu1F1HBUNuEDAEQ4whBoPbFFqzViQpStLx8etxBwyGOHCx42f7+ckO7r8YHS3J+bqxuejFiYjIFk1Z20UuRtPJ1u5uNtjqZSLyQdlS6cZSLl7Ji32JN0fzS25tyOq6qGjW0bB3gbiSzd34PDoajuez46vpaHKRiyxOuwk80/pcVCE87QE8+3hBRoX6MS4JHhQsfWk6A0uuFxJ/8LqNyM5HQ3mdpEm2kyb9bYTfOVzJsxJP6L51wbOq1sjeYNDnphRhA8ZZ46wyJM9aXStLTPcJ4IUqqtVr3HoWYZS1CGuQ2X1RaSqqIG870nWE0+CU92QPSkfsWVDjg6Y6vKlKyzTtJxnCBoYTF+SpMixsgdAFeM6Ll3jbVNZzkVa8XXJ8I5JDhL9ghI+Wz+ny0CnzQJrTEUMxwlcCT1XrbWsML7a3nSD8iNdV3+Lha52weRL4x0eQ71ekP4prAgAA</ns2:PersoenlicheVersichertendaten>
+         <ns2:AllgemeineVersicherungsdaten>H4sIAAAAAAAAALVS30/CMBD+V5a+Q7vFBTBdCYIxZAJGFI0vS92Obdl2M21B5a93I2g2QtAXX9p8d/f9SHt8+FHk1haUTkv0iN1lxAIMyyjF2CPT5aLT77uDju0SSxuJkcxLBI98giZDwR/HwSjPYyggRVjVImECaoOxjqQBfJ7dWuPJLFhd3y+ni7lH3K5TG1SWqD2SGPN2Sem77lYK0qRZNwK6lnSro6I+6LaaJ4L/CBtQDVTb6DDZmJ3gVxCniMJhjsMumM3pocD9UldBjJIQ1+QWzACxEhE2s92e69oDTk/226xcAkagqicCMTliNHt8LgsQDxAmmGagLF9JrBQzqTVwum/y0auq+3vSn5P2XMb+I6n/nYqeiUWP8cnveNloaXYprkvdAjf+qvWdKJURdkPkUGpygkOaSj/Y858Wd4I5nNY3p+cm6bE1bQWj7cWiv2+z+AIFMg/ELwMAAA==</ns2:AllgemeineVersicherungsdaten>
+         <ns2:GeschuetzteVersichertendaten>H4sIAAAAAAAAAIVPXWvCQBD8K+HezWohoGXvpGgpQq3QUBFf5EjWXPByKblN2ubX90ILtSj4Mvs1zMzi/LOyUUeNL2snxSQei4hcVuelK6RYpZvRdJrMRpNERJ61y7WtHUnxRV7MFb4tDk/kM9MS90zbQSUz1DAFYoDd+jlaLNeH7eNrutq8SJHEd4NBsHReCsP8fg/w4eOCKs3lKc4Jjho6n1cDQBf4QuG+7bWxrSt8iMCtV5j+1DHCb4dwhUSWTlx24TluNBWk8IGanm3IqGYIfwPutXH6/PZ/EWwuteD28+obUb40hF4BAAA=</ns2:GeschuetzteVersichertendaten>
+         <ns2:VSD_Status>
+            <ns2:Status>0</ns2:Status>
+            <ns2:Timestamp>2023-02-07T14:50:18.000Z</ns2:Timestamp>
+            <ns2:Version>5.2.0</ns2:Version>
+         </ns2:VSD_Status>
+         <ns2:Pruefungsnachweis>H4sIAAAAAAAA/w2M3QqCMBhAXyV8AL+5oj/mQNyKgk3ROaKbKLT8T1L8e/q8OReHwyG+XLlMPDQPwosnbcMykYmM1ViVdWsbadc1R4ChNT9J9eyywowTeD+hb+MKmnqAfukNSlRIMcJrtMN7tMW7zYHAoginmACnxL9TzZxJsGgtcmeWjGNPOZbIIyzzVGt2fo1zVvIrFEqq7BZZwVd7Z81+vSsmfzgVNoFlskDSP8uj5+izAAAA</ns2:Pruefungsnachweis>
+      </ns2:ReadVSDResponse>
+   </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

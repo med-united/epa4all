@@ -14,6 +14,7 @@ import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.model.EntitlementRequestType;
+import de.servicehealth.model.EntitlementRequestTypeV2;
 import de.servicehealth.model.ValidToResponseType;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -25,7 +26,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.UUID;
 
+import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.extractInsurantId;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 @ApplicationScoped
@@ -99,6 +102,20 @@ public class EntitlementService {
         Instant instant = response.getValidTo().toInstant();
         insuranceDataService.setEntitlementExpiry(instant, telematikId, insurantId);
         return instant;
+    }
+
+    public ValidToResponseType setEntitlementV2(String telematikId, String poppToken) throws EpaNotFoundException {
+        String insurantId = extractInsurantId(poppToken).toString();
+        EpaAPI epaAPI = epaMultiService.findEpaAPI(insurantId);
+        EntitlementRequestTypeV2 entitlementRequestTypeV2 = new EntitlementRequestTypeV2();
+        entitlementRequestTypeV2.setPopp(poppToken);
+        ValidToResponseType response = epaAPI.getEntitlementsAPI().setEntitlementPsV2(
+            insurantId, epaConfig.getEpaUserAgent(), entitlementRequestTypeV2, UUID.randomUUID()
+        );
+        log.info("Updating local entitlement expiry with {}", response.getValidTo());
+        Instant instant = response.getValidTo().toInstant();
+        insuranceDataService.setEntitlementExpiry(instant, telematikId, insurantId);
+        return response;
     }
 
     public static synchronized String extractHCV(InsuranceData insuranceData) {

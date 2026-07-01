@@ -15,7 +15,7 @@ import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.api.epa4all.EpaConfig;
 import de.servicehealth.api.epa4all.EpaMultiService;
 import de.servicehealth.epa4all.server.FeatureConfig;
-import de.servicehealth.epa4all.server.cetp.CETPEventHandler;
+import de.servicehealth.epa4all.server.cetp.cardlink.CardlinkCetpHandler;
 import de.servicehealth.epa4all.server.cetp.KonnektorClient;
 import de.servicehealth.epa4all.server.cetp.mapper.event.EventMapper;
 import de.servicehealth.epa4all.server.config.DefaultUserConfig;
@@ -27,8 +27,8 @@ import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
 import de.servicehealth.epa4all.server.idp.vaunp.VauNpProvider;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.vsd.VsdService;
-import de.servicehealth.epa4all.server.ws.CETPPayload;
-import de.servicehealth.epa4all.server.ws.WebSocketPayload;
+import de.servicehealth.epa4all.server.ws.payload.WsCetpPayload;
+import de.servicehealth.epa4all.server.ws.payload.WsTelematikPayload;
 import de.servicehealth.folder.WebdavConfig;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.quarkus.test.junit.QuarkusMock;
@@ -94,10 +94,10 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
     protected EntitlementService entitlementService;
 
     @Inject
-    protected jakarta.enterprise.event.Event<WebSocketPayload> webSocketPayloadEvent;
+    protected jakarta.enterprise.event.Event<WsTelematikPayload> webSocketPayloadEvent;
 
     @Inject
-    protected jakarta.enterprise.event.Event<CETPPayload> cetpPayloadEvent;
+    protected jakarta.enterprise.event.Event<WsCetpPayload> cetpPayloadEvent;
 
     @Inject
     protected InsuranceDataService insuranceDataService;
@@ -167,7 +167,7 @@ public abstract class AbstractVsdTest extends AbstractWebdavIT {
         CardlinkClient cardlinkClient = mock(CardlinkClient.class);
         RuntimeConfig runtimeConfig = new RuntimeConfig(konnektorDefaultConfig, defaultUserConfig.getUserConfigurations());
 
-        CETPEventHandler cetpServerHandler = new CETPEventHandler(
+        CardlinkCetpHandler cetpServerHandler = new CardlinkCetpHandler(
             webSocketPayloadEvent, cetpPayloadEvent, insuranceDataService, entitlementService, epaFileDownloader,
             konnektorClient, epaMultiService, cardlinkClient, runtimeConfig, featureConfig, epaCallGuard
         );

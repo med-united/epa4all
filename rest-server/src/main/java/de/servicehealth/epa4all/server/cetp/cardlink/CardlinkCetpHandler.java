@@ -1,4 +1,4 @@
-package de.servicehealth.epa4all.server.cetp;
+package de.servicehealth.epa4all.server.cetp.cardlink;
 
 import de.health.service.cetp.AbstractCETPEventHandler;
 import de.health.service.cetp.IKonnektorClient;
@@ -16,8 +16,8 @@ import de.servicehealth.epa4all.server.filetracker.download.FileDownload;
 import de.servicehealth.epa4all.server.insurance.InsuranceData;
 import de.servicehealth.epa4all.server.insurance.InsuranceDataService;
 import de.servicehealth.epa4all.server.rest.EpaContext;
-import de.servicehealth.epa4all.server.ws.CETPPayload;
-import de.servicehealth.epa4all.server.ws.WebSocketPayload;
+import de.servicehealth.epa4all.server.ws.payload.WsCetpPayload;
+import de.servicehealth.epa4all.server.ws.payload.WsTelematikPayload;
 import ihe.iti.xds_b._2007.RetrieveDocumentSetResponseType;
 import jakarta.enterprise.event.Event;
 import jakarta.ws.rs.core.Response;
@@ -30,7 +30,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static de.health.service.cetp.utils.Utils.printException;
 import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.print;
@@ -52,24 +51,25 @@ import static de.servicehealth.vau.VauClient.X_KONNEKTOR;
 import static de.servicehealth.vau.VauClient.X_USER_AGENT;
 import static de.servicehealth.vau.VauClient.X_WORKPLACE;
 
-public class CETPEventHandler extends AbstractCETPEventHandler {
+public class CardlinkCetpHandler extends AbstractCETPEventHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(CETPEventHandler.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(CardlinkCetpHandler.class.getName());
 
-    private final Event<WebSocketPayload> webSocketPayloadEvent;
-    private final Event<CETPPayload> cetpPayloadEvent;
+    private final Event<WsTelematikPayload> webSocketPayloadEvent;
+    private final Event<WsCetpPayload> cetpPayloadEvent;
     private final InsuranceDataService insuranceDataService;
     private final EntitlementService entitlementService;
     private final EpaFileDownloader epaFileDownloader;
     private final IKonnektorClient konnektorClient;
     private final EpaMultiService epaMultiService;
+    private final CardlinkClient cardlinkClient;
     private final RuntimeConfig runtimeConfig;
     private final FeatureConfig featureConfig;
     private final EpaCallGuard epaCallGuard;
 
-    public CETPEventHandler(
-        Event<WebSocketPayload> webSocketPayloadEvent,
-        Event<CETPPayload> cetpPayloadEvent,
+    public CardlinkCetpHandler(
+        Event<WsTelematikPayload> webSocketPayloadEvent,
+        Event<WsCetpPayload> cetpPayloadEvent,
         InsuranceDataService insuranceDataService,
         EntitlementService entitlementService,
         EpaFileDownloader epaFileDownloader,
@@ -80,8 +80,6 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         FeatureConfig featureConfig,
         EpaCallGuard epaCallGuard
     ) {
-        super(cardlinkClient);
-
         this.webSocketPayloadEvent = webSocketPayloadEvent;
         this.cetpPayloadEvent = cetpPayloadEvent;
         this.insuranceDataService = insuranceDataService;
@@ -89,6 +87,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         this.epaFileDownloader = epaFileDownloader;
         this.konnektorClient = konnektorClient;
         this.epaMultiService = epaMultiService;
+        this.cardlinkClient = cardlinkClient;
         this.runtimeConfig = runtimeConfig;
         this.featureConfig = featureConfig;
         this.epaCallGuard = epaCallGuard;
@@ -99,24 +98,21 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         return "CARD/INSERTED";
     }
 
-    private void logCardInsertedEvent(Map<String, String> paramsMap, String correlationId) {
-        String paramsStr = paramsMap.entrySet().stream()
-            .filter(p -> !p.getKey().equals("CardHolderName"))
-            .map(p -> String.format("key=%s value=%s", p.getKey(), p.getValue())).collect(Collectors.joining(", "));
-
-        log.info(String.format("[%s] Card inserted: params: %s", correlationId, paramsStr));
+    @Override
+    protected Logger getLog() {
+        return log;
     }
 
     @Override
-    protected void processEvent(IUserConfigurations configurations, Map<String, String> paramsMap) {
+    protected void processEvent(IUserConfigurations configurations, Map<String, String> paramsMap, String eventXml) {
         String correlationId = UUID.randomUUID().toString();
         logCardInsertedEvent(paramsMap, correlationId);
         if (featureConfig.isExternalPnwEnabled()) {
             log.warn("External PNW is enabled, skipping CARD/INSERTED event processing");
             return;
         }
-        CETPPayload cetpPayload = new CETPPayload();
-        cetpPayload.setParameters(paramsMap);
+        WsCetpPayload wsCetpPayload = new WsCetpPayload();
+        wsCetpPayload.setParameters(paramsMap);
 
         boolean hasEGK = "EGK".equalsIgnoreCase(paramsMap.get("CardType"));
         boolean hasCardHandle = paramsMap.containsKey("CardHandle");
@@ -131,9 +127,9 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             String workplaceId = configurations.getWorkplaceId();
             try {
                 String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-                cetpPayload.setSmcbHandle(smcbHandle);
+                wsCetpPayload.setSmcbHandle(smcbHandle);
                 String telematikId = konnektorClient.getTelematikId(runtimeConfig, smcbHandle);
-                cetpPayload.setTelematikId(telematikId);
+                wsCetpPayload.setTelematikId(telematikId);
                 voidMdcEx(Map.of(
                     CT_ID, ctId,
                     SLOT, String.valueOf(slotId),
@@ -155,8 +151,8 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                         throw new IllegalStateException("Unable to read InsuranceData after VSD call");
                     }
                     String insurantId = insuranceData.getInsurantId();
-                    cetpPayload.setKvnr(insurantId);
-                    cetpPayload.setPersoenlicheVersichertendaten(print(insuranceData.getPersoenlicheVersichertendaten(), false));
+                    wsCetpPayload.setKvnr(insurantId);
+                    wsCetpPayload.setPersoenlicheVersichertendaten(print(insuranceData.getPersoenlicheVersichertendaten(), false));
 
                     Instant entitlementExpiry = entitlementService.resolveEntitlement(
                         runtimeConfig, insuranceData, smcbHandle, telematikId, insurantId
@@ -173,11 +169,11 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                         handleDownloadResponse(bytes, ctId, telematikId, epaContext, insurantId);
                         String encodedPdf = Base64.getEncoder().encodeToString(bytes);
                         Map<String, Object> payload = Map.of("slotId", slotId, "ctId", ctId, "bundles", "PDF:" + encodedPdf);
-                        cardlinkClient.sendJson(correlationId, egkIccsn, "eRezeptBundlesFromAVS", payload);
+                        sendJson(correlationId, egkIccsn, "eRezeptBundlesFromAVS", payload);
                     }
                 });
             } catch (Exception e) {
-                cetpPayload.setError(e.getMessage());
+                wsCetpPayload.setError(e.getMessage());
                 voidMdc(Map.of(
                     CT_ID, ctId,
                     SLOT, String.valueOf(slotId),
@@ -187,7 +183,8 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
                 ), () -> {
                     log.warn(String.format("[%s] Could not get medication PDF", correlationId), getOriginalCause(e));
                     String error = printException(e);
-                    cardlinkClient.sendJson(
+
+                    sendJson(
                         correlationId,
                         egkIccsn,
                         "receiveTasklistError",
@@ -200,7 +197,16 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
             log.info(String.format(msgFormat, paramsMap));
         }
 
-        cetpPayloadEvent.fireAsync(cetpPayload);
+        cetpPayloadEvent.fireAsync(wsCetpPayload);
+    }
+
+    private void sendJson(String correlationId, String egkIccsn, String type, Map<String, Object> payload) {
+        try {
+            cardlinkClient.connect();
+            cardlinkClient.sendJson(correlationId, egkIccsn, type, payload);
+        } finally {
+            cardlinkClient.close();
+        }
     }
 
     private Map<String, String> prepareXHeaders(EpaAPI epaApi, String insurantId, String konnektorHost, String workplaceId) {
@@ -228,7 +234,7 @@ public class CETPEventHandler extends AbstractCETPEventHandler {
         // Default StructureDefinition will be used
         FileDownload fileDownload = new FileDownload(taskId, telematikId, kvnr, fileName, epaContext, defaultExtrinsicContext);
 
-        webSocketPayloadEvent.fireAsync(new WebSocketPayload(ctId, telematikId, kvnr, Base64.getEncoder().encodeToString(bytes)));
+        webSocketPayloadEvent.fireAsync(new WsTelematikPayload(ctId, telematikId, kvnr, Base64.getEncoder().encodeToString(bytes)));
 
         RetrieveDocumentSetResponseType.DocumentResponse documentResponse = new RetrieveDocumentSetResponseType.DocumentResponse();
         documentResponse.setDocument(bytes);

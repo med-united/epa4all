@@ -6,7 +6,7 @@ import de.servicehealth.epa4all.integration.base.AbstractWiremockTest;
 import de.servicehealth.epa4all.integration.bc.wiremock.setup.CallInfo;
 import de.servicehealth.epa4all.server.filetracker.FileEventSender;
 import de.servicehealth.epa4all.server.filetracker.download.EpaFileDownloader;
-import de.servicehealth.epa4all.server.ws.CETPPayload;
+import de.servicehealth.epa4all.server.ws.payload.WsCetpPayload;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusMock;
@@ -97,11 +97,11 @@ public class CardInsertedPdfFailedEpaIT extends AbstractWiremockTest {
             String msg = MESSAGES.poll(20, TimeUnit.SECONDS);
             assertNotNull(msg);
             try (Jsonb build = jsonbBuilder.build()) {
-                CETPPayload cetpPayload = build.fromJson(msg, CETPPayload.class);
-                assertEquals("X110485291", cetpPayload.getKvnr());
-                assertTrue(cetpPayload.getError().contains("Problem with reading the data"));
-                assertTrue(cetpPayload.getPersoenlicheVersichertendaten().contains("UC_PersoenlicheVersichertendatenXML"));
-                assertNotNull(cetpPayload.getParameters());
+                WsCetpPayload wsCetpPayload = build.fromJson(msg, WsCetpPayload.class);
+                assertEquals("X110485291", wsCetpPayload.getKvnr());
+                assertTrue(wsCetpPayload.getError().contains("Problem with reading the data"));
+                assertTrue(wsCetpPayload.getPersoenlicheVersichertendaten().contains("UC_PersoenlicheVersichertendatenXML"));
+                assertNotNull(wsCetpPayload.getParameters());
             }
         }
     }

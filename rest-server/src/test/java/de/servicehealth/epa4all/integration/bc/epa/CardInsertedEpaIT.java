@@ -8,7 +8,7 @@ import de.servicehealth.epa4all.common.profile.ProxyEpaTestProfile;
 import de.servicehealth.epa4all.integration.base.AbstractVsdTest;
 import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
-import de.servicehealth.epa4all.server.ws.WebSocketPayload;
+import de.servicehealth.epa4all.server.ws.payload.WsTelematikPayload;
 import de.servicehealth.folder.WebdavConfig;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusMock;
@@ -135,10 +135,10 @@ public class CardInsertedEpaIT extends AbstractVsdTest {
                 String msg = MESSAGES.poll(20, TimeUnit.SECONDS);
                 assertNotNull(msg);
                 try (Jsonb build = jsonbBuilder.build()) {
-                    WebSocketPayload webSocketPayload = build.fromJson(msg, WebSocketPayload.class);
-                    assertEquals(kvnr, webSocketPayload.getKvnr());
-                    assertEquals(ctId, webSocketPayload.getCardTerminalId());
-                    assertNotNull(webSocketPayload.getMedicationPdfBase64());
+                    WsTelematikPayload wsTelematikPayload = build.fromJson(msg, WsTelematikPayload.class);
+                    assertEquals(kvnr, wsTelematikPayload.getKvnr());
+                    assertEquals(ctId, wsTelematikPayload.getCardTerminalId());
+                    assertNotNull(wsTelematikPayload.getMedicationPdfBase64());
                 }
             }
         });

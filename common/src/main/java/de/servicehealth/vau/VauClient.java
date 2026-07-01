@@ -47,6 +47,7 @@ public class VauClient {
     public static final String VAU_NP = "VAU-NP";
     public static final String KVNR = "kvnr";
     public static final String TELEMATIK_ID = "telematikId";
+    public static final String CARD_TERMINAL_ID = "cardTerminalId";
     public static final String TASK_ID = "taskId";
     public static final String VAU_CLIENT = "vauClient";
     public static final String UPLOAD_CONTENT_TYPE = "uploadContentType";
