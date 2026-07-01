@@ -1,14 +1,13 @@
 package de.servicehealth.epa4all.server.cetp.popp;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.health.service.cetp.AbstractCETPEventHandler;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.config.api.IUserConfigurations;
-import de.servicehealth.api.epa4all.EpaNotFoundException;
 import de.servicehealth.epa4all.server.config.RuntimeConfig;
 import de.servicehealth.epa4all.server.entitlement.EntitlementService;
 import de.servicehealth.epa4all.server.ws.payload.WsPoppPayload;
-import de.servicehealth.model.ValidToResponseType;
 import jakarta.enterprise.event.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +40,6 @@ public class PoppCetpHandler extends AbstractCETPEventHandler {
 
     private static final Logger log = LoggerFactory.getLogger(PoppCetpHandler.class.getName());
 
-    private static final String POPP_TOKEN_HEADER = "PoPP";
-
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
 
     private final Event<WsPoppPayload> wsPoppPayloadEvent;
@@ -69,7 +66,6 @@ public class PoppCetpHandler extends AbstractCETPEventHandler {
 
         objectMapper = new ObjectMapper();
         httpClient = HttpClient.newBuilder()
-            // .sslContext(sslContext) // TODO - verify
             .connectTimeout(CONNECT_TIMEOUT)
             .followRedirects(HttpClient.Redirect.NEVER)
             .build();
@@ -113,13 +109,13 @@ public class PoppCetpHandler extends AbstractCETPEventHandler {
                     WORKPLACE, workplaceId
                 ), () -> {
                     PoppTokenRequest request = new PoppTokenRequest("contact-connector", cardHandle);
-                    HttpRequest post = HttpRequest.newBuilder(URI.create(poppConfig.getPoppClientUrl()))
+                    HttpRequest postPopp = HttpRequest.newBuilder(URI.create(poppConfig.getPoppClientUrl()))
                         .timeout(Duration.ofSeconds(poppConfig.getPoppClientTimeoutSec()))
                         .header(CONTENT_TYPE, APPLICATION_JSON)
                         .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(request)))
                         .build();
 
-                    httpClient.sendAsync(post, HttpResponse.BodyHandlers.ofString())
+                    httpClient.sendAsync(postPopp, HttpResponse.BodyHandlers.ofString())
                         .thenCompose(poppResp -> {
                             if (poppResp.statusCode() != 200) {
                                 String error = "Popp Client response: %d, body: %s".formatted(
@@ -129,15 +125,19 @@ public class PoppCetpHandler extends AbstractCETPEventHandler {
                             }
                             String poppToken = poppResp.body();
 
-                            HttpRequest get = HttpRequest.newBuilder(URI.create(poppConfig.getPoppVsdmUrl()))
+                            String vsdRequest;
+                            try {
+                                vsdRequest = objectMapper.writeValueAsString(new VsdRequest(poppToken));
+                            } catch (JsonProcessingException e) {
+                                return CompletableFuture.failedFuture(new PoppException(e.getMessage(), 400));
+                            }
+                            HttpRequest postVsd = HttpRequest.newBuilder(URI.create(poppConfig.getPoppVsdmUrl()))
                                 .timeout(Duration.ofSeconds(poppConfig.getPoppVsdmTimeoutSec()))
                                 .header(ACCEPT, APPLICATION_XML)
-                                .header(POPP_TOKEN_HEADER, poppToken)
-                                .GET()
+                                .POST(HttpRequest.BodyPublishers.ofString(vsdRequest))
                                 .build();
 
-                            // TODO - check how VSDM endpoint is exposed
-                            return httpClient.sendAsync(get, HttpResponse.BodyHandlers.ofString())
+                            return httpClient.sendAsync(postVsd, HttpResponse.BodyHandlers.ofString())
                                 .thenCompose(vsdmResp -> {
                                     if (vsdmResp.statusCode() != 200) {
                                         String error = "VSDM 2.0 response: %d, body: %s".formatted(
@@ -146,16 +146,16 @@ public class PoppCetpHandler extends AbstractCETPEventHandler {
                                         return CompletableFuture.failedFuture(new PoppException(error, vsdmResp.statusCode()));
                                     }
                                     try {
-                                        // TODO confirm - how to process failure
-                                        ValidToResponseType validToResponseType = entitlementService.setEntitlementV2(poppToken);
-
-                                        WsPoppPayload payload = new WsPoppPayload(ctId, telematikId, eventXml, vsdmResp.body(), poppToken);
-                                        wsPoppPayloadEvent.fireAsync(payload);
-
-                                        return CompletableFuture.completedFuture(null);
-                                    } catch (EpaNotFoundException e) {
-                                        return CompletableFuture.failedFuture(e);
+                                        entitlementService.setEntitlementV2(telematikId, poppToken);
+                                    } catch (Exception e) {
+                                        log.warn("Error during setEntitlementV2", e);
                                     }
+                                    WsPoppPayload payload = new WsPoppPayload(
+                                        ctId, telematikId, eventXml, vsdmResp.body(), poppToken
+                                    );
+                                    wsPoppPayloadEvent.fireAsync(payload);
+
+                                    return CompletableFuture.completedFuture(null);
                                 });
                         })
                         .whenComplete((result, ex) -> {
@@ -167,9 +167,7 @@ public class PoppCetpHandler extends AbstractCETPEventHandler {
                                 WORKPLACE, workplaceId
                             ), () -> {
                                 if (ex != null) {
-                                    log.error("Popp request failed", ex);
-                                } else {
-                                    log.info("Popp request completed");
+                                    log.error("Popp request failed", getOriginalCause(ex));
                                 }
                             });
                         });

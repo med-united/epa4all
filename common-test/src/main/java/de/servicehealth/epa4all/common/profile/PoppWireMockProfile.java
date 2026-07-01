@@ -9,7 +9,7 @@ public class PoppWireMockProfile implements QuarkusTestProfile {
     public static final int POPP_WIREMOCK_PORT = 9445;
 
     public static final String POPP_CLIENT_PATH = "/popp/token";
-    public static final String POPP_VSDM_PATH = "/vsdm";
+    public static final String POPP_VSDM_PATH = "/vsdm/xml";
 
     @Override
     public String getConfigProfile() {

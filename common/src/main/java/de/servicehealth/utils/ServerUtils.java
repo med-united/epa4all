@@ -141,7 +141,7 @@ public class ServerUtils {
         return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
     }
 
-    public static Throwable getOriginalCause(Exception exception) {
+    public static Throwable getOriginalCause(Throwable exception) {
         Throwable cause = exception;
         while (cause.getCause() != null) {
             cause = cause.getCause();

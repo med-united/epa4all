@@ -29,7 +29,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
@@ -40,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -58,6 +58,8 @@ public class CardInsertedPoppIT extends AbstractWiremockTest {
     private static WireMockServer poppWmServer;
 
     private final JsonbBuilder jsonbBuilder = new JsonBindingBuilder();
+
+    private final String telematikId = "3-SMC-B-Testkarte--883110000147807";
 
     @InjectMock
     EntitlementService entitlementService;
@@ -110,7 +112,7 @@ public class CardInsertedPoppIT extends AbstractWiremockTest {
             receiveCardInsertedEvent(null, kvnr);
 
             // since flow is async we emulate CountDownLatch as timeout(20_000)
-            verify(entitlementService, timeout(20_000)).setEntitlementV2(POPP_TOKEN);
+            verify(entitlementService, timeout(20_000)).setEntitlementV2(telematikId, POPP_TOKEN);
 
             String msg = MESSAGES.poll(20, TimeUnit.SECONDS);
             assertNotNull(msg);
@@ -134,7 +136,7 @@ public class CardInsertedPoppIT extends AbstractWiremockTest {
             String kvnr = "X110587452";
             receiveCardInsertedEvent(null, kvnr);
 
-            verify(entitlementService, after(3_000).never()).setEntitlementV2(anyString());
+            verify(entitlementService, after(3_000).never()).setEntitlementV2(eq(telematikId), anyString());
             assertNull(MESSAGES.poll(2, TimeUnit.SECONDS));
         }
     }
@@ -148,7 +150,7 @@ public class CardInsertedPoppIT extends AbstractWiremockTest {
             String kvnr = "X110587452";
             receiveCardInsertedEvent(null, kvnr);
 
-            verify(entitlementService, after(3_000).never()).setEntitlementV2(anyString());
+            verify(entitlementService, after(3_000).never()).setEntitlementV2(eq(telematikId), anyString());
             assertNull(MESSAGES.poll(2, TimeUnit.SECONDS));
         }
     }
@@ -168,6 +170,6 @@ public class CardInsertedPoppIT extends AbstractWiremockTest {
     }
 
     private void stubPoppVsdm(ResponseDefinitionBuilder response) {
-        poppWmServer.addStubMapping(get(urlEqualTo(PoppWireMockProfile.POPP_VSDM_PATH)).willReturn(response).build());
+        poppWmServer.addStubMapping(post(urlEqualTo(PoppWireMockProfile.POPP_VSDM_PATH)).willReturn(response).build());
     }
 }
