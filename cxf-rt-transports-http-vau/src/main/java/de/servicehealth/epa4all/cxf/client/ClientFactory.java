@@ -36,6 +36,8 @@ import org.apache.cxf.transport.http.HTTPConduit;
 import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.util.List;
 import java.util.Set;
 
@@ -52,6 +54,9 @@ public class ClientFactory extends StartableService {
     @Named("gematikSSLContext")
     SSLContext gematikSslContext;
 
+    @Inject
+    X509TrustManager gematikTrustManager;
+
     @Override
     public int getPriority() {
         return CxfClientFactoryPriority;
@@ -59,7 +64,12 @@ public class ClientFactory extends StartableService {
 
     public void doStart() {
         Bus globalBus = BusFactory.getDefaultBus();
-        globalBus.setProperty("force.urlconnection.http.conduit", false);
+        // CXF's HttpClientHTTPConduit (java.net.http based) ignores TLSClientParameters, so the
+        // VAU/ePA WebClients fell back to the JVM default SSLContext (cacerts, no TI CAs) and failed
+        // PKIX. Force the URLConnection conduit, which honours the per-conduit trust config set in
+        // initConduit() (our Gematik trust manager: all TSL CAs + leaf-only TI chain completion).
+        // Scoped to this bus's CXF clients, so the IDP client and others are unaffected.
+        globalBus.setProperty("force.urlconnection.http.conduit", true);
         globalBus.setProperty("bus.jmx.usePlatformMBeanServer", TRUE);
         globalBus.setProperty("bus.jmx.enabled", TRUE);
 
@@ -143,6 +153,11 @@ public class ClientFactory extends StartableService {
         // setDisableCNCheck and setHostnameVerifier should not be set
         // to stick to HttpClientHTTPConduit (see HttpClientHTTPConduit.setupConnection)
         tlsParams.setSslContext(gematikSslContext);
+        // The JDK-HttpClient conduit builds its SSLContext from the trust managers and does not
+        // honour a bare setSslContext(...), so without this the VAU/ePA handshake fell back to the
+        // JDK default trust store (no TI CAs) and failed PKIX. Set our Gematik trust manager
+        // (all TSL CAs + leaf-only chain completion) explicitly.
+        tlsParams.setTrustManagers(new TrustManager[]{ gematikTrustManager });
         conduit.setTlsClientParameters(tlsParams);
     }
 }
