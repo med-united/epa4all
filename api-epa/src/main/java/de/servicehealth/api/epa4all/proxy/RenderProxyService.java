@@ -87,7 +87,11 @@ public class RenderProxyService extends BaseProxyService {
             .post(forwardRequest, FhirResponse.class);
 
         Response.ResponseBuilder builder = Response.status(response.getStatus()).entity(response.getPayload());
-        response.getHeaders().forEach(p -> builder.header(p.getKey(), p.getValue()));
+        response.getHeaders().forEach(p -> {
+            if (!isFramingHeader(p.getKey())) {
+                builder.header(p.getKey(), p.getValue());
+            }
+        });
         builder.type(PDF.equals(format) ? APPLICATION_PDF : TEXT_HTML);
         return builder.build();
     }
