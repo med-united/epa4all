@@ -80,7 +80,6 @@ public class PrescriptionBundleService {
         Patient epaPatient = findPatient(epaBundle, epaMedRequest);
         Practitioner epaPractitioner = findPractitioner(epaBundle, epaMedRequest);
         String practitionerName = extractPractitionerName(epaPractitioner);
-        String kimAddress = kimLdapService.searchKimAddress(userRuntimeConfig, practitionerName);
 
         String senderTelematikId = "";
         String senderOrgName = practitionerName;
@@ -91,6 +90,14 @@ public class PrescriptionBundleService {
             senderOrgName = epaOrganization.hasName() ? epaOrganization.getName() : practitionerName;
             senderOrgTypeCode = extractOrgTypeCode(epaOrganization);
         }
+
+        // Resolve the KIM address of the *institution* (Betriebsstätte/SMC-B): in VZD
+        // the KIM mailbox lives on the institution entry, not the individual doctor's
+        // HBA entry (which typically has none). Prefer the org's Telematik-ID (exact),
+        // then the org name, and fall back to the practitioner name.
+        String kimAddress = kimLdapService.searchKimAddress(
+            userRuntimeConfig, senderTelematikId, senderOrgName, practitionerName
+        );
 
         String kvnr = extractIdentifierValue(epaPatient, CS_KVID);
         String patientFamily = extractFamily(epaPatient);
