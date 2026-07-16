@@ -204,6 +204,11 @@ public class JWebdavResponseImpl implements JWebdavResponse {
     }
 
     @Override
+    public void sendRedirect(String location, int sc, boolean clearBuffer) throws IOException {
+        httpResponse.sendRedirect(location, sc, clearBuffer);
+    }
+
+    @Override
     public void setDateHeader(String s, long l) {
         httpResponse.setDateHeader(s, l);
     }
