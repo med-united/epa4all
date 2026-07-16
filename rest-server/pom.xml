@@ -92,7 +92,7 @@
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>org.hl7.fhir.r4</artifactId>
-            <version>6.9.11</version>
+            <version>6.9.12</version>
         </dependency>
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
