@@ -3,4 +3,7 @@
 	dh $@
 
 override_dh_auto_build:
-	./mvnw package
+	./mvnw -B -ntp -DskipTests -pl lib-cetp      clean install
+	./mvnw -B -ntp -DskipTests -pl lib-vau       clean install
+	./mvnw -B -ntp -DskipTests -pl api-telematik clean install
+	./mvnw -B -ntp -DskipTests -pl '!lib-cetp,!lib-vau,!api-telematik' -T1C clean install

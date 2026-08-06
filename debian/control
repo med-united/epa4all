@@ -8,6 +8,6 @@ Standards-Version: 4.5.1
 
 Package: epa4all
 Architecture: all
-Depends: openjdk-21-jre | openjdk-17-jre, curl, bash, tini, ca-certificates, less, iproute2, sudo, nano, socat, unzip
-Description: epa4all - Electronic patient record system built with Quarkus
+Depends: openjdk-21-jre | openjdk-17-jre, adduser, curl, tini, ca-certificates, less, iproute2, sudo, nano, socat, unzip
+Description: Electronic patient record system built with Quarkus
  epa4all is a Java-based application for managing electronic patient records.
