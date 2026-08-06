@@ -10,8 +10,12 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -19,6 +23,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static de.servicehealth.epa4all.server.insurance.InsuranceUtils.createUCEntity;
 import static de.servicehealth.utils.ServerUtils.writeBytesToFile;
 import static de.servicehealth.utils.XmlUtils.createDocument;
+import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 
 public class VsdResponseFile {
 
@@ -29,6 +34,8 @@ public class VsdResponseFile {
     public static final String GESCHUETZTE_VERSICHERTENDATEN_XML = "GeschuetzteVersichertendaten.xml";
     public static final String PRUEFUNGSNACHWEIS_XML = "Pruefungsnachweis.xml";
     public static final String READ_VSD_RESPONSE_XML = "ReadVSDResponse.xml";
+
+    private static final String VSD_SERVICE_NAMESPACE = "http://ws.gematik.de/conn/vsds/VSDService/v5.2";
 
     static JAXBContext readVSDJaxbContext;
 
@@ -112,6 +119,25 @@ public class VsdResponseFile {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Accepts the gematik ReadVSDResponse element either as the document root
+     * or wrapped in its original Konnektor SOAP envelope.
+     */
+    public static ReadVSDResponse parse(String xml) throws JAXBException, XMLStreamException {
+        XMLInputFactory factory = XMLInputFactory.newInstance();
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        XMLStreamReader reader = factory.createXMLStreamReader(new StringReader(xml));
+        while (reader.hasNext()) {
+            if (reader.next() == START_ELEMENT
+                && VSD_SERVICE_NAMESPACE.equals(reader.getNamespaceURI())
+                && "ReadVSDResponse".equals(reader.getLocalName())) {
+                return readVSDJaxbContext.createUnmarshaller().unmarshal(reader, ReadVSDResponse.class).getValue();
+            }
+        }
+        throw new JAXBException("ReadVSDResponse element is not found");
     }
 
     public static String extractInsurantId(ReadVSDResponse readVSDResponse, String fallbackKvnr) {

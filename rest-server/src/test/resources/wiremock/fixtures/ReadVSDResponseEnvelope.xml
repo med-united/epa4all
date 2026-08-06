@@ -1,0 +1,15 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Body>
+      <ns2:ReadVSDResponse xmlns:ns8="urn:oasis:names:tc:SAML:1.0:assertion" xmlns:ns7="http://www.w3.org/2000/09/xmldsig#" xmlns:ns6="urn:oasis:names:tc:dss:1.0:core:schema" xmlns:ns5="http://ws.gematik.de/tel/error/v2.0" xmlns:ns4="http://ws.gematik.de/conn/ConnectorContext/v2.0" xmlns:ns3="http://ws.gematik.de/conn/ConnectorCommon/v5.0" xmlns:ns2="http://ws.gematik.de/conn/vsds/VSDService/v5.2">
+         <ns2:PersoenlicheVersichertendaten>H4sIAAAAAAAA/41SQW7bMBD8isB7vFIKpXKxYmDETWogiYsYdXwzWGkdEaFWAUm5rd+bZ/TQVZq4dtFDL1zuaJYz1BDPv7cu2ZIPtuNSZaNUJcRVV1t+KNVsMT8pinx8kuUqCdFwbVzHVKofFNS5xi8X688y2hE7WzW0HI6R6iMJU5bVzXVyMb1ZLz/eLWbz21Llo9NBQTQ5lKqJ8ekDwLcweqDWRPs4qgk2BrahbocFtsJXGg/O9Ucdr2dTvcqy9Ox9Mc5ThL+/4Ys91nhFX3sfg7jqW52Niyw9TQuEIxiXnWfTkl5EemoMW0pWxNYkE649SanJUXJJzorQKxVvTdW87C79Mz9ufg4eEfaoCIeqcVQ1Ud8PevtOJlvisOuDiTt75Z83lofBAxAX0ZsQiCeiL1Wu04XoyMadaZwuzvI8QzjCcO6jnsgvEAMIQ4PXEpvG+67hICRnJBvykjDpKcK/YITfI6/q+q4TC6ZHeAPwk+kD920rcbxDOOj2nD+W4S0COI4R/uPx6F9gkp05nwIAAA==</ns2:PersoenlicheVersichertendaten>
+         <ns2:AllgemeineVersicherungsdaten>H4sIAAAAAAAA/81S32+CMBD+VwjvckDGJkupcbosxqnL3NiyF9LBCUQ4Flrd4l9vMWYBY9zrXtrcd/f9SK9s8FMWxhZrmVcUmI5lmwZSXCU5pYE5WS56/b7n9xzPHHD2OoqGRZFiiTlh2HDiDOsNpTIRCul99mhoNZKBmSn1dQvwLS09LVS+thKElYCtTMrmgK1nuaYxGs+i8P55OVnMA1Mj2p2zX2GFdatqbGScbdSOsztMcyLu2q5nu84VgyPAppXUQVQtMG3InXKNRFqEO7bv2bZ/7TM42++yCoGUYK1fBPn4hNHusbkokb+gVMbDNOwtQwYHhA0/a4wzOkz+w3hwIR+c1meX8bGRQu1yWlWyU2ifzjJJ1Ip7LZEj1OZExzRaPzrw3xZP/MZh0NwMLk3CqTV0gkH3W8Hff5nvAbNkyiccAwAA</ns2:AllgemeineVersicherungsdaten>
+         <ns2:GeschuetzteVersichertendaten>H4sIAAAAAAAA/4VQbUvDMBD+KyXf12xCZZNrxjZFBs6JZUP2ZYTmTMratCSXKv31ZiioDPHLvTzP3XMvMH9v6qRH56vW5mySjlmCtmxVZXXO1sV2NJ1ms9EkY3MBu9XxHn1pAtJAuD83lQYdoVUympfNQxLVrM+ZIepuOH/zqcZGUnVKFfJXyXuvmrPhfZZesWR1uznu756L9fYxZxGJ0wUcwiBNHaz2niQFL6D49GPgXxHwy6Il+tYqdPgU92otWu1C16G4Bv4XBQXWeKKqj/eTk6gjtEA3UB3vEjPg3wkcpLHyJ/cbiKtdavH/HyY+AItSKmOBAQAA</ns2:GeschuetzteVersichertendaten>
+         <ns2:VSD_Status>
+            <ns2:Status>0</ns2:Status>
+            <ns2:Timestamp>2025-02-14T09:07:42.000Z</ns2:Timestamp>
+            <ns2:Version>5.2.0</ns2:Version>
+         </ns2:VSD_Status>
+         <ns2:Pruefungsnachweis>H4sIAAAAAAAA/x2N0U6DMABFf4X0fbTUuFDTdplYFzCAroZkezFoOySOMteujL+38+Heh5ucc+nqOhwjr8+2Hw0DSYxApM3XqHrTMZDLepGm92SRgMi61qj2OBrNwKwtWHH6WkXZU/nRiK3M6+qfvvHBaCwD386dHiCcbNzpoXX9T6w0PLTQWzXAk5mgv71x+i45RniJUhSSYEQoDBMVHFMowsme32lPDp+Tr84i9f3YZHIe1jp5m55Jsymyl83y95pfSCcuRjw2olY7t91hiMuilMWcMwqDJFTF/wB/Z5J/7wAAAA==</ns2:Pruefungsnachweis>
+      </ns2:ReadVSDResponse>
+   </soap:Body>
+</soap:Envelope>
