@@ -1,0 +1,7 @@
+epa4all (0.0.0-1) UNRELEASED; urgency=high
+
+  * Placeholder entry. The real version is injected by CI at build time
+    via `dch --newversion "<date-tag-with-dots>-1"`, mirroring the same
+    date-tag used for the Docker image and GitHub release (POL-57).
+
+ -- Daniel Krueger <daniel.krueger@service-health.de>  Fri, 31 Jul 2026 00:00:00 +0200

@@ -1,0 +1,19 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+  configure)
+    mkdir -p /opt/epa4all/{app,promtail,lib/boot,lib/main,certs,webdav,frontend,config,quarkus,prometheus,secret,tls,ig-schema,jcr,config/konnektoren/8588}
+    chown -R epa4all:epa4all /opt/epa4all
+    chmod -R g+rwX /opt/epa4all
+
+    adduser --system --group --no-create-home epa4all
+    chown -R epa4all:epa4all /opt/epa4all
+
+    for cert in /opt/epa4all/certs/*.pem; do
+        keytool -importcert -file "$cert" -alias "$(basename "$cert" .pem)" -cacerts -storepass changeit -noprompt
+    done
+    ;;
+esac
+#DEBHELPER#
+exit 0

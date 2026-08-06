@@ -1,0 +1,16 @@
+[Unit]
+Description=epa4all Service
+After=network.target
+
+[Service]
+Type=simple
+User=epa4all
+ExecStart=/opt/epa4all/run.sh
+
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
