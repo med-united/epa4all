@@ -5,6 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=epa4all
+WorkingDirectory=/opt/epa4all
 ExecStart=/opt/epa4all/run.sh
 
 TimeoutStopSec=10
