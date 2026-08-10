@@ -1,13 +1,16 @@
 package de.servicehealth.epa4all.server.rest;
 
+import de.gematik.ws.conn.vsds.vsdservice.v5.ReadVSDResponse;
 import de.servicehealth.api.epa4all.EpaAPI;
 import de.servicehealth.api.epa4all.entitlement.EntitlementsFdvAPI;
+import de.servicehealth.epa4all.server.vsd.VsdResponseFile;
 import de.servicehealth.epa4all.server.vsd.VsdService;
 import de.servicehealth.model.EntitlementClaimsResponseType;
 import de.servicehealth.model.GetEntitlements200Response;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -15,15 +18,19 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
+import jakarta.xml.bind.JAXBException;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
+import javax.xml.stream.XMLStreamException;
 import java.time.Instant;
 import java.util.Map;
 
 import static de.servicehealth.epa4all.server.rest.consent.ConsentFunction.Medication;
+import static de.servicehealth.epa4all.server.vsd.VsdResponseFile.extractInsurantId;
 import static de.servicehealth.logging.LogContext.resultMdcEx;
 import static de.servicehealth.logging.LogField.INSURANT;
 import static de.servicehealth.logging.LogField.KONNEKTOR;
@@ -112,7 +119,12 @@ public class Entitlement extends AbstractResource {
         )
         @QueryParam(X_KONNEKTOR) String konnektor,
         @Parameter(name = X_INSURANT_ID, description = "Patient KVNR", required = true)
-        @NotBlank @QueryParam(X_INSURANT_ID) String insurantId
+        @NotBlank @QueryParam(X_INSURANT_ID) String insurantId,
+        @RequestBody(
+            description = "Optional ReadVSDResponse XML (gematik VSDService v5.2 schema). "
+                + "When provided, it is stored locally and used instead of calling readVSD on the Konnektor"
+        )
+        String readVSDResponseXml
     ) throws Exception {
         return resultMdcEx(Map.of(
             SMCB_HANDLE, smcbHandle,
@@ -120,6 +132,15 @@ public class Entitlement extends AbstractResource {
             INSURANT, insurantId
         ), () -> {
             consentValidator.validate(insurantId, Medication);
+            if (readVSDResponseXml != null && !readVSDResponseXml.isBlank()) {
+                ReadVSDResponse readVSDResponse;
+                try {
+                    readVSDResponse = VsdResponseFile.parse(readVSDResponseXml);
+                } catch (JAXBException | XMLStreamException e) {
+                    throw new BadRequestException("Invalid ReadVSDResponse payload", e);
+                }
+                vsdService.saveVsdFile(telematikId, extractInsurantId(readVSDResponse, insurantId), readVSDResponse);
+            }
             EpaContext epaContext = prepareEpaContext(insurantId);
             Instant expiry = epaContext.getEntitlementExpiry();
             return expiry == null ? Response.status(NO_CONTENT).build() : Response.ok().build();
