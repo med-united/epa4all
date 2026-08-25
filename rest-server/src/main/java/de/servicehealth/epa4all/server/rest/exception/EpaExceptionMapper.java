@@ -53,7 +53,8 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
 
     private ErrorStatus extractException(Throwable t) {
         if (t instanceof VauException vauException) {
-            return new ErrorStatus(null, vauException.getJsonNode(), null, CONFLICT);
+            Response.Status status = Response.Status.fromStatusCode(vauException.getStatus());
+            return new ErrorStatus(null, vauException.getJsonNode(), null, status == null ? CONFLICT : status);
         } else if (t instanceof PnwException pnwException) {
             PnwResponse pnwResponse = new PnwResponse(
                 pnwException.getKvnr(),

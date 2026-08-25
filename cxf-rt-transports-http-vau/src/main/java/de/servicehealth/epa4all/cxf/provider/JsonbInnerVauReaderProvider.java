@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
+import static de.servicehealth.vau.VauClient.VAU_STATUS;
 
 public class JsonbInnerVauReaderProvider extends AbstractJsonbReader {
 
@@ -29,6 +30,15 @@ public class JsonbInnerVauReaderProvider extends AbstractJsonbReader {
             return entityStream.readAllBytes();
         }
         String error = (String) vauErrorList.getFirst();
-        throw new VauException(error);
+        throw new VauException(error, parseVauStatus(httpHeaders));
+    }
+
+    @SuppressWarnings("rawtypes")
+    private int parseVauStatus(MultivaluedMap httpHeaders) {
+        try {
+            return Integer.parseInt((String) httpHeaders.getFirst(VAU_STATUS));
+        } catch (Exception e) {
+            return VauException.DEFAULT_ERROR_STATUS;
+        }
     }
 }
