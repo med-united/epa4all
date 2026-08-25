@@ -1,0 +1,216 @@
+name: Release (date tag → Debian package)
+
+# Fires on the same date-version tags as docker-build.yml, e.g.:
+#   git tag 2026-05-07   && git push origin 2026-05-07     # first release of the day
+#   git tag 2026-05-07-2 && git push origin 2026-05-07-2   # 2nd, 3rd, ... same day
+#
+# workflow_dispatch supports two manual modes:
+#   * tag given      -> re-run the release for that existing date tag, publishes
+#                       to the package server same as a real tag push.
+#   * tag left blank -> ad-hoc build of the selected ref; the resulting .deb is
+#                       uploaded as a workflow artifact for inspection only,
+#                       never published to packages.service-health.de.
+on:
+  push:
+    tags:
+      - '20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing date tag to re-release. Leave blank for an ad-hoc manual build.'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.ver.outputs.mode }}
+      version: ${{ steps.ver.outputs.version }}
+      deb-version: ${{ steps.ver.outputs.deb_version }}
+
+    steps:
+    - name: Checkout (full history + submodules)
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        submodules: recursive
+
+    - name: Resolve version and mode
+      id: ver
+      # Mirrors docker-build.yml's version resolution so the .deb version and
+      # the Docker tag / GitHub Release for the same release are identical.
+      # deb_version converts the date tag into a valid Debian version string:
+      # hyphens become dots (Debian treats the LAST hyphen as the upstream/
+      # revision separator, which is ambiguous for a bare date), and an
+      # explicit "-1" revision is appended. E.g. 2026-05-07 -> 2026.05.07-1.
+      run: |
+        set -euo pipefail
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          IN_TAG="${{ github.event.inputs.tag }}"
+          if [ -n "$IN_TAG" ]; then
+            MODE="release"
+            VERSION="$IN_TAG"
+            git checkout --quiet "refs/tags/${VERSION}"
+            git submodule update --init --recursive
+          else
+            MODE="manual"
+            VERSION="manual-$(git rev-parse --short HEAD)"
+          fi
+        else
+          MODE="release"
+          VERSION="${GITHUB_REF_NAME}"
+        fi
+        DEB_VERSION="$(echo "$VERSION" | tr '-' '.')-1"
+        echo "Mode: ${MODE} | Version: ${VERSION} | Debian version: ${DEB_VERSION}"
+        echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
+        echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+        echo "deb_version=${DEB_VERSION}" >> "$GITHUB_OUTPUT"
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Install packaging tools
+      run: sudo apt-get update && sudo apt-get install -y debhelper devscripts fakeroot
+
+    - name: Stamp debian/changelog with the release version
+      run: |
+        set -euo pipefail
+        dch --newversion "${{ steps.ver.outputs.deb_version }}" \
+            --distribution stable \
+            --urgency medium \
+            "Release ${{ steps.ver.outputs.version }}"
+
+    # debian/rules builds the submodules and the rest of the Maven reactor
+    # itself (mirroring docker-build.yml's build sequence), so no separate
+    # Maven step is needed here - dpkg-buildpackage does the whole thing.
+    - name: Build the .deb
+      run: dpkg-buildpackage -us -uc -b
+
+    - name: Locate build output
+      id: artifact
+      run: |
+        set -euo pipefail
+        DEB="$(ls ../epa4all_*_all.deb)"
+        echo "path=${DEB}" >> "$GITHUB_OUTPUT"
+        echo "name=$(basename "$DEB")" >> "$GITHUB_OUTPUT"
+
+    - name: Upload .deb as workflow artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.artifact.outputs.name }}
+        path: ${{ steps.artifact.outputs.path }}
+        retention-days: 30
+
+    - name: Upload .deb for the publish job
+      if: ${{ steps.ver.outputs.mode == 'release' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: deb-for-publish
+        path: ${{ steps.artifact.outputs.path }}
+        retention-days: 1
+
+  # Only runs for real releases (tag push, or workflow_dispatch with an
+  # existing tag) - never for ad-hoc manual builds, and never for pull
+  # requests (this workflow has no pull_request trigger at all). Gated
+  # behind the "package-release" GitHub Environment: configure that
+  # environment with required reviewers and a deployment branch/tag policy
+  # restricted to the release tag pattern before this can run for real -
+  # see POL-57 for the security rationale (public repo, no branch
+  # protection on main today).
+  publish:
+    needs: build
+    if: ${{ needs.build.outputs.mode == 'release' }}
+    runs-on: ubuntu-latest
+    environment: package-release
+
+    steps:
+    - name: Download .deb from build job
+      uses: actions/download-artifact@v4
+      with:
+        name: deb-for-publish
+        path: .
+
+    - name: Install reprepro and SSH client
+      run: sudo apt-get update && sudo apt-get install -y reprepro openssh-client rsync
+
+    - name: Set up SSH deploy key
+      run: |
+        set -euo pipefail
+        mkdir -p ~/.ssh
+        echo "${{ secrets.PACKAGES_SSH_KEY }}" > ~/.ssh/id_deploy
+        chmod 600 ~/.ssh/id_deploy
+        ssh-keyscan -H packages.service-health.de >> ~/.ssh/known_hosts
+
+    - name: Import GPG signing key
+      run: |
+        set -euo pipefail
+        echo "${{ secrets.PACKAGES_GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import
+        echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+        gpgconf --reload gpg-agent
+
+    - name: Download current repo state from the package server
+      # The package server has no reprepro installed - it only serves the
+      # static pool/+dists/ (and conf/+db/) tree that gets rsynced up from
+      # wherever reprepro last ran. Mirror that same round-trip here instead
+      # of maintaining a separate copy of conf/distributions in this repo,
+      # so there is a single source of truth for the reprepro config.
+      #
+      # Scoped to conf/, db/, dists/, and pool/main/e/ (epa4all's own pool
+      # slot) only, skipping the multi-GB pool/ entries of other packages
+      # (e.g. kim-relay) that reprepro doesn't need to touch to include a
+      # *new* package - measured this at ~46% smaller (6.3G -> 3.4G) and a
+      # noticeably faster round trip than a full sync (was ~15 min each way
+      # unfiltered). db/ itself (reprepro's internal, repo-wide database -
+      # references.db, checksums.db, contents.cache.db, etc.) is still the
+      # dominant cost and can't be scoped further without risking reprepro's
+      # consistency, so this doesn't get the round trip down to seconds -
+      # further reduction (e.g. disabling Contents-index caching) would mean
+      # changing reprepro's config for the whole repo, out of scope here.
+      # No --delete is used, so this is safe either way: anything not
+      # matched by the filters is simply left alone, both locally and (on
+      # the upload step) on the server.
+      run: |
+        set -euo pipefail
+        mkdir -p apt
+        rsync -az -e "ssh -i ~/.ssh/id_deploy" \
+          --include='conf/' --include='conf/**' \
+          --include='db/' --include='db/**' \
+          --include='dists/' --include='dists/**' \
+          --include='pool/' --include='pool/main/' --include='pool/main/e/' --include='pool/main/e/**' \
+          --exclude='*' \
+          "${{ vars.PACKAGES_SSH_USER || 'ec2-user' }}@packages.service-health.de:/srv/www/vhosts/packages.service-health.de/" \
+          apt/
+
+    - name: Include the .deb in both distributions
+      env:
+        GPG_PASSPHRASE: ${{ secrets.PACKAGES_GPG_PASSPHRASE }}
+      run: |
+        set -euo pipefail
+        export GPG_TTY=$(tty || true)
+        DEB="$(ls epa4all_*_all.deb)"
+        for codename in trixie noble; do
+          reprepro -V --basedir apt \
+            --gpg-options "--pinentry-mode loopback --batch --passphrase-fd 0" \
+            includedeb "$codename" "$DEB" <<< "$GPG_PASSPHRASE"
+        done
+
+    - name: Upload the updated repo state back to the package server
+      # Same scoping as the download step, and still no --delete: only the
+      # conf/db/dists/pool/main/e/ paths this job actually touched get
+      # uploaded, everything else on the server (kim-relay's pool entries,
+      # jammy's untouched dists, etc.) is left exactly as it was.
+      run: |
+        set -euo pipefail
+        rsync -az -e "ssh -i ~/.ssh/id_deploy" \
+          --include='conf/' --include='conf/**' \
+          --include='db/' --include='db/**' \
+          --include='dists/' --include='dists/**' \
+          --include='pool/' --include='pool/main/' --include='pool/main/e/' --include='pool/main/e/**' \
+          --exclude='*' \
+          apt/ \
+          "${{ vars.PACKAGES_SSH_USER || 'ec2-user' }}@packages.service-health.de:/srv/www/vhosts/packages.service-health.de/"
