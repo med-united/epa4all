@@ -36,7 +36,7 @@ public class JsonbInnerVauReaderProvider extends AbstractJsonbReader {
     @SuppressWarnings("rawtypes")
     private int parseVauStatus(MultivaluedMap httpHeaders) {
         try {
-            return Integer.parseInt((String) httpHeaders.getFirst(VAU_STATUS));
+            return Integer.parseInt(String.valueOf(httpHeaders.getFirst(VAU_STATUS)));
         } catch (Exception e) {
             return VauException.DEFAULT_ERROR_STATUS;
         }
