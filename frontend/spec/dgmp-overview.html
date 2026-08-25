@@ -1,0 +1,851 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HTML>
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+    <title>Überblick zum digital gestützten Medikationsprozess - Implementation Guide ePA Medication Service v1.3.1</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="author" content="http://hl7.org/fhir"/>
+
+    <link href="fhir.css" rel="stylesheet"/>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap-fhir.css" rel="stylesheet"/>
+
+    <!-- Project extras -->
+    <link href="assets/css/project.css" rel="stylesheet"/>
+    <link href="assets/css/pygments-manni.css" rel="stylesheet"/>
+    <link href="assets/css/jquery-ui.css" rel="stylesheet"/>
+  	<link href="assets/css/prism.css" rel="stylesheet" />
+  	<link href="assets/css/cqf.css" rel="stylesheet" />
+    <!-- Placeholder for child template CSS declarations -->
+<link href="assets/css/ig.gematik.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.gematik.min.js"> </script>
+<link href="assets/css/edge-dark.min.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.api.doc.gematik.min.js"> </script>
+<link href="assets/css/ig.req.gematik.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.req.gematik.min.js"> </script>
+
+<script type="text/javascript" src="assets/js/ig.bibliography.gematik.js"> </script>
+
+<style>
+    .gem-ig-headline-container {
+        -webkit-background-size: 100% auto;
+        -moz-background-size: 100% auto;
+        -o-background-size: 100% auto;
+        background-size: 100% auto;
+        background: url('assets/images/gem-headline.png') no-repeat;
+        background-position: 90% -136px;
+    }
+</style>
+
+    <script type="text/javascript" src="fhir-table-scripts.js"> </script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="assets/js/html5shiv.js"></script>
+    <script src="assets/js/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Favicons -->
+    <link rel="fhir-logo" sizes="144x144" href="assets/ico/icon-fhir-144.png"/>
+    <link rel="fhir-logo" sizes="114x114" href="assets/ico/icon-fhir-114.png"/>
+    <link rel="fhir-logo" sizes="72x72" href="assets/ico/icon-fhir-72.png"/>
+    <link rel="fhir-logo" href="assets/ico/icon-fhir-57.png"/>
+    <link rel="shortcut icon" href="assets/ico/favicon.png"/>
+  </head>
+  <body onload="document.body.style.opacity='1'">
+
+	  <script src="assets/js/prism.js"></script>
+    <script type="text/javascript" src="assets/js/mermaid.js"></script>
+    <script type="text/javascript" src="assets/js/mermaid-init.js"></script>
+    <style type="text/css">h2{--heading-prefix:"2"}
+    h3,h4,h5,h6{--heading-prefix:"2"}</style>
+    <div id="segment-header" class="segment">  <!-- segment-header -->
+      <div class="container">  <!-- container -->
+
+        <!-- Placeholder for child template header declarations -->
+
+<div id="hl7-nav">
+    <a id="gem-ig-logo" no-external="true" href="./index.html">
+        <img height="50" alt="Home" src="assets/images/gem-logo.png"/>
+    </a>
+</div>
+
+
+      </div> <!-- /container -->
+    </div>  <!-- /segment-header -->
+
+    <div id="segment-navbar" class="segment">  <!-- segment-navbar -->
+      <div id="stripe"> </div>
+      <div class="container">  <!-- container -->
+        <!-- HEADER CONTENT -->
+
+        <nav class="navbar navbar-inverse">
+          <!--status-bar-->
+          <div class="container">
+            <button data-target=".navbar-inverse-collapse" class="navbar-toggle" data-toggle="collapse" type="button">
+              <span class="icon-bar"> </span>
+              <span class="icon-bar"> </span>
+              <span class="icon-bar"> </span>
+            </button>
+            <a class="navbar-brand hidden" href="http://hl7.org/fhir/R4/index.html">FHIR</a>
+            <div class="nav-collapse collapse navbar-inverse-collapse">
+              <!-- menu.xml  -->
+
+<ul xmlns="http://www.w3.org/1999/xhtml" class="nav navbar-nav">
+  <li>
+    <a href="index.html">Home</a>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Fachlichkeit
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="dgmp-overview.html">Überblick</a>
+      </li>
+      <li>
+        <a href="dgmp-scenarios.html">dgMP-Szenarien</a>
+      </li>
+      <li>
+        <a href="dgmp-use-cases.html">dgMP-Anwendungsfälle</a>
+      </li>
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Technische Umsetzung
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="technical-use-cases.html">Technische Anwendungsfälle</a>
+      </li>
+      <li>
+        <a href="special-notes.html">Zur besonderen Beachtung</a>
+      </li>
+      <li>
+        <a href="processing-rules.html">Verarbeitungsregeln</a>
+      </li>
+      <li>
+        <a href="migration.html">Migrationsvorgaben</a>
+      </li>
+      <li>
+        <a href="dosage-examples.html">Darstellung von Dosierungsinformationen</a>
+      </li>
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Schnittstellen
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="general-principles.html">Generelle Prinzipien</a>
+      </li>
+      <li>
+        <a href="privacy-security.html">Datenschutz und Sicherheit</a>
+      </li>
+      <li>
+        <a href="query-api.html">Query API</a>
+      </li>
+      <li>
+        <a href="operation-api.html">Operation API</a>
+      </li>
+      <li>
+        <a href="render-api.html">Render API</a>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a href="artifacts.html">FHIR-Artefakte</a>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Anhänge
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="referenced.html">Referenzen</a>
+      </li>
+      <li>
+        <a href="downloads.html">Downloads</a>
+      </li>
+      <li>
+        <a href="medication-openapi.html">OpenAPI</a>
+      </li>
+      <li>
+        <a href="release-notes.html">Release Notes</a>
+      </li>
+      <li>
+        <a href="spec-sheet.html">Anforderungslisten</a>
+      </li>
+      <li>
+        <a href="comparisons.html">Versionsvergleiche</a>
+      </li>
+      <li>
+        <a href="license.html">Lizenz</a>
+      </li>
+    </ul>
+  </li>
+</ul>
+            </div>  <!-- /.nav-collapse -->
+          </div>  <!-- /.container -->
+        </nav>  <!-- /.navbar -->
+      <!-- /HEADER CONTENT -->
+      </div>  <!-- /container -->
+    </div>  <!-- /segment-navbar -->
+
+    <div class="segment"> 
+      <div class="container">
+        
+
+<div class="gem-ig-headline-container"> 
+    <div id="gem-ig-headline" class="col-lg-10 col-md-12">
+        <div class="gem-ig-headline-title">
+            
+Implementation Guide<br /> ePA Medication Service
+        </div>
+        <div id="ig-status" class="gem-ig-headline-subtitle">
+            <span style="display:inline-block;">Version 1.3.1 - release
+                
+                
+            </span>
+            
+
+        </div>
+    </div>
+</div>
+      </div>
+    </div>
+
+    <!--status-bar-->
+
+    <div id="segment-breadcrumb" class="segment">  <!-- segment-breadcrumb -->
+      <div class="container">  <!-- container -->
+        <ul class="breadcrumb">
+          <li><a href='toc.html'><b>Table of Contents</b></a></li><li><b>Überblick zum digital gestützten Medikationsprozess</b></li>
+
+          <span style="float:right;">
+
+            <a href="index.html">&lt;vorherige</a> | 
+
+            <a href="#bottom">unten</a>
+
+          | <a href="dgmp-scenarios.html">nächste&gt;</a>
+
+          </span>
+
+        </ul>
+      </div>  <!-- /container -->
+    </div>  <!-- /segment-breadcrumb -->
+
+    <a name="top"> </a>
+    <div id="segment-content" class="segment">  <!-- segment-content -->
+      <div class="container">  <!-- container -->
+        <div class="row">
+          <div class="inner-wrapper">
+<style type="text/css">
+h2:before{color:silver;counter-increment:section;content:var(--heading-prefix) " ";}
+h3:before{color:silver;counter-increment:sub-section;content:var(--heading-prefix) "." counter(sub-section) " ";}
+h4:before{color:silver;counter-increment:composite;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) " ";}
+h5:before{color:silver;counter-increment:detail;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) "." counter(detail) " ";}
+h6:before{color:silver;counter-increment:more-detail;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) "." counter(detail) "." counter(more-detail)" ";}
+</style>
+<div class="col-12">
+  
+  <h2>Überblick zum digital gestützten Medikationsprozess</h2>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+    <p><!-- white space is critical inside of capture --></p>
+<div class="markdown-toc">
+  <p>Seiteninhalt:</p>
+
+<ul id="markdown-toc">
+  <li><a href="#die-epa-im-dgmp" id="markdown-toc-die-epa-im-dgmp">Die ePA im dgMP</a></li>
+  <li><a href="#elektronische-medikationsliste" id="markdown-toc-elektronische-medikationsliste">Elektronische Medikationsliste</a></li>
+  <li><a href="#elektronischer-medikationsplan" id="markdown-toc-elektronischer-medikationsplan">Elektronischer Medikationsplan</a></li>
+  <li><a href="#der-dgmp-aus-der-perspektive-des-versicherten" id="markdown-toc-der-dgmp-aus-der-perspektive-des-versicherten">Der dgMP aus der Perspektive des Versicherten</a></li>
+  <li><a href="#einschränkungs--und-widerspruchsmöglichkeiten-im-dgmp" id="markdown-toc-einschränkungs--und-widerspruchsmöglichkeiten-im-dgmp">Einschränkungs- und Widerspruchsmöglichkeiten im dgMP</a></li>
+  <li><a href="#rechtliche-regelungen" id="markdown-toc-rechtliche-regelungen">Rechtliche Regelungen</a></li>
+  <li><a href="#ausblick" id="markdown-toc-ausblick">Ausblick</a></li>
+</ul>
+
+</div>
+<p>Jedes Arzneimittel, welches zur Versorgung eines Menschen angewendet werden soll, durchläuft einen Versorgungsprozess – den Medikationsprozess. Dieser kann für verschreibungspflichtige
+Arzneimittel exemplarisch als Zyklus gezeichnet werden:</p>
+
+<figure>
+    <div class="gem-ig-img-container" style="--box-width: 700px; margin-bottom: 30px;">
+        <img src="./Medikationsprozess.png" alt="Medikationsprozess" style="width: 100%;" />
+    </div>
+    <figcaption><strong>Abbildung:</strong> Exemplarischer Medikationsprozess (Quelle: Eigene Darstellung in Anlehnung an [Multimedikation] und [Medikationsfehler])</figcaption>
+</figure>
+
+<p><br /></p>
+
+<p>Wird dasselbe Arzneimittel langfristig angewendet, so wird der Zyklus mit jeder ärztlichen Therapieentscheidung ganz oder teilweise neu durchlaufen. In mehreren dieser Teilschritte können zudem Arzneimitteltherapiesicherheitsprüfungen durchgeführt, mit anderen Versorgenden zur Therapie kommuniziert und Informationen dokumentiert werden. Außerdem kann neben den ärztlich verordneten Arzneimitteln auch eine Selbstmedikation angewendet werden.</p>
+
+<p>Variationen des oben abgebildeten Musterprozesses treten verstärkt im stationären Sektor oder in der Langzeitpflege auf, beispielsweise wenn Entscheidungen nicht mehr mit den Patienten gemeinsam getroffen werden können oder die Abgabe über ein von der Apotheke beauftragtes Blisterzentrum erfolgt. Eine detaillierte Aufführung bestehender Medikationsprozesse kann im
+<em>Positionspapier Digital gestützte Medikationsprozesse</em> des Arbeitskreises <em>Analyse der Medikationsprozesse</em> des <em>Interop Council</em> [Interop Council] nachvollzogen werden. Dennoch haben alle Medikationsprozesse wesentliche Gemeinsamkeiten.</p>
+
+<p>Außerdem gilt, dass sich der Medikationsprozess des einzelnen Arzneimittels in eine übergeordnete Medikationsplanung einbetten muss, wenn zeitgleich mehr als ein Arzneimittel angewendet wird. Diese übergeordnete Planung berücksichtigt unter anderem Interaktionen zwischen den Arzneimitteln, muss aber auch die Handhabbarkeit einer zunehmend komplexen Arzneimitteltherapie für die betroffene Person im Blick behalten.</p>
+
+<p>Die wichtigsten Akteure in einem Medikationsprozess sind:</p>
+
+<ol>
+  <li>Versicherte und ihre pflegenden Angehörigen</li>
+  <li>Das versorgende Personal, darunter insbesondere Ärzte, Apotheker und Pflegepersonal</li>
+</ol>
+
+<p>All diese Akteure können zunehmend digital unterstützt werden.</p>
+
+<p>Diese Unterstützung kann durch Anwendungen inner- und außerhalb der Telematikinfrastruktur erfolgen. Seitens der Telematikinfrastruktur spielen insbesondere das E-Rezept und die ePA eine zentrale Rolle im Medikationsprozess. Aber auch Anwendungen außerhalb der Telematikinfrastruktur, von software-gestützten Arzneimitteltherapiesicherheits-Prüfungen bis zur App für Medikationserinnerungen, können den Medikationsprozess sinnvoll unterstützen.</p>
+
+<p>Der digital gestützte Medikationsprozess ergibt sich demnach aus dem allgemeinen Medikationsprozess im Zusammenspiel mit verschiedenen digitalen Anwendungen. Durch dieses Zusammenspiel sollen die beteiligten Akteure im Medikationsprozess so unterstützt werden, dass eine möglichst sichere Arzneimitteltherapie durchgeführt und das Therapieziel erreicht werden kann.</p>
+
+<h3 id="die-epa-im-dgmp">Die ePA im dgMP</h3>
+
+<p>Die Komponenten und Inhalte der ePA, welche den digital gestützten Medikationsprozess unterstützen, umfassen konkret:</p>
+
+<p><strong>ePA Medication Service</strong></p>
+
+<p>Der ePA Medication Service umfasst alle Daten zur Arzneimitteltherapie des Versicherten in der ePA. Zu den Kernfunktionalitäten dieses Services gehören:</p>
+
+<ol>
+  <li>Die Dokumentation therapeutischer Entscheidungen aus ärztlicher Medikationsplanung und pharmazeutischer Beratung</li>
+  <li>Die (teilweise automatische) Befüllung der ePA mit Daten zu verschriebenen und abgegebenen Arzneimitteln</li>
+</ol>
+
+<p>Der ePA Medication Service ist die Quelle der Ansichten, die als elektronische Medikationsliste und elektronischer Medikationsplan abgerufen und gepflegt werden.</p>
+
+<p><strong>Elektronische Medikationsliste (eML)</strong></p>
+
+<p>Die eML ist die verlaufsbasierte Ansicht auf das Verordnungs- und Abgabegeschehen ausgehend vom E-Rezept. Sie kann von Ärzten oder Apothekern um Informationen zu anderweitig verschriebenen und freiverkäuflichen Arzneimitteln ergänzt werden. Die eML wird in der Regel chronologisch angezeigt und entspricht damit einer patientenbezogenen Medikationshistorie.</p>
+
+<p><strong>Elektronischer Medikationsplan (eMP)</strong></p>
+
+<p>Der eMP ist eine Ansicht auf die aktuelle Medikation des Versicherten. Er bildet die partizipativen Entscheidungen zwischen ihm und seinen behandelnden Ärzten und Apothekern ab und enthält weiterführende Informationen, die die Arzneimittelanwendung erklären und unterstützen sollen. Auch die zukünftige und vergangene Medikation kann hinterlegt und bei Bedarf abgerufen werden.</p>
+
+<p><strong>Weitere AMTS-relevante Informationen</strong></p>
+
+<p>Die ePA kann weitere personenbezogene Informationen enthalten, die für die Durchführung einer sicheren und gesundheitsfördernden Arzneimitteltherapie eines Versicherten zu berücksichtigen sind (Arzneimitteltherapiesicherheit (AMTS)). Hierzu
+gehören beispielsweise Vitalwerte, Diagnosen, Laborwerte, Allergien und Unverträglichkeiten. Sobald diese strukturiert erfasst werden können, sollen diese bedarfsgerecht gemeinsam mit Daten zur Arzneimitteltherapie zur Anzeige gebracht werden (z.B. für einen Arzt oder Apotheker bei Anzeige des eMP).</p>
+
+<h3 id="elektronische-medikationsliste">Elektronische Medikationsliste</h3>
+
+<p>Die eML ist die verlaufsbasierte Ansicht auf das Verordnungs- und Abgabegeschehen per E-Rezept. Sie kann von Ärzten oder Apothekern um Informationen zu anderweitig verschriebenen und freiverkäuflichen Arzneimitteln ergänzt werden. Die eML wird in der Regel chronologisch angezeigt und entspricht damit einer patientenbezogenen Medikationshistorie.</p>
+
+<h4 id="funktionalitäten-der-eml-ab-dem-release-der-epa-30">Funktionalitäten der eML ab dem Release der ePA 3.0</h4>
+
+<p>Mit dem Release 3.0 leistet die ePA den ersten Beitrag zum dgMP: die elektronische Medikationsliste. Die Medikationsliste ergibt sich in diesem Release ausschließlich aus Verordnungs- und Abgabedaten, die über den E-Rezept-Fachdienst ohne weiteres Zutun der Leistungserbringer in die ePA eingestellt werden. Die Daten zum verordneten und abgegebenen Arzneimittel werden dabei miteinander verknüpft und in einem Eintrag in der Medikationsliste dargestellt.</p>
+
+<p>Der ePA Medication Service bietet drei verschiedene Optionen, die Medikationsliste aufzubereiten. Zum einen können das ePA-FdV bzw. das Primärsystem direkt auf die nativen FHIR-Daten zugreifen und diese darstellen. Darüber hinaus werden auf diese Weise Wege eröffnet, mit der Medikationsliste zu interagieren und Daten daraus strukturiert nachzunutzen. Beispielsweise können weitere Daten je Eintrag im Detail angezeigt werden, eine Folgeverordnung aus der Medikationsliste begonnen oder nach bestimmten Inhalten gefiltert werden. Alternativ kann die Medikationsliste durch das Primärsystem auch als XHTML- oder PDF-Datei dargestellt werden. Dies ist für Primärsysteme, welche von Leistungserbringern genutzt werden, die am Medikationsprozess aktiv beteiligt sind – insbesondere Ärzte und Apotheker, aber auch Pflegekräfte – nur als temporäre Lösung zu verstehen, da mit den Daten über die Ansicht hinaus nicht gearbeitet werden kann.</p>
+
+<p>Die dargestellte Übersicht über die verordneten Arzneimittel umfasst standardmäßig die letzten 12 Monate. Der Zeitraum kann durch den Leistungserbringer darüber hinaus flexibel ausgewählt werden (zum Beispiel reduziert auf 3 oder 6 Monate oder erweitert auf 18 Monate).</p>
+
+<p>Ein vollständiges Abbild der Arzneimitteltherapie des Versicherten ist die Medikationsliste nicht. Einer der wesentlichen Gründe hierfür ist die Voraussetzung, dass eine Verschreibung über das E-Rezept erfolgt, damit Daten zu einem Arzneimittel in die ePA eingestellt werden. Dies ist zum Start der ePA 3.0 für verschreibungspflichtige Arzneimittel zulasten der gesetzlichen Krankenkassen sowie für Blutprodukte, die ausschließlich in Apotheken abgegeben werden können, verpflichtend. Arzneimittel, welche hingegen nicht über den beschriebenen Weg in der ePA 3.0 abgebildet werden, sind:</p>
+
+<ol>
+  <li>
+    <p>Arzneimittel, die zum Start der ePA 3.0 noch nicht als E-Rezept verordnet werden können, darunter insbesondere:</p>
+
+    <p>a) Betäubungsmittel (BtM-Rezept)</p>
+
+    <p>b) Teratogene Wirkstoffe (T-Rezept)</p>
+  </li>
+  <li>
+    <p>Arzneimittel, die prinzipiell als E-Rezept verordnet/empfohlen und damit auf der eML abgebildet werden können, für welche jedoch ein analoger Verordnungsprozess gewählt wurde, darunter insbesondere</p>
+
+    <p>a) Arzneimittel, die als Ausnahme von der Verpflichtung zur Nutzung des E-Rezepts analog verordnet werden (bspw. bei einem Heimbesuch)</p>
+
+    <p>b) Arzneimittel, für welche die Verwendung des E-Rezepts optional ist, da sie nicht zulasten der gesetzlichen Krankenversicherung abgerechnet werden (z.B. “blaues Selbstzahlerrezept” oder “grünes Rezept”)</p>
+
+    <p>c) Arzneimittel, die von Ärzten verordnet werden, die zum Start der ePA 3.0 nicht an die TI angeschlossen sind (bspw. Arbeitsmediziner)</p>
+  </li>
+  <li>
+    <p>Arzneimittel, die im ambulanten Bereich ohne eine Verschreibung an den Patienten abgegeben werden (bspw. als Abgabe von Arztmustern gemäß <span>§</span> 47 AMG)</p>
+  </li>
+  <li>
+    <p>Rezeptfreie Arzneimittel, die ohne eine Verschreibung in der Apotheke abgegeben werden (Over The Counter Medikation, OTC)</p>
+  </li>
+  <li>
+    <p>Arzneimittel, die im Ausland erworben werden</p>
+  </li>
+  <li>
+    <p>Arzneimittel, die im Rahmen eines Aufenthalts in einer stationären Einrichtung unter ärztlicher Aufsicht angewendet oder bei Entlassung aus einer stationären Einrichtung im Entlassbrief empfohlen werden, ohne dass ein E-Rezept ausgestellt wird</p>
+  </li>
+  <li>
+    <p>Sonstige Präparate (bspw. Nahrungsergänzungsmittel), die ohne Verschreibung außerhalb des Gesundheitssystems erworben werden (bspw. in einer Drogerie)</p>
+  </li>
+</ol>
+
+<p>Um in der eML eine möglichst vollständige Aufstellung aller relevanten Arzneimittel abbilden zu können, ist diese Lücke bestmöglich zu schließen. Das Ziel ist die Entwicklung der Medikationsliste als zuverlässige Datenbank aller gegenwärtigen oder vergangenen Arzneimittel des Versicherten – einer vollumfänglichen Medikationshistorie.</p>
+
+<h4 id="funktionalitäten-der-eml-ab-dem-release-der-epa-313">Funktionalitäten der eML ab dem Release der ePA 3.1.3</h4>
+
+<p>Mit dem Release 3.1.3 der ePA wird ein Schritt in Richtung Vollständigkeit der Medikationsliste gegangen: Es wird ermöglicht, dass Arzneimittel ohne vorliegendes E-Rezept in der ePA nachgetragen werden können.</p>
+
+<p>Es ist dafür stets erforderlich, dass ein Primärsystem die nativen FHIR-Daten des ePA Medication Services abrufen und verarbeiten kann. Da Ärzte und Apotheker wesentliche Akteure im dgMP sind, sollte auch eine PDF oder HTML-Umsetzung insbesondere durch die von ihnen genutzten Primärsysteme mit der ePA 3.1.3 durch eine FHIR-basierte Darstellung abgelöst werden.</p>
+
+<h5 id="zielsetzung-des-nachtrags-von-arzneimitteln">Zielsetzung des Nachtrags von Arzneimitteln</h5>
+
+<p>Der Nachtrag von Arzneimitteln in der eML soll prioritär Versorgungssituationen unterstützen, in denen die Arzneimitteltherapie nicht unter direkter Aufsicht von Ärzten und Apothekern in einer einzelnen Einrichtung erfolgt, sondern selbstständig durch den Versicherten oder seine Pflegenden umgesetzt wird. Die Daten sollen im Wesentlichen für die folgenden drei Anwendungsfälle genutzt werden können:</p>
+
+<ul>
+  <li>
+    <p>Pflege des elektronischen Medikationsplans (eMP)</p>
+  </li>
+  <li>
+    <p>Medikationsanalysen inklusive Arzneimitteltherapiesicherheitsprüfungen</p>
+  </li>
+  <li>
+    <p>Therapeutische Entscheidungen von mitbehandelnden Ärzten und Apothekern</p>
+  </li>
+</ul>
+
+<p>Es liegt daher ein besonderer Fokus auf solche Arzneimittel, die im ambulanten Bereich oder in Pflegeeinrichtungen eingesetzt werden (vgl. “Funktionalitäten der eML ab dem Release der ePA 3.0” Punkt 1.-5.). Für rezeptfreie Arzneimittel (OTC) ist dabei stets zu bewerten, ob die Aufnahme in die ePA entweder vom Versicherten gewünscht oder medizinisch bzw. pharmazeutisch zu empfehlen ist, bspw. aufgrund eines Interaktionspotenzials. Diese Entscheidung ist auf Basis der medizinischen bzw. pharmazeutischen Expertise und den zur Verfügung stehenden Informationen zum Versicherten zu treffen.</p>
+
+<h5 id="formale-voraussetzungen-für-einen-nachtrag-von-arzneimitteln">Formale Voraussetzungen für einen Nachtrag von Arzneimitteln</h5>
+
+<p>Ein Nachtrag von Arzneimitteln kann mit der ePA 3.1.3 nur durch Ärzte und Apotheker sowie ihre berufsmäßigen Gehilfen nach <span>§</span> 352 SGB V vorgenommen werden. Selbstständige Nachträge durch Versicherte sind bis auf Weiteres nicht möglich.</p>
+
+<p>Für jeden Nachtrag ist der Zugriff der Institution auf die ePA des Versicherten erforderlich. Dieser muss ggf. zu diesem Zwecke hergestellt werden. Hierin weicht der Nachtrag vom Prozess über den E-Rezept-Fachdienst ab, da in diesem kein direkter Zugriff des Primärsystems auf die ePA erforderlich ist.</p>
+
+<p>Im Kontext der öffentlichen Apotheke stellt sich die besondere Herausforderung, dass Daten zur Abgabe eines Arzneimittels nicht immer personenbezogen verarbeitet werden. Eine Zuordnung zur ePA des betreffenden Versicherten ist in solchen Situationen durch die Apotheke herzustellen. Hierbei kann die Apotheke durch das Primärsystem unterstützt werden. Ist eine eGK eingelesen, wird nebenläufig mit einer Kundenkartei gearbeitet oder werden personenbezogene Daten digital erfasst (z.B. bei Nutzung eines Direktabrechnungsverfahrens), kann das AVS dem Apotheker eine für ihn freigeschaltete ePA vorschlagen.</p>
+
+<p>Diese Herausforderung stellt sich verstärkt, wenn ein rezeptfreies Arzneimittel (OTC) in der Apotheke abgegeben wird. Technisch kann analog verfahren werden. Durch die Apotheke ist jedoch zunächst zu klären, für welche Person das OTC vorgesehen ist.</p>
+
+<p>Es ist anzumerken, dass in bestimmten Ausnahmefällen nicht alle kodierten Informationen zu rezeptfreien Arzneimitteln (OTC) in der ePA 3.1.3 verarbeitet werden können, sofern diese von den bei verschreibungspflichtigen Arzneimitteln verwendeten Werten abweichen (z.B. OTC-spezifische Darreichungsformen). Dies ist in späteren Ausbaustufen der ePA vorgesehen.</p>
+
+<h5 id="umsetzung-des-nachtrags-von-arzneimitteln-im-primärsystem">Umsetzung des Nachtrags von Arzneimitteln im Primärsystem</h5>
+
+<p>Allgemein gilt, dass Ärzte und Apotheker im Rahmen des Nachtrags bestmöglich durch ihr Primärsystem unterstützt werden sollen. Hierbei sollen Arzneimitteldatenbanken und digital erfasste Daten zum Arzneimittel (z.B. in Verordnungsmodulen oder Warenwirtschaftssystemen) für den Nachtrag verwendet werden können, sodass eine manuelle Erfassung dieser entfällt.</p>
+
+<p>Dabei sollte sichergestellt werden, dass nur Arzneimittel, die nicht auf Basis eines E-Rezepts verschrieben wurden, nachgetragen werden, um Dopplungen mit Einträgen durch den E-Rezept-Fachdienst zu vermeiden. Werden Daten zu Verschreibungen und Abgaben auch lokal für die Leistungserbringer vorgehalten (z.B. als Verordnungshistorie in einem Verordnungsmodul), sollte zudem verhindert werden, dass ein Arzneimittel mehrfach aus dem lokalen System in die ePA eingestellt wird. Zu diesem Zwecke sollten Daten im lokalen System, welche bereits eingestellt wurden, entsprechend gekennzeichnet und ein Nachtrag in der ePA verhindert werden.</p>
+
+<p>Ein nachgetragenes Arzneimittel erscheint immer als Eintrag in der eML. Es ist jedoch davon auszugehen, dass Nachträge insbesondere bei Versicherten erfolgen, die eine komplexere Arzneimitteltherapie erhalten und entsprechend auch Anspruch auf die Pflege des eMPs haben (s.u.). Der Nachtrag sollte daher in Primärsystemen stets so umgesetzt sein, dass im gleichen Arbeitsschritt auch die Informationen mitgegeben werden können, die erforderlich sind, um das Arzneimittel ebenfalls auf dem eMP abzubilden. Nur so kann der eMP seine Funktion als führende Quelle für die Arzneimittelanwendung erfüllen.</p>
+
+<h5 id="verknüpfung-zum-emp">Verknüpfung zum eMP</h5>
+
+<p>Mit der ePA 3.1.3 wird in Form des eMPs eine zweite Ansicht auf Arzneimitteldaten in der ePA angeboten. eML und eMP dienen unterschiedlichen Anwendungszwecken, stehen aber in einer engen inhaltlichen Beziehung zueinander: Formal ist die über das E-Rezept in der eML dokumentierte Verordnung und Abgabe das Ergebnis der Medikationsplanung, welche im eMP dokumentiert werden sollte. Bei einer längerfristigen Anwendung erfolgen pro Arzneimittel auf dem eMP mehrere Verschreibungen und Abgaben, die in mehreren eML-Einträgen münden.</p>
+
+<p>eML und eMP in der ePA 3.1.3 sind daher so konzipiert, dass dieser inhaltliche Bezug abbildbar ist: Einem eMP-Eintrag lassen sich eines oder mehrere verordnete, abgegebene oder nachgetragene Arzneimittel auf der eML zuordnen. Informationen zum Arzneimittel, die für beide Ansichten zentral sind, werden in dem Fall aus demselben Datenbestand des ePA Medication Services bezogen. Der eMP zeigt die letztgültigen Informationen zum Arzneimittel an, welche sich aus dem chronologisch jüngsten eML-Eintrag ergeben. Die übrigen eML-Einträge können als Verordnungs- und Abgabehistorie zu diesem eMP-Eintrag verstanden werden. Auf diesem Wege bleiben beide Ansichten zweckgerecht nutzbar, die Aktualität des eMP lässt sich anhand der Verordnungs- und Abgabehistorie prüfen, und bestehende Daten können für die Pflege des eMP wiederverwendet werden.</p>
+
+<p>Die Beziehung zwischen eML und eMP wird im Folgenden als “Verknüpfung” bezeichnet. Sie wird unter “Leitgedanken des eMP in der ePA 3.1.3” näher beschrieben.</p>
+
+<p>Im Idealprozess ist die Verknüpfung vollständig und zeigt für alle eML-Einträge auf, aus welcher Therapieentscheidung (auf dem eMP) heraus ihr Verordnungs- und Abgabeprozess angestoßen wurde.</p>
+
+<p>Es ist davon auszugehen, dass diese Verknüpfung bis auf Weiteres keinen Anspruch auf Vollständigkeit erheben kann. Voraussichtlich werden in der eML stets Arzneimittel enthalten sein, die nicht in der Medikationsplanung auf dem eMP berücksichtigt worden sind. Dies kann beispielsweise dann der Fall sein, wenn ein E-Rezept verschrieben wird, ohne dass der Leistungserbringer Zugriff auf die ePA und damit den eMP des Versicherten hat.</p>
+
+<h3 id="elektronischer-medikationsplan">Elektronischer Medikationsplan</h3>
+
+<p>Der eMP ist eine Ansicht auf die aktuelle Medikation des Versicherten. Er bildet die partizipativen Entscheidungen zwischen ihm und seinen behandelnden Ärzten und Apothekern ab und enthält weiterführende Informationen, die die Arzneimittelanwendung erklären und unterstützen sollen. Auch die zukünftige und vergangene Medikation kann hinterlegt und bei Bedarf abgerufen werden.</p>
+
+<h4 id="bundeseinheitlicher-medikationsplan">Bundeseinheitlicher Medikationsplan</h4>
+
+<p>Der elektronische Medikationsplan in der elektronischen Patientenakte fußt auf den Erfahrungen mit dem bundeseinheitlichen Medikationsplan (BMP).</p>
+
+<p><strong>Hintergrund zum Bundeseinheitlichen Medikationsplan</strong></p>
+
+<p>Der BMP wurde 2016 erstmalig gemäß <span>§</span> 31a Abs. 4 Satz 1 SGB V von der Kassenärztlichen Bundesvereinigung (KBV), dem Deutschen Apothekerverband (DAV) und der Bundesärztekammer (BÄK) vereinbart. In der Vereinbarung heißt es:</p>
+
+<p>“Der Medikationsplan soll in einheitlich standardisierter Form umfassend, übersichtlich und patientenverständlich die aktuelle Medikation des Versicherten abbilden. Dem Versicherten soll damit ein verständlicher und wiedererkennbarer Einnahmeplan zur Verfügung gestellt werden, der ihn in der richtigen Anwendung seiner Medikation unterstützt. […] Der Medikationsplan soll durch die Verbesserung der Information von Versicherten, Ärzten und Apothekern und anderen an der Arzneimittelversorgung der Versicherten beteiligten Personen eine Verbesserung der Arzneimitteltherapiesicherheit ermöglichen.” [BMP_Vereinbarungen]</p>
+
+<figure>
+    <div class="gem-ig-img-container">
+        <img src="./BMP.jpg" style="width: 80%" alt="BMP" />
+    </div>
+    <figcaption><strong>Abbildung:</strong> Bundeseinheitlicher Medikationsplan</figcaption>
+</figure>
+
+<p><br clear="all" /> <!-- Kein Textumlauf, stattdessen hinter Grafik weitermachen -->
+Gesetzlich Versicherte haben Anspruch auf einen BMP, wenn sie mindestens vier Wochen lang drei oder mehr verordnete und systemisch wirkende Arzneimittel anwenden. Dies gilt sowohl für den ambulanten vertragsärztlichen Bereich als auch im Rahmen des Entlassmanagements nach einem Krankenhausaufenthalt (siehe auch <span>§</span> 31a SGB V, <span>§</span> 29a Bundesmantelvertrag Ärzte und Rahmenvertrag über ein Entlassmanagement beim Übergang in die Versorgung nach Krankenhausaufenthalt nach <span>§</span> 39 Absatz 1a SGB V).</p>
+
+<p>Die Erstellung des BMP erfolgt in der Regel durch den Hausarzt – oder in Ausnahmefällen durch einen anderen Arzt, der schwerpunktmäßig für die Medikation des Versicherten verantwortlich ist. Gemäß <span>§</span> 29a Bundesmantelvertrag sind dabei alle Arzneimittel zu berücksichtigen, die von diesem Arzt verordnet wurden oder über die er ausreichend Kenntnis hat. Auch apothekenpflichtige Arzneimittel, die der Versicherte ohne Verschreibung anwendet, sind zu ergänzen, sofern der Arzt darüber ausreichend Kenntnis hat und dies für medizinisch notwendig erachtet.</p>
+
+<p>Seitdem der BMP in elektronischer Form auf der elektronischen Gesundheitskarte gespeichert werden kann, sind neben den oben genannten Ärzten auch mitbehandelnde Fachärzte und Apotheken verpflichtet, den Medikationsplan zu aktualisieren, sobald sie die Medikation anpassen oder ausreichend Kenntnis über eine Anpassung haben.</p>
+
+<p><strong>Mehrwerte und Limitationen des Bundeseinheitlichen Medikationsplan</strong></p>
+
+<p>Mehrere Projekte im letzten Jahrzehnt zeigen sowohl die wesentlichen Vorteile eines Medikationsplans als auch seine Herausforderungen. So konnte das Projekt ARMIN, dessen Intervention aus einem interprofessionellen Medikationsmanagement inklusive Erstellung und Pflege eines Medikationsplans bestand, eine relative Risikoreduktion bezüglich der Mortalität der Teilnehmenden um 16% zeigen [ARMIN_Studienergebnisse]. Liegt ein aktueller Medikationsplan vor, kann er sowohl die Arzneimittelanwendung selbst als auch die interdisziplinäre Zusammenarbeit wesentlich stärken.</p>
+
+<p>Zeitgleich zeigen andere Studien, dass BMPs, die nicht in ein interprofessionelles Medikationsmanagement eingebettet sind, <em>in der Regel</em> unvollständig sind oder unzutreffende Informationen enthalten [BMP_Studienergebnisse].</p>
+
+<p>Eine der zentralen Herausforderungen ergibt sich daraus, dass der BMP ein Dokument ist, welches dezentral erstellt und gepflegt wird. Soll er durch Mitbehandler aktualisiert werden, muss er physisch vorgelegt werden, um in das lokale Primärsystem übernommen, dort bearbeitet und anschließend erneut ausgedruckt werden zu können. Hierzu dient ein zweidimensionaler DataMatrix-Code, der eingescannt werden kann. Der Abgleich und das Zusammenführen mehrerer Versionen können einen erheblichen Zeitaufwand bedeuten. Zudem hat diese Übernahme in der Vergangenheit auch zu Fehlern mit erheblichen Konsequenzen geführt, wenn bspw. durch Implementierungsfehler die Informationen nicht vollständig über den DataMatrix-Code transportiert wurden [MTX_Ueberdosierung].</p>
+
+<p>Der verantwortliche Arzt hat in den BMP immer die von ihm verordneten Arzneimittel aufzunehmen sowie solche, über die er ausreichend Kenntnis hat. Dies kann zu mehreren, parallel existierenden Medikationsplänen führen, insbesondere wenn Versicherte von mehreren Ärzten behandelt werden, welche aus Haftungsgründen zögern, fremde Verordnungen zu übernehmen.</p>
+
+<p>Eine grundsätzliche Herausforderung sind zudem die Aufwände, die mit der Erstellung und Pflege eines Medikationsplans einhergehen. Die Aufwände und damit die Akzeptanz variieren mit der Umsetzungsqualität. Unabhängig davon sind Ärzte – und auf Wunsch des Versicherten auch Apotheker  – verpflichtet, einen BMP zu pflegen und müssen diese Arbeit zusätzlich zum Verordnungs- und Abgabegeschehen leisten.</p>
+
+<h4 id="elektronischer-medikationsplan-in-der-epa-313">Elektronischer Medikationsplan in der ePA 3.1.3</h4>
+
+<p>Der elektronische Medikationsplan in der ePA 3.1.3 baut auf die Erfahrungen mit dem BMP auf. Er soll zugleich zentrale Herausforderungen des BMPs angehen, indem er die Möglichkeiten der ePA gezielt einsetzt: Der eMP in der ePA ist zentral verfügbar und kann deshalb kollaborativ gepflegt werden. Um seiner wesentlichen Aufgabe gerecht zu werden, ein Abbild der aktuellen Arzneimitteltherapie zu sein, muss der Medikationsplan zudem konsequent und effizient in die bestehenden Versorgungsprozesse integriert werden. Ziel ist es, die Vollständigkeit und Aktualität des Medikationsplans zu erhöhen und zugleich den Aufwand für alle Beteiligten zu reduzieren.</p>
+
+<p><strong>Leitgedanken des eMP in der ePA 3.1.3</strong></p>
+
+<p>Zum Verständnis des vorliegenden Konzepts sind folgende Leitgedanken zu verstehen:</p>
+
+<p>Das Ergebnis der Medikations<em>planung</em> ist eine therapeutische Entscheidung. Zu solchen Entscheidungen gehört die <em>Aufnahme</em> einer Therapie, die Entscheidung für ihre <em>Fortführung</em>, jegliche <em>Änderungen</em> an sowie die <em>Beendigung</em> von einer bestehenden Therapie. Ein konsequent geführter Medikationsplan bildet all diese Entscheidungen ab und verschafft so dem Anwender einen klaren Blick auf die aktuelle Arzneimitteltherapie.</p>
+
+<p>In der Medikationsplanung werden Entscheidungen getroffen, die über das einzelne Präparat hinaus gehen. Daher ist der Medikationsplan dem Verordnungs- und Abgabegeschehen und entsprechend der eML übergeordnet. Jede Entscheidung, die im eMP erfasst wird, muss sich jedoch notwendigerweise auf ein konkretes Präparat beziehen, um umgesetzt werden zu können. Daraus ergibt sich ein direkter inhaltlicher Bezug zwischen eMP, E-Rezept und eML: Formal ist die Verschreibung und Abgabe, die über das E-Rezept in der eML erfasst wird, das Ergebnis der Medikationsplanung, welche über den eMP abgebildet wird. Diese Beziehung muss im digital gestützten Medikationsprozess abgebildet werden.</p>
+
+<p>Viele der Entscheidungen, die im Medikationsplan abgebildet werden sollen, werden zudem bereits in dem eigentlich nachgelagerten Verordnungs- und Abgabeprozess erfasst. Im Sinne der Effizienz und der Kongruenz sollen Parallelerfassungen entfallen und der Medikationsplan konsequent in die bestehenden Prozesse integriert werden.</p>
+
+<p>Um diesen Leitgedanken zu entsprechen, ist ein Idealprozess zu etablieren, der Medikationsplanung, Verschreibung und Abgabe gemeinsam denkt. Desto häufiger dieser Idealprozess durchlaufen wird, desto zuverlässiger kann der eMP die aktuelle Arzneimitteltherapie abbilden.</p>
+
+<p><strong>Grundstruktur des eMP</strong></p>
+
+<p>Der Medikationsplan in der ePA 3.1.3 baut sich aus einzelnen eMP-Einträgen auf. Jeder “eMP-Eintrag” repräsentiert eine Arzneimitteltherapie und entspricht damit konzeptuell einer Zeile im BMP. Ein eMP-Eintrag besteht dabei aus zwei verschiedenen Gruppen von Informationen:</p>
+
+<ol>
+  <li>
+    <p><strong>eMP-spezifische Informationen, die die übergeordnete Medikationsplanung abbilden</strong>: Mithilfe dieser Informationen wird einerseits die Frage beantwortet, ob und wie das Arzneimittel aktuell angewendet werden soll; andererseits unterstützen sie den Versicherten, seinen Medikationsplan zu verstehen und die Arzneimitteltherapie richtig umzusetzen. Auch ein Arzneimittel, für das noch keine Verschreibung und/oder Abgabe erfasst ist, ist eMP-spezifisch.</p>
+  </li>
+  <li>
+    <p><strong>Informationen, die mit jeder neuen Verschreibung und Abgabe erneut erfasst werden, sich abseits dessen aber nicht verändern</strong>: Sie werden für den eMP nicht separat erfasst, sondern sind eine weitere Sicht auf die bereits in der eML dargestellten Informationen zum Arzneimittel sowie zum Verordnungs- und Abgabegeschehen.</p>
+  </li>
+</ol>
+
+<p>Ein eMP-Eintrag besteht stets aus einem Datensatz an eMP-spezifischen Informationen. Er steht für sich allein, solange die Therapie mit diesem Arzneimittel ausschließlich geplant wurde. Hiermit gemeint sind solche Einträge, die ausschließlich im Sinne einer “Planung” auf dem Medikationsplan erfasst wurden, unabhängig davon ob die Therapie mit diesem Arzneimittel ggf. schon begonnen wurde. Folgt auf diese Planung eine Verschreibung und/oder Abgabe wird der eMP-Eintrag mit dem entstehenden eML-Eintrag verknüpft. Die Informationen zum Arzneimittel bezieht der eMP-Eintrag ab dem Zeitpunkt der ersten Abgabe aus der eML. Wird ein eMP-Eintrag zu einem bereits verschriebenen und/oder abgegebenen Arzneimittel erstellt (bspw. auf Basis anamnestischer Informationen), werden die Informationen zum Arzneimittel von Beginn an aus dem bestehenden oder entstehenden eML-Eintrag bezogen.</p>
+
+<p>Bei künftigen Verschreibungen und/oder Abgaben zu diesem eMP-Eintrag werden die eML-Einträge ebenfalls mit ihm verknüpft und aktualisieren so die Informationen zum Arzneimittel im eMP. Ein gesamthafter eMP-Eintrag besteht demnach stets aus einem Datensatz eMP-spezifischer Informationen in Verbindung mit keinem, einem oder mehreren eML-Einträgen. Es entsteht eine Verordnungs- und Abgabehistorie zu diesem eMP-Eintrag. Zugleich ordnet der eMP die Arzneimittel auf der eML damit so ein, dass nachvollzogen werden kann, welche Arzneimittel aus der eML aktuell angewendet werden und was dabei zu beachten ist.</p>
+
+<p>Anzumerken ist, dass ein eML-Eintrag maximal einem eMP-Eintrag zugeordnet werden kann. So muss im eMP-Eintrag berücksichtigt werden, dass auch Verschreibungen von Kombinationspräparaten und -packungen nur einem eMP-Eintrag zugeordnet werden können. Außerdem sind Abgaben, bei denen für ein per E-Rezept verschriebenes und mit dem
+eMP verknüpften Arzneimittel mehrere Arzneimittel abgegeben werden, aus diesem Grund von einer automatisierten Aktualisierung aus dem Prozess heraus ausgeschlossen. Der Anwender muss hier aktiv den eMP aktualisieren. Dieser Fall kann beispielsweise auftreten, wenn aufgrund von Lieferengpässen die gewünschte Wirkstärke nur durch Kombination zweier Präparate erreicht werden kann.</p>
+
+<p>Ein eMP kann angezeigt werden, sobald ein Leistungserbringer erstmals einen eMP-Eintrag anlegt. Die dazu berechtigten Leistungserbringer sind Ärzte und Apotheker sowie berufsmäßige Gehilfen nach <span>§</span> 352 SGB V.</p>
+
+<p>Der Medikationsplan ist in diesem Sinne nicht mehr als klassisches Dokument zu verstehen. Die Anlage oder Bearbeitung erfolgt auf Ebene des eMP-Eintrags unter Berücksichtigung der gesamthaften Medikation. Die gewohnten Ansichten können weiterhin abgerufen werden, darunter der aktuelle Stand des Medikationsplans sowie der Stand des Medikationsplans zu einem beliebigen Zeitpunkt in der Vergangenheit. Zudem werden jegliche Änderungen am eMP individuell und detailliert nachvollziehbar.</p>
+
+<figure>
+    <div class="gem-ig-img-container">
+        <img src="./PS-Beispiel-Medikationsliste.png" alt="PS-Beispiel-Medikationsliste" style="width: 100%;" />
+    </div>
+    <figcaption><strong>Abbildung:</strong> Beispielanzeige einer Medikationsliste im Primärsystem</figcaption>
+</figure>
+
+<p><br /></p>
+
+<figure>
+    <div class="gem-ig-img-container">
+        <img src="./PS-Beispiel-Medikationsplan.png" alt="PS-Beispiel-Medikationsplan" style="width: 100%;" />
+    </div>
+    <figcaption><strong>Abbildung:</strong> Beispielanzeige eines Medikationsplans im Primärsystem</figcaption>
+</figure>
+
+<p><br /></p>
+
+<p><strong>eMP-spezifische Informationen</strong></p>
+
+<p>Mit dem eMP werden weitere medikationsspezifische Informationen in der ePA abgebildet, um die Darstellung eines Medikationsplans zu ermöglichen. Die folgenden eMP-spezifischen Informationen können jeweils für einen eMP-Eintrag erfasst werden:</p>
+
+<ol>
+  <li>
+    <p><strong>Status</strong>: Der Status dient der Einordnung, welche Rolle das Arzneimittel in der aktuellen, bisherigen und zukünftigen Arzneimittelanwendung einnimmt. Er hat die folgenden Ausprägungen:</p>
+
+    <p>a) aktiv — soll aktuell vom Versicherten angewendet werden</p>
+
+    <p>b) aktiv mit Startzeitpunkt in der Zukunft (geplant) — noch nicht begonnen; Beginn in absehbarer Zeit vorgesehen</p>
+
+    <p>c) pausiert — vorübergehend unterbrochen; Wiederaufnahme vorgesehen</p>
+
+    <p>d) beendet — in der Vergangenheit angewendet; Therapie regulär abgeschlossen</p>
+
+    <p>e) abgebrochen — begonnen, aber vorzeitig und ohne regulären Abschluss beendet</p>
+
+    <p>f) inkorrekt — Eintrag irrtümlich erstellt; keine Anwendung vorgesehen</p>
+
+    <p>Der Status definiert auch die Standard-Anzeige eines eMP. Diese setzt sich zusammen aus aktiven (inkl. solchen mit Startzeitpunkt in der Zukunft) und pausierten eMP-Einträgen. Beendete, abgebrochene und inkorrekte eMP-Einträge werden jedoch ebenfalls langfristig in der ePA gespeichert und können auf unbegrenzte Zeit bei Bedarf abgerufen werden.</p>
+  </li>
+  <li>
+    <p><strong>Indikation</strong>: Die Angabe der Indikation richtet sich im Wesentlichen an Gesundheitspersonal. Sie ermöglicht es, nachzuvollziehen, warum das betreffende Arzneimittel angewendet wird und wird als ICD-10 Code ausgedrückt. Im ePA-FdV verweist der ICD-10-Code über eine Verlinkung auf die versichertenverständliche Erläuterung des Codes im Nationalen Gesundheitsportal, sodass das Feld auch für den Versicherten nachvollziehbar wird.</p>
+  </li>
+  <li>
+    <p><strong>Versichertenverständlicher Grund</strong>: Das Feld “Grund” benennt den Behandlungsanlass für das Arzneimittel in versichertenverständlicher Form und unterstützt so Verständnis und Wiedererkennung auf dem eMP. Ergänzend angegebene ICD-10-Codes enthalten oft vergleichbare Informationen in medizinischer Fachsprache.</p>
+  </li>
+  <li>
+    <p><strong>Hinweise für den Versicherten</strong>: Das Feld “Hinweise” dient übergeordneten Hinweisen zur Therapie mit einem Arzneimittel. Sie richten sich an den Versicherten, sind aber nicht der Dosierung zuzuordnen. Hierzu gehören bspw. mögliche unerwünschte Arzneimittelwirkungen, Empfehlungen zu regelmäßigen Kontrolluntersuchungen oder zur korrekten Lagerung des Arzneimittels.</p>
+  </li>
+  <li>
+    <p><strong>Hinweise für Mitbehandelnde</strong>: Dieses Feld dient dem Erfassen von Kommentaren für Mitbehandelnde, die an Entscheidungen zur Arzneimitteltherapie beteiligt sind. Hier kann bspw. eine Off-Label-Therapie begründet, ein akzeptiertes AMTS-Risiko dokumentiert oder der Hinweis hinterlassen werden, was bei Therapieanpassungen von Mitbehandlern berücksichtigt werden sollte. Es wird dem Versicherten im Ausdruck nicht und im ePA-FdV nur zweitrangig angezeigt, sodass darauf verzichtet werden sollte, hier Informationen zu erfassen, die für den Versicherten und seine Arzneimittelanwendung unmittelbar relevant sind.</p>
+  </li>
+</ol>
+
+<p>Jeder eMP-Eintrag muss einen Status und eine Dosierung enthalten. Die Angabe der übrigen eMP-spezifischen Informationen ist freiwillig (2-5); mindestens der versichertenverständliche “Grund” kann jedoch für jeden eMP-Eintrag angeraten werden. Alle Informationen – auch diejenigen, die sich primär an Gesundheitspersonal richten – können vom Versicherten eingesehen werden.</p>
+
+<p><strong>Dosierung</strong></p>
+
+<p>Die gewünschte Dosierung eines Arzneimittels kann an mehreren Stellen im Medikationsprozess erfasst werden: Sowohl im Rahmen der Verordnung als auch bei der Abgabe können Dosierangaben im E-Rezept hinterlegt und entsprechend in der eML ausgewiesen werden. Zusätzlich werden Dosierangaben im eMP geführt. Für den digital gestützten Medikationsprozess ist es essenziell, dass Dosierungen in allen Prozessschritten interoperabel vorliegen. Beispielsweise soll auf Basis eines eML- oder eMP-Eintrags ein E-Rezept generiert werden können; umgekehrt sollen Angaben aus dem Verordnungs- und Abgabeprozess in den eMP übernommen werden können. Vor diesem Hintergrund unterstützen sowohl das E-Rezept als auch der ePA Medication Service mit der ePA 3.1.3 die Erfassung von strukturierten Dosierungen gemäß dem “FHIR Implementation Guide für medikationsbezogene Anwendungsfälle im deutschen Gesundheitswesen” (HL7 Deutschland e. V.). Mit dem Release 3.1.3 werden demnach sechs spezifische Dosierschemata unterstützt:</p>
+
+<ol>
+  <li>
+    <p>Tägliche Anwendung mit Tageszeiten-Bezug (bspw. täglich: morgens — je 400 mg)​</p>
+  </li>
+  <li>
+    <p>Tägliche Anwendung mit Uhrzeiten-Bezug (bspw. täglich: um 08:00 Uhr — je 2 Stück)​</p>
+  </li>
+  <li>
+    <p>Anwendung mit Wochentags-Bezug (bspw. 2 x wöchentlich: Dienstag und Donnerstag — je 2 Stück)​</p>
+  </li>
+  <li>
+    <p>Anwendung in wiederkehrenden Intervallen (bspw. alle 8 Tage: je 1 Stück)​</p>
+  </li>
+  <li>
+    <p>Kombinationen von wiederkehrenden Intervallen mit Tageszeiten- oder Uhrzeitenbezug (bspw. 2 x alle 2 Tage: um 08:00 Uhr, 20:00 Uhr — je 1 Stück)​</p>
+  </li>
+  <li>
+    <p>Kombinationen von Wochentagen mit Tageszeiten- oder Uhrzeitenbezug (bspw. 4 x wöchentlich: Montag und Freitag — morgens und abends — je 1 Stück)</p>
+  </li>
+</ol>
+
+<p>Für alle genannten Dosierschemata kann zusätzlich die geplante Dauer der Anwendung angegeben werden. Ist eine Dosierung nicht über diese Dosierschemata abbildbar, kann weiterhin eine Freitext-Dosierung gewählt werden. Auch die Dosierung von Kombinationspackungen mit zwei oder mehr separat anzuwendenden Arzneimitteln ist über einen Freitext auszugeben. Mit zukünftigen Ausbaustufen des FHIR Implementation Guides der HL7 Deutschland werden die Möglichkeiten, Dosierungen strukturiert zu erfassen, erweitert.</p>
+
+<p>Die Dosierung im eMP wird unabhängig von den verknüpften eML-Einträgen erfasst; so liegt pro eMP-Eintrag eine fortlaufende Dosierungshistorie vor. Eine Aktualisierung kann jedoch aus dem Verordnungs- und Abgabeprozess angestoßen werden. Die Aktualisierung der Dosierung erfolgt zu den folgenden drei Zeitpunkten:</p>
+
+<ol>
+  <li>
+    <p>Editieren der Dosierung direkt im eMP bei Anlage oder Aktualisierung eines eMP-Eintrags</p>
+  </li>
+  <li>
+    <p>Sofern die Abgabe als Substitution gekennzeichnet wird: Abgabe eines Arzneimittels auf Basis eines E-Rezepts mit Bezug zu einem eMP-Eintrag</p>
+  </li>
+</ol>
+
+<p>Da mit einer Substituierung auch einhergehen kann, dass die Wirkstärke von der in der Verordnung angegebenen abweicht und eine entsprechende Dosisanpassung zwingend erforderlich ist, ist hierfür die oben beschriebene Besonderheit vorgesehen. Ungeachtet dessen ist es Apothekern stets möglich, die Dosierung direkt im eMP zu aktualisieren. Eine Aktualisierung aus dem Verordnungs- und Abgabeprozess erfolgt nicht, wenn dort Gebrauch von “DJ” gemacht wird (“DJ” = Kürzel für “Dosierungsanweisung vorhanden: ja”; weist auf eine schriftliche Dosierungsanweisung z. B. im Medikationsplan hin und ersetzt die Dosierangabe im E-Rezept).</p>
+
+<p><strong>eMP-Identifier und digitale Prozessunterstützung</strong></p>
+
+<p>Um einen möglichst hohen Grad an Vollständigkeit und Aktualität zu erreichen, soll sich der eMP in bestehende Prozesse, insbesondere das Verordnungs- und Abgabewesen, integrieren. Die Inhalte des eMPs und der eML sollten daher sinnvoll in die lokalen Prozesse des Primärsystems eingebunden sein.</p>
+
+<p>Um diese Prozessintegration zu unterstützen, wird mit dem <em>eMP-Identifier</em> ein eindeutiger Identifikator pro eMP-Eintrag eingeführt. Dieser wird vom Aktensystem bei der erstmaligen Anlage eines eMP-Eintrags generiert und bleibt unabhängig von nachfolgenden Aktualisierungen desselben eMP-Eintrags konstant. Er enthält keine fachlichen Informationen, sondern dient dazu, einen eMP-Eintrag abseits des eMPs zu referenzieren – beispielsweise im E-Rezept, einer lokalen Verordnungshistorie oder einem lokal geführten Medikationsplan. Der formal zweistufige Prozess aus Medikationsplanung und anschließender Verschreibung kann für den Arzt damit in einem Arbeitsschritt abgebildet werden. Zudem können Aktualisierungen des eMP aus verschiedenen Prozessen heraus angestoßen werden – beispielsweise bei einer Folgeverordnung aus der lokalen Verordnungshistorie, wenn dort der <em>eMP-Identifier</em> der letzten Verordnung persistiert wurde. Wird ein E-Rezept in der Apotheke eingelöst, das bereits einen eMP-Eintrag referenziert, erfolgt die Aktualisierung des eMP anhand des abgegebenen Arzneimittel aufwandsneutral. Hierdurch wird beispielsweise eine Substitution automatisch auch im Medikationsplan ersichtlich.</p>
+
+<p>Die intendierten Prozesse bei Versicherten mit Anspruch auf einen eMP werden in den dgMP-Szenarien beschrieben. Die Möglichkeit, E-Rezepte auch ohne Bezug zum eMP auszustellen bzw. einzulösen, bleibt davon unberührt.</p>
+
+<p><strong>Kohärenz von eMP-Einträgen</strong></p>
+
+<p>Durch die bei längerfristigen Therapien intendierte Verknüpfung eines eMP-Eintrags mit mehreren eML-Einträgen kann der eMP-Eintrag anhand des Verordnungs- und Abgabegeschehens aktualisiert werden und die entsprechende Verordnungs- und Abgabehistorie zu einem eMP-Eintrag nachvollzogen werden. Eine solche Verknüpfung sollte nur erfolgen, wenn tatsächlich eine gemeinsame Therapieintention – vereinfacht ausgedrückt über die Verwendung des gleichen Wirkstoffs für dieselbe Indikation – vorliegt. Diese Zuordnung ist therapeutischer Natur und muss von den versorgenden Ärzten und Apothekern getroffen werden. Das Aktensystem kann diesbezüglich keine Prüfung vornehmen.</p>
+
+<p>Die folgende Tabelle bietet eine dementsprechende fachliche Richtlinie, welche Gemeinsamkeiten alle zu einem eMP-Eintrag gehörenden Arzneimittel teilen sollten, um dem Leitgedanken des eMP zu entsprechen.</p>
+
+<table>
+<tbody>
+<tr>
+<td><p><strong>Kohärenz wünschenswert</strong></p></td>
+<td><p><strong>Keine Kohärenz erforderlich</strong></p></td>
+</tr>
+<tr>
+<td><p>Wirkstoff</p></td>
+<td><p>Verordner</p></td>
+</tr>
+<tr>
+<td><p>Indikation</p></td>
+<td><p>Administrative Art der Verordnung</p></td>
+</tr>
+<tr>
+<td></td>
+<td><p>Handelsname</p></td>
+</tr>
+<tr>
+<td></td>
+<td><p>Dosierung</p></td>
+</tr>
+<tr>
+<td></td>
+<td><p>Wirkstärke</p></td>
+</tr>
+<tr>
+<td></td>
+<td><p>Darreichungsform</p></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<p>Das Primärsystem kann die Leistungserbringer darin unterstützen, kohärente Zuordnungen zu treffen, insbesondere wenn es über eine integrierte Arzneimitteldatenbank verfügt. Hierzu kann bevorzugt der Wirkstoff (ASK- oder ATC-codiert), aber – eingeschränkt durch eine zu hohe Spezifität – auch Daten zum spezifischen Arzneimittel (bspw. Handelsname oder PZN) genutzt werden, um auf mögliche (In-)Kohärenzen zwischen verschiedenen Arzneimitteln hinzuweisen. Solche Hinweise können beispielsweise im Kontext einer (geplanten) Verordnung oder Abgabe von Interesse sein, um diese richtig auf dem eMP abzubilden. Auch im Vergleich von Arzneimitteln auf der eML und bestehenden eMP-Einträgen oder mit Blick auf die Historie eines eMP-Eintrags kann eine solche Bewertung durch das Primärsystem den Leistungserbringer unterstützen. Die Entscheidung, ob diese Zuordnung stimmig ist, erfolgt jedoch stets durch die Leistungserbringer selbst.</p>
+
+<p><strong>Rollenverständnis im Umgang mit dem eMP</strong></p>
+
+<p>Die Anlage eines eMP-Eintrags (für verschreibungspflichtige Arzneimittel) erfolgt im Idealprozess durch Ärzte. Er ist in der Regel das Ergebnis der ärztlichen Medikationsplanung.</p>
+
+<p>Die pharmazeutische Bewertung und Beratung zur Arzneimitteltherapie baut auf die ärztliche Medikationsplanung auf. Die Apotheke berät auf Basis des eMP mit ihrer pharmazeutischen Expertise sowohl die Ärzte als auch die Versicherten. Mit der Abgabe eines per E-Rezept verschriebenen Arzneimittels erfolgt (automatisch) die erste Aktualisierung des eMP-Eintrags durch Apotheker. Sie kann ihre Expertise aber auch umfassender in den eMP einbringen, beispielsweise im Rahmen erweiterter Medikationsberatungen.</p>
+
+<p>Die Fortschreibung von eMP-Einträgen obliegt damit Ärzten und Apothekern gemeinsam und findet im Rahmen von weiteren Verschreibungen, Abgaben und sonstigen Therapieentscheidungen statt. Fehlen Arzneimittel auf einem eMP können sowohl Ärzte als auch Apotheker einen passenden eMP-Eintrag erstellen. Auch ein Controlling im Kontext der Verblisterung von Arzneimitteln für Menschen in der Heimpflege kann durch beide Rollen erfüllt werden.</p>
+
+<p>Zusammenfassend haben Apotheker und Ärzte prinzipiell dieselben Rechte im Kontext des eMP, aber unterschiedliche Verantwortlichkeiten. Der eMP wird damit zum Werkzeug der interdisziplinären Zusammenarbeit. Alle Ärzte und Apotheker, die an der Therapie des Versicherten beteiligt sind, tragen eine gemeinsame Verantwortung für den Medikationsplan.</p>
+
+<p>Ärzte und Apotheker in stationären Umfeldern (bspw. Krankenhaus oder stationäre Langzeitpflege) haben hierbei dieselben Rechte wie ihre ambulant tätigen Kollegen. Der wesentliche Mehrwert für die stationäre Versorgung entsteht jedoch an den Übergängen zwischen den Sektoren: Stationär tätige Ärzte und Apotheker profitieren bei Aufnahme in die stationäre Behandlung von der eML und dem eMP als Informationsquelle und können den Medikationsplan bspw. im Rahmen der Medikationsanamnese bei Aufnahme oder im Kontext des Entlassmanagements fortschreiben. Eine kontinuierliche Nutzung im Laufe des stationären Aufenthalts ist mit der ePA 3.1.3 nicht zu erwarten.</p>
+
+<p>Pflegekräfte sind mit der ePA 3.1.3 ausschließlich Konsumenten des elektronischen Medikationsplans. Die pflegerische Versorgung ist jedoch ein integraler Bestandteil der Arzneimitteltherapie vieler Menschen mit Polypharmazie. Erkenntnisse aus der pflegerischen Versorgung sollen daher in Weiterentwicklungsstufen stärker in den dgMP integriert werden.</p>
+
+<h3 id="der-dgmp-aus-der-perspektive-des-versicherten">Der dgMP aus der Perspektive des Versicherten</h3>
+
+<p>Der digital gestützte Medikationsprozess dient einer sicheren und gesundheitsfördernden Arzneimitteltherapie des Versicherten. Die für ihn wesentlichen Informationen muss der Versicherte dabei niederschwellig und versichertenverständlich abrufen können. Im Folgenden wird beschrieben, wie Informationen über das ePA-FdV eingesehen oder für den Versicherten ausgedruckt werden können.</p>
+
+<p><strong>Nutzung von eML und eMP im ePA-FdV</strong></p>
+
+<p>Der Versicherte bekommt an einer Stelle in seinem ePA-FdV alle medizinisch und pharmazeutisch relevanten Informationen zur Medikation als Übersicht. Die Anzeige von Medikationsdaten sollte auf den Versicherten und die digitale Anzeige zugeschnitten sein. Es eignet sich eine vereinfachte Anzeige, welche die wichtigsten Informationen übersichtlich aufbereitet. Diese muss ausreichend Informationen enthalten, um das Arzneimittel eindeutig zu identifizieren sowie mindestens die Dosierung inkl. Einheit und – sofern vorhanden – den “Grund”. Auch die “Hinweise” für den Versicherten sollten in dieser Ansicht angezeigt werden; es muss mindestens deutlich erkennbar sein, wenn ein solcher Hinweis vorliegt. Die Wortwahl im ePA-FdV darf sich nicht von der Bezeichnung der Spalten im eMP-Ausdruck unterscheiden, um eine Wiedererkennung über beide Formate sicherzustellen. Für Interessierte ist ein Wechsel in eine Detailansicht mit ausführlichen Informationen ebenfalls ermöglicht werden.</p>
+
+<p>Mit Einführung des eMP soll dieser zunehmend zur <em>Single Source of Truth</em> für die Arzneimittelanwendung im ePA-FdV werden. Dieser wird als solche umso zuverlässiger, desto konsequenter der oben beschriebene Idealprozess durchlaufen werden kann.</p>
+
+<p>Neben dem eMP kann jedoch auch weiterhin die eML über das ePA-FdV abgerufen werden. Die Anzeige der eML dient folgenden Zwecken:</p>
+
+<ul>
+  <li>Zentrale Informationsquelle zur persönlichen Arzneimitteltherapie für Menschen, die keinen (Anspruch auf einen) Medikationsplan haben</li>
+  <li>Alternative Ansicht auf Medikationsdaten in der ePA im Sinne einer Medikationshistorie</li>
+  <li>Darstellung, welche Arzneimittel nicht im Medikationsplan berücksichtigt wurden (s.u.)</li>
+</ul>
+
+<p>Im Sinne der Nutzerführung sollten Versicherte mit einem eMP prioritär den eMP und Versicherte ohne eMP prioritär die eML angezeigt bekommen. Da nicht davon ausgegangen werden kann, dass der oben beschriebene Idealprozess immer durchlaufen werden wird, ist zudem damit umzugehen, dass Versicherte mit einem eMP auch Einträge auf der eML vorfinden werden, die im eMP nicht berücksichtigt sind. Eine Darstellung dieser kann durch Funktionalitäten erweitert werden, die dem Versicherten erlauben, Diskrepanzen für sich zu “klären”, Leistungserbringer bspw. über den TI-Messenger darüber zu informieren und auch Arzneimittel der eML in Mehrwertdiensten des ePA-FdV (s.u.) zu berücksichtigen.</p>
+
+<p>Im ePA-FdV können Mehrwertdienste angeboten werden. Dies können Erinnerungsfunktionen sein, damit der Versicherte auf Wunsch immer rechtzeitig und entsprechend den Anwendungshinweisen eine Benachrichtigung aus seinem ePA-FdV erhält, um die Therapietreue auf einfachem Wege zu stärken. Eine Reichweitenberechnung ist ebenfalls vorstellbar und könnte genutzt werden, um den Versicherten zu erinnern, wenn zeitnah ein neues Rezept benötigt werden könnte. Außerdem können über das ePA-FdV weiterführende Informationen abgerufen werden; darunter ist mindestens die Verlinkung des ICD-10-Code zu versichertenverständlichen Erläuterungen im Nationalen Gesundheitsportal verpflichtend.</p>
+
+<p>Diese Mehrwertfunktionen sollen in zukünftigen Weiterentwicklungsstufen durch strukturierte und codierte Informationen zunehmend unterstützt werden.</p>
+
+<p><strong>Ausdruck des eMP</strong></p>
+
+<p>Alternativ zur Anzeige des eMP im ePA-FdV kann der Versicherte auch einen Ausdruck des eMP nutzen. Er kann den eMP hierfür selbstständig über das ePA-FdV ausdrucken oder von einem Leistungserbringer ausdrucken lassen (Formale Voraussetzung: Bestehender Anspruch auf einen Medikationsplan gemäß <span>§</span> 31a SGB V Abs. (1)). Nähere Beschreibungen zum Ausdruck finden sich im Anwendungsfall “eMP ausdrucken”.</p>
+
+<h3 id="einschränkungs--und-widerspruchsmöglichkeiten-im-dgmp">Einschränkungs- und Widerspruchsmöglichkeiten im dgMP</h3>
+
+<p>Versicherte können die Teilnahme am dgMP einschränken oder ihr ganzheitlich widersprechen. Zu diesem Zwecke unterstützt die ePA für alle neben der Widerspruchsoption zur ePA im Allgemeinen zudem zwei medikationsspezifische Widerspruchsoptionen. Diese können vom Versicherten über das ePA-FdV oder bei einer Ombudsstelle erhoben werden:</p>
+
+<ul>
+  <li>
+    <p><strong>Auswirkungen eines Widerspruchs gegen die Teilnahme am dgMP</strong>: Der Zugriff aller Gesundheitseinrichtungen auf die Daten im ePA Medication Service sowie auf einen etwaig vorhandenen dokumentenbasierten Medikationsplan (Inhalte im eMP-Ordner des XDS Document Services) wird gesperrt. Der etwaig vorhandene eMP kann nicht mehr gepflegt werden. Die Verordnungs- und Abgabedaten des E-Rezept-Fachdienstes werden jedoch weiterhin in den ePA Medication Service übertragen und dort gespeichert. Sie sind nur für den Versicherten als eML einsehbar.</p>
+  </li>
+  <li>
+    <p><strong>Auswirkungen eines Widerspruchs gegen das Einstellen von Daten durch den E-Rezept-Fachdienst</strong>: Es erfolgt keine weitere Übermittlung von Verordnungs- und Abgabedaten vom E-Rezept-Fachdienst in den ePA Medication Service. Es werden ferner alle Medikationsdaten des ePA Medication Service gelöscht. Zudem wird ein potentiell vorhandener dokumentenbasierter Medikationsplan (Inhalte im eMP-Ordner des XDS Document Services) gelöscht. Mit diesem Widerspruch wird auch automatisch der “Teilnahme am dgMP” (s.o.) widersprochen. Der Versicherte hat demnach keine eML und keinen eMP.</p>
+  </li>
+  <li>
+    <p><strong>Rücknahme des Widerspruchs gegen die Teilnahme am dgMP</strong>: Beide oben genannten Widersprüche können nur gemeinsam zurückgenommen werden. Nach der Rücknahme wird das Übertragen von Verordnungs- und Abgabedaten durch den E-Rezept-Fachdienst wieder aktiviert und berechtigte Gesundheitseinrichtungen können wieder auf die dgMP-Daten zugreifen.</p>
+  </li>
+</ul>
+
+<p>Das Primärsystem kann nachvollziehen, ob und wenn ja, welche der beiden oben genannten Widersprüche vorliegen. Daneben hat der Versicherte die Möglichkeit, einzelnen Gesundheitseinrichtungen den Zugriff auf die dgMP-Daten (inkl. eines etwaigen vorhandenen dokumentenbasierten Medikationsplans) zu verwehren (LEI-spezifisches Verbergen). Das Löschen oder Verbergen einzelner dgMP-Datenpunkte ist nicht möglich.</p>
+
+<h3 id="rechtliche-regelungen">Rechtliche Regelungen</h3>
+
+<p>Die im SGB V geregelten Anspruchsvoraussetzungen gelten für Versicherte der gesetzlichen Krankenversicherung. Welche Leistungen im Zusammenhang mit der ePA für privat Versicherte angeboten werden, hängt von der jeweiligen privaten Krankenversicherung ab.</p>
+
+<p>Die elektronische Medikationsliste wird für alle gesetzlich Versicherten automatisch ab dem ersten Arzneimittel erstellt. Sie kann sowohl als Informationsgrundlage für die Versicherten selbst als auch im Behandlungskontext genutzt werden. Es besteht eine gesetzliche Verpflichtung zur Ergänzung von Medikationsdaten durch Apotheker (nach <span>§</span> 346 Absatz 2 SGB V).</p>
+
+<p>Mit dem Digitalisierungsgesetz (DigiG) bleibt die Anspruchsberechtigung für die Erstellung und Pflege eines Medikationsplans in Papierform und als elektronischer Medikationsplan nach <span>§</span> 31 a SGB V bestehen. Gesetzlich Versicherte haben demnach Anspruch auf einen solchen Medikationsplan, wenn sie mindestens vier Wochen lang drei oder mehr verordnete und systemisch wirkende Arzneimittel anwenden. Dies gilt sowohl für den ambulanten vertragsärztlichen Bereich als auch im Rahmen des Entlassmanagements nach einem Krankenhausaufenthalt (siehe auch <span>§</span> 31a SGB V, <span>§</span> 29 Bundesmantelvertrag Ärzte und Rahmenvertrag über ein Entlassmanagement beim Übergang in die Versorgung nach Krankenhausaufenthalt nach <span>§</span> 39 Absatz 1a SGB V). Eventuelle Anpassungsbedarfe durch den dgMP in den jeweiligen Regelwerken müssen von den zuständigen Stellen geprüft werden.</p>
+
+<p>Ab Bereitstellung des elektronischen Medikationsplans in der ePA für alle (gemäß <span>§</span> 355 SGB V) darf der elektronische Medikationsplan nur noch in der ePA abgebildet werden. War auf der elektronischen Gesundheitskarte ein elektronischer Medikationsplan vorhanden, so sind Ärzte nach <span>§</span> 358 Absatz 8 SGB V verpflichtet, diesen zu löschen – auch bei einem vorliegenden Widerspruch gegen die ePA.</p>
+
+<p>An der vertragsärztlichen Versorgung teilnehmende Ärzte haben elektronische Medikationspläne in der ePA zu erstellen und zu pflegen (<span>§</span><span>§</span> 31a und 346 Absatz 2 SGB V). Abgebende Apotheken erhalten die Pflicht, elektronische Medikationspläne in der ePA zu aktualisieren (<span>§</span><span>§</span> 31a SGB V). Bis zur Einführung des eMP in der ePA 3.1.3 kann dieser Pflicht durch elektronische Medikationspläne nach [gemSpec_Info_AMTS_1.5.0] (entspricht: eMP-Format für die eGK) nachgekommen werden, welche in der Dokumentenkategorie “eMP” in die ePA eingestellt werden können. Ab der ePA 3.1.3 sind diese nur noch über einen Lesezugriff abrufbar. Der Ausdruck des elektronischen Medikationsplans in der ePA erfüllt den Anspruch auf einen Medikationsplan in Papierform.</p>
+
+<p>Die Anspruchsberechtigung für elektronische Medikationspläne und das Abbilden dieser in der ePA setzt voraus, dass die Versicherten der ePA und dem digital gestützten Medikationsprozess in der ePA nicht widersprochen haben und den Leistungserbringenden den Zugriff auf ihre ePA nicht verwehren. Der Anspruch auf einen Medikationsplan in Papierform bleibt davon unberührt. In welcher Form der Medikationsplan in Papierform auszustellen ist, obliegt der Entscheidung des Gesetzgebers und den weiteren zuständigen Stellen.</p>
+
+<h3 id="ausblick">Ausblick</h3>
+
+<p>Der digital gestützte Medikationsprozess wird auch über das Release der ePA 3.1.3 hinaus sowie abseits der ePA weiterentwickelt werden. Die folgende Auflistung an Fokuspunkten für den dgMP ist exemplarisch für weiterführende Aspekte der Arzneimitteltherapie im Kontext der ePA:</p>
+
+<ol>
+  <li>
+    <p><strong>Strukturierte Dosierschemata</strong>: Zukünftige Weiterentwicklungsstufen des anwendungsübergreifenden Profils für strukturierte Dosierschemata der HL7 Deutschland werden in der ePA abgebildet. Anwendungsfälle wie bspw. die bedarfsgerechte Darstellung von Dosierschemata oder Reichweitenberechnungen werden dadurch ermöglicht. Die Strukturierung von Dosierschemata unterstützt bspw. AMTS-Prüfungen und ermöglicht Reichweitenberechnungen, anhand derer ein Versicherter oder Arzt rechtzeitig benachrichtigt werden kann, wenn eine Packung eines Arzneimittels fast aufgebraucht worden ist.</p>
+  </li>
+  <li>
+    <p><strong>Weiterentwicklung des Ausdrucks</strong>: Es ist bis auf Weiteres davon auszugehen, dass eine signifikante Zahl an Versicherten den Ausdruck des eMP in Papierform nutzen werden. Mit der Weiterentwicklung des eMP, insbesondere hinsichtlich strukturierter Dosierungen, sollte der Ausdruck auf Versichertenverständlichkeit überprüft und weiterentwickelt werden, um eine möglichst vollständige und verständliche Darstellung der aktuellen Arzneimitteltherapie zu gewährleisten.</p>
+  </li>
+  <li>
+    <p><strong>Stärkere Integration des stationären Sektors</strong>: Gemäß aktuellem Konzept des dgMP erfolgt weiterhin ein Informationsverlust am Übergang vom stationären in den ambulanten Sektor, da die Medikationshistorie aus einem stationären Aufenthalt nicht vollständig in der ePA nachvollziehbar wird. Zukünftige Weiterentwicklungsstufen sollen den Informationsverlust am Übergang zwischen Sektoren weiter reduzieren. Außerdem soll die Erstellung einer Entlassdokumentation und die Aktualisierung des Medikationsplans stärker harmonisiert werden.</p>
+  </li>
+  <li>
+    <p><strong>Stärkere Integration der Pflege</strong>: Gemäß aktueller Gesetzeslage und dem darauf aufbauenden Konzept sind Pflegekräfte ausschließlich Konsumenten von medikationsbezogenen Informationen in der ePA. Es werden jedoch auch in der pflegerischen Versorgung wesentliche Erkenntnisse für die Arzneimitteltherapie gewonnen; ein Umstand, den zukünftige Weiterentwicklungsstufen berücksichtigen sollen.</p>
+  </li>
+  <li>
+    <p><strong>AMTS-relevante Informationen</strong>: Weitere Daten, die nicht direkt medikationsbezogen, aber relevant für die Arzneimitteltherapiesicherheit sind (z.B. Laborwerte oder Allergien und Unverträglichkeiten) werden zukünftig strukturiert in der ePA gespeichert und sowohl Therapieentscheidungen als auch AMTS-Prüfungen unterstützten können. Außerdem soll die Möglichkeit geschaffen werden, Ergebnisse von AMTS-Prüfungen und darauf basierende Entscheidungen für Mitbehandelnde in der ePA zu dokumentieren.</p>
+  </li>
+</ol>
+
+
+
+
+</div>
+        </div>  <!-- /inner-wrapper -->
+      </div>  <!-- /row -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-content -->
+
+  <script type="text/javascript" src="assets/js/jquery.js"> </script>     <!-- note keep space here, otherwise it will be transformed to empty tag -> fails -->
+  <script type="text/javascript" src="assets/js/jquery-ui.min.js"> </script>
+
+  <script type="text/javascript" src="assets/js/window-hash.js"> </script>
+  <a name="bottom"> </a>
+  <div id="segment-footer" igtool="footer" class="segment">  <!-- segment-footer -->
+    <div class="container">  <!-- container -->
+
+      <div style="background-color:var(--footer-nav-bg-color)">
+        <table style="width:100%">
+          <tbody>
+            <tr>
+              <td style="text-align:left">&#xA0;
+
+                <a href="index.html">&lt;vorherige</a>
+
+              </td>
+              <td style="text-align:center">
+                <a href="#top">oben</a>
+              </td>
+              <td style="text-align:right">&#xA0;
+
+                <a href="dgmp-scenarios.html">nächste&gt;</a>
+
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="inner-wrapper">
+        <p>
+          IG &#169; 2025+ <a style="color:var(--footer-hyperlink-text-color)" href="https://www.gematik.de">gematik GmbH</a>.  Paket de.gematik.epa.medication#1.3.1 basierend auf <a style="color: var(--footer-hyperlink-text-color)" href="http://hl7.org/fhir/R4/">FHIR 4.0.1</a>. Generiert <span title="Wed, Mar 25, 2026 10:38+0000">2026-03-25</span>
+          <br/>
+          <span style="color: var(--footer-highlight-text-color)">
+                      Links: <a style="color: var(--footer-hyperlink-text-color)" href="toc.html">Table of Contents</a> |
+                 <a style="color: var(--footer-hyperlink-text-color)" href="qa.html">QA Report</a>
+                 
+                
+          </span>
+        </p>
+      </div>  <!-- /inner-wrapper -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-footer -->
+  
+  <div id="segment-post-footer" class="segment hidden">  <!-- segment-post-footer -->
+    <div class="container">  <!-- container -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-post-footer -->
+
+  <!-- JS and analytics only. -->
+  <!-- Bootstrap core JavaScript
+  ================================================== -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script type="text/javascript" src="assets/js/bootstrap.min.js"> </script>
+  <script type="text/javascript" src="assets/js/respond.min.js"> </script>
+  <script type="text/javascript" src="assets/js/anchor.min.js"> </script>
+  <script type="text/javascript" src="assets/js/clipboard.min.js"> </script>
+  <script type="text/javascript" src="assets/js/clipboard-btn.js"> </script>
+  <script type="text/javascript" src="assets/js/anchor-hover.js"> </script>
+  <!-- Analytics Below
+  ================================================== -->
+  </body>
+</html>
+

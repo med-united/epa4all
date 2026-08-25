@@ -6,6 +6,8 @@ server:
   customMiddleware:
     - name: serveIndexHtml
       afterMiddleware: compression
+    - name: mockBackend
+      afterMiddleware: compression
 framework:
   name: OpenUI5
   version: 1.136.11
@@ -16,6 +18,7 @@ framework:
     - name: sap.ui.layout
     - name: themelib_sap_fiori_3
     - name: sap.tnt
+    - name: sap.uxap
 ---
 # Custom middleware extension as part of your project
 specVersion: "2.6"
@@ -25,3 +28,13 @@ metadata:
   name: serveIndexHtml 
 middleware:
   path: lib/middleware/serveIndexHtml.js
+---
+# Mock of the epa4all rest-server (/fhir = ePA Medication Service, /webdav = patient folders).
+# Only active when the environment variable MOCK_BACKEND=true is set (npm run start:mock).
+specVersion: "2.6"
+kind: extension
+type: server-middleware
+metadata:
+  name: mockBackend
+middleware:
+  path: lib/middleware/mockBackend.js

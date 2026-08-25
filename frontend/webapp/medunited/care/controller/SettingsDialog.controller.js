@@ -43,10 +43,15 @@ sap.ui.define([
                         localStorage.setItem("telematikId", sRawResponse);
 						localStorage.setItem("iccsn", sSelectedSmcb);
 
+                        if (!this._telematikIdAvailable) {
+                            // first setup: the WebDAV model was created without a Telematik-ID, reload the app with it
+                            window.location.reload();
+                            return;
+                        }
                         sap.ui.getCore().getEventBus().publish("WebdavModel", "TelematikIdUpdated", {
                             telematikId: sRawResponse
                         });
-                    },
+                    }.bind(this),
                     error: function (oError) {
                         console.error("Error fetching Telematik ID:", oError);
                     }

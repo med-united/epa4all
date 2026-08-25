@@ -1,0 +1,18 @@
+{
+  "resourceType" : "OperationOutcome",
+  "id" : "bf47037d-2f98-4ee1-9675-cab7dd8635df",
+  "meta" : {
+    "profile" : ["https://gematik.de/fhir/ti/StructureDefinition/operation-outcome|1.1.1"]
+  },
+  "issue" : [{
+    "severity" : "error",
+    "code" : "processing",
+    "details" : {
+      "coding" : [{
+        "system" : "http://terminology.hl7.org/CodeSystem/operation-outcome",
+        "code" : "UPDATE_MULTIPLE_MATCHES",
+        "display" : "Error: Multiple matches exist for the conditional update"
+      }]
+    }
+  }]
+}

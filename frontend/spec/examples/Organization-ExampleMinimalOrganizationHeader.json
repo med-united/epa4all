@@ -1,0 +1,50 @@
+{
+  "resourceType" : "Organization",
+  "id" : "ExampleMinimalOrganizationHeader",
+  "meta" : {
+    "profile" : ["https://gematik.de/fhir/ti/StructureDefinition/ti-organization|1.1.1"]
+  },
+  "text" : {
+    "status" : "generated",
+    "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p class=\"res-header-id\"><b>Generated Narrative: Organization ExampleMinimalOrganizationHeader</b></p><a name=\"ExampleMinimalOrganizationHeader\"> </a><a name=\"hcExampleMinimalOrganizationHeader\"> </a><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\"/><p style=\"margin-bottom: 0px\">Profile: <a href=\"https://simplifier.net/resolve?scope=de.gematik.ti@1.3.0&amp;canonical=https://gematik.de/fhir/ti/StructureDefinition/ti-organization\">TI Organizationversion: null1.1.1)</a></p></div><p><b>identifier</b>: <code>https://gematik.de/fhir/sid/telematik-id</code>/9-2.58.00000089, <code>https://fhir.kbv.de/NamingSystem/KBV_NS_Base_BSNR</code>/721111100</p><p><b>type</b>: <span title=\"Codes:{https://gematik.de/fhir/directory/CodeSystem/OrganizationProfessionOID 1.2.276.0.76.4.50}\">Betriebsstätte Arzt</span></p><p><b>name</b>: Die Hausarztpraxis</p><p><b>address</b>: Friedrichstr. 136, <br/>10117 Berlin</p><blockquote><p><b>contact</b></p><p><b>telecom</b>: ph: 0301234567, fax: 030123456789, <a href=\"mailto:hausarztpraxis@example.com\">hausarztpraxis@example.com</a></p></blockquote></div>"
+  },
+  "identifier" : [{
+    "system" : "https://gematik.de/fhir/sid/telematik-id",
+    "value" : "9-2.58.00000089"
+  },
+  {
+    "system" : "https://fhir.kbv.de/NamingSystem/KBV_NS_Base_BSNR",
+    "value" : "721111100"
+  }],
+  "type" : [{
+    "coding" : [{
+      "system" : "https://gematik.de/fhir/directory/CodeSystem/OrganizationProfessionOID",
+      "code" : "1.2.276.0.76.4.50",
+      "display" : "Betriebsstätte Arzt"
+    }]
+  }],
+  "name" : "Die Hausarztpraxis",
+  "address" : [{
+    "text" : "Friedrichstr. 136, \n10117 Berlin",
+    "line" : ["Friedrichstr. 136"],
+    "city" : "Berlin",
+    "district" : "Mitte",
+    "state" : "Berlin",
+    "postalCode" : "10117",
+    "country" : "DE"
+  }],
+  "contact" : [{
+    "telecom" : [{
+      "system" : "phone",
+      "value" : "0301234567"
+    },
+    {
+      "system" : "fax",
+      "value" : "030123456789"
+    },
+    {
+      "system" : "email",
+      "value" : "hausarztpraxis@example.com"
+    }]
+  }]
+}

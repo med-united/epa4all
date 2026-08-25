@@ -44,7 +44,9 @@ sap.ui.define([
 				const oFlexibleColumnLayout = me.getOwnerComponent().getRootControl().byId("fcl");
 				this.getOwnerComponent().runAsOwner(() => {
 					let sViewer;
-					if(sDecodedDocument.indexOf("vaccination") != -1) {
+					if(sDecodedDocument == "emp:manage") {
+						sViewer = "MedicationPlan";
+					} else if(sDecodedDocument.indexOf("vaccination") != -1) {
 						sViewer = "VaccinationEditor";
 					} else if(sDecodedDocument.indexOf("pdf") != -1 && !sDecodedDocument.endsWith(".xml")) {
 						sViewer = "PdfViewer";
@@ -58,7 +60,14 @@ sap.ui.define([
 					XMLView.create({
 					    viewName: "medunited.care.view.patient.viewer."+sViewer
 					}).then((oView) => {
-						if(sViewer == "PdfViewer") {							
+						if(sViewer == "MedicationPlan") {
+							oView.getController().setContext({
+								kvnr: sPatientId,
+								modelPath: sModelPath,
+								patient: iPatientModelOffest,
+								document: sDocument
+							});
+						} else if(sViewer == "PdfViewer") {							
 							oView.byId("pdf").setSource(sDecodedDocument);
 						} else if(sViewer == "CodeViewer") {
 							me.fetchDocument(sDecodedDocument).then((text) => {
@@ -545,6 +554,13 @@ sap.ui.define([
 				"patient" : this._entity,
 				"layout": "ThreeColumnsEndExpanded",
 				"document": encodeURIComponent("/render/v1/emp/pdf?x-insurantid="+sPatientId)
+			});
+		},
+		onManageMedicationPlan: function(oEvent) {
+			this.oRouter.navTo(this.getEntityName().toLowerCase() + "-detail", {
+				"patient" : this._entity,
+				"layout": "ThreeColumnsEndExpanded",
+				"document": encodeURIComponent("emp:manage")
 			});
 		},
 		onSeeMedicationListXhtml: function(oEvent) {

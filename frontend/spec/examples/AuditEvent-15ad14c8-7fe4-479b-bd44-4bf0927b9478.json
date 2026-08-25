@@ -1,0 +1,52 @@
+{
+  "resourceType" : "AuditEvent",
+  "id" : "15ad14c8-7fe4-479b-bd44-4bf0927b9478",
+  "meta" : {
+    "versionId" : "1",
+    "lastUpdated" : "2026-09-17T12:07:21.117Z",
+    "profile" : ["https://gematik.de/fhir/epa/StructureDefinition/epa-auditevent|1.3.0"]
+  },
+  "type" : {
+    "system" : "http://terminology.hl7.org/CodeSystem/audit-event-type",
+    "code" : "rest"
+  },
+  "action" : "E",
+  "recorded" : "2026-09-17T12:07:21.117Z",
+  "outcome" : "0",
+  "agent" : [{
+    "type" : {
+      "coding" : [{
+        "system" : "http://dicom.nema.org/resources/ontology/DCM",
+        "code" : "110150",
+        "display" : "Application"
+      }]
+    },
+    "who" : {
+      "identifier" : {
+        "system" : "https://gematik.de/fhir/sid/telematik-id",
+        "value" : "1-000000000000000"
+      }
+    },
+    "altId" : "1-000000000000000",
+    "name" : "E-Rezept-Fachdienst",
+    "requestor" : true
+  }],
+  "source" : {
+    "observer" : {
+      "display" : "Elektronische Patientenakte Fachdienst"
+    },
+    "type" : [{
+      "system" : "https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs",
+      "code" : "MEDICATIONSVC",
+      "display" : "Medication Service"
+    }]
+  },
+  "entity" : [{
+    "name" : "Medication Service",
+    "description" : "providePrescription_MedicationSvc",
+    "detail" : [{
+      "type" : "data-submission",
+      "valueString" : "true"
+    }]
+  }]
+}

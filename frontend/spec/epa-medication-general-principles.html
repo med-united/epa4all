@@ -1,0 +1,891 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HTML>
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+    <title>Generelle Prinzipien - Implementation Guide ePA Medication Service v1.3.1</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="author" content="http://hl7.org/fhir"/>
+
+    <link href="fhir.css" rel="stylesheet"/>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap-fhir.css" rel="stylesheet"/>
+
+    <!-- Project extras -->
+    <link href="assets/css/project.css" rel="stylesheet"/>
+    <link href="assets/css/pygments-manni.css" rel="stylesheet"/>
+    <link href="assets/css/jquery-ui.css" rel="stylesheet"/>
+  	<link href="assets/css/prism.css" rel="stylesheet" />
+  	<link href="assets/css/cqf.css" rel="stylesheet" />
+    <!-- Placeholder for child template CSS declarations -->
+<link href="assets/css/ig.gematik.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.gematik.min.js"> </script>
+<link href="assets/css/edge-dark.min.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.api.doc.gematik.min.js"> </script>
+<link href="assets/css/ig.req.gematik.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.req.gematik.min.js"> </script>
+
+<script type="text/javascript" src="assets/js/ig.bibliography.gematik.js"> </script>
+
+<style>
+    .gem-ig-headline-container {
+        -webkit-background-size: 100% auto;
+        -moz-background-size: 100% auto;
+        -o-background-size: 100% auto;
+        background-size: 100% auto;
+        background: url('assets/images/gem-headline.png') no-repeat;
+        background-position: 90% -136px;
+    }
+</style>
+
+    <script type="text/javascript" src="fhir-table-scripts.js"> </script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="assets/js/html5shiv.js"></script>
+    <script src="assets/js/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Favicons -->
+    <link rel="fhir-logo" sizes="144x144" href="assets/ico/icon-fhir-144.png"/>
+    <link rel="fhir-logo" sizes="114x114" href="assets/ico/icon-fhir-114.png"/>
+    <link rel="fhir-logo" sizes="72x72" href="assets/ico/icon-fhir-72.png"/>
+    <link rel="fhir-logo" href="assets/ico/icon-fhir-57.png"/>
+    <link rel="shortcut icon" href="assets/ico/favicon.png"/>
+  </head>
+  <body onload="document.body.style.opacity='1'">
+
+	  <script src="assets/js/prism.js"></script>
+    <script type="text/javascript" src="assets/js/mermaid.js"></script>
+    <script type="text/javascript" src="assets/js/mermaid-init.js"></script>
+    <style type="text/css">h2{--heading-prefix:"10"}
+    h3,h4,h5,h6{--heading-prefix:"10"}</style>
+    <div id="segment-header" class="segment">  <!-- segment-header -->
+      <div class="container">  <!-- container -->
+
+        <!-- Placeholder for child template header declarations -->
+
+<div id="hl7-nav">
+    <a id="gem-ig-logo" no-external="true" href="./index.html">
+        <img height="50" alt="Home" src="assets/images/gem-logo.png"/>
+    </a>
+</div>
+
+
+      </div> <!-- /container -->
+    </div>  <!-- /segment-header -->
+
+    <div id="segment-navbar" class="segment">  <!-- segment-navbar -->
+      <div id="stripe"> </div>
+      <div class="container">  <!-- container -->
+        <!-- HEADER CONTENT -->
+
+        <nav class="navbar navbar-inverse">
+          <!--status-bar-->
+          <div class="container">
+            <button data-target=".navbar-inverse-collapse" class="navbar-toggle" data-toggle="collapse" type="button">
+              <span class="icon-bar"> </span>
+              <span class="icon-bar"> </span>
+              <span class="icon-bar"> </span>
+            </button>
+            <a class="navbar-brand hidden" href="http://hl7.org/fhir/R4/index.html">FHIR</a>
+            <div class="nav-collapse collapse navbar-inverse-collapse">
+              <!-- menu.xml  -->
+
+<ul xmlns="http://www.w3.org/1999/xhtml" class="nav navbar-nav">
+  <li>
+    <a href="index.html">Home</a>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Fachlichkeit
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="dgmp-overview.html">Überblick</a>
+      </li>
+      <li>
+        <a href="dgmp-scenarios.html">dgMP-Szenarien</a>
+      </li>
+      <li>
+        <a href="dgmp-use-cases.html">dgMP-Anwendungsfälle</a>
+      </li>
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Technische Umsetzung
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="technical-use-cases.html">Technische Anwendungsfälle</a>
+      </li>
+      <li>
+        <a href="special-notes.html">Zur besonderen Beachtung</a>
+      </li>
+      <li>
+        <a href="processing-rules.html">Verarbeitungsregeln</a>
+      </li>
+      <li>
+        <a href="migration.html">Migrationsvorgaben</a>
+      </li>
+      <li>
+        <a href="dosage-examples.html">Darstellung von Dosierungsinformationen</a>
+      </li>
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Schnittstellen
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="general-principles.html">Generelle Prinzipien</a>
+      </li>
+      <li>
+        <a href="privacy-security.html">Datenschutz und Sicherheit</a>
+      </li>
+      <li>
+        <a href="query-api.html">Query API</a>
+      </li>
+      <li>
+        <a href="operation-api.html">Operation API</a>
+      </li>
+      <li>
+        <a href="render-api.html">Render API</a>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a href="artifacts.html">FHIR-Artefakte</a>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Anhänge
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="referenced.html">Referenzen</a>
+      </li>
+      <li>
+        <a href="downloads.html">Downloads</a>
+      </li>
+      <li>
+        <a href="medication-openapi.html">OpenAPI</a>
+      </li>
+      <li>
+        <a href="release-notes.html">Release Notes</a>
+      </li>
+      <li>
+        <a href="spec-sheet.html">Anforderungslisten</a>
+      </li>
+      <li>
+        <a href="comparisons.html">Versionsvergleiche</a>
+      </li>
+      <li>
+        <a href="license.html">Lizenz</a>
+      </li>
+    </ul>
+  </li>
+</ul>
+            </div>  <!-- /.nav-collapse -->
+          </div>  <!-- /.container -->
+        </nav>  <!-- /.navbar -->
+      <!-- /HEADER CONTENT -->
+      </div>  <!-- /container -->
+    </div>  <!-- /segment-navbar -->
+
+    <div class="segment"> 
+      <div class="container">
+        
+
+<div class="gem-ig-headline-container"> 
+    <div id="gem-ig-headline" class="col-lg-10 col-md-12">
+        <div class="gem-ig-headline-title">
+            
+Implementation Guide<br /> ePA Medication Service
+        </div>
+        <div id="ig-status" class="gem-ig-headline-subtitle">
+            <span style="display:inline-block;">Version 1.3.1 - release
+                
+                
+            </span>
+            
+
+        </div>
+    </div>
+</div>
+      </div>
+    </div>
+
+    <!--status-bar-->
+
+    <div id="segment-breadcrumb" class="segment">  <!-- segment-breadcrumb -->
+      <div class="container">  <!-- container -->
+        <ul class="breadcrumb">
+          <li><a href='toc.html'><b>Table of Contents</b></a></li><li><b>Generelle Prinzipien</b></li>
+
+          <span style="float:right;">
+
+            <a href="dosage-examples.html">&lt;vorherige</a> | 
+
+            <a href="#bottom">unten</a>
+
+          | <a href="privacy-security.html">nächste&gt;</a>
+
+          </span>
+
+        </ul>
+      </div>  <!-- /container -->
+    </div>  <!-- /segment-breadcrumb -->
+
+    <a name="top"> </a>
+    <div id="segment-content" class="segment">  <!-- segment-content -->
+      <div class="container">  <!-- container -->
+        <div class="row">
+          <div class="inner-wrapper">
+<style type="text/css">
+h2:before{color:silver;counter-increment:section;content:var(--heading-prefix) " ";}
+h3:before{color:silver;counter-increment:sub-section;content:var(--heading-prefix) "." counter(sub-section) " ";}
+h4:before{color:silver;counter-increment:composite;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) " ";}
+h5:before{color:silver;counter-increment:detail;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) "." counter(detail) " ";}
+h6:before{color:silver;counter-increment:more-detail;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) "." counter(detail) "." counter(more-detail)" ";}
+</style>
+<div class="col-12">
+  
+  <h2>Generelle Prinzipien</h2>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+    <p><!-- white space is critical inside of capture --></p>
+<div class="markdown-toc">
+  <p>Seiteninhalt:</p>
+
+<ul id="markdown-toc">
+  <li><a href="#übergeordnete-anforderungen" id="markdown-toc-übergeordnete-anforderungen">Übergeordnete Anforderungen</a></li>
+  <li><a href="#schnittstellenadressierung" id="markdown-toc-schnittstellenadressierung">Schnittstellenadressierung</a></li>
+  <li><a href="#schnittstellenimplementierung" id="markdown-toc-schnittstellenimplementierung">Schnittstellenimplementierung</a></li>
+  <li><a href="#fhir-spezifische-anforderungen" id="markdown-toc-fhir-spezifische-anforderungen">FHIR-spezifische Anforderungen</a></li>
+</ul>
+
+</div>
+<p>Dieser Implementation Guide verwendet die Schlüsselwörter <strong>MUSS</strong>, <strong>DARF NICHT</strong>, <strong>SOLL NICHT</strong> und <strong>KANN</strong> als deutsche Pendants des [RFC 2119], um Anforderungen als Ausdruck normativer Festlegungen zu kennzeichnen. Anforderungen werden im Implementation Guide wie folgt dargestellt:</p>
+
+<p><br /><b>&lt;IG-ID-Version&gt; - &lt;Titel der Anforderung&gt;</b><br /> Text / Beschreibung<br /> [&lt;=]</p>
+
+<h3 id="übergeordnete-anforderungen">Übergeordnete Anforderungen</h3>
+
+<p>Der Medication Service berücksichtigt als Ausprägung eines FHIR Data Service allgemeingültige [gemIG_TI_Common#Medication] und ePA-spezifische [gemIG_ePA_Basic#Medication] Anforderungen.</p>
+
+<h3 id="schnittstellenadressierung">Schnittstellenadressierung</h3>
+
+<requirement conformance="SHALL" key="IG-MED17488MTF" title="Medication-Service-Schnittstellen: Bereitstellung auf vordefinierten Pfaden im VAU-Kanal" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS sämtliche FHIR-Schnittstellen unter den folgenden Pfaden verfügbar machen:
+    <br /><br />
+  <ul>
+    <li><code>[base]/epa/medication/api/v1/fhir/</code></li>
+    <li><code>[base]/epa/medication/render/</code></li>
+  </ul>
+    wobei <code>[base]</code> einem gültigen Pfadnamen eines VAU-Kanals nach folgendem Schema entsprechen muss:
+    <code>http://epa4all</code>
+</requirement>
+
+<h3 id="schnittstellenimplementierung">Schnittstellenimplementierung</h3>
+
+<requirement conformance="SHALL" key="IG-MED31793UJS" title="Non-FHIR HTTP Status Codes für Schnittstellen des Medciation Service" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS zusätzlich folgende HTTP Status Codes unterstützen:
+    <br /><br />
+    <figure>
+      <table style="width: 100%">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Beschreibung</th>
+            <th>Error Code</th>
+            <th>Anmerkung</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>423</td>
+            <td>If the insurant objected to the medication process or objected to the submission of prescription and dispensation data into the ePA system, the Medication Service is locked.</td>
+            <td>locked</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+      <figcaption><strong>Tabelle:</strong> HTTP Status Codes für die Medication-Service-Antwortnachrichten</figcaption>
+    </figure>
+</requirement>
+
+<requirement conformance="SHALL" key="IG-MED06578PNW" title="Medikationsliste oder Medikationsplan anzeigen bei Widerspruch" version="3">
+    <meta lockversion="false" />
+    <actor name="EPA-FdV">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Falls der Versicherte der Teilnahme am digital gestützten Medikationsprozess widersprochen hat (d.h. "medication = deny") und dem Einstellen von Verordnungsdaten und Dispensierinformation durch den E-Rezept-Fachdienst nicht widersprochen hat (d.h. "erp-submission = permit") MUSS das ePA-FdV dem Versicherten beim Aufruf der elektronischen Medikationsliste (eML) oder des elektronischen Medikationsplans (eMP) erkenntlich machen, dass die eML oder der eMP aufgrund des derzeitigen Widerspruchs durch Leistungserbringer nicht eingesehen und zur Behandlung des Versicherten genutzt werden kann.
+</requirement>
+
+<requirement conformance="MAY" key="IG-MED04026M9H" title="Medikationsliste u. -plan (FHIR-Schnittstelle/Query API) anzeigen" version="4">
+    <meta lockversion="false" />
+    <actor name="EPA-FdV">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Das ePA-FdV KANN es dem Nutzer ermöglichen für sein Aktenkonto oder für das Aktenkonto des zu Vertretenden unter Verwendung von der <i>Query API</i> die Medikationsliste oder den Medikationsplan oder deren Details anzuzeigen bzw. nach Details zu suchen.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-MED05461W2P" title="Medikationsliste anzeigen (FHIR-Schnittstelle/Query API)" version="3">
+    <meta lockversion="false" />
+    <actor name="EPA-PS">
+        <testProcedure id="Konformitätsbestätigung" />
+    </actor>
+    Das Primärsystem MUSS die <i>Query API</i> implementieren, um die Medikationsliste oder deren Details anzuzeigen bzw. nach Details zu suchen.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-MED43098L7G" title="Medikationsplan anzeigen (FHIR-Schnittstelle/Query API)" version="1">
+    <meta lockversion="false" />
+    <actor name="EPA-PS">
+        <testProcedure id="Konformitätsbestätigung" />
+    </actor>
+    Das Primärsystem MUSS die <i>Query API</i> implementieren, um den Medikationsplan oder deren Details anzuzeigen bzw. nach Details zu suchen.
+</requirement>
+
+<requirement conformance="SHOULD" key="IG-MED18070Y2W" title="Hinweis auf Komma als Dezimaltrennzeichen" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-PS">
+        <testProcedure id="Konformitätsbestätigung" />
+    </actor>
+    Das Primärsystem SOLL den Benutzer darauf hinweisen, dass bei der Freitexteingabe von Dezimalzahlen bei einem vorhandenen  Dezimalbruchteil (insbesondere bei der Formulierung einer Freitextdosierungsanweisung) ein Komma als Dezimaltrennzeichen verwendet werden soll, um die Lesbarkeit auf dem Medikationsplan zu erhöhen.
+</requirement>
+
+<p>Das heißt, dass potentielle “Nachkommastellen” mit einem Komma und insbesondere nicht mit einem Punkt abgetrennt werden sollen. Ein entsprechender Hinweis kann in einer Hilfeseite unter der Eingabezeile oder auf anderem Wege angebracht werden, der sich gut in die Ergonomie des Primärsystems integriert.</p>
+
+<requirement conformance="SHALL" key="IG-MED04839P1M" title="Anwenderinformation bei vorliegender eMP-Verknüpfung und eMP-Aktualisierung" version="0">
+<meta lockversion="false" />
+<actor name="EPA-PS-APO">
+<testProcedure id="Konformitätsbestätigung" />
+</actor>
+    <actor name="ERP-PS-AB">
+<testProcedure id="Konformitätsbestätigung" />
+</actor>
+    Das Primärsystem MUSS den Anwender darüber informieren, dass eine automatisierte Aktualisierung des Eintrags im elektronischen Medikationsplan (eMP) anhand des Dispensierdatensatzes nicht erfolgen kann, wenn bei der Abgabe auf Basis eines E-Rezepts mit hinterlegtem eMP-Identifier zu einem verschriebenen Arzneimittel mehrere Arzneimittel abgegeben werden. Darüber hinaus MUSS dem Anwender die Anzeige des eMP angeboten werden, damit eine manuelle Aktualisierung vorgenommen werden kann.
+</requirement>
+
+<h3 id="fhir-spezifische-anforderungen">FHIR-spezifische Anforderungen</h3>
+
+<h4 id="server-spezifische-festlegungen">Server-spezifische Festlegungen</h4>
+
+<p>Die folgenden Rahmenbedingungen hinsichtlich der FHIR-Spezifikation sind für den Medication Service festgelegt.</p>
+
+<ul>
+  <li>Der E-Rezept-Fachdienst muss sich bei jeder Übertragung von Daten in den Medication Service auf einen bestimmten Versicherten beziehen. Dazu böte es sich an, eine im Medication Service hinterlegte FHIR Patient-Ressourceninstanz direkt zu referenzieren. Aufgrund der gesetzlich intendierten, fehlenden Leseberechtigung des E-Rezept-Fachdienstes ist das jedoch nicht möglich, sodass stattdessen lediglich ein KVNR-Identifier für die Zuordnung zu einem bestimmten Versicherten übertragen wird. Konkret MÜSSEN E-Rezept-Fachdienst sowie Medication Service deshalb sicherstellen, dass die FHIR-Elemente <em>MedicationRequest.subject.identifier</em> sowie <em>MedicationDispense.subject.identifier</em> an den von HL7 Deutschland e.V. definierten Datentyp <em><a href="http://fhir.de/StructureDefinition/identifier-kvid-10">Identifier für Patient</a></em> gebunden sind.</li>
+  <li>Das Löschen von Verschreibungsdaten oder Dispensierinformationen innerhalb des E-Rezept-Fachdienstes wird im Medication Service über ein Ändern des Status (d.h. Status = “cancelled”) der jeweiligen Ressourceninstanz umgesetzt.</li>
+  <li>Für die FHIR Operations ist es erforderlich, dass eine Referenzierung der Ressourcen innerhalb der Parameter-Instanz möglich ist.</li>
+</ul>
+
+<!--requirement conformance="SHALL" key="IG-MED87181PL5" title="Löschen fehlerhafter oder stornierter Medikationsdaten" version="1">
+    <actor name="EPA-Medication-Service"></actor>
+    Der Medication Service MUSS sicherstellen, dass alle FHIR-Instanzen, deren Status auf <i>entered-in-error</i> gesetzt wurde, unmittelbar nach dem Zustandswechsel gelöscht werden. Dabei sind die definierten Versionierungsrichtlinien einzuhalten.
+</requirement-->
+
+<p><strong>Wichtig</strong>: Gelöschte Instanzen bleiben über die FHIR-Versionshistorie weiterhin abrufbar, da keine physikalische Löschung erfolgt.</p>
+
+<requirement conformance="SHALL" key="IG-MED06281JMT" title="Keine Übernahme von Referenzen bei übermittelten Ressourcen in Operationen" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS sicherstellen, dass bei der Verarbeitung übermittelter Ressourcen im Rahmen einer Operation keine enthaltenen Referenzen wie <i>subject</i>, <i>medicationReference</i>, <i>basedOn</i> oder <i>derivedFrom</i> übernommen werden. Die Referenzierung innerhalb der resultierenden Ressource erfolgt ausschließlich durch die Geschäftslogik des Medication Service.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-MED12861P6W" title="Verwerfen übermittelter Ressource-IDs bei Operationen" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS übermittelte <i>id</i>-Werte von Ressourcen im Rahmen einer Operation verwerfen und stattdessen eine neue ID vergeben, die im weiteren Verlauf der Operation verwendet wird.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-MED78911M80" title="Komma als Dezimaltrennzeichen in Render APIs" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS bei der Darstellung von Dezimalzahlen in Resultaten der Render-APIs das Dezimaltrennzeichen Komma "," verwenden.
+</requirement>
+
+<p><em>Hinweis:</em> Dies betrifft Situationen, in denen Daten, die die Repräsentation einer Dezimalzahl darstellen, als Text ausgegeben werden. Dezimalzahlen in Freitextfeldern sind davon nicht betroffen.</p>
+
+<h4 id="de-duplizierung">De-Duplizierung</h4>
+
+<p>Die zentrale De-Duplizierung bei inhaltlich identischen Ressourcen im Medication Service ist von entscheidender Bedeutung, um sowohl den Nutzen als auch die Qualität der Daten im Medication Service zu gewährleisten. Durch den nachstehenden Ansatz wird vermieden, dass ePA-Clients eigene, möglicherweise unterschiedliche Aggregierungsalgorithmen dezentral implementieren, was zu Inkonsistenzen in den Daten des Medication Service führen könnte. Zusätzlich verbessert eine zentrale De-Duplizierung die Verknüpfbarkeit und Integration der vorhandenen FHIR-Ressourcen.</p>
+
+<p>Zur eindeutigen Identifizierung werden im Rahmen einer Verschreibung und ihr zugeordnete Dispensierinformationen die folgenden Identifier erzeugt und den notwendigen FHIR-Ressourcen hinzugefügt:</p>
+
+<requirement conformance="SHALL" key="IG-MED40234G89" title="Erzeugung und Zuweisung des RxPrescriptionProcessIdentifier" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS für jede MedicationRequest-, MedicationDispense- und Medication-Ressource einen <i>RxPrescriptionProcessIdentifier</i> erzeugen und dieser hinzufügen.
+
+    Der <i>RxPrescriptionProcessIdentifier</i> MUSS nach dem Schema (E-Prescription-ID + "_" + authoredOn[YYYYMMDD]) generiert werden.
+
+    Die Erzeugung dieses Identifiers MUSS durch den Medication Service erfolgen.
+</requirement>
+
+<p>Beispiel-Extension für die Ressourcen <em>Medication</em> und <em>MedicationDispense</em></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  "extension" : [
+    {
+      "url" : "https://gematik.de/fhir/epa-medication/StructureDefinition/rx-prescription-process-identifier-extension",
+      "valueIdentifier" : {
+        "system" : "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+        "value" : "160.153.303.257.459_20250122"
+      }
+    }
+  ],
+</code></pre></div></div>
+
+<p>Beispiel-Identifier für die Ressource <em>MedicationRequest</em></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  "identifier" : [
+    {
+      "system" : "https://gematik.de/fhir/epa-medication/sid/rx-prescription-process-identifier",
+      "value" : "160.153.303.257.459_20250122"
+    }
+  ],
+</code></pre></div></div>
+
+<requirement conformance="SHALL" key="IG-MED59646EXK" title="Erzeugung und Zuweisung des RxOriginatorProcessIdentifier" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS für jede <i>MedicationRequest</i>-, <i>MedicationDispense</i>- und <i>Medication</i>-Ressource einen <i>RxOriginatorProcessIdentifier</i> erzeugen und dieser hinzufügen.
+
+    Der <i>RxOriginatorProcessIdentifier</i> MUSS nach dem Schema (Resource-ID + "_" + Prescription-ID) generiert werden.
+
+    Dieser Identifier MUSS jede Prescription-ID mit der ursprünglichen Resource-ID des Erstellungssystems verknüpfen, um eine präzise Nachverfolgung und Koordination der Arzneimitteldaten zu gewährleisten.
+
+    Die Erzeugung dieses Identifier MUSS durch den Medication Service erfolgen.
+</requirement>
+
+<p><strong>Beispiel</strong></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  "identifier" : [
+    {
+      "system" : "https://gematik.de/fhir/epa-medication/sid/rx-originator-process-identifier",
+      "value" : "dc810e53-c26b-47bc-8c78-c7f79ea5f7ae_160.153.303.257.459"
+    }
+  ],
+</code></pre></div></div>
+
+<h5 id="anforderungen-an-den-epamedicationuniqueidentifier">Anforderungen an den EPAMedicationUniqueIdentifier</h5>
+
+<p>Dieser im Medication Service erzeugte Identifier an <em>Medication</em>-Ressourcen stellt die Eindeutigkeit anhand von Hashwerten über Pharmazentralnummer (PZN), Wirkstoff oder Freitext sicher. Von der Hashwertbildung ausgenommen sind die FHIR-Elemente <em>id</em>, <em>identifier</em>, <em>meta</em>, <em>amount</em>, <em>batch</em> sowie <em>status</em>.</p>
+
+<requirement conformance="SHALL" key="IG-MED10129K1D" title="Verwaltung des EPAMedicationUniqueIdentifier" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Die Erzeugung des <i>EPAMedicationUniqueIdentifier</i> MUSS für jede Medication beim Einstellen in den Medication Service durch die Geschäftslogik der entsprechenden FHIR-Operation generiert und der entsprechenden Medication hinzugefügt werden. Falls beim Hinzufügen einer Medication in den Medication Service ein Wert für den <i>EPAMedicationUniqueIdentifier</i> vorhanden ist, MUSS dieser durch den Medication Service ersetzt werden.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-MED89895TXC" title="Keine EPAMedicationUniqueIdentifier für Contained Medications" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+  Der Medication Service MUSS vermeiden, contained <i>Medication</i>-Elemente einer <i>Medication</i>-Instanz einen <i>EPAMedicationUniqueIdentifier</i> hinzuzufügen.
+  Die contained <i>Medication</i>-Ressourcen müssen jedoch bei der Generierung des <i>EPAMedicationUniqueIdentifier</i> der übergeordneten <i>Medication</i>-Instanz berücksichtigt werden. Die enthaltene <i>Medication</i> bleibt innerhalb der Hauptinstanz ohne eigenständige Identifizierung.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-MED57011GPN" title="Zusammenstellung der Hashwerte des EPAMedicationUniqueIdentifier" version="3">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS die einzelnen Bestandteile in folgender Reihenfolge in die Hash-Berechnung einfließen lassen:
+    <br /><br />
+    <ol>
+      <li><i>Medication.code</i> – Alle Kodierungen in der Reihenfolge ihrer Angabe in der <i>Medication</i>-Instanz.</li>
+      <li><i>Medication.code.text</i> – Nach Entfernung von Leerzeichen und Umwandlung in Kleinbuchstaben.</li>
+      <li><i>Medication.form</i> – Alle Kodierungen in der Reihenfolge ihrer Angabe in der <i>Medication</i>-Instanz.</li>
+      <li>
+        <i>Medication.ingredient[x]</i> – Alphabetisch sortierte Kombination aus:
+        <ul>
+          <li>Falls ein <i>ingredient.itemCodeableConcept</i> vorhanden ist, werden die Kodierungen und der Text extrahiert.</li>
+          <li>Falls eine <i>ingredient.strength</i> vorhanden ist, werden die numerischen Werte und Einheiten verarbeitet.</li>
+         <li>Falls <i>ingredient.itemReference</i> vorhanden ist, wird die Referenz gespeichert und erst nach der Verarbeitung von <i>ingredient.itemCodeableConcept</i> behandelt.</li>
+        </ul>
+      </li>
+      <li>Alphabetische Sortierung der Ingredients – Nach der Kombination der Werte müssen alle Ingredients alphabetisch sortiert werden.</li>
+      <li>Enthaltene Medications (<i>contained</i>) – Falls eine über <i>ingredient.itemReference</i> referenzierte <i>contained</i> Medication existiert, wird sie rekursiv verarbeitet und alphabetisch sortiert.</li>
+      <li>
+        Extensions – Berücksichtigung spezifischer Extensions mit der entsprechenden URL, wobei die Werte in Kleinbuchstaben umgewandelt, Leerzeichen entfernt und alphabetisch sortiert werden. Spezifische Extensions sind:
+        <ul>
+          <li>Extension: <i>MedicationManufacturingInstructionsExtension</i> URL: <i>https://gematik.de/fhir/epa-medication/StructureDefinition/medication-manufacturing-instructions-extension</i></li>
+        </ul>
+      </li>
+    </ol>
+    Der daraus resultierende Hashwert wird in Großbuchstaben dargestellt und stellt den eindeutigen <i>EPAMedicationUniqueIdentifier</i> dar. Der Begriff <i>"Kodierung"</i> in dieser Anforderung bedeutet die ausschließliche Berücksichtigung der FHIR-Elementwerte <i>Coding.code</i> und <i>Coding.system</i> des Datentyps <i>Coding</i>.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-MED48361BE0" title="Generierung des EPAMedicationUniqueIdentifier" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS den <i>EPAMedicationUniqueIdentifier</i> mittels des SHA-256-Algorithmus generieren.
+</requirement>
+
+<p><strong>Beispiel</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  "identifier" : [
+    {
+      "system" : "https://gematik.de/fhir/epa-medication/sid/epa-medication-unique-identifier",
+      "value" : "A632B2AB4232C9787E0731E3824942350070FB492EB1005A4AFA00F4BACD8AA1"
+    }
+  ],
+</code></pre></div></div>
+
+<h6 id="beispielimplementierung">Beispielimplementierung</h6>
+
+<p>Eine Beispielimplementierung für die Generierung eines SHA-256-basierten Hash-Werts ist auf [Medication_Unique_Identifier_Tool] veröffentlicht und steht als Referenz zur Verfügung.</p>
+
+<h4 id="datenherausgabe">Datenherausgabe</h4>
+
+<requirement conformance="SHALL" key="IG-MED87542J43" title="Implementierung der /metadata Funktion im Medication Service" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS die Funktion <code>GET [base]/epa/medication/api/v1/fhir/metadata</code> implementieren. Diese Funktionalität stellt sicher, dass bei einem Aufruf von <code>/metadata</code> das FHIR <i>CapabilityStatement</i> des Medication Service mit dem Namen <i>EPAMedicationServiceServer</i> zurückgegeben wird.
+</requirement>
+
+<p><em>Hinweis:</em> Das Capability Statement bietet eine detaillierte Beschreibung der Fähigkeiten des Medication Service und ist entscheidend für das Verständnis der unterstützten FHIR-Funktionalitäten. Der Abruf und Zugriff des Capability Statement unterliegt nicht den gesetzlichen Zugriffsbestimmungen bzw. der Legal Policy, da hier aus Client-Sicht ein technisches Spezifikationsartefakt gelesen wird und keine medizinischen Daten ausgetauscht oder anderweitig in Erfahrung gebracht werden. Dies legitimiert bspw. auch den E-Rezept-Fachdienst, das Capability Statement abzufragen.</p>
+
+<requirement conformance="SHALL" key="IG-MED20855WKX" title="Bereitstellung von Statusmeldungen als EPAOperationOutcome durch den Medication Service" version="3">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS bei der Verarbeitung von FHIR-Operationen spezifische Statusmeldungen im Format <a href="./StructureDefinition-epa-ms-operation-outcome.html">EPA Medication Service Operation Outcome</a> bereitstellen. Diese Statusmeldungen MÜSSEN dem Value Set <a href="./ValueSet-epa-ms-operation-outcome-details.html">EPAMSOperationOutcomeDetailsVS</a> entsprechen.
+    <br /><br />
+    Der Medication Service MUSS sicherstellen, dass diese Statusmeldungen in einer konsistenten und maschinenlesbaren Form ausgegeben werden, um eine eindeutige Fehlerbehandlung zu ermöglichen.
+</requirement>
+
+<requirement conformance="SHOULD" key="IG-MED40417H68" title="Rückgabe von Diagnosedaten beim Einstellen von Daten durch E-Rezept-Fachdienst" version="2">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Herstellererklärung" />
+    </actor>
+    Der Medication Service SOLL Diagnosedaten bei auftretenden Fehlern beim Speichern von empfangenen Daten des E-Rezept-Fachdienstes in das Element <i>OperationOutcome.issue.diagnostics</i> zurückgeben.
+    Dieses gilt für folgende FHIR-Operationen:
+    <br /><br />
+    <table>
+      <thead>
+        <tr>
+          <th>Operation API</th>
+          <th>OperationId</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td width="450px"><a href="./op-provide-prescription-erp.html">Operation API: Verschreibungsdaten einstellen</a></td>
+          <td> providePrescription_MedicationSvc</td>
+        </tr>
+        <tr>
+          <td width="450px"><a href="./op-cancel-prescription-erp.html">Operation API: Verschreibungsdaten stornieren</a></td>
+          <td>cancelPrescription_MedicationSvc</td>
+        </tr>
+        <tr>
+          <td width="450px"><a href="./op-provide-dispensation-erp.html">Operation API: Dispensierinformationen einstellen</a></td>
+          <td>provideDispensation_MedicationSvc</td>
+        </tr>
+        <tr>
+          <td width="450px"><a href="./op-cancel-dispensation-erp.html">Operation API: Dispensierinformationen stornieren</a></td>
+          <td>cancelDispensation_MedicationSvc</td>
+        </tr>
+      </tbody>
+    </table>
+    <figcaption><strong>Tabelle:</strong> Rückgabe von Diagnosedaten beim Einstellen von Daten durch E-Rezept-Fachdienst</figcaption>
+</requirement>
+
+<p><strong>Beispiel für die Nutzung von OperationOutcome.issue.diagnostics zur Beschreibung des Validierungsfehlers</strong></p>
+<div class="gem-ig-example" data-title="OperationOutcome (JSON)">
+    <pre class="json" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-json" style="white-space: pre; text-wrap: nowrap;">{
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">resourceType</a>" : "OperationOutcome",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a>" : "0a30eb5d-289f-44cf-a0bd-ec4ec38edaa8",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>" : {
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>" : [
+      <a href="StructureDefinition-epa-ms-operation-outcome.html" style="color: Maroon">&#x1F517;</a> "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-ms-operation-outcome|1.0.6-2"
+    ]
+  },
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a>" : "error",
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a>" : "invalid",
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>" : {
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>" : [
+          {
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>" : "https://gematik.de/fhir/epa-medication/CodeSystem/epa-ms-operation-outcome-details",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a>" : "MEDSVC_NO_VALID_STRUCTURE",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a>" : "Invalid Data Structure in Medication Service"
+          }
+        ]
+      },
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.diagnostics">diagnostics</a>" : "Parameters.parameter[0] | Slice 'Parameters.parameter:rxPrescription.part:authoredOn': minimum required = 1, but only found 0 (from https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-provide-prescription-erp-input-parameters|1.1.5);\nParameters.parameter[0] | Parameters.parameter:rxPrescription.part: minimum required = 6, but only found 5 (from https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-provide-prescription-erp-input-parameters|1.1.5);"
+    }
+  ]
+}</code></pre>
+
+</div>
+<div class="gem-ig-example" data-title="OperationOutcome (XML)">
+    <pre class="xml" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-xml" style="white-space: pre; text-wrap: nowrap;">
+&lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a> xmlns=&quot;http://hl7.org/fhir&quot;&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;0a30eb5d-289f-44cf-a0bd-ec4ec38edaa8&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>
+             <a href="http://hl7.org/fhir/R4/datatypes.html#canonical">value</a>=&quot;https://gematik.de/fhir/epa-medication/StructureDefinition/epa-ms-operation-outcome|1.0.6-2&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;error&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;invalid&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>
+                <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;https://gematik.de/fhir/epa-medication/CodeSystem/epa-ms-operation-outcome-details&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;MEDSVC_NO_VALID_STRUCTURE&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;Invalid Data Structure in Medication Service&quot;/&gt;
+      &lt;/<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.diagnostics">diagnostics</a>
+                 <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;Parameters.parameter[0] | Slice 'Parameters.parameter:rxPrescription.part:authoredOn': minimum required = 1, but only found 0 (from https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-provide-prescription-erp-input-parameters|1.1.5);
+Parameters.parameter[0] | Parameters.parameter:rxPrescription.part: minimum required = 6, but only found 5 (from https://gematik.de/fhir/epa-medication/StructureDefinition/epa-op-provide-prescription-erp-input-parameters|1.1.5);&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+&lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a>&gt;</code></pre>
+
+</div>
+
+<h4 id="validierung">Validierung</h4>
+
+<requirement conformance="SHALL" key="IG-MED54433PBV" title="Ausschluss der KBV-Schlüsseltabellen-Validierung für FHIR-Operationen des E-Rezept-Fachdienstes" version="2">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Herstellererklärung" />
+    </actor>
+    Der Medication Service MUSS bei der Validierung der FHIR-Schema- und Strukturvorgaben für FHIR-Operationen, die ausschließlich vom E-Rezept-Fachdienst genutzt werden, auf die Validierung der KBV-Schlüsseltabellen verzichten.
+    <ul>
+        <li>Die strukturelle FHIR-Validierung der Eingabedaten muss sich auf das FHIR-Schema und die korrekte Verwendung der Ressourcen und Datentypen beschränken.</li>
+        <li>Eine Prüfung auf zulässige Werte innerhalb der KBV-Schlüsseltabellen (z.B. für Darreichungsformen) darf nicht erfolgen.</li>
+        <li>Der E-Rezept-Fachdienst gilt als vertrauenswürdiger Fachdienst und verwaltet die KBV-Schlüsseltabellen über einen eigenen Aktualisierungsmechanismus.</li>
+    </ul>
+    Dieses gilt für folgende FHIR-Operationen:
+    <br /><br />
+    <table>
+      <thead>
+        <tr>
+          <th>Operation API</th>
+          <th>OperationId</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td width="450px"><a href="./op-provide-prescription-erp.html">Operation API: Verschreibungsdaten einstellen</a></td>
+          <td> providePrescription_MedicationSvc</td>
+        </tr>
+        <tr>
+          <td width="450px"><a href="./op-cancel-prescription-erp.html">Operation API: Verschreibungsdaten stornieren</a></td>
+          <td>cancelPrescription_MedicationSvc</td>
+        </tr>
+        <tr>
+          <td width="450px"><a href="./op-provide-dispensation-erp.html">Operation API: Dispensierinformationen einstellen</a></td>
+          <td>provideDispensation_MedicationSvc</td>
+        </tr>
+        <tr>
+          <td width="450px"><a href="./op-cancel-dispensation-erp.html">Operation API: Dispensierinformationen stornieren</a></td>
+          <td>cancelDispensation_MedicationSvc</td>
+        </tr>
+      </tbody>
+    </table>
+    <figcaption><strong>Tabelle:</strong> OperationIds für Operation APIs</figcaption>
+</requirement>
+
+<requirement conformance="SHALL" key="IG-MED97505ZEG" title="Gewährleistung der Profilkonformität" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+  Der Medication Service MUSS sicherstellen, dass beim Erzeugen von FHIR-Ressourcen in seinen Geschäftslogiken keine FHIR-Elemente und FHIR Extensions aus den FHIR-Eingabedaten übernommen werden, welche nicht in den serviceeigenen FHIR-Profilen mittels Must Support (MS) gelistet sind.
+</requirement>
+
+<p>Die Einschränkung bezieht sich nur darauf, dass keine FHIR-Elemente und FHIR-Extensions aus Eingabedaten übernommen werden dürfen, die nicht mit Must Support markiert sind. Es schränkt nicht Informationen ein, die in Geschäftslogiken gesetzt werden.</p>
+
+<requirement conformance="SHALL" key="IG-MED32282ZGM" title="Ignorierung von FHIR-Profilangaben" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+  Der Medication Service MUSS bei Schreibzugriffen Angaben einer FHIR-Instanz zur FHIR-Profilkonformität im FHIR-Element <i>meta.profile</i> ignorieren und darf sie nicht dauerhaft in serviceeigenen FHIR-Profilen speichern.
+</requirement>
+
+<p><em>Hinweis:</em> Gemäß der Anforderung [gemIG_ePA_Basic#IG-EPA74597GNF] schreibt der Medication Service nach Validierung und Ausführung der entsprechenden Geschäftslogik das FHIR-Element <i>meta.profile</i> selbst.</p>
+
+<requirement conformance="SHALL" key="IG-MED51601THQ" title="Validierung der aufbereiteten Dosierungsdarstellung gemäß HL7 Deutschland e.V. DosageDgMP-Profil" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der Medication Service MUSS sicherstellen, dass die aufbereitete Dosierungsdarstellung der übergebenen Ressourcen von MedicationRequest, MedicationDispense und MedicationStatement gemäß den Vorgaben des <i>DosageDgMP</i>-Profils von HL7 Deutschland generiert wurde. Bei fehlschlagender Validierung ist die Operation mit HTTP Status Code <i>400 Bad Request</i> und einem <i>OperationOutcome</i> mit dem Fehlercode <i>MEDSVC_DOSAGE_INVALID</i> abzulehnen.
+</requirement>
+
+<p><em>Hinweis:</em> Die vom E-Rezept-Fachdienst übergebenen Ressourcen von <em>MedicationRequest</em> und <em>MedicationDispense</em> sollen nicht validiert werden, da die Korrektheit der aufbereiteten Dosierungsdarstellung bereits vom E-Rezept-Fachdienst sichergestellt wird.</p>
+
+<p><strong>Beispiel für OperationOutcome bei Verstoß gegen DosageDgMP-Textregeln</strong></p>
+<div class="gem-ig-example" data-title="OperationOutcome (JSON)">
+    <pre class="json" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-json" style="white-space: pre; text-wrap: nowrap;">{
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">resourceType</a>" : "OperationOutcome",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a>" : "1a5a1db0-7bab-4d25-a43d-3ad1efb29cb5",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>" : {
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>" : [
+      <a href="StructureDefinition-epa-ms-operation-outcome.html" style="color: Maroon">&#x1F517;</a> "https://gematik.de/fhir/epa-medication/StructureDefinition/epa-ms-operation-outcome|1.0.6-2"
+    ]
+  },
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a>" : "error",
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a>" : "invalid",
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>" : {
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>" : [
+          {
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>" : "https://gematik.de/fhir/epa-medication/CodeSystem/epa-ms-operation-outcome-details",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a>" : "MEDSVC_DOSAGE_INVALID",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a>" : "Invalid dosage structure or content"
+          }
+        ]
+      }
+    }
+  ]
+}</code></pre>
+
+</div>
+<div class="gem-ig-example" data-title="OperationOutcome (XML)">
+    <pre class="xml" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-xml" style="white-space: pre; text-wrap: nowrap;">
+&lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a> xmlns=&quot;http://hl7.org/fhir&quot;&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;1a5a1db0-7bab-4d25-a43d-3ad1efb29cb5&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>
+             <a href="http://hl7.org/fhir/R4/datatypes.html#canonical">value</a>=&quot;https://gematik.de/fhir/epa-medication/StructureDefinition/epa-ms-operation-outcome|1.0.6-2&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;error&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;invalid&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>
+                <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;https://gematik.de/fhir/epa-medication/CodeSystem/epa-ms-operation-outcome-details&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;MEDSVC_DOSAGE_INVALID&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;Invalid dosage structure or content&quot;/&gt;
+      &lt;/<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+&lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a>&gt;</code></pre>
+
+</div>
+
+
+
+
+</div>
+        </div>  <!-- /inner-wrapper -->
+      </div>  <!-- /row -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-content -->
+
+  <script type="text/javascript" src="assets/js/jquery.js"> </script>     <!-- note keep space here, otherwise it will be transformed to empty tag -> fails -->
+  <script type="text/javascript" src="assets/js/jquery-ui.min.js"> </script>
+
+  <script type="text/javascript" src="assets/js/window-hash.js"> </script>
+  <a name="bottom"> </a>
+  <div id="segment-footer" igtool="footer" class="segment">  <!-- segment-footer -->
+    <div class="container">  <!-- container -->
+
+      <div style="background-color:var(--footer-nav-bg-color)">
+        <table style="width:100%">
+          <tbody>
+            <tr>
+              <td style="text-align:left">&#xA0;
+
+                <a href="dosage-examples.html">&lt;vorherige</a>
+
+              </td>
+              <td style="text-align:center">
+                <a href="#top">oben</a>
+              </td>
+              <td style="text-align:right">&#xA0;
+
+                <a href="privacy-security.html">nächste&gt;</a>
+
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="inner-wrapper">
+        <p>
+          IG &#169; 2025+ <a style="color:var(--footer-hyperlink-text-color)" href="https://www.gematik.de">gematik GmbH</a>.  Paket de.gematik.epa.medication#1.3.1 basierend auf <a style="color: var(--footer-hyperlink-text-color)" href="http://hl7.org/fhir/R4/">FHIR 4.0.1</a>. Generiert <span title="Wed, Mar 25, 2026 10:38+0000">2026-03-25</span>
+          <br/>
+          <span style="color: var(--footer-highlight-text-color)">
+                      Links: <a style="color: var(--footer-hyperlink-text-color)" href="toc.html">Table of Contents</a> |
+                 <a style="color: var(--footer-hyperlink-text-color)" href="qa.html">QA Report</a>
+                 
+                
+          </span>
+        </p>
+      </div>  <!-- /inner-wrapper -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-footer -->
+  
+  <div id="segment-post-footer" class="segment hidden">  <!-- segment-post-footer -->
+    <div class="container">  <!-- container -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-post-footer -->
+
+  <!-- JS and analytics only. -->
+  <!-- Bootstrap core JavaScript
+  ================================================== -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script type="text/javascript" src="assets/js/bootstrap.min.js"> </script>
+  <script type="text/javascript" src="assets/js/respond.min.js"> </script>
+  <script type="text/javascript" src="assets/js/anchor.min.js"> </script>
+  <script type="text/javascript" src="assets/js/clipboard.min.js"> </script>
+  <script type="text/javascript" src="assets/js/clipboard-btn.js"> </script>
+  <script type="text/javascript" src="assets/js/anchor-hover.js"> </script>
+  <!-- Analytics Below
+  ================================================== -->
+  </body>
+</html>
+

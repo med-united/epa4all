@@ -1,0 +1,37 @@
+{
+  "resourceType" : "Provenance",
+  "id" : "fdfc2842-bfff-436f-ab13-74785d0188c0",
+  "meta" : {
+    "versionId" : "1",
+    "lastUpdated" : "2025-06-02T11:15:00+01:00",
+    "profile" : ["https://gematik.de/fhir/epa/StructureDefinition/epa-activity-provenance|1.3.0"]
+  },
+  "target" : [{
+    "reference" : "MedicationStatement/29d46448-b585-4501-9660-a1236436560f/_history/2"
+  }],
+  "occurredDateTime" : "2025-06-02T11:15:00+01:00",
+  "recorded" : "2025-06-02T11:15:00+01:00",
+  "activity" : {
+    "coding" : [{
+      "system" : "http://terminology.hl7.org/CodeSystem/v3-DataOperation",
+      "code" : "Update",
+      "display" : "revise"
+    }]
+  },
+  "agent" : [{
+    "type" : {
+      "coding" : [{
+        "system" : "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+        "code" : "author"
+      }]
+    },
+    "who" : {
+      "reference" : "Organization/e66d6c66-96e0-4725-b48c-73702ee63cdf",
+      "identifier" : {
+        "system" : "https://gematik.de/fhir/sid/telematik-id",
+        "value" : "9-2.58.00000040"
+      },
+      "display" : "gematik Praxis"
+    }
+  }]
+}

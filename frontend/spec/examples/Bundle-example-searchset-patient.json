@@ -1,0 +1,46 @@
+{
+  "resourceType" : "Bundle",
+  "id" : "example-searchset-patient",
+  "type" : "searchset",
+  "total" : 1,
+  "link" : [{
+    "relation" : "self",
+    "url" : "/epa/patient/api/v1/fhir/Patient?_count=10"
+  }],
+  "entry" : [{
+    "fullUrl" : "http://epa4all/epa/patient/api/v1/fhir/Patient/7eeb4e81-ce38-4d70-84fc-9ca4c7d0939c",
+    "resource" : {
+      "resourceType" : "Patient",
+      "id" : "7eeb4e81-ce38-4d70-84fc-9ca4c7d0939c",
+      "meta" : {
+        "versionId" : "2",
+        "lastUpdated" : "2026-01-19T14:37:12+01:00",
+        "profile" : ["https://gematik.de/fhir/epa/StructureDefinition/epa-patient|1.3.0"]
+      },
+      "identifier" : [{
+        "system" : "http://fhir.de/sid/gkv/kvid-10",
+        "value" : "G995030566"
+      }],
+      "name" : [{
+        "use" : "official",
+        "family" : "Mustermann",
+        "given" : ["Erika"]
+      },
+      {
+        "use" : "maiden",
+        "family" : "Gabler",
+        "_family" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/humanname-own-name",
+            "valueString" : "Gabler"
+          }]
+        }
+      }],
+      "gender" : "female",
+      "birthDate" : "1964-08-12"
+    },
+    "search" : {
+      "mode" : "match"
+    }
+  }]
+}

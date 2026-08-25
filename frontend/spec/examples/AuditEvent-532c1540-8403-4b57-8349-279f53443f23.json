@@ -1,0 +1,76 @@
+{
+  "resourceType" : "AuditEvent",
+  "id" : "532c1540-8403-4b57-8349-279f53443f23",
+  "meta" : {
+    "versionId" : "1",
+    "lastUpdated" : "2026-03-10T13:50:04.047Z",
+    "profile" : ["https://gematik.de/fhir/epa/StructureDefinition/epa-auditevent|1.3.0"]
+  },
+  "type" : {
+    "system" : "http://terminology.hl7.org/CodeSystem/audit-event-type",
+    "code" : "rest"
+  },
+  "action" : "C",
+  "recorded" : "2026-03-10T13:50:04.047Z",
+  "outcome" : "0",
+  "agent" : [{
+    "type" : {
+      "coding" : [{
+        "system" : "http://terminology.hl7.org/CodeSystem/v3-RoleClass",
+        "code" : "PAT",
+        "display" : "patient"
+      }]
+    },
+    "who" : {
+      "identifier" : {
+        "system" : "http://fhir.de/sid/gkv/kvid-10",
+        "value" : "A123456780"
+      }
+    },
+    "altId" : "A123456780",
+    "name" : "Erika Musterfrau",
+    "requestor" : true
+  }],
+  "source" : {
+    "observer" : {
+      "display" : "Elektronische Patientenakte Fachdienst"
+    },
+    "type" : [{
+      "system" : "https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs",
+      "code" : "CONMGMT",
+      "display" : "Constraint Management"
+    }]
+  },
+  "entity" : [{
+    "name" : "GeneralDenyPolicy",
+    "description" : "batchSetDenyPolicyAssignment",
+    "detail" : [{
+      "type" : "DocumentTitle",
+      "valueString" : "Befund von Dr. Mustermann"
+    },
+    {
+      "type" : "RootDocumentId",
+      "valueString" : "urn:uuid:0ab6dc6f-d5f2-4d89-8782-6794b6f372f2^^^^urn:gematik:iti:xds:2023:rootDocumentUniqueId"
+    }]
+  },
+  {
+    "name" : "GeneralDenyPolicy",
+    "description" : "batchSetDenyPolicyAssignment",
+    "detail" : [{
+      "type" : "DocumentTitle",
+      "valueString" : "Brief von Dr. Mustermann"
+    },
+    {
+      "type" : "RootDocumentId",
+      "valueString" : "urn:uuid:256181de-e732-48d7-8cbb-acdc133dde66^^^^urn:gematik:iti:xds:2023:rootDocumentUniqueId"
+    }]
+  },
+  {
+    "name" : "GeneralDenyPolicy",
+    "description" : "batchSetDenyPolicyAssignment",
+    "detail" : [{
+      "type" : "CategoryId",
+      "valueString" : "dental"
+    }]
+  }]
+}

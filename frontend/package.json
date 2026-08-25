@@ -6,6 +6,7 @@
     "description": "epa4all Frontend",
     "scripts": {
         "start": "ui5 serve -o index.html --accept-remote-connections",
+        "start:mock": "MOCK_BACKEND=true ui5 serve -o index.html --accept-remote-connections",
         "build": "ui5 build"
     },
     "devDependencies": {

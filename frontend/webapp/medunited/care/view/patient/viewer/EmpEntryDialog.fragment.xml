@@ -1,0 +1,80 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:f="sap.ui.layout.form">
+	<Dialog id="empEntryDialog" title="{= ${dlg>/entry/id} ? ${i18n>empDialogEditEntry} : ${i18n>empDialogAddEntry}}" contentWidth="52rem" draggable="true" resizable="true" busy="{dlg>/busy}" busyIndicatorDelay="0">
+		<f:SimpleForm editable="true" layout="ResponsiveGridLayout" labelSpanXL="4" labelSpanL="4" labelSpanM="4" labelSpanS="12" columnsXL="2" columnsL="2" columnsM="1">
+			<f:content>
+				<core:Title text="{i18n>empColMedication}" />
+				<Label text="{i18n>empLabelMedicationName}" required="true" />
+				<Input value="{dlg>/entry/name}" placeholder="z.B. Benazepril AL 20mg 98 Filmtabletten N3" valueState="{= ${dlg>/entry/name} ? 'None' : 'Error'}" />
+				<Label text="{i18n>empLabelPzn}" />
+				<Input value="{dlg>/entry/pzn}" maxLength="8" placeholder="8-stellig" />
+				<Label text="{i18n>empLabelForm}" />
+				<Select selectedKey="{dlg>/entry/form}" items="{dlg>/forms}" forceSelection="false">
+					<core:Item key="{dlg>key}" text="{dlg>text}" />
+				</Select>
+				<Label text="{i18n>empLabelNormgroesse}" />
+				<Select selectedKey="{dlg>/entry/normgroesse}" forceSelection="false">
+					<core:Item key="" text="" />
+					<core:Item key="N1" text="N1" />
+					<core:Item key="N2" text="N2" />
+					<core:Item key="N3" text="N3" />
+					<core:Item key="KTP" text="KTP (Kein therapiegerechtes Packungsmaß)" />
+				</Select>
+				<Label text="{i18n>empLabelIngredient}" />
+				<Input value="{dlg>/entry/ingredient}" placeholder="Wirkstoff" />
+				<Label text="{i18n>empLabelStrength}" />
+				<HBox>
+					<Input value="{dlg>/entry/strength}" type="Number" width="8rem" class="sapUiTinyMarginEnd" />
+					<Select selectedKey="{dlg>/entry/strengthUnit}" width="8rem">
+						<core:Item key="mg" text="mg" />
+						<core:Item key="g" text="g" />
+						<core:Item key="µg" text="µg" />
+						<core:Item key="ml" text="ml" />
+						<core:Item key="I.E." text="I.E." />
+					</Select>
+				</HBox>
+
+				<core:Title text="{i18n>empSubSectionDosage}" />
+				<Label text="{i18n>empLabelDosageScheme}" />
+				<HBox alignItems="Center" wrap="Wrap">
+					<StepInput value="{dlg>/entry/morning}" min="0" max="20" step="0.5" width="6rem" description="{i18n>empMorning}" change="onDosageChange" class="sapUiTinyMarginEnd" />
+					<StepInput value="{dlg>/entry/noon}" min="0" max="20" step="0.5" width="6rem" description="{i18n>empNoon}" change="onDosageChange" class="sapUiTinyMarginEnd" />
+					<StepInput value="{dlg>/entry/evening}" min="0" max="20" step="0.5" width="6rem" description="{i18n>empEvening}" change="onDosageChange" class="sapUiTinyMarginEnd" />
+					<StepInput value="{dlg>/entry/night}" min="0" max="20" step="0.5" width="6rem" description="{i18n>empNight}" change="onDosageChange" />
+				</HBox>
+				<Label text="{i18n>empLabelDosageUnit}" />
+				<Select selectedKey="{dlg>/entry/doseUnit}" items="{dlg>/doseUnits}">
+					<core:Item key="{dlg>key}" text="{dlg>text}" />
+				</Select>
+				<Label text="{i18n>empLabelDosageText}" required="true" />
+				<Input value="{dlg>/entry/dosageText}" placeholder="z.B. 1-0-1-0 Stück" valueState="{= ${dlg>/entry/dosageText} ? 'None' : 'Error'}" />
+				<Label text="{i18n>empLabelPeriodStart}" />
+				<DatePicker value="{dlg>/entry/start}" displayFormat="medium" valueFormat="yyyy-MM-dd" />
+				<Label text="{i18n>empLabelPeriodEnd}" />
+				<DatePicker value="{dlg>/entry/end}" displayFormat="medium" valueFormat="yyyy-MM-dd" />
+
+				<core:Title text="{i18n>empSubSectionReason}" />
+				<Label text="{i18n>empLabelReason}" />
+				<Input value="{dlg>/entry/reason}" placeholder="z.B. Bluthochdruck" />
+				<Label text="{i18n>empLabelIcd}" />
+				<Input value="{dlg>/entry/icd}" placeholder="ICD-10-GM, z.B. I10.00" maxLength="8" />
+				<Label text="{i18n>empLabelPatientNote}" />
+				<TextArea value="{dlg>/entry/patientNote}" rows="2" width="100%" placeholder="Hinweis für den Versicherten" />
+				<Label text="{i18n>empLabelNote}" />
+				<TextArea value="{dlg>/entry/note}" rows="2" width="100%" placeholder="Hinweis für Leistungserbringer" />
+				<Label text="{i18n>empColStatus}" visible="{= !!${dlg>/entry/id}}" />
+				<Select selectedKey="{dlg>/entry/status}" visible="{= !!${dlg>/entry/id}}">
+					<core:Item key="active" text="{i18n>empStatusActive}" />
+					<core:Item key="on-hold" text="{i18n>empStatusOnHold}" />
+					<core:Item key="completed" text="{i18n>empStatusCompleted}" />
+					<core:Item key="stopped" text="{i18n>empStatusStopped}" />
+				</Select>
+			</f:content>
+		</f:SimpleForm>
+		<beginButton>
+			<Button text="{i18n>empBtnSave}" type="Emphasized" press="onSaveEntry" enabled="{= !!${dlg>/entry/name} &amp;&amp; !!${dlg>/entry/dosageText}}" />
+		</beginButton>
+		<endButton>
+			<Button text="{i18n>buttonCancel}" press="onCancelEntry" />
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

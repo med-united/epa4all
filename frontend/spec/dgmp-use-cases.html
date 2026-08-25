@@ -1,0 +1,2187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HTML>
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+    <title>dgMP-Anwendungsfälle - Implementation Guide ePA Medication Service v1.3.1</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="author" content="http://hl7.org/fhir"/>
+
+    <link href="fhir.css" rel="stylesheet"/>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap-fhir.css" rel="stylesheet"/>
+
+    <!-- Project extras -->
+    <link href="assets/css/project.css" rel="stylesheet"/>
+    <link href="assets/css/pygments-manni.css" rel="stylesheet"/>
+    <link href="assets/css/jquery-ui.css" rel="stylesheet"/>
+  	<link href="assets/css/prism.css" rel="stylesheet" />
+  	<link href="assets/css/cqf.css" rel="stylesheet" />
+    <!-- Placeholder for child template CSS declarations -->
+<link href="assets/css/ig.gematik.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.gematik.min.js"> </script>
+<link href="assets/css/edge-dark.min.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.api.doc.gematik.min.js"> </script>
+<link href="assets/css/ig.req.gematik.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.req.gematik.min.js"> </script>
+
+<script type="text/javascript" src="assets/js/ig.bibliography.gematik.js"> </script>
+
+<style>
+    .gem-ig-headline-container {
+        -webkit-background-size: 100% auto;
+        -moz-background-size: 100% auto;
+        -o-background-size: 100% auto;
+        background-size: 100% auto;
+        background: url('assets/images/gem-headline.png') no-repeat;
+        background-position: 90% -136px;
+    }
+</style>
+
+    <script type="text/javascript" src="fhir-table-scripts.js"> </script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="assets/js/html5shiv.js"></script>
+    <script src="assets/js/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Favicons -->
+    <link rel="fhir-logo" sizes="144x144" href="assets/ico/icon-fhir-144.png"/>
+    <link rel="fhir-logo" sizes="114x114" href="assets/ico/icon-fhir-114.png"/>
+    <link rel="fhir-logo" sizes="72x72" href="assets/ico/icon-fhir-72.png"/>
+    <link rel="fhir-logo" href="assets/ico/icon-fhir-57.png"/>
+    <link rel="shortcut icon" href="assets/ico/favicon.png"/>
+  </head>
+  <body onload="document.body.style.opacity='1'">
+
+	  <script src="assets/js/prism.js"></script>
+    <script type="text/javascript" src="assets/js/mermaid.js"></script>
+    <script type="text/javascript" src="assets/js/mermaid-init.js"></script>
+    <style type="text/css">h2{--heading-prefix:"4"}
+    h3,h4,h5,h6{--heading-prefix:"4"}</style>
+    <div id="segment-header" class="segment">  <!-- segment-header -->
+      <div class="container">  <!-- container -->
+
+        <!-- Placeholder for child template header declarations -->
+
+<div id="hl7-nav">
+    <a id="gem-ig-logo" no-external="true" href="./index.html">
+        <img height="50" alt="Home" src="assets/images/gem-logo.png"/>
+    </a>
+</div>
+
+
+      </div> <!-- /container -->
+    </div>  <!-- /segment-header -->
+
+    <div id="segment-navbar" class="segment">  <!-- segment-navbar -->
+      <div id="stripe"> </div>
+      <div class="container">  <!-- container -->
+        <!-- HEADER CONTENT -->
+
+        <nav class="navbar navbar-inverse">
+          <!--status-bar-->
+          <div class="container">
+            <button data-target=".navbar-inverse-collapse" class="navbar-toggle" data-toggle="collapse" type="button">
+              <span class="icon-bar"> </span>
+              <span class="icon-bar"> </span>
+              <span class="icon-bar"> </span>
+            </button>
+            <a class="navbar-brand hidden" href="http://hl7.org/fhir/R4/index.html">FHIR</a>
+            <div class="nav-collapse collapse navbar-inverse-collapse">
+              <!-- menu.xml  -->
+
+<ul xmlns="http://www.w3.org/1999/xhtml" class="nav navbar-nav">
+  <li>
+    <a href="index.html">Home</a>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Fachlichkeit
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="dgmp-overview.html">Überblick</a>
+      </li>
+      <li>
+        <a href="dgmp-scenarios.html">dgMP-Szenarien</a>
+      </li>
+      <li>
+        <a href="dgmp-use-cases.html">dgMP-Anwendungsfälle</a>
+      </li>
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Technische Umsetzung
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="technical-use-cases.html">Technische Anwendungsfälle</a>
+      </li>
+      <li>
+        <a href="special-notes.html">Zur besonderen Beachtung</a>
+      </li>
+      <li>
+        <a href="processing-rules.html">Verarbeitungsregeln</a>
+      </li>
+      <li>
+        <a href="migration.html">Migrationsvorgaben</a>
+      </li>
+      <li>
+        <a href="dosage-examples.html">Darstellung von Dosierungsinformationen</a>
+      </li>
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Schnittstellen
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="general-principles.html">Generelle Prinzipien</a>
+      </li>
+      <li>
+        <a href="privacy-security.html">Datenschutz und Sicherheit</a>
+      </li>
+      <li>
+        <a href="query-api.html">Query API</a>
+      </li>
+      <li>
+        <a href="operation-api.html">Operation API</a>
+      </li>
+      <li>
+        <a href="render-api.html">Render API</a>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a href="artifacts.html">FHIR-Artefakte</a>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Anhänge
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="referenced.html">Referenzen</a>
+      </li>
+      <li>
+        <a href="downloads.html">Downloads</a>
+      </li>
+      <li>
+        <a href="medication-openapi.html">OpenAPI</a>
+      </li>
+      <li>
+        <a href="release-notes.html">Release Notes</a>
+      </li>
+      <li>
+        <a href="spec-sheet.html">Anforderungslisten</a>
+      </li>
+      <li>
+        <a href="comparisons.html">Versionsvergleiche</a>
+      </li>
+      <li>
+        <a href="license.html">Lizenz</a>
+      </li>
+    </ul>
+  </li>
+</ul>
+            </div>  <!-- /.nav-collapse -->
+          </div>  <!-- /.container -->
+        </nav>  <!-- /.navbar -->
+      <!-- /HEADER CONTENT -->
+      </div>  <!-- /container -->
+    </div>  <!-- /segment-navbar -->
+
+    <div class="segment"> 
+      <div class="container">
+        
+
+<div class="gem-ig-headline-container"> 
+    <div id="gem-ig-headline" class="col-lg-10 col-md-12">
+        <div class="gem-ig-headline-title">
+            
+Implementation Guide<br /> ePA Medication Service
+        </div>
+        <div id="ig-status" class="gem-ig-headline-subtitle">
+            <span style="display:inline-block;">Version 1.3.1 - release
+                
+                
+            </span>
+            
+
+        </div>
+    </div>
+</div>
+      </div>
+    </div>
+
+    <!--status-bar-->
+
+    <div id="segment-breadcrumb" class="segment">  <!-- segment-breadcrumb -->
+      <div class="container">  <!-- container -->
+        <ul class="breadcrumb">
+          <li><a href='toc.html'><b>Table of Contents</b></a></li><li><b>dgMP-Anwendungsfälle</b></li>
+
+          <span style="float:right;">
+
+            <a href="dgmp-scenarios.html">&lt;vorherige</a> | 
+
+            <a href="#bottom">unten</a>
+
+          | <a href="technical-use-cases.html">nächste&gt;</a>
+
+          </span>
+
+        </ul>
+      </div>  <!-- /container -->
+    </div>  <!-- /segment-breadcrumb -->
+
+    <a name="top"> </a>
+    <div id="segment-content" class="segment">  <!-- segment-content -->
+      <div class="container">  <!-- container -->
+        <div class="row">
+          <div class="inner-wrapper">
+<style type="text/css">
+h2:before{color:silver;counter-increment:section;content:var(--heading-prefix) " ";}
+h3:before{color:silver;counter-increment:sub-section;content:var(--heading-prefix) "." counter(sub-section) " ";}
+h4:before{color:silver;counter-increment:composite;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) " ";}
+h5:before{color:silver;counter-increment:detail;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) "." counter(detail) " ";}
+h6:before{color:silver;counter-increment:more-detail;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) "." counter(detail) "." counter(more-detail)" ";}
+</style>
+<div class="col-12">
+  
+  <h2>dgMP-Anwendungsfälle</h2>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+    <p><!-- white space is critical inside of capture --></p>
+<div class="markdown-toc">
+  <p>Seiteninhalt:</p>
+
+<ul id="markdown-toc">
+  <li><a href="#übergreifende-vorbedingungen" id="markdown-toc-übergreifende-vorbedingungen">Übergreifende Vorbedingungen</a></li>
+  <li><a href="#anzeige-der-elektronischen-medikationsliste-eml" id="markdown-toc-anzeige-der-elektronischen-medikationsliste-eml">Anzeige der elektronischen Medikationsliste (eML)</a></li>
+  <li><a href="#anzeige-des-elektronischen-medikationsplans-emp" id="markdown-toc-anzeige-des-elektronischen-medikationsplans-emp">Anzeige des elektronischen Medikationsplans (eMP)</a></li>
+  <li><a href="#abgleich-geplantes-arzneimittel---emp" id="markdown-toc-abgleich-geplantes-arzneimittel---emp">Abgleich geplantes Arzneimittel - eMP</a></li>
+  <li><a href="#pflege-des-emp-im-rahmen-der-rezeptierung-per-e-rezept---anlage-eines-emp-eintrags" id="markdown-toc-pflege-des-emp-im-rahmen-der-rezeptierung-per-e-rezept---anlage-eines-emp-eintrags">Pflege des eMP im Rahmen der Rezeptierung per E-Rezept - Anlage eines eMP-Eintrags</a></li>
+  <li><a href="#pflege-des-emp-im-rahmen-der-rezeptierung-per-e-rezept---aktualisieren-eines-emp-eintrags" id="markdown-toc-pflege-des-emp-im-rahmen-der-rezeptierung-per-e-rezept---aktualisieren-eines-emp-eintrags">Pflege des eMP im Rahmen der Rezeptierung per E-Rezept - Aktualisieren eines eMP-Eintrags</a></li>
+  <li><a href="#pflege-des-emp-im-rahmen-der-dispensierung-per-e-rezept---anlage-eines-emp-eintrags" id="markdown-toc-pflege-des-emp-im-rahmen-der-dispensierung-per-e-rezept---anlage-eines-emp-eintrags">Pflege des eMP im Rahmen der Dispensierung per E-Rezept - Anlage eines eMP-Eintrags</a></li>
+  <li><a href="#pflege-des-emp-im-rahmen-der-dispensierung-per-e-rezept---aktualisieren-eines-emp-eintrags" id="markdown-toc-pflege-des-emp-im-rahmen-der-dispensierung-per-e-rezept---aktualisieren-eines-emp-eintrags">Pflege des eMP im Rahmen der Dispensierung per E-Rezept - Aktualisieren eines eMP-Eintrags</a></li>
+  <li><a href="#abgleich-von-eml-und-emp" id="markdown-toc-abgleich-von-eml-und-emp">Abgleich von eML und eMP</a></li>
+  <li><a href="#pflege-des-emp-aus-der-eml---anlage-eines-emp-eintrags" id="markdown-toc-pflege-des-emp-aus-der-eml---anlage-eines-emp-eintrags">Pflege des eMP aus der eML - Anlage eines eMP-Eintrags</a></li>
+  <li><a href="#pflege-des-emp-aus-der-eml---aktualisierung-eines-emp-eintrags" id="markdown-toc-pflege-des-emp-aus-der-eml---aktualisierung-eines-emp-eintrags">Pflege des eMP aus der eML - Aktualisierung eines eMP-Eintrags</a></li>
+  <li><a href="#aufheben-einer-verknüpfung" id="markdown-toc-aufheben-einer-verknüpfung">Aufheben einer Verknüpfung</a></li>
+  <li><a href="#nachtrag-von-arzneimitteln" id="markdown-toc-nachtrag-von-arzneimitteln">Nachtrag von Arzneimitteln</a></li>
+  <li><a href="#korrektur-eines-nachtrags" id="markdown-toc-korrektur-eines-nachtrags">Korrektur eines Nachtrags</a></li>
+  <li><a href="#editieren-von-emp-einträgen" id="markdown-toc-editieren-von-emp-einträgen">Editieren von eMP-Einträgen</a></li>
+  <li><a href="#pausieren-von-emp-einträgen" id="markdown-toc-pausieren-von-emp-einträgen">Pausieren von eMP-Einträgen</a></li>
+  <li><a href="#beenden-von-emp-einträgen" id="markdown-toc-beenden-von-emp-einträgen">Beenden von eMP-Einträgen</a></li>
+  <li><a href="#aktivieren-von-emp-einträgen" id="markdown-toc-aktivieren-von-emp-einträgen">Aktivieren von eMP-Einträgen</a></li>
+  <li><a href="#planen-von-emp-einträgen" id="markdown-toc-planen-von-emp-einträgen">Planen von eMP-Einträgen</a></li>
+  <li><a href="#emp-ausdrucken" id="markdown-toc-emp-ausdrucken">eMP ausdrucken</a></li>
+  <li><a href="#durchführung-von-amts-prüfungen" id="markdown-toc-durchführung-von-amts-prüfungen">Durchführung von AMTS-Prüfungen</a></li>
+  <li><a href="#übernahme-des-emp-in-das-lokale-ps" id="markdown-toc-übernahme-des-emp-in-das-lokale-ps">Übernahme des eMP in das lokale PS</a></li>
+  <li><a href="#abgleich-von-lokalen-daten-zur-arzneimitteltherapie-und-emp" id="markdown-toc-abgleich-von-lokalen-daten-zur-arzneimitteltherapie-und-emp">Abgleich von lokalen Daten zur Arzneimitteltherapie und eMP</a></li>
+</ul>
+
+</div>
+
+<p>Die folgenden funktionalen Anwendungsfälle beschreiben, ausgehend von den übergeordneten Szenarien (dgMP-Szenarien) sektorenspezifisch die medikationsbezogenen Tätigkeiten von Leistungserbringer:innen unter Zuhilfenahme ihres Primärsystems oder ePA-Client-Systems, welches gegenüber dem ePA-Aktensystem respektive Medication Service die Medikationsdaten erfasst oder aktualisiert.</p>
+
+<blockquote>
+  <p><strong><em>Demonstrator für den digital gestützten Medikationsprozess</em></strong></p>
+
+  <p><a href="https://www.figma.com/proto/NChMupKNZHqsVZsCpMoSJu/Demonstr.-Implementation-Guide-ePA-Medication-Service?page-id=0%3A1&amp;node-id=15-329161&amp;viewport=-551%2C-20%2C0.08&amp;t=Tj8nfRnnPgZYLLVB-9&amp;scaling=scale-down&amp;content-scaling=fixed&amp;starting-point-node-id=15%3A329161&amp;show-proto-sidebar=1">Hier</a> geht’s zum Demonstrator.</p>
+
+  <p><strong>Was ist der Demonstrator?</strong> Der Demonstrator ist eine Sammlung klickbarer Prototypen, die beispielhaft zeigt, wie einige der unten formulierten Anwendungsfälle des digital gestützten Medikationsprozesses in einer Versorgungseinrichtung ablaufen könnten. Anhand des Demonstrators soll der konzeptionelle Gedanke visualisiert, die Diskussion am Bild ermöglicht und ein gemeinsames Verständnis geschaffen werden.</p>
+
+  <p><strong>Navigation im Demonstrator</strong>: Die Prototypen sind nach den Anwendungsfällen nummeriert. Über die Navigation auf der linken Seite kann zwischen den Anwendungsfällen gewechselt werden. Innerhalb des Klickpfads kann den grünen Orientierungshilfen gefolgt werden.</p>
+
+  <p><strong>Feedback geben</strong>: Feedback ist herzlich willkommen und kann über die Kommentarfunktion am linken oberen Bildschirmrand hinterlassen werden. Hierfür ist ein kostenloses Benutzerkonto bei Figma anzulegen. Es ist zu beachten, dass nicht auf alle Kommentare eine Rückmeldung erfolgen kann. Das Feedback wird je nach Einschätzung kontinuierlich in die Weiterentwicklung eingebaut.</p>
+
+  <p><strong>Bitte beachten</strong>:</p>
+
+  <ol>
+    <li><strong>Kontinuierliche Weiterentwicklung des Demonstrators</strong>: Der Demonstrator befindet sich derzeit in einem kontinuierlichen Feedback- und Entwicklungsprozess. Entsprechend erfolgen Änderungen unabhängig vom Release-Management dieses Implementation Guides.</li>
+    <li><strong>Medizinische Feinheiten</strong>: Der Fokus liegt auf einer Darstellung des Konzepts, sodass die gezeigten medizinischen Informationen nur exemplarisch sind. Bei Fehlern bitten wir entsprechend um Nachsicht.</li>
+    <li><strong>Perspektive</strong>: Derzeit wird nur die ärztliche Perspektive aus einem Praxisverwaltungssystem dargestellt. Weitere Perspektiven sind in Planung.</li>
+    <li><strong>Strukturierte Dosierungen</strong>: Die Benutzeroberfläche zur Eingabe strukturierter Dosierungen ist bisher nur angedeutet und soll in einem eigenen Projekt entwickelt werden.</li>
+  </ol>
+</blockquote>
+
+<h3 id="übergreifende-vorbedingungen">Übergreifende Vorbedingungen</h3>
+
+<p>Generell gehen die Anwendungsfälle davon aus, dass ein Zugang zum ePA-Aktensystem aufgebaut ist, sowie eine etwaige Befugnis der Nutzer:in vorliegt. Weiterhin wurde durch den Versicherten kein Widerspruch in diesen Versorgungsprozess kenntlich gemacht.</p>
+
+<h3 id="anzeige-der-elektronischen-medikationsliste-eml">Anzeige der elektronischen Medikationsliste (eML)</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Sowohl der Versicherte als auch verschiedene Gesundheitsprofessionen benötigen einen möglichst vollständigen Überblick über die 
+Medikationshistorie eines Versicherten, um die Versorgung optimal zu gestalten. Die eML
+ermöglicht diese Sicht und unterstützt damit Anwendungszwecke wie eine Medikationsanamnese bzw. die
+Erhebung eines Medikationsstatus.
+Pflegende und Versicherte greifen insbesondere dann auf die
+Medikationsliste zu, wenn kein elektronischer Medikationsplan vorhanden ist.
+In diesem Fall kann die eML für die Planung und Umsetzung der Arzneimittelanwendung berücksichtigt werden. Es muss für den Anwender im Arbeitsumfeld des Primärsystems
+leicht erkennbar sein, wenn eine eML für ihn abrufbar ist.</p>
+
+<p>Standardmäßig wird die eML als tabellarische Ansicht aller per E-Rezept verordneten und abgegebenen oder nachgetragenen Arzneimittel
+angezeigt. Nachgetragene Arzneimittel müssen eindeutig als solche erkennbar sein. 
+Stornierte Einträge werden in der Regel ausgeblendet. Darüber hinaus sollte der Anwender
+nachvollziehen können, welche Arzneimittel substituiert, im Rahmen einer Mehrfachverordnung verschrieben und
+welche auch im eMP berücksichtigt worden sind. Arzneimittel in der eML, die aktuell oder historisch noch nicht im eMP abgebildet sind,
+können dadurch gesondert betrachtet werden.</p>
+
+<p>Zur Auswahl der Spalten einer tabellarischen Ansicht kann auch bei einer nativen FHIR-Darstellung orientierend die Anforderung IG-MED64473BLY-* - 
+Schematischer Aufbau und Datenherkunft der generierten elektronischen Medikationsliste (eML) genutzt werden. 
+Weitere Informationen sind in einer Detailansicht anzuzeigen. Insbesondere zur Anzeige im ePA-FdV können die Informationen aus der eML um 
+Fach- und Gebrauchsinformationstexte sowie um Bilder der Packung oder Darreichungsform des Arzneimittels angereichert werden.</p>
+
+<p>Die Sortierung der Einträge erfolgt in der Regel chronologisch anhand der Verordnungs- und Abgabedaten. Für Arzneimittel, welche über 
+einen Nachtrag in die ePA eingestellt werden, liegen in der eML keine Daten zur Verschreibung und Abgabe vor. 
+Sie werden daher entsprechend des Einstelldatums oder – sofern beim Nachtrag angegeben – einem manuell hinterlegten Datum einsortiert.</p>
+
+<p>Nähere Informationen zur eML im ePA-FdV finden sich auch im Abschnitt “Der dgMP aus der Perspektive des Versicherten” im “Überblick”.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich im Primärsystem bzw. ePA-FdV.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt die Option “Medikationsliste” aus oder bedient eine Tastenkombination.</li>
+  <li>Das Primärsystem bzw. das ePA-FdV ruft die eML vom ePA-Aktensystem ab und bereitet sie für die Anzeige auf.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender sieht die elektronische Medikationsliste in einer Übersichtsdarstellung.</li>
+  <li>Der Anwender kann bei Bedarf weitere Informationen in einer Detailansicht oder über ein “Overlay” abrufen.</li>
+  <li>Der Anwender kann Filter- und Suchfunktionen nutzen, um bestimmte Informationen zu finden oder hervorheben zu lassen.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-green">
+              PFLEGEKRAFT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-blue">
+              VERSICHERTER
+            </span>
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Anzeige der elektronischen Medikationsliste (eML)</figcaption>
+</figure>
+
+<h3 id="anzeige-des-elektronischen-medikationsplans-emp">Anzeige des elektronischen Medikationsplans (eMP)</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Sobald erstmalig ein Eintrag im Medikationsplan angelegt wurde, kann 
+der Medikationsplan angezeigt werden. Allen an der Arzneimitteltherapie beteiligten Akteuren soll der aktuelle
+Medikationsplan digital zur Verfügung stehen. Versicherte und Pflegende können
+anhand des Medikationsplans die Arzneimittelanwendung planen. Ärzte und Apotheker
+können den Medikationsplan anzeigen, um eine Medikationsanamnese durchzuführen bzw. den Medikationsstatus und eine
+Medikationshistorie zu erheben. Außerdem können sie überprüfen, ob etwaige Anpassungen erforderlich sind. Es muss
+für den Anwender im Arbeitsumfeld des Primärsystems
+leicht erkennbar sein, wenn ein eMP für ihn abrufbar ist.</p>
+
+<p>Es werden grundsätzlich alle eMP-Einträge mit dem Status “aktiv”, “geplant” und “pausiert” angezeigt. Diese sollten
+gruppiert werden, eindeutig unterscheidbar sein sowie in dieser Reihenfolge angezeigt werden. Die im Anwendungsfall 
+“Anzeige der elektronischen Medikationsliste” benannten zusätzlichen Informationen zum Arzneimittel können auch in der
+Ansicht des eMP angezeigt werden (bspw. Bilder der Packung oder Darreichungsform).</p>
+
+<p>Hier beschrieben wird eine FHIR-basierte Darstellung. Die Darstellung
+als PDF wird unter “eMP ausdrucken” beschrieben.</p>
+
+<p>Nähere Informationen zum eMP im ePA-FdV finden sich auch im Abschnitt “Der dgMP aus der Perspektive des Versicherten” im “Überblick”.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich im Primärsystem bzw. ePA-FdV.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt die Option “Medikationsplan” aus oder bedient eine Tastenkombination.</li>
+  <li>Das Primärsystem bzw. das ePA-FdV ruft den eMP vom ePA-Aktensystem ab und bereitet ihn für die Anzeige auf.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender sieht den elektronischen Medikationsplan in einer Übersichtsdarstellung.</li>
+  <li>Der Anwender kann bei Bedarf weitere Informationen in einer Detailansicht, als aufklappbare Liste oder über ein “Overlay” abrufen, darunter:
+    <ul>
+      <li>Verordnungs- und Abgabehistorie (inkl. Nachträgen) zu diesem eMP-Eintrag.</li>
+      <li>Änderungshistorie zu diesem eMP-Eintrag (inkl. Art, Urheber und Zeitpunkt der Änderung).</li>
+    </ul>
+  </li>
+  <li>Der Anwender kann Filter- und Suchfunktionen nutzen, um bestimmte Informationen zu finden oder hervorheben zu lassen.</li>
+  <li>Der Anwender kann sich den Zustand des gesamten eMP zu einem bestimmten Zeitpunkt in der Vergangenheit anzeigen lassen (Historie).</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-green">
+              PFLEGEKRAFT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-blue">
+              VERSICHERTER
+            </span>
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Anzeige des elektronischen Medikationsplans (eMP)</figcaption>
+</figure>
+
+<h3 id="abgleich-geplantes-arzneimittel---emp">Abgleich geplantes Arzneimittel - eMP</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Wird eine Verschreibung oder Dispensierung begonnen, ohne, dass ein eMP-Eintrag referenziert ist, prüft das Primärsystem, 
+ob bereits ein aktiver eMP-Eintrag mit einem vergleichbaren Arzneimittel existiert, um das E-Rezept
+ggf. mit einem bestehenden eMP-Eintrag zu verknüpfen oder einen neuen eMP-Eintrag anzulegen. Für diesen Abgleich ist bevorzugt der 
+Wirkstoff (ASK- oder ATC-codiert) zu betrachten, aber auch Daten zum spezifischen Arzneimittel (bspw. Handelsname oder PZN)
+können genutzt werden. Primärsysteme, die vergleichbare Fragestellungen bspw. in einem AMTS-Modul betrachten,
+können auch eine komplexere Entscheidungsunterstützung anbieten. Es sollte vermieden werden, etwaige Hinweise als Push- oder Pop-Up-Benachrichtigungen
+darzustellen, die eine Interaktion des Anwenders mit dem Hinweis zwingend voraussetzen. Zu bevorzugen ist ein in den Arbeitsablauf
+und die Benutzeroberfläche integrierter Vorschlag, der direkt und aufwandsarm angenommen werden kann. Von diesem Anwendungsfall
+unbetroffen ist die Möglichkeit, einen zu referenzierenden eMP-Eintrag auch ohne Vorschlag des Primärsystems manuell auswählen zu können.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in der Ansicht des Primärsystems, in der Verschreibungen bzw. Dispensierungen verarbeitet werden.</li>
+  <li>Der Anwender hat die Verschreibung/Dispensierung und die Auswahl des Arzneimittels gestartet.</li>
+  <li>Das Primärsystem hat geprüft, ob für den Versicherten ein eMP in der ePA hinterlegt ist. Das ist der Fall.</li>
+  <li>Das Primärsystem hat geprüft, ob mithilfe eines eMP-Identifiers bereits ein eMP-Eintrag referenziert wird. Das ist nicht der Fall.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Das Primärsystem prüft, ob ein eMP-Eintrag mit einem vergleichbaren Arzneimittel existiert. Zu berücksichtigen sind mindestens alle eMP-Einträge mit dem Status “aktiv”, “geplant” und “pausiert”.
+    <ul>
+      <li>Wenn ja: Das Primärsystem zeigt den identifizierten eMP-Eintrag als Vorschlag an.</li>
+      <li>Wenn nein: Das Primärsystem zeigt an, dass kein vergleichbares Arzneimittel auf dem eMP identifiziert werden konnte.</li>
+    </ul>
+  </li>
+  <li>Das Primärsystem bietet an, den gesamten eMP eingebettet in die aktuelle Arbeitsumgebung anzuzeigen.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Liegt ein passender eMP-Eintrag vor: Der Anwender kann die Verknüpfung des vorgeschlagenen eMP-Eintrags mit der 
+geplanten Verschreibung/Dispensierung bestätigen und den eMP-Eintrag inkl. seines Status bei Bedarf anpassen. Alternativ fährt der Anwender ohne Bezug zu dem vorgeschlagenen eMP-Eintrag fort. Vgl. <a href="dgmp-use-cases.html#pflege-des-emp-im-rahmen-der-rezeptierung-per-e-rezept---aktualisieren-eines-emp-eintrags">Pflege des eMP im Rahmen der Rezeptierung per E-Rezept - Aktualisieren eines eMP-Eintrags</a>.</li>
+  <li>Liegt kein passender eMP-Eintrag vor: Der Anwender kann einen neuen eMP-Eintrag für diese Verschreibung/Dispensierung anlegen (oder ohne Bezug zu einem eMP-Eintrag fortfahren). Vgl. <a href="dgmp-use-cases.html#pflege-des-emp-im-rahmen-der-rezeptierung-per-e-rezept---anlage-eines-emp-eintrags">Pflege des eMP im Rahmen der Rezeptierung per E-Rezept - Anlage eines eMP-Eintrags</a>.</li>
+  <li>Die Verknüpfung mit einem eMP-Eintrag kann bis zur Signatur des E-Rezepts bzw. Abschluss der Dispensierung wieder aufgehoben werden.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Abgleich geplantes Arzneimittel - eMP</figcaption>
+</figure>
+
+<h3 id="pflege-des-emp-im-rahmen-der-rezeptierung-per-e-rezept---anlage-eines-emp-eintrags">Pflege des eMP im Rahmen der Rezeptierung per E-Rezept - Anlage eines eMP-Eintrags</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Die ärztliche Medikationsplanung mündet häufig in einer Verschreibung. Im Rahmen der Verschreibung eines Arzneimittels per E-Rezept kann ein eMP-Eintrag
+angelegt werden, um den eMP gemäß der Medikationsplanung zu aktualisieren. So wird der Medikationsplan gepflegt und eine Mehrfachdokumentation vermieden.
+Es ist zu empfehlen, den gesamten eMP im Laufe des Prozesses – spätestens nach Signatur des E-Rezepts – anzuzeigen, da die Aufnahme einer 
+neuen Therapie auch Konsequenzen für die sonstige Arzneimitteltherapie haben kann. Eine im Hintergrund laufende AMTS-Prüfung kann dabei unterstützen.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender plant, ein Arzneimittel zu verschreiben und hat diesen Vorgang ohne Bezug zu einem bestehenden eMP-Eintrag begonnen (initial kein eMP-Identifier vorhanden).</li>
+  <li>Das Primärsystem hat geprüft, ob für den Versicherten ein eMP in der ePA hinterlegt ist. Das ist der Fall.</li>
+  <li>Ein Abgleich zwischen dem geplantem Arzneimittel und dem eMP hat keinen vergleichbaren eMP-Eintrag identifiziert. Vgl. <a href="dgmp-use-cases.html#abgleich-geplantes-arzneimittel---emp">Abgleich geplantes Arzneimittel - eMP</a></li>
+  <li>Für diese Verschreibungen unter diesen Bedingungen ist die Anlage eines eMP-Eintrags standardmäßig aktiviert oder wurde vom Anwender manuell ausgelöst.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender gibt mindestens die Pflichtinformationen für das E-Rezept an. Die Dosierung wird nicht als “DJ” angegeben.</li>
+  <li>Der Anwender gibt optional weitere Informationen für den eMP-Eintrag an (z.B. den versichertenverständlichen “Grund”) und kann bei Bedarf den Status anpassen (Standardeinstellung: “aktiv”).</li>
+  <li>Der Anwender schließt die Bearbeitung des eMP-Eintrags und des E-Rezepts ab.</li>
+  <li>Das Primärsystem kreiert einen eMP-Eintrag im ePA-Aktensystem und übergibt den eMP-Identifier an den Verordnungsdatensatz.</li>
+  <li>Der Anwender signiert das E-Rezept.</li>
+  <li>Das Primärsystem sendet den Verordnungsdatensatz an den E-Rezept-Fachdienst.</li>
+  <li>Der E-Rezept-Fachdienst sendet den Verordnungsdatensatz an das ePA-Aktensystem.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Die Verordnung wird in der eML angezeigt. Der Anwender kann erkennen, dass eine Verknüpfung mit einem eMP-Eintrag vorliegt.</li>
+  <li>Der Anwender kann im eMP erkennen, dass eine Verknüpfung mit einem eML-Eintrag vorliegt.</li>
+  <li>Der Anwender kann nachträgliche Änderungen am eMP-Eintrag vornehmen.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-verordnung-verschreibung-und-dispensierung-mit-dem-emp">Anwendungsfall: Verordnung, Verschreibung und Dispensierung mit dem eMP</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Pflege des eMP im Rahmen der Rezeptierung per E-Rezept - Anlage eines eMP-Eintrags</figcaption>
+</figure>
+
+<h3 id="pflege-des-emp-im-rahmen-der-rezeptierung-per-e-rezept---aktualisieren-eines-emp-eintrags">Pflege des eMP im Rahmen der Rezeptierung per E-Rezept - Aktualisieren eines eMP-Eintrags</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Die ärztliche Medikationsplanung mündet häufig in einer Rezeptierung. Im Rahmen der Rezeptierung eines Arzneimittels per E-Rezept kann ein eMP-Eintrag
+aktualisiert werden, um den eMP gemäß der Medikationsplanung zu aktualisieren. So wird der Medikationsplan gepflegt und eine Mehrfachdokumentation vermieden.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender plant, ein Arzneimittel zu verschreiben.</li>
+  <li>Das Primärsystem kann auf die ePA des Versicherten zugreifen.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender stellt einen Bezug zwischen der geplanten Verschreibung und einem bestehenden eMP-Eintrag her. Dies kann bspw. ausgelöst werden durch:
+    <ul>
+      <li>Die Verschreibung wird als Folgeverordnung aus dem eMP begonnen.</li>
+      <li>Die Verschreibung wird als Folgeverordnung aus der eML oder einem lokalen Kontext (z.B. Verordnungshistorie/Medikationsplan) begonnen. Dort ist ein eMP-Identifier für einen eMP-Eintrag hinterlegt, welcher dem Anwender zur Anzeige gebracht wird.</li>
+      <li>Der Abgleich zwischen einem geplantem Arzneimittel und dem eMP hat einen vergleichbaren eMP-Eintrag identifiziert und der Anwender hat diese Zuordnung bestätigt. Vgl. <a href="dgmp-use-cases.html#abgleich-geplantes-arzneimittel---emp">Abgleich_geplantes_Arzneimittel_eMP</a></li>
+    </ul>
+  </li>
+  <li>Der Anwender editiert bei Bedarf die Informationen zum Arzneimittel für das E-Rezept.</li>
+  <li>Der Anwender editiert bei Bedarf die weiteren Informationen des eMP-Eintrags (bspw. “Hinweise” für den Versicherten) und stellt dabei sicher, dass mindestens ein Status und eine Dosierung vorhanden sind.</li>
+  <li>Der Anwender schließt die Bearbeitung des eMP-Eintrags und des E-Rezepts ab.</li>
+  <li>Der Anwender bestätigt die Verknüpfung des eMP-Eintrags mit dem ausgefüllten E-Rezept.</li>
+  <li>Der Anwender signiert das E-Rezept.</li>
+  <li>Das Primärsystem sendet den Verordnungsdatensatz an den E-Rezept-Fachdienst.</li>
+  <li>Das Primärsystem aktualisiert den eMP-Eintrag.</li>
+  <li>Der E-Rezept-Fachdienst sendet den Verordnungsdatensatz an das ePA-Aktensystem.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Die Verordnung wird in der eML angezeigt. Der Anwender kann erkennen, dass eine Verknüpfung mit einem eMP-Eintrag vorliegt.</li>
+  <li>Der Anwender kann im eMP erkennen, dass eine Verknüpfung mit einem eML-Eintrag vorliegt.</li>
+  <li>Der Anwender kann nachträgliche Änderungen am eMP-Eintrag vornehmen.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-verordnung-verschreibung-und-dispensierung-mit-dem-emp">Anwendungsfall: Verordnung, Verschreibung und Dispensierung mit dem eMP</a></li>
+  <li><a href="./technical-use-cases.html#anwendungsfall-aktualisierung-eines-emp-eintrags">Anwendungsfall: Aktualisierung eines eMP-Eintrags</a></li>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Pflege des eMP im Rahmen der Rezeptierung per E-Rezept - Aktualisieren eines eMP-Eintrags</figcaption>
+</figure>
+
+<h3 id="pflege-des-emp-im-rahmen-der-dispensierung-per-e-rezept---anlage-eines-emp-eintrags">Pflege des eMP im Rahmen der Dispensierung per E-Rezept - Anlage eines eMP-Eintrags</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>In der Apotheke werden E-Rezepte abgerufen und eingelöst, um Arzneimittel auf Basis von ärztlichen Verordnungen
+zu dispensieren und Informationen zu dieser Dispensierung zu dokumentieren. Im Rahmen einer solchen Dispensierung
+eines Arzneimittels per E-Rezept kann ein eMP-Eintrag
+angelegt werden, um den eMP gemäß der pharmazeutischen Beratung und entsprechend dem
+abgegebenen Arzneimittel zu aktualisieren. Dies ist nur erforderlich, sofern der verordnende Arzt das E-Rezept ohne Bezug zum eMP (d.h. ohne eMP-Identifier) ausgestellt hat.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Das E-Rezept wird erfolgreich vom E-Rezept-Fachdienst abgerufen.</li>
+  <li>Der Verordnungsdatensatz des E-Rezepts enthält keinen eMP-Identifier, der es einem eMP-Eintrag zuordnet.</li>
+  <li>Das Primärsystem hat geprüft, ob für den Versicherten ein eMP in der ePA hinterlegt ist. Das ist der Fall.</li>
+  <li>Ein Abgleich zwischen dem abzugebenden Arzneimittel und dem eMP hat keinen vergleichbaren eMP-Eintrag identifiziert.</li>
+  <li>Der Anwender plant, das Arzneimittel an den Versicherten abzugeben.</li>
+  <li>Für E-Rezepte ohne eMP-Identifier bei vorhandenem eMP ist die Anlage eines eMP-Eintrags standardmäßig aktiviert oder wurde vom Anwender manuell ausgelöst.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Sofern Dosierung als “DJ” angegeben: Der Anwender ergänzt eine Dosierangabe.</li>
+  <li>Der Anwender gibt optional weitere Informationen für den eMP-Eintrag an (z.B. den versichertenverständlichen “Grund”) und kann bei Bedarf den Status anpassen (Standardeinstellung: “aktiv”).</li>
+  <li>Das Primärsystem kreiert einen eMP-Eintrag im ePA-Aktensystem und verknüpft diesen mit dem eML-Eintrag zu diesem E-Rezept.</li>
+  <li>Der Anwender schließt die Dispensierung ab.</li>
+  <li>Das Primärsystem sendet den Dispensierdatensatz an den E-Rezept-Fachdienst.</li>
+  <li>Der E-Rezept-Fachdienst sendet den Dispensierdatensatz an das ePA-Aktensystem.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Die Verordnung wird in der eML angezeigt. Der Anwender kann erkennen, dass eine Verknüpfung mit einem eMP-Eintrag vorliegt.</li>
+  <li>Das Arzneimittel aus der Verordnung wird auf dem eMP angezeigt. Der Anwender kann erkennen, dass eine Verknüpfung mit einem eML-Eintrag vorliegt.</li>
+  <li>Der Anwender kann nachträgliche Änderungen am eMP-Eintrag vornehmen.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-nachtrag-im-emp">Anwendungsfall: Nachtrag im eMP</a></li>
+  <li><a href="./technical-use-cases.html#anwendungsfall-hinzufügen-und-entfernen-einer-eml-emp-verknüpfung">Anwendungsfall: Hinzufügen und Entfernen einer eML-eMP-Verknüpfung</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Pflege des eMP im Rahmen der Dispensierung per E-Rezept - Anlage eines eMP-Eintrags</figcaption>
+</figure>
+
+<h3 id="pflege-des-emp-im-rahmen-der-dispensierung-per-e-rezept---aktualisieren-eines-emp-eintrags">Pflege des eMP im Rahmen der Dispensierung per E-Rezept - Aktualisieren eines eMP-Eintrags</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>In der Apotheke werden E-Rezepte abgerufen, eingelöst und quittiert, um Arzneimittel auf Basis von ärztlichen Verordnungen
+zu dispensieren und Informationen zu dieser Dispensierung zu dokumentieren. Im Rahmen einer solchen Dispensierung
+eines Arzneimittels per E-Rezept kann ein eMP-Eintrag
+aktualisiert werden, um den eMP gemäß der pharmazeutischen Beratung und entsprechend dem
+abgegebenen Arzneimittel zu aktualisieren.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Das E-Rezept wird erfolgreich vom E-Rezept-Fachdienst abgerufen.</li>
+  <li>Der Verordnungsdatensatz des E-Rezepts enthält keinen eMP-Identifier, der es einem eMP-Eintrag zuordnet.</li>
+  <li>Das Primärsystem hat geprüft, ob für den Versicherten ein eMP in der ePA hinterlegt ist. Das ist der Fall.</li>
+  <li>Ein Abgleich zwischen dem abzugebenden Arzneimittel und dem eMP (durch das Primärsystem oder den Anwender) hat einen vergleichbaren eMP-Eintrag identifiziert.</li>
+  <li>Der Anwender plant, das Arzneimittel an den Versicherten abzugeben.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender bestätigt die Auswahl des eMP-Eintrags.</li>
+  <li>Der Anwender editiert bei Bedarf die Informationen des eMP-Eintrags (bspw. “Hinweise” für den Versicherten) und stellt dabei sicher, dass mindestens ein Status und eine Dosierung vorhanden sind.</li>
+  <li>Das Primärsystem aktualisiert den eMP-Eintrag und verknüpft ihn mit dem eML-Eintrag zu diesem E-Rezept.</li>
+  <li>Der Anwender schließt die Dispensierung ab.</li>
+  <li>Das Primärsystem sendet den Dispensierdatensatz an den E-Rezept-Fachdienst.</li>
+  <li>Der E-Rezept-Fachdienst sendet den Dispensierdatensatz an das ePA-Aktensystem.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Die Verordnung wird in der eML angezeigt. Der Anwender kann erkennen, dass eine Verknüpfung mit einem eMP-Eintrag vorliegt.</li>
+  <li>Das Arzneimittel aus der Verordnung wird auf dem eMP angezeigt. Der Anwender kann erkennen, dass eine Verknüpfung mit einem eML-Eintrag vorliegt.</li>
+  <li>Der Anwender kann nachträgliche Änderungen am eMP-Eintrag vornehmen.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-aktualisierung-eines-emp-eintrags">Anwendungsfall: Aktualisierung eines eMP-Eintrags</a></li>
+  <li><a href="./technical-use-cases.html#anwendungsfall-hinzufügen-und-entfernen-einer-eml-emp-verknüpfung">Anwendungsfall: Hinzufügen und Entfernen einer eML-eMP-Verknüpfung</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Pflege des eMP im Rahmen der Dispensierung per E-Rezept - Aktualisieren eines eMP-Eintrags</figcaption>
+</figure>
+
+<h3 id="abgleich-von-eml-und-emp">Abgleich von eML und eMP</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Sowohl in der eML als auch im eMP findet der Anwender Informationen zur
+Arzneimitteltherapie vor. Da die eML über das E-Rezept ohne Zutun der Leistungserbringer
+gepflegt wird, kann es vorkommen, dass Arzneimittel in der eML abgebildet sind, die keinen
+Bezug zum eMP haben. Ein Abgleich zwischen eML und eMP soll diese Arzneimittel identifizieren, damit sie
+gesondert betrachtet und bei Bedarf auf dem eMP ergänzt werden können. Der Abgleich kann beispielsweise
+als Filterfunktionalität angeboten oder bereits bei der Anzeige der eML visualisiert werden.
+Das Primärsystem kann dabei auch eine
+Einschätzung vornehmen, ob die identifizierten Arzneimittel auf der eML ggf. einem bestehenden eMP-Eintrag zugeordnet werden könnten oder
+noch kein vergleichbares Arzneimittel auf dem eMP abgebildet ist. Für diesen Abgleich ist bevorzugt der 
+Wirkstoff (ASK- oder ATC-codiert) zu betrachten, aber auch Daten zum spezifischen Arzneimittel (bspw. Handelsname oder PZN)
+können genutzt werden.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in der Ansicht der eML oder des eMP.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt an, dass er eML und eMP vergleichen möchte.</li>
+  <li>Der Anwender schränkt bei Bedarf den Zeitraum ein, aus dem Arzneimittel berücksichtigt werden sollen. Ggf. können weitere Parameter angepasst werden.</li>
+  <li>Das Primärsystem führt einen Abgleich durch und zeigt die Ergebnisse an.
+    <ul>
+      <li>Arzneimittel in der eML, die keinen Bezug zum eMP haben, werden hervorgehoben.</li>
+      <li>Der Zeitpunkt der letzten Aktualisierung des eMP kann angezeigt und in einer chronologischer Ansicht der eML visualisiert werden.</li>
+    </ul>
+  </li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Anwender kann (bei vorhandener Berechtigung) entscheiden, ob die betroffenen Arzneimittel auf den eMP aufgenommen werden sollen. Vgl. <a href="dgmp-use-cases.html#pflege-des-emp-aus-der-eml---aktualisierung-eines-emp-eintrags">Pflege des eMP aus der eML - Aktualisierung eines eMP-Eintrags</a>, <a href="dgmp-use-cases.html#pflege-des-emp-aus-der-eml---anlage-eines-emp-eintrags">Pflege des eMP aus der eML - Anlage eines eMP-Eintrags</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-green">
+              PFLEGEKRAFT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-blue">
+              VERSICHERTER
+            </span>
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Abgleich von eML und eMP</figcaption>
+</figure>
+
+<h3 id="pflege-des-emp-aus-der-eml---anlage-eines-emp-eintrags">Pflege des eMP aus der eML - Anlage eines eMP-Eintrags</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Stellt ein Arzt oder Apotheker fest, dass ein Arzneimittel auf dem eMP fehlt, das aktuell
+angewendet wird, sollte es dort aufgenommen werden, damit der eMP die aktuelle
+Arzneimitteltherapie bestmöglich abbilden kann. Es ist möglich, dass solche
+Arzneimittel bereits auf der eML abgebildet sind, wenn sie bspw. per
+E-Rezept verordnet wurden. In diesem Fall können diese eML-Einträge ausgewählt
+werden, um eMP-Einträge zu erstellen.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender hat einen oder mehrere eML-Einträge ausgewählt, für die eMP-Einträge angelegt werden sollen.</li>
+  <li>Der Anwender hat die Anlage der eMP-Einträge aus dem eMP oder der eML heraus begonnen.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Sofern in der eML noch nicht vorhanden: Der Anwender gibt die Dosierung des jeweiligen Arzneimittels an.</li>
+  <li>Der Anwender ergänzt optional weitere Informationen für den eMP (bspw. versichertenverständlicher “Grund”) und passt bei Bedarf den Status an.</li>
+  <li>Der Anwender bestätigt die Anlage der eMP-Einträge.</li>
+  <li>Das Primärsystem legt die eMP-Einträge im ePA-Aktensystem an, verknüpft die eML-Einträge und zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender kann sich den aktualisierten eMP anzeigen lassen; die neuen eMP-Einträge werden visuell hervorgehoben. Vgl. <a href="dgmp-use-cases.html#anzeige-des-elektronischen-medikationsplans-emp">Anzeige des elektronischen Medikationsplans (eMP)</a></li>
+  <li>Der Anwender kann in der eML erkennen, dass eine Verknüpfung der eML-Einträge mit einem eMP-Eintrag vorliegt. Vgl. <a href="dgmp-use-cases.html#anzeige-der-elektronischen-medikationsliste-eml">Anzeige der elektronischen Medikationsliste (eML)</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-nachtrag-im-emp">Anwendungsfall: Nachtrag im eMP</a></li>
+  <li><a href="./technical-use-cases.html#anwendungsfall-hinzufügen-und-entfernen-einer-eml-emp-verknüpfung">Anwendungsfall: Hinzufügen und Entfernen einer eML-eMP-Verknüpfung</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Pflege des eMP aus der eML - Anlage eines eMP-Eintrags</figcaption>
+</figure>
+
+<h3 id="pflege-des-emp-aus-der-eml---aktualisierung-eines-emp-eintrags">Pflege des eMP aus der eML - Aktualisierung eines eMP-Eintrags</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Stellt ein Arzt oder Apotheker fest, dass ein eMP-Eintrag nicht mehr aktuell ist, sollte der
+eMP-Eintrag aktualisiert werden, damit der eMP die aktuelle
+Arzneimitteltherapie bestmöglich abbilden kann. Das ist bspw. der Fall, wenn das
+Arzneimittel zwischenzeitlich erneut per E-Rezept verschrieben worden ist, ohne dass dies
+auf dem eMP abgebildet wurde. In diesem Fall kann einer oder mehrere eML-Einträge
+ausgewählt werden, um diese einem bestehenden eMP-Eintrag zuzuordnen und diesen zu
+aktualisieren. Die Anzeige des eMP-Eintrags speist sich aus dem chronologisch jüngsten eML-Eintrag,
+der mit ihm verknüpft ist (bspw. letzte Abgabe).</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in der Ansicht der eML oder einem Split-View aus eML und eMP.</li>
+  <li>Der Anwender hat einen oder mehrere eML-Einträge ausgewählt, die einem eMP-Eintrag zugeordnet werden sollen.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt den eMP-Eintrag aus, dem die eML-Einträge zuzuordnen ist (bspw. als “Drag and Drop” im Split View).</li>
+  <li>Der Anwender editiert bei Bedarf die Informationen des eMP-Eintrags (bspw. “Hinweise” für den Versicherten) und stellt dabei sicher, dass mindestens ein Status und eine Dosierung vorhanden sind.</li>
+  <li>Der Anwender bestätigt die Bearbeitung des eMP-Eintrags und die Verknüpfung.</li>
+  <li>Das Primärsystem aktualisiert den eMP-Eintrag, verknüpft ihn mit den eML-Einträgen und zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender kann sich den aktualisierten eMP anzeigen lassen; der aktualisierte eMP-Eintrag wird visuell hervorgehoben. Vgl. <a href="dgmp-use-cases.html#anzeige-des-elektronischen-medikationsplans-emp">Anzeige des elektronischen Medikationsplans (eMP)</a></li>
+  <li>Der Anwender kann in der eML erkennen, dass eine Verknüpfung der eML-Einträge mit einem eMP-Eintrag vorliegt. Vgl. <a href="dgmp-use-cases.html#anzeige-der-elektronischen-medikationsliste-eml">Anzeige der elektronischen Medikationsliste (eML)</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-hinzufügen-und-entfernen-einer-eml-emp-verknüpfung">Anwendungsfall: Hinzufügen und Entfernen einer eML-eMP-Verknüpfung</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Pflege des eMP aus der eML - Aktualisierung eines eMP-Eintrags</figcaption>
+</figure>
+
+<h3 id="aufheben-einer-verknüpfung">Aufheben einer Verknüpfung</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Bei der Zuordnung von Arzneimitteln mitsamt Verschreibungen und Abgaben zu einem eMP-Eintrag
+können Fehler passieren. Ein solcher Fehler kann vom Anwender oder vom Primärsystem erkannt werden, bspw. da ein verknüpftes Arzneimittel
+nicht zu den vorangegangenen oder der angegebenen Indikation passt. Möchte ein Anwender einen solchen Fehler korrigieren, kann die
+Verknüpfung aufgehoben werden.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in der Ansicht des eMP.</li>
+  <li>Der Anwender hat einen oder mehrere eML-Einträge ausgewählt, dessen Verknüpfung mit einem eMP-Eintrag er für fehlerhaft befindet.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt eine Option aus, die ihm erlaubt, fehlerhafte Zuordnungen zu einem eMP-Eintrag zu markieren.</li>
+  <li>Das Primärsystem hebt die Verknüpfung auf und setzt bei Bedarf die Informationen zum Arzneimittel im eMP auf die der chronologisch jüngeren Verknüpfung zurück.</li>
+  <li>Das Primärsystem zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender kann sich den aktualisierten eMP anzeigen lassen; der aktualisierte eMP-Eintrag wird visuell hervorgehoben. Vgl. <a href="dgmp-use-cases.html#anzeige-des-elektronischen-medikationsplans-emp">Anzeige des elektronischen Medikationsplans (eMP)</a></li>
+  <li>Das Primärsystem bietet dem Anwender an, eine neue Verknüpfung herzustellen oder einen neuen eMP-Eintrag anzulegen. Vgl. <a href="dgmp-use-cases.html#pflege-des-emp-aus-der-eml---anlage-eines-emp-eintrags">Pflege des eMP aus der eML - Anlage eines eMP-Eintrags</a>, <a href="dgmp-use-cases.html#pflege-des-emp-aus-der-eml---aktualisierung-eines-emp-eintrags">Pflege des eMP aus der eML - Aktualisierung eines eMP-Eintrags</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-hinzufügen-und-entfernen-einer-eml-emp-verknüpfung">Anwendungsfall: Hinzufügen und Entfernen einer eML-eMP-Verknüpfung</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Aufheben einer Verknüpfung</figcaption>
+</figure>
+
+<h3 id="nachtrag-von-arzneimitteln">Nachtrag von Arzneimitteln</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Wurde ein Arzneimittel nicht über das E-Rezept verordnet und abgegeben, kann es in der ePA
+nachgetragen werden, um die eML und den eMP auf den aktuellen Wissensstand zu heben. Dies kann beispielsweise der Fall sein,
+wenn ein Papierrezept ausgestellt, ein rezeptfreies Arzneimittel in der Apotheke erworben wird oder ein Arzt oder Apotheker im Gespräch
+mit dem Versicherten erhebt, dass ein Arzneimittel angewandt wird, das noch nicht in der ePA abgebildet ist. Die Daten zum 
+Nachtrag werden vorzugsweise vom Primärsystem aus einer Arzneimitteldatenbank (ggf. in Verbindung mit oder alternativ aus einem 
+Verordnungsmodul oder einem Warenwirtschaftssystem) vorausgefüllt und nur in Ausnahmefällen händisch eingetragen.
+Bei der Verarbeitung von Rezeptdaten abseits des E-Rezepts (z. B. im Verordnungsprozess) kann die Option zum direkten Nachtragen 
+auch standardmäßig aktiviert und nur bei Bedarf vom Anwender abgewählt werden. Auch hier sollten Informationen, die bspw. bei
+einem Fertigarzneimittel auf dem Rezept fehlen, durch eine Arzneimitteldatenbank ergänzt werden.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in einer Ansicht des Primärsystems oder der ePA (eML/eMP), in der Daten zur Arzneimitteltherapie des Versicherten angezeigt werden.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender startet den Nachtrag:
+    <ul>
+      <li>Der Anwender wählt im Primärsystem ein Arzneimittel aus, das nachgetragen werden soll.</li>
+      <li>Alternativ: Der Anwender öffnet eine Maske für den Nachtrag eines Arzneimittels.</li>
+    </ul>
+  </li>
+  <li>Das Primärsystem füllt alle Datenfelder für Arzneimittel aus, die aus der lokalen Dokumentation und – sofern vorhanden – Arzneimitteldatenbank befüllt werden können.</li>
+  <li>Sofern darüber hinaus erforderlich: Der Anwender ergänzt mindestens die Wirkstoffbezeichnung, die Darreichungsform und die Wirkstärke.</li>
+  <li>Sofern das Arzneimittel auch auf dem eMP abgebildet werden soll:
+    <ul>
+      <li>Der Anwender gibt an, dass er einen eMP-Eintrag anlegen möchte und stellt sicher, dass mindestens eine Dosierung vorhanden ist. Er ergänzt optional weitere Informationen für den eMP (bspw. versichertenverständlicher “Grund”) und passt bei Bedarf den Status an.</li>
+      <li>Alternativ: Der Anwender wählt einen bestehenden eMP-Eintrag aus, der diesem Nachtrag zugeordnet werden kann. Er editiert bei Bedarf die Informationen des eMP-Eintrags (bspw. “Hinweise” für den Versicherten) und stellt dabei sicher, dass mindestens ein Status und eine Dosierung vorhanden sind.</li>
+    </ul>
+  </li>
+  <li>Das Primärsystem kreiert einen Nachtrag für die eML und ggf. einen eMP-Eintrag im ePA-Aktensystem. Es stellt eine Verknüpfung zwischen dem Nachtrag und dem eMP-Eintrag her.</li>
+  <li>Das Primärsystem zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Das Arzneimittel ist auf der eML als Nachtrag und ggf. auf dem eMP abgebildet.</li>
+  <li>Der Anwender kann die Informationen zum eMP-Eintrag nachträglich editieren.</li>
+  <li>Der Anwender kann den Nachtrag stornieren oder eine ggf. vorhandene Verknüpfung mit einem eMP-Eintrag auflösen.</li>
+  <li>Sofern Informationen zum Arzneimittel auch lokal persistiert werden (z.B. bei Nachtrag aus einer Verordnungshistorie) ist dort nachvollziehbar, dass dieses Arzneimittel in der ePA nachgetragen wurde. Ein erneuter Nachtrag desselben Arzneimittels wird verhindert.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-nachtrag-in-der-eml">Anwendungsfall: Nachtrag in der eML</a></li>
+  <li><a href="./technical-use-cases.html#anwendungsfall-nachtrag-im-emp">Anwendungsfall: Nachtrag im eMP</a></li>
+  <li><a href="./technical-use-cases.html#anwendungsfall-hinzufügen-und-entfernen-einer-eml-emp-verknüpfung">Anwendungsfall: Hinzufügen und Entfernen einer eML-eMP-Verknüpfung</a></li>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Nachtrag von Arzneimitteln</figcaption>
+</figure>
+
+<h3 id="korrektur-eines-nachtrags">Korrektur eines Nachtrags</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Beim Nachtrag eines Arzneimittels können Fehler passieren. Möchte ein Anwender
+einen solchen Fehler korrigieren, kann er den ursprünglichen Nachtrag (unabhängig vom Urheber) als ungültig
+kennzeichnen und einen neuen Nachtrag verfassen. Dies ist unabhängig davon, ob er der Urheber des Nachtrags war.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in der eML-Ansicht.</li>
+  <li>Der Anwender hat einen eML-Eintrag ausgewählt, den er für ungültig befindet.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt die Option “Fehlerhafter Eintrag”.</li>
+  <li>Der Anwender bestätigt, dass er den Nachtrag als fehlerhaft markieren möchte (umgangssprachlich: löschen).</li>
+  <li>Das Primärsystem aktualisiert den Status des eML-Eintrags zu “entered in error” und zeigt eine Bestätigung an.</li>
+  <li>Sofern der Nachtrag die jüngste Verknüpfung zu einem eMP-Eintrag dargestellt hat: Das Primärsystem setzt den eMP-Eintrag auf den letzten Zustand vor der Verknüpfung dieses Nachtrags zurück.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Nachtrag wird in eML und eMP ausgeblendet. Soll er angezeigt werden, ist nachvollziehbar, dass er als fehlerhaft bewertet wurde.</li>
+  <li>Der Anwender kann einen neuen Nachtrag verfassen. Informationen aus dem fehlerhaften Nachtrag können anteilig übernommen werden. Vgl. <a href="dgmp-use-cases.html#nachtrag-von-arzneimitteln">Nachtrag von Arzneimitteln</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-stornierung-eines-eml-eintrags">Anwendungsfall: Aktualisierung eines eML-Eintrags</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Korrektur eines Nachtrags</figcaption>
+</figure>
+
+<h3 id="editieren-von-emp-einträgen">Editieren von eMP-Einträgen</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Ein eMP-Eintrag kann nach seiner Anlage editiert werden. Dies kann der Fall sein, wenn
+sich neue Erkenntnisse ergeben oder die Therapie angepasst wird. Hiervon betroffen sind alle eMP-spezifischen Informationen 
+(Indikation, versichertenverständlicher “Grund”, “Hinweise” für den Versicherten, “Hinweise für Mitbehandelnde”, 
+Start- und Enddatum) sowie die Dosierung. Über die Historie kann nachvollzogen werden,
+von welcher Einrichtung und zu welchem Zeitpunkt der eMP-Eintrag editiert wurde.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in einer Ansicht des eMP.</li>
+  <li>Der Anwender hat einen eMP-Eintrag ausgewählt, den er bearbeiten möchte.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender editiert oder ergänzt die eMP-spezifischen Informationen bzw. die Dosierung des eMP-Eintrags (bspw. “Hinweise” für den Versicherten). Er stellt dabei sicher, dass mindestens ein Status und eine Dosierung vorhanden sind.</li>
+  <li>Wird die Dosierung angepasst: Der Anwender bestätigt, dass die Dosierungsanpassung abgeschlossen ist.</li>
+  <li>Sofern der ausgewählte eMP-Eintrag im Status “beendet” oder “pausiert” vorliegt: Das Primärsystem schlägt vor, den Status auf “aktiv” zu setzen. Der Anwender kann den Statuswechsel bestätigen.</li>
+  <li>Das Primärsystem aktualisiert den eMP-Eintrag und zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender kann sich den aktualisierten eMP anzeigen lassen; aktualisierte Informationen können visuell hervorgehoben werden. Vgl. <a href="dgmp-use-cases.html#anzeige-des-elektronischen-medikationsplans-emp">Anzeige des elektronischen Medikationsplans (eMP)</a></li>
+  <li>Der Anwender kann über die Historie des eMP-Eintrags nachvollziehen, wie, von welcher Einrichtung und zu welchem Zeitpunkt der eMP-Eintrag editiert wurde.</li>
+  <li>Der Anwender kann die Bearbeitung des eMP-Eintrags fortsetzen, sofern erforderlich.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-aktualisierung-eines-emp-eintrags">Anwendungsfall: Aktualisierung eines eMP-Eintrags</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Editieren von eMP-Einträgen</figcaption>
+</figure>
+
+<h3 id="pausieren-von-emp-einträgen">Pausieren von eMP-Einträgen</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Wird die Therapie mit einem Arzneimittel pausiert, kann der eMP-Eintrag den Status
+“pausiert” erhalten. Der eMP-Eintrag wird weiterhin auf dem aktuellen eMP abgebildet. Über die Historie kann nachvollzogen werden,
+ von welcher Einrichtung und zu welchem Zeitpunkt die Statusanpassung vorgenommen wurde. Soll die Therapie wieder aufgenommen werden, kann der Status erneut angepasst werden.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in einer Ansicht des eMP.</li>
+  <li>Der Anwender hat einen oder mehrere eMP-Einträge ausgewählt, die er bearbeiten möchte.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt in einer Navigation des Status die Option “Pausiert” aus.</li>
+  <li>Das Primärsystem aktualisiert den Status des eMP-Eintrags/der eMP-Einträge und zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der eMP-Eintrag/die eMP-Einträge erhalten den Status “pausiert”; sie werden entsprechend gekennzeichnet und – sofern vorhanden – mit anderen pausierten eMP-Einträgen in der Anzeige des aktuellen eMP gruppiert.</li>
+  <li>Der Anwender kann die Bearbeitung des eMP-Eintrags/der eMP-Einträge fortsetzen, sofern erforderlich.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-aktualisierung-eines-emp-eintrags">Anwendungsfall: Aktualisierung eines eMP-Eintrags</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Pausieren von eMP-Einträgen</figcaption>
+</figure>
+
+<h3 id="beenden-von-emp-einträgen">Beenden von eMP-Einträgen</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Wird die Therapie mit einem Arzneimittel abgeschlossen, kann der eMP-Eintrag den Status
+“beendet”  oder “abgebrochen” erhalten. Der eMP-Eintrag wird damit nicht mehr auf dem aktuellen eMP
+abgebildet. Über die Historie kann weiterhin nachvollzogen werden, dass das Arzneimittel
+zeitweilig auf dem eMP abgebildet war und von welcher Einrichtung zu welchem Zeitpunkt die Statusanpassung vorgenommen wurde.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in einer Ansicht des eMP.</li>
+  <li>Der Anwender hat einen oder mehrere eMP-Einträge ausgewählt, die er bearbeiten möchte.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt in einer Navigation des Status die Option “Beendet” aus.</li>
+  <li>Das Primärsystem zeigt ein Fenster mit der Frage an “Konnte die Therapie mit diesem Arzneimittel planmäßig abgeschlossen werden?”. Die Vorauswahl für alle Arzneimittel ist “Ja”.</li>
+  <li>Der Anwender passt die Vorauswahl ggf. an (“Nein”) und bestätigt das Beenden des eMP-Eintrags.</li>
+  <li>Primärsystem aktualisiert den Status des eMP-Eintrags/der eMP-Einträge und zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der eMP-Eintrag/die eMP-Einträge erhalten den Status “beendet”, sofern der Anwender bestätigt hat, dass die Therapie planmäßig abgeschlossen werden konnte. Anderenfalls erhalten sie den Status “abgebrochen”. Sie werden in der Ansicht des aktuellen eMP nicht mehr angezeigt. Soll er angezeigt werden, ist nachvollziehbar, dass die Therapie beendet wurde. Vgl. <a href="dgmp-use-cases.html#anzeige-des-elektronischen-medikationsplans-emp">Anzeige des elektronischen Medikationsplans (eMP)</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-aktualisierung-eines-emp-eintrags">Anwendungsfall: Aktualisierung eines eMP-Eintrags</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Beenden von eMP-Einträgen</figcaption>
+</figure>
+
+<h3 id="aktivieren-von-emp-einträgen">Aktivieren von eMP-Einträgen</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Wird die Therapie mit einem Arzneimittel wieder aufgenommen, die im Vorfeld als pausiert oder beendet gegolten hat,
+kann der eMP-Eintrag (erneut) den Status “aktiv” erhalten. Der eMP-Eintrag wird damit (wieder) auf dem aktuellen eMP
+abgebildet. Über die Historie kann nachvollzogen werden, von welcher Einrichtung und zu welchem Zeitpunkt die Statusanpassung vorgenommen wurde.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in einer Ansicht des eMP.</li>
+  <li>Der Anwender hat einen oder mehrere eMP-Einträge ausgewählt, die er bearbeiten möchte.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt in einer Navigation des Status die Option “Aktiv” aus.</li>
+  <li>Das Primärsystem aktualisiert den Status des eMP-Eintrags/der eMP-Einträge und zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der eMP-Eintrag/die eMP-Einträge erhalten den Status “aktiv”; sie werden entsprechend gekennzeichnet und – sofern vorhanden – mit anderen aktiven eMP-Einträgen in der Anzeige des aktuellen eMP gruppiert.</li>
+  <li>Der Anwender kann die Bearbeitung des eMP-Eintrags/der eMP-Einträge fortsetzen, sofern erforderlich.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-aktualisierung-eines-emp-eintrags">Anwendungsfall: Aktualisierung eines eMP-Eintrags</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Aktivieren von eMP-Einträgen</figcaption>
+</figure>
+
+<h3 id="planen-von-emp-einträgen">Planen von eMP-Einträgen</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Es kann vorkommen, dass die Therapie mit einem Arzneimittel vorerst nur im eMP dokumentiert werden soll, ohne dass eine
+Rezeptierung oder Abgabe erfolgt. Da die Therapie mit diesem Arzneimittel ausschließlich im eMP dargestellt wird, befindet sich der Eintrag
+formal im “Planungszustand”. Der Planungszustand trifft jedoch keine medizinische Aussage, ob die Therapie mit dem Arzneimittel bereits begonnen wurde.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in einer Ansicht des eMP.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt die Option “Anlage eines eMP-Eintrags” aus.</li>
+  <li>Der Anwender gibt mindestens alle verpflichtend auszufüllenden Datenfelder für den eMP-Eintrag im Planungsstatus an.</li>
+  <li>Das Primärsystem kreiert einen eMP-Eintrag im ePA-Aktensystem und zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der eMP-Eintrag kann im eMP nachvollzogen werden. Das Arzneimittel ist nicht in der eML abgebildet.</li>
+  <li>Der Anwender kann ein E-Rezept oder einen Nachtrag zu diesem eMP-Eintrag erstellen. Mit stattgehabter Verknüpfung erfolgt ein Statuswechsel zu “aktiv” Vgl. <a href="dgmp-use-cases.html#nachtrag-von-arzneimitteln">Nachtrag_von_Arzneimitteln</a>, <a href="dgmp-use-cases.html#pflege-des-emp-im-rahmen-der-rezeptierung-per-e-rezept---aktualisieren-eines-emp-eintrags">Pflege des eMP im Rahmen der Rezeptierung per E-Rezept - Aktualisieren eines eMP-Eintrags</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#anwendungsfall-verordnung-verschreibung-und-dispensierung-mit-dem-emp">Anwendungsfall: Verordnung, Verschreibung und Dispensierung mit dem eMP</a> ohne E-Rezept.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Planen von eMP-Einträgen</figcaption>
+</figure>
+
+<h3 id="emp-ausdrucken">eMP ausdrucken</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Der eMP kann als PDF dargestellt werden, um anschließend ausgedruckt und zum Beispiel dem Versicherten oder einem
+benannten Vertreter mitgegeben werden zu können. Außerdem kann das PDF/der Ausdruck Gesundheitseinrichtungen übergeben werden,
+die an der Versorgung beteiligt sind, aber keinen Zugriff auf den eMP haben, um Versorgungsbrüche zu vermeiden.</p>
+
+<p>Form und Inhalt des Ausdrucks werden von der gematik vorgegeben. Das PDF für den Ausdruck wird vom Aktensystem generiert und hat
+daher unabhängig vom Primärsystem bzw. ePA-FdV denselben Aufbau.</p>
+
+<p>Der Aufbau des Ausdrucks orientiert sich sowohl in der visuellen Darstellung als auch in den Inhalten mehrheitlich am BMP. 
+Das inkludiert die strukturierte Darstellung von Dosierungen, welche eine langfristige und tägliche Anwendung mit Tageszeiten-Bezug (bspw. täglich: morgens — je 400 mg)​ vorsehen. 
+Strukturiert erfasste Dosierungen, die diese Abbildungsregeln erfüllen, werden in einer Kreuztabelle ausgegeben; dort nicht abbildbare Dosierungen erscheinen in einer Zusatzzeile unterhalb des eMP-Eintrags.</p>
+
+<p>Abweichend vom BMP trägt der Ausdruck des eMP keinen DataMatrix-Code, da das Transportmedium des eMP die ePA ist. Außerdem werden bis auf Weiteres keine Zwischenüberschriften, 
+keine individualisierbare Zeilenreihenfolge und keine weiteren AMTS-relevanten Informationen im Ausdruck unterstützt. Die Reihenfolge der eMP-Einträge untereinander wird in erster Linie anhand des 
+Erstellungsdatums des eMP-Eintrags festgelegt. Durch das Persistieren dieser Zeilenreihenfolge bleibt die Orientierung auf dem Ausdruck auch über mehrere Versionen hinweg erhalten.</p>
+
+<p>Es ist anzumerken, dass nicht alle Informationen, die digital im eMP erfasst werden, auch auf dem Ausdruck nachvollziehbar sind. Insbesondere die Indikation (ICD-10-Code) und die “Hinweise für Mitbehandelnde” sind dort nicht abgebildet, 
+da sie keine wesentlichen Informationen für die Arzneimittelanwendung des Versicherten enthalten.</p>
+
+<p>Das Aktensystem generiert den Ausdruck stets aus dem letztgültigen Zustand des eMP; historisierte Versionen des eMP können nicht über das Aktensystem ausgedruckt werden. 
+Auf dem Ausdruck ist nachvollziehbar, zu welchem Zeitpunkt er erstellt wurde. Es wird darauf hingewiesen, dass ggf. weitere oder aktuellere Informationen in der elektronischen Patientenakte vorliegen könnten.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in einer Ansicht des eMP.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt die Option “PDF erstellen” oder “eMP ausdrucken” aus.</li>
+  <li>Das Aktensystem generiert den PDF-Ausdruck.</li>
+  <li>Das Primärsystem bietet an, den generierten PDF-Ausdruck lokal zu speichern oder zu drucken.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Die Person, für die der Ausdruck vorgesehen war, erhält den Ausdruck und kann anhand dessen die Arzneimitteltherapie anwenden.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-green">
+              PFLEGEKRAFT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-blue">
+              VERSICHERTER
+            </span>
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall eMP ausdrucken</figcaption>
+</figure>
+
+<h3 id="durchführung-von-amts-prüfungen">Durchführung von AMTS-Prüfungen</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>AMTS-Prüfungen (Arzneimitteltherapiesicherheits-Prüfungen) können
+arzneimittelbezogene Probleme identifizieren. Hierzu sollen alle Daten zur
+Arzneimitteltherapie des Versicherten in der ePA zu Rate gezogen werden können, darunter Verordnungs- und Dispensierdaten (eML)
+und Daten zur aktuellen Arzneimitteltherapie (eMP). Die Prüfung
+selbst wird von AMTS-Modulen außerhalb der Telematikinfrastruktur durchgeführt. In diesem Anwendungsfall wird
+ausschließlich diese softwaregestützte AMTS-Prüfung beschrieben. Eine vollständige AMTS-Prüfung umfasst in der Regel weitere 
+Aspekte, bspw. ein Gespräch zwischen Apotheker und Versichertem, die hier nicht beschrieben sind.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender verfügt über ein in das Primärsystem/das ePA-FdV integriertes AMTS-Modul.</li>
+  <li>Der Anwender befindet sich:
+    <ul>
+      <li>in einer lokalen Ansicht, in der Arzneimittel verwaltet werden oder</li>
+      <li>in einer Ansicht der eML oder des eMP.</li>
+    </ul>
+  </li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender startet die AMTS-Prüfung in seinem AMTS-Modul.</li>
+  <li>Der Anwender kann – abhängig vom Angebot des AMTS-Moduls – bestimmte Parameter anpassen (z.B. zu berücksichtigender Zeitraum oder Status von Arzneimitteln im eMP).</li>
+  <li>Das Primärsystem führt die AMTS-Prüfung unter Einbezug der Daten aus der ePA durch und zeigt die Ergebnisse an, wobei die von arzneimittelbezogenen Problemen betroffenen Arzneimittel hervorgehoben werden.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender kann entscheiden, ob er Maßnahmen ergreifen möchte, um die identifizierten Probleme zu adressieren (z.B. im Falle von Leistungserbringerinstitutionen die Anpassung des eMP oder bei Versicherten die Kontaktierung eines Arztes).</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-green">
+              PFLEGEKRAFT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-blue">
+              VERSICHERTER
+            </span>
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Durchführung von AMTS-Prüfungen</figcaption>
+</figure>
+
+<h3 id="übernahme-des-emp-in-das-lokale-ps">Übernahme des eMP in das lokale PS</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Der aktuelle Zustand des eMP kann in das lokale Primärsystem überführt werden. Dies ist
+insbesondere an Versorgungsschnittstellen relevant, bspw. wenn ein Abgleich mit der
+Hausmedikation erfolgen muss oder die Medikationsplanung während eines stationären
+Aufenthalts lokal vorgenommen werden soll. Im Sinne der Nachnutzbarkeit sollten hierfür stets
+die nativen FHIR-Daten genutzt werden; das PDF ist auf die Bedürfnisse des Versicherten
+zugeschnitten und hierfür nicht zu empfehlen. Idealerweise gibt es für diesen Anwendungsfall einen dedizierten Speicherort
+im lokalen System, der bereits vorausgewählt ist.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in einer Ansicht des eMP.</li>
+  <li>Der Anwender hat den eMP ggf. aktualisiert, sofern ihm Änderungen bekannt gewesen sind oder von ihm angestoßen wurden.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt die Option “Medikationsplan speichern/herunterladen” aus.</li>
+  <li>Das Primärsystem lädt den aktuellen Stand des Medikationsplans herunter und zeigt eine Bestätigung an.</li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender kann die Daten des Medikationsplans nutzen, um eine lokale Medikationsplanung zu beginnen/aktualisieren.</li>
+  <li>Wurde bereits eine frühere Version des eMP lokal hinterlegt: Der Anwender kann sich eine Differenzansicht anzeigen lassen.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-green">
+              PFLEGEKRAFT
+            </span>
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Übernahme des eMP in das lokale PS</figcaption>
+</figure>
+
+<h3 id="abgleich-von-lokalen-daten-zur-arzneimitteltherapie-und-emp">Abgleich von lokalen Daten zur Arzneimitteltherapie und eMP</h3>
+
+<figure style="width: auto;">
+  <table style="width: auto; border: 1px solid #dcdcdc;">
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Beschreibung</th>
+      <td style="padding: 5px;"><p>Lokal gespeicherte Daten zur Arzneimitteltherapie, insb. eine lokale Medikationsplanung,
+können mit dem eMP abgeglichen werden. Dies ist insbesondere an
+Versorgungsschnittstellen relevant, an denen Informationen zur weiteren
+Arzneimitteltherapie an Mitbehandler und den Versicherten übergeben werden sollen.
+Etwaige Differenzen können in die weitere Beurteilung mit einfließen und Ausgangspunkt für eine Aktualisierung des eMP sein.</p>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Vorbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender befindet sich in einer Ansicht des eMP, ggf. in gemeinsamer Anzeige mit lokalen Daten zur Arzneimitteltherapie (z.B. lokaler Medikationsplan).</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Durchzuführende Aktionen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender wählt die Option “Vergleiche eMP mit meiner Medikation”.</li>
+  <li>Das Primärsystem zeigt an:
+    <ul>
+      <li>Alle Arzneimittel im Primärsystem und eMP, für die derselbe eMP-Identifier hinterlegt ist.</li>
+      <li>Alle Arzneimittel im Primärsystem und eMP, für die kein eMP-Identifier vorliegt, die aber Ähnlichkeiten zeigen.</li>
+      <li>Alle Arzneimittel, die im Primärsystem hinterlegt sind, für die kein passender eMP-Eintrag vorliegt.</li>
+    </ul>
+  </li>
+</ul>
+</td>
+
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Nachbedingungen</th>
+      <td style="padding: 5px;"><ul>
+  <li>Der Anwender kann (bei vorhandener Berechtigung) den eMP anhand der Informationen im Primärsystem aktualisieren. Vgl. <a href="dgmp-use-cases.html#nachtrag-von-arzneimitteln">Nachtrag_von_Arzneimitteln</a>, <a href="dgmp-use-cases.html#pausieren-von-emp-einträgen">Pausieren von eMP-Einträgen</a>, <a href="dgmp-use-cases.html#beenden-von-emp-einträgen">Beenden von eMP-Einträgen</a>, <a href="dgmp-use-cases.html#aktivieren-von-emp-einträgen">Aktivieren von eMP-Einträgen</a>, <a href="dgmp-use-cases.html#editieren-von-emp-einträgen">Editieren von eMP-Einträgen</a>.</li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Technische Anwendungsfälle des Medication Service</th>
+      <td style="padding: 5px;"><ul>
+  <li><a href="./technical-use-cases.html#lesezugriffe">Lesezugriffe</a></li>
+</ul>
+</td>
+    </tr>
+    <tr>
+      <th style="padding: 5px; width: 23rem;">Relevante(r) Sektor(en)</th>
+      <td style="padding: 5px;">
+        
+          
+            <span class="badge gem-ig-badge gem-ig-badge-bg-orange">
+              APOTHEKER
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-grey">
+              (ZAHN-)ARZT
+            </span>
+          
+        
+          
+            <span class="badge gem-ig-badge 
+gem-ig-badge-bg-green">
+              PFLEGEKRAFT
+            </span>
+          
+        
+          
+        
+      </td>
+    </tr>
+  </table>
+  <figcaption><strong>Tabelle:</strong> Fachlicher Anwendungsfall Abgleich von lokalen Daten zur Arzneimitteltherapie und eMP</figcaption>
+</figure>
+
+
+
+
+</div>
+        </div>  <!-- /inner-wrapper -->
+      </div>  <!-- /row -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-content -->
+
+  <script type="text/javascript" src="assets/js/jquery.js"> </script>     <!-- note keep space here, otherwise it will be transformed to empty tag -> fails -->
+  <script type="text/javascript" src="assets/js/jquery-ui.min.js"> </script>
+
+  <script type="text/javascript" src="assets/js/window-hash.js"> </script>
+  <a name="bottom"> </a>
+  <div id="segment-footer" igtool="footer" class="segment">  <!-- segment-footer -->
+    <div class="container">  <!-- container -->
+
+      <div style="background-color:var(--footer-nav-bg-color)">
+        <table style="width:100%">
+          <tbody>
+            <tr>
+              <td style="text-align:left">&#xA0;
+
+                <a href="dgmp-scenarios.html">&lt;vorherige</a>
+
+              </td>
+              <td style="text-align:center">
+                <a href="#top">oben</a>
+              </td>
+              <td style="text-align:right">&#xA0;
+
+                <a href="technical-use-cases.html">nächste&gt;</a>
+
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="inner-wrapper">
+        <p>
+          IG &#169; 2025+ <a style="color:var(--footer-hyperlink-text-color)" href="https://www.gematik.de">gematik GmbH</a>.  Paket de.gematik.epa.medication#1.3.1 basierend auf <a style="color: var(--footer-hyperlink-text-color)" href="http://hl7.org/fhir/R4/">FHIR 4.0.1</a>. Generiert <span title="Wed, Mar 25, 2026 10:38+0000">2026-03-25</span>
+          <br/>
+          <span style="color: var(--footer-highlight-text-color)">
+                      Links: <a style="color: var(--footer-hyperlink-text-color)" href="toc.html">Table of Contents</a> |
+                 <a style="color: var(--footer-hyperlink-text-color)" href="qa.html">QA Report</a>
+                 
+                
+          </span>
+        </p>
+      </div>  <!-- /inner-wrapper -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-footer -->
+  
+  <div id="segment-post-footer" class="segment hidden">  <!-- segment-post-footer -->
+    <div class="container">  <!-- container -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-post-footer -->
+
+  <!-- JS and analytics only. -->
+  <!-- Bootstrap core JavaScript
+  ================================================== -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script type="text/javascript" src="assets/js/bootstrap.min.js"> </script>
+  <script type="text/javascript" src="assets/js/respond.min.js"> </script>
+  <script type="text/javascript" src="assets/js/anchor.min.js"> </script>
+  <script type="text/javascript" src="assets/js/clipboard.min.js"> </script>
+  <script type="text/javascript" src="assets/js/clipboard-btn.js"> </script>
+  <script type="text/javascript" src="assets/js/anchor-hover.js"> </script>
+  <!-- Analytics Below
+  ================================================== -->
+  </body>
+</html>
+

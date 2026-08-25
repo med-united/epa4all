@@ -1,0 +1,11 @@
+{
+  "resourceType" : "OperationOutcome",
+  "id" : "72c7abbf-51c5-4647-846e-7c5af57e2105",
+  "meta" : {
+    "profile" : ["https://gematik.de/fhir/ti/StructureDefinition/operation-outcome|1.1.1"]
+  },
+  "issue" : [{
+    "severity" : "error",
+    "code" : "invalid"
+  }]
+}

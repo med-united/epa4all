@@ -1,0 +1,56 @@
+{
+  "resourceType" : "AuditEvent",
+  "id" : "27a03af4-5ebc-4dd6-83ba-7b775e5b664a",
+  "meta" : {
+    "versionId" : "1",
+    "lastUpdated" : "2026-11-04T21:13:47.161Z",
+    "profile" : ["https://gematik.de/fhir/epa/StructureDefinition/epa-auditevent|1.3.0"]
+  },
+  "type" : {
+    "system" : "http://terminology.hl7.org/CodeSystem/audit-event-type",
+    "code" : "rest"
+  },
+  "action" : "C",
+  "recorded" : "2026-11-04T21:13:47.161Z",
+  "outcome" : "0",
+  "agent" : [{
+    "type" : {
+      "coding" : [{
+        "system" : "http://terminology.hl7.org/CodeSystem/v3-RoleClass",
+        "code" : "PAT",
+        "display" : "patient"
+      }]
+    },
+    "who" : {
+      "identifier" : {
+        "system" : "http://fhir.de/sid/gkv/kvid-10",
+        "value" : "A123456780"
+      }
+    },
+    "altId" : "A123456780",
+    "name" : "Erika Musterfrau",
+    "requestor" : true
+  }],
+  "source" : {
+    "observer" : {
+      "display" : "Elektronische Patientenakte Fachdienst"
+    },
+    "type" : [{
+      "system" : "https://gematik.de/fhir/epa/CodeSystem/epa-auditevent-sourcetype-cs",
+      "code" : "PUSHNOTMGMT",
+      "display" : "Push Notification Management"
+    }]
+  },
+  "entity" : [{
+    "name" : "PushNotificationManagement",
+    "description" : "updatePusher",
+    "detail" : [{
+      "type" : "DisplayNamePusher",
+      "valueString" : "Erikas Tablet"
+    },
+    {
+      "type" : "DisplayNameDevice",
+      "valueString" : "Erikas Tablet für ePA"
+    }]
+  }]
+}

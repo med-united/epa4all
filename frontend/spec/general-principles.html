@@ -1,0 +1,1161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HTML>
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+    <title>Generelle Prinzipien - Implementation Guide ePA Basisfunktionalitäten v1.3.1</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="author" content="http://hl7.org/fhir"/>
+
+    <link href="fhir.css" rel="stylesheet"/>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap-fhir.css" rel="stylesheet"/>
+
+    <!-- Project extras -->
+    <link href="assets/css/project.css" rel="stylesheet"/>
+    <link href="assets/css/pygments-manni.css" rel="stylesheet"/>
+    <link href="assets/css/jquery-ui.css" rel="stylesheet"/>
+  	<link href="assets/css/prism.css" rel="stylesheet" />
+  	<link href="assets/css/cqf.css" rel="stylesheet" />
+    <!-- Placeholder for child template CSS declarations -->
+<link href="assets/css/ig.gematik.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.gematik.min.js"> </script>
+<link href="assets/css/edge-dark.min.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.api.doc.gematik.min.js"> </script>
+<link href="assets/css/ig.req.gematik.css" rel="stylesheet" />
+<script type="text/javascript" src="assets/js/ig.req.gematik.min.js"> </script>
+
+<script type="text/javascript" src="assets/js/ig.bibliography.gematik.js"> </script>
+
+<style>
+    .gem-ig-headline-container {
+        -webkit-background-size: 100% auto;
+        -moz-background-size: 100% auto;
+        -o-background-size: 100% auto;
+        background-size: 100% auto;
+        height: 280px;
+        background-color: #2a6496;
+        background: url('./gem-headline.png') no-repeat;
+        background-position: 180% -104px;
+        background-size: 90% auto;
+    }
+</style>
+
+    <script type="text/javascript" src="fhir-table-scripts.js"> </script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="assets/js/html5shiv.js"></script>
+    <script src="assets/js/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- Favicons -->
+    <link rel="fhir-logo" sizes="144x144" href="assets/ico/icon-fhir-144.png"/>
+    <link rel="fhir-logo" sizes="114x114" href="assets/ico/icon-fhir-114.png"/>
+    <link rel="fhir-logo" sizes="72x72" href="assets/ico/icon-fhir-72.png"/>
+    <link rel="fhir-logo" href="assets/ico/icon-fhir-57.png"/>
+    <link rel="shortcut icon" href="assets/ico/favicon.png"/>
+  </head>
+  <body onload="document.body.style.opacity='1'">
+
+	  <script src="assets/js/prism.js"></script>
+    <script type="text/javascript" src="assets/js/mermaid.js"></script>
+    <script type="text/javascript" src="assets/js/mermaid-init.js"></script>
+    <style type="text/css">h2{--heading-prefix:"2"}
+    h3,h4,h5,h6{--heading-prefix:"2"}</style>
+    <div id="segment-header" class="segment">  <!-- segment-header -->
+      <div class="container">  <!-- container -->
+
+        <!-- Placeholder for child template header declarations -->
+
+<div id="hl7-nav">
+    <a id="gem-ig-logo" no-external="true" href="./index.html">
+        <img height="50" alt="Home" src="assets/images/gem-logo.png"/>
+    </a>
+</div>
+
+
+      </div> <!-- /container -->
+    </div>  <!-- /segment-header -->
+
+    <div id="segment-navbar" class="segment">  <!-- segment-navbar -->
+      <div id="stripe"> </div>
+      <div class="container">  <!-- container -->
+        <!-- HEADER CONTENT -->
+
+        <nav class="navbar navbar-inverse">
+          <!--status-bar-->
+          <div class="container">
+            <button data-target=".navbar-inverse-collapse" class="navbar-toggle" data-toggle="collapse" type="button">
+              <span class="icon-bar"> </span>
+              <span class="icon-bar"> </span>
+              <span class="icon-bar"> </span>
+            </button>
+            <a class="navbar-brand hidden" href="http://hl7.org/fhir/R4/index.html">FHIR</a>
+            <div class="nav-collapse collapse navbar-inverse-collapse">
+              <!-- menu.xml  -->
+
+<ul xmlns="http://www.w3.org/1999/xhtml" class="nav navbar-nav">
+  <li>
+    <a href="index.html">Home</a>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Generelle Prinzipien
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="general-principles.html">Generelle Prinzipien</a>
+      </li>
+      <li>
+        <a href="operation-api.html">Operation API: Allgemeine Anforderungen</a>
+      </li>
+      <li>
+        <a href="privacy-security.html">Datenschutz und Sicherheit</a>
+      </li>
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Audit Event Service
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="api-audit.html">Audit Event Service</a>
+      </li>
+      <li>
+        <a href="auditevent-output.html">Belegung der Protokolldaten</a>
+      </li>
+      <li>
+        <a href="query-api-audit-event.html">Query API</a>
+      </li>
+      <li>
+        <a href="render-api-audit-event.html">Render API</a>
+      </li>
+    </ul>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Patient Service
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="api-patient.html">Patient Service</a>
+      </li>
+      <li>
+        <a href="query-api-patient.html">Query API</a>
+      </li>
+      <li>
+        <a href="upsert-patient.html">Hinzufügen/Aktualisieren</a>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a href="artifacts.html">FHIR-Artefakte</a>
+  </li>
+  <li class="dropdown">
+    <a data-toggle="dropdown" href="#" class="dropdown-toggle">Anhänge
+      <b class="caret"></b>
+    </a>
+    <ul class="dropdown-menu">
+      <li>
+        <a href="referenced.html">Referenzen</a>
+      </li>
+      <li>
+        <a href="downloads.html">Downloads</a>
+      </li>
+      <li>
+        <a href="openapi.html">OpenAPI</a>
+      </li>
+      <li>
+        <a href="release-notes.html">Release Notes</a>
+      </li>
+      <li>
+        <a href="spec-sheet.html">Anforderungslisten</a>
+      </li>
+      <li>
+        <a href="comparisons.html">Versionsvergleiche</a>
+      </li>
+      <li>
+        <a href="license.html">Lizenz</a>
+      </li>
+    </ul>
+  </li>
+</ul>
+            </div>  <!-- /.nav-collapse -->
+          </div>  <!-- /.container -->
+        </nav>  <!-- /.navbar -->
+      <!-- /HEADER CONTENT -->
+      </div>  <!-- /container -->
+    </div>  <!-- /segment-navbar -->
+
+    <div class="segment"> 
+      <div class="container">
+        
+
+<div class="gem-ig-headline-container"> 
+    <div id="gem-ig-headline" class="col-lg-10 col-md-12">
+        <div class="gem-ig-headline-title">
+            
+Implementation Guide<br /> ePA Basisfunktionalitäten
+        </div>
+        <div id="ig-status" class="gem-ig-headline-subtitle">
+            <span style="display:inline-block;">Version 1.3.1 - release
+                
+                
+            </span>
+            
+
+        </div>
+    </div>
+</div>
+      </div>
+    </div>
+
+    <!--status-bar-->
+
+    <div id="segment-breadcrumb" class="segment">  <!-- segment-breadcrumb -->
+      <div class="container">  <!-- container -->
+        <ul class="breadcrumb">
+          <li><a href='toc.html'><b>Table of Contents</b></a></li><li><b>Generelle Prinzipien</b></li>
+
+          <span style="float:right;">
+
+            <a href="index.html">&lt;vorherige</a> | 
+
+            <a href="#bottom">unten</a>
+
+          | <a href="privacy-security.html">nächste&gt;</a>
+
+          </span>
+
+        </ul>
+      </div>  <!-- /container -->
+    </div>  <!-- /segment-breadcrumb -->
+
+    <a name="top"> </a>
+    <div id="segment-content" class="segment">  <!-- segment-content -->
+      <div class="container">  <!-- container -->
+        <div class="row">
+          <div class="inner-wrapper">
+<style type="text/css">
+h2:before{color:silver;counter-increment:section;content:var(--heading-prefix) " ";}
+h3:before{color:silver;counter-increment:sub-section;content:var(--heading-prefix) "." counter(sub-section) " ";}
+h4:before{color:silver;counter-increment:composite;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) " ";}
+h5:before{color:silver;counter-increment:detail;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) "." counter(detail) " ";}
+h6:before{color:silver;counter-increment:more-detail;content:var(--heading-prefix) "." counter(sub-section) "." counter(composite) "." counter(detail) "." counter(more-detail)" ";}
+</style>
+<div class="col-12">
+  
+  <h2>Generelle Prinzipien</h2>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+    <p><!-- white space is critical inside of capture --></p>
+<div class="markdown-toc">
+  <p>Seiteninhalt:</p>
+
+<ul id="markdown-toc">
+  <li><a href="#übergeordnete-anforderungen" id="markdown-toc-übergeordnete-anforderungen">Übergeordnete Anforderungen</a></li>
+  <li><a href="#schnittstellenimplementierung" id="markdown-toc-schnittstellenimplementierung">Schnittstellenimplementierung</a></li>
+  <li><a href="#leistungserbringerinstitutionserkennung-mittels-x-requesting-organization" id="markdown-toc-leistungserbringerinstitutionserkennung-mittels-x-requesting-organization">Leistungserbringerinstitutionserkennung mittels X-Requesting-Organization</a></li>
+  <li><a href="#erstellen-und-verwenden-eines-änderungseintrags-provenance" id="markdown-toc-erstellen-und-verwenden-eines-änderungseintrags-provenance">Erstellen und Verwenden eines Änderungseintrags (Provenance)</a></li>
+  <li><a href="#fhir-spezifische-anforderungen" id="markdown-toc-fhir-spezifische-anforderungen">FHIR-spezifische Anforderungen</a></li>
+</ul>
+
+</div>
+<p>Dieser Implementation Guide verwendet die Schlüsselwörter <strong>MUSS</strong>, <strong>DARF NICHT</strong>, <strong>SOLL NICHT</strong> und <strong>KANN</strong> als deutsche Pendants des [RFC2119], um Anforderungen als Ausdruck normativer Festlegungen zu kennzeichnen. Anforderungen werden im Implementation Guide wie folgt dargestellt:</p>
+
+<p><br /><b>&lt;IG-ID-Version&gt; - &lt;Titel der Anforderung&gt;</b><br /> Text / Beschreibung<br /> [&lt;=]</p>
+
+<h3 id="übergeordnete-anforderungen">Übergeordnete Anforderungen</h3>
+
+<p>Der Audit Event Service berücksichtigt als Ausprägung eines FHIR Data Service allgemeingültige [gemIG_TI_Common#Audit] Anforderungen.</p>
+
+<p>Der Patient Service berücksichtigt als Ausprägung eines FHIR Data Service allgemeingültige [gemIG_TI_Common#Patient] Anforderungen.</p>
+
+<h3 id="schnittstellenimplementierung">Schnittstellenimplementierung</h3>
+
+<requirement conformance="SHALL" key="IG-EPA39507N6L" title="Non-FHIR HTTP Status Codes für alle Schnittstellen der ePA" version="4">
+    <meta lockversion="false" />
+    <actor name="EPA-Audit-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-MHD-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Patient-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service im ePA-Aktensystem MUSS folgende HTTP Status Codes unterstützen:
+    <br /><br />
+    <figure>
+        <table style="width: 100%">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Beschreibung</th>
+                    <th>Error Code</th>
+                    <th>Anmerkung</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>200</code></td>
+                    <td>Successful operation</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>403</code></td>
+                    <td>Requestor not authorized</td>
+                    <td><code>invalAuth</code></td>
+                    <td>no user session with valid ID-Token available</td>
+                </tr>
+                <tr>
+                    <td><code>403</code></td>
+                    <td>Requestor has no valid entitlement</td>
+                    <td><code>notEntitled</code></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>403</code></td>
+                    <td>Requestor role is not in the list of allowed user groups</td>
+                    <td><code>invalidOid</code></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>403</code></td>
+                    <td>Device registration does not exist</td>
+                    <td><code>unregisteredDevice</code></td>
+                    <td>if requestor role is oid_versicherter only</td>
+                </tr>
+                <tr>
+                    <td><code>404</code></td>
+                    <td>Health record is in state UNKNOWN or INITIALIZED</td>
+                    <td><code>noHealthRecord</code></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>409</code></td>
+                    <td>Request conflicts with the current state of the health record</td>
+                    <td><code>statusMismatch</code></td>
+                    <td>siehe <a href="#wiederholungsintervalle">'Wiederholungsintervalle'</a></td>
+                </tr>
+                <tr>
+                    <td><code>431</code></td>
+                    <td>Requesting Organization Header exceeds maximum size</td>
+                    <td><code>SVC_ORG_HEADER_TOO_LARGE</code></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>500</code></td>
+                    <td>Any other error</td>
+                    <td><code>internalError</code></td>
+                    <td>siehe <a href="#wiederholungsintervalle">'Wiederholungsintervalle'</a></td>
+                </tr>
+            </tbody>
+        </table>
+        <figcaption><strong>Tabelle:</strong> HTTP Status Codes für die FHIR-Data-Service-Antwortnachrichten</figcaption>
+    </figure>
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA52233FBE" title="Fehlercode-Formatierung ohne Rückgabe von FHIR-Operationen oder Ressourcen" version="2">
+    <meta lockversion="false" />
+    <actor name="EPA-Audit-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-MHD-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Patient-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service im ePA-Aktensystem MUSS einen Fehlercode mit dem entsprechenden HTTP Status Code im Media Type <i>application/json</i> nach folgendem Schema zurückgeben:
+    <br /><br />
+    <pre><code>    {
+      "errorCode": "statusMismatch"
+    }</code></pre>
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA92949ABX" title="HTTP Status Code für SVC_IDENTITY_MISMATCH Fehlermeldung" version="3">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Patient-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS für die Fehlermeldung <i>SVC_IDENTITY_MISMATCH</i> den HTTP Status Code <i>403</i> verwenden, wenn die Telematik-ID im ID-Token (ausgestellt durch den IDP-Dienst) oder die KVNR im <i>x-insurantid</i>-HTTP Header nicht mit den FHIR-Daten übereinstimmt.
+</requirement>
+
+<p><strong>Beispiel für ein OperationOutcome mit SVC_IDENTITY_MISMATCH</strong></p>
+<div class="gem-ig-example" data-title="OperationOutcome.issue.details SVC_IDENTITY_MISMATCH (JSON)">
+    <pre class="json" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-json" style="white-space: pre; text-wrap: nowrap;">{
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">resourceType</a>" : "OperationOutcome",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a>" : "ad48bf90-a664-44f4-af14-ee6e81db3df4",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>" : {
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>" : [
+      <a href="https://simplifier.net/resolve?scope=de.gematik.ti@1.3.0&amp;canonical=https://gematik.de/fhir/ti/StructureDefinition/operation-outcome" style="color: Maroon">&#x1F517;</a> "https://gematik.de/fhir/ti/StructureDefinition/operation-outcome|1.1.1"
+    ]
+  },
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a>" : "error",
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a>" : "forbidden",
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>" : {
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>" : [
+          {
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>" : "https://gematik.de/fhir/ti/CodeSystem/operation-outcome-details-codes",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a>" : "SVC_IDENTITY_MISMATCH",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a>" : "Identity mismatch: Access token or x-insurantid header does not match FHIR data (Telematik-ID / KVNR)"
+          }
+        ]
+      }
+    }
+  ]
+}</code></pre>
+
+</div>
+<div class="gem-ig-example" data-title="OperationOutcome.issue.details SVC_IDENTITY_MISMATCH (XML)">
+    <pre class="xml" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-xml" style="white-space: pre; text-wrap: nowrap;">
+&lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a> xmlns=&quot;http://hl7.org/fhir&quot;&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;ad48bf90-a664-44f4-af14-ee6e81db3df4&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>
+             <a href="http://hl7.org/fhir/R4/datatypes.html#canonical">value</a>=&quot;https://gematik.de/fhir/ti/StructureDefinition/operation-outcome|1.1.1&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;error&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;forbidden&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>
+                <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;https://gematik.de/fhir/ti/CodeSystem/operation-outcome-details-codes&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;SVC_IDENTITY_MISMATCH&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a>
+                 <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;Identity mismatch: Access token or x-insurantid header does not match FHIR data (Telematik-ID / KVNR)&quot;/&gt;
+      &lt;/<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+&lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a>&gt;</code></pre>
+
+</div>
+
+<requirement conformance="SHALL" key="IG-EPA55012GJA" title="Non-FHIR HTTP Error Code statusMismatch für Schnittstellen der ePA" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-MHD-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Patient-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service im ePA-Aktensystem MUSS – für den Fall, dass sich die Akte im Status SUSPENDED oder INACCESSIBLE befindet – den HTTP Status Code <i>409 statusMismatch</i> unterstützen.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA69406CJF" title="Validierung von FHIR-Ressourceninstanzen bei Erstellung und Aktualisierung" version="1">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Patient-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS beim Erstellen und Aktualisieren von FHIR-Ressourceninstanzen die übermittelten Daten gemäß dem für die jeweilige Ressource geltenden FHIR-Profil validieren und bei fehlgeschlagender Validierung die Operation mit dem HTTP Status Code <i>422 Unprocessable Entity</i> sowie einer <i>OperationOutcome</i>-Ressource ablehnen, die mindestens einen <i>issue</i>-Eintrag mit <i>issue.code = invalid</i> und <i>issue.severity = error</i> enthält.
+</requirement>
+
+<div class="gem-ig-example" data-title="OperationOutcome bei fehlgeschlagender Validierung (JSON)">
+    <pre class="json" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-json" style="white-space: pre; text-wrap: nowrap;">{
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">resourceType</a>" : "OperationOutcome",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a>" : "72c7abbf-51c5-4647-846e-7c5af57e2105",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>" : {
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>" : [
+      <a href="https://simplifier.net/resolve?scope=de.gematik.ti@1.3.0&amp;canonical=https://gematik.de/fhir/ti/StructureDefinition/operation-outcome" style="color: Maroon">&#x1F517;</a> "https://gematik.de/fhir/ti/StructureDefinition/operation-outcome|1.1.1"
+    ]
+  },
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a>" : "error",
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a>" : "invalid"
+    }
+  ]
+}</code></pre>
+
+</div>
+<div class="gem-ig-example" data-title="OperationOutcome bei fehlgeschlagender Validierung (XML)">
+    <pre class="xml" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-xml" style="white-space: pre; text-wrap: nowrap;">
+&lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a> xmlns=&quot;http://hl7.org/fhir&quot;&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;72c7abbf-51c5-4647-846e-7c5af57e2105&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>
+             <a href="http://hl7.org/fhir/R4/datatypes.html#canonical">value</a>=&quot;https://gematik.de/fhir/ti/StructureDefinition/operation-outcome|1.1.1&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;error&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;invalid&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+&lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a>&gt;</code></pre>
+
+</div>
+
+<h4 id="wiederholungsintervalle">Wiederholungsintervalle</h4>
+
+<p>Die folgenden Wiederholungsintervalle werden im Falle einer Fehlerantwort definiert:</p>
+
+<ul>
+  <li><i>409</i> Conflict (statusMismatch)
+    <ul>
+      <li>etwa 24 Stunden</li>
+    </ul>
+  </li>
+  <li><i>500</i> Internal Error
+    <ul>
+      <li>etwa 10 Minuten</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="leistungserbringerinstitutionserkennung-mittels-x-requesting-organization">Leistungserbringerinstitutionserkennung mittels X-Requesting-Organization</h3>
+
+<p>Zur Identifikation der Leistungserbringerinstitution, desssen Primärsystem eine FHIR-Operation auslöst, wird der HTTP Header <em>X-Requesting-Organization</em> verwendet. Dieser Header überträgt eine FHIR <em>Organization</em>-Ressource im JSON-Format, base64-kodiert gemäß [RFC4648].</p>
+
+<p>Die übermittelte <em>Organization</em> muss dem Profil <em>TIOrganization</em> entsprechen und enthält unter anderem die Telematik-ID der Leistungserbringerinstitution. Diese wird vom FHIR Data Service mit der im ID-Token enthaltenen Telematik-ID verglichen, um die Identität der Leistungserbringerinstitution zu verifizieren. Dabei ist zu beachten, dass der HTTP Header <em>X-Requesting-Organization</em> eine maximale Größe von 8 KByte nicht überschreiten darf.</p>
+
+<p>Neben der Validierung dient die übermittelte Leistungserbringerinstitution bzw. der Organization-Datensatz auch der automatischen Referenzierung in <em>Provenance</em>-Ressourcen, die bei Änderungsoperationen erzeugt werden. So kann jede Änderung systematisch der verantwortlichen Leistungserbringerinstitution zugeordnet werden.</p>
+
+<requirement conformance="SHALL" key="IG-EPA19082TMV" title="Verwendung des HTTP Header X-Requesting-Organization zur Identifikation der anfragenden Organisation" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS den HTTP Header <i>X-Requesting-Organization</i> unterstützen, um die anfragende Organisation im Rahmen einer Anfragenachricht zu identifizieren.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA47086E4R" title="Format des HTTP Header X-Requesting-Organization" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS ausschließlich den HTTP Header <i>X-Requesting-Organization</i> mit einer gemäß [RFC4648] Base64-kodierten, vollständig serialisierten FHIR <i>Organization</i>-Ressource im Format <i>FHIR+JSON</i> für eine Weiterverarbeitung der Anfragenachricht akzeptieren.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA32002Z7B" title="Profilanforderung an die FHIR Organization im Header X-Requesting-Organization" version="2">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS sicherstellen, dass die im HTTP Header <i>X-Requesting-Organization</i> enthaltene <i>Organization</i>-Ressource dem Profil <i>TIOrganization</i> entspricht. Bei fehlgeschlagender Validierung ist die Operation mit HTTP Status Code <i>422 Unprocessable Entity</i> und einem <i>OperationOutcome</i> mit dem Fehlercode <i>issue.code=invalid</i> und <i>issue.details=SVC_ORG_HEADER_PROFILE_MISMATCH</i> abzulehnen.
+</requirement>
+
+<div class="gem-ig-example" data-title="OperationOutcome bei fehlgeschlagender Validierung der Organization in X-Requesting-Organization (JSON)">
+    <pre class="json" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-json" style="white-space: pre; text-wrap: nowrap;">{
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">resourceType</a>" : "OperationOutcome",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a>" : "3e5635b7-5546-4b2b-8509-a138652985e7",
+  "<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>" : {
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>" : [
+      <a href="https://simplifier.net/resolve?scope=de.gematik.ti@1.3.0&amp;canonical=https://gematik.de/fhir/ti/StructureDefinition/operation-outcome" style="color: Maroon">&#x1F517;</a> "https://gematik.de/fhir/ti/StructureDefinition/operation-outcome|1.1.1"
+    ]
+  },
+  "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a>" : "error",
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a>" : "invalid",
+      "<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>" : {
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>" : [
+          {
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>" : "https://gematik.de/fhir/epa/CodeSystem/epa-operation-outcome-details-codes",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a>" : "SVC_ORG_HEADER_PROFILE_MISMATCH",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a>" : "Profile mismatch in header Organization"
+          }
+        ]
+      }
+    }
+  ]
+}</code></pre>
+
+</div>
+<div class="gem-ig-example" data-title="OperationOutcome bei fehlgeschlagender Validierung der Organization in X-Requesting-Organization (XML)">
+    <pre class="xml" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-xml" style="white-space: pre; text-wrap: nowrap;">
+&lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a> xmlns=&quot;http://hl7.org/fhir&quot;&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.id">id</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;3e5635b7-5546-4b2b-8509-a138652985e7&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>
+             <a href="http://hl7.org/fhir/R4/datatypes.html#canonical">value</a>=&quot;https://gematik.de/fhir/ti/StructureDefinition/operation-outcome|1.1.1&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/resource.html#OperationOutcome.meta">meta</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.severity">severity</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;error&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;invalid&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>
+                <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;https://gematik.de/fhir/epa/CodeSystem/epa-operation-outcome-details-codes&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;SVC_ORG_HEADER_PROFILE_MISMATCH&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;Profile mismatch in header Organization&quot;/&gt;
+      &lt;/<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue.details">details</a>&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome.issue">issue</a>&gt;
+&lt;/<a href="http://hl7.org/fhir/R4/operationoutcome.html#OperationOutcome">OperationOutcome</a>&gt;</code></pre>
+
+</div>
+
+<requirement conformance="SHALL" key="IG-EPA12496JW7" title="Validierung der Telematik-ID aus dem Header X-Requesting-Organization gegen das ID-Token" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS die in der übermittelten <i>Organization.identifier</i> enthaltene Telematik-ID mit der im ID-Token (ausgestellt durch den IDP-Dienst) enthaltenen Telematik-ID vergleichen. Stimmen die beiden Werte nicht überein, ist die Anfrage mit dem HTTP Status Code <i>403 Forbidden</i> abzulehnen. Zusätzlich ist eine <i>OperationOutcome</i>-Ressource mit dem Fehlercode <i>SVC_IDENTITY_MISMATCH</i> zurückzugeben.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA86324UP3" title="Maximale Größe des HTTP Header X-Requesting-Organization" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS eine Anfrage ablehnen, wenn der HTTP Header <i>X-Requesting-Organization</i> einschließlich seiner Base64-Kodierung eine Größe von mehr als <i>8 KByte</i> überschreitet und dabei den HTTP Status Code <i>431 Request Header Fields Too Large</i> zurückgeben. Das Größenlimit bezieht sich auf den vollständigen Header-Eintrag, also den Header-Namen <i>X-Requesting-Organization</i>, den Doppelpunkt, das Leerzeichen sowie den Base64-kodierten Header-Wert.
+</requirement>
+
+<h4 id="beispiel-http-request-mit-x-requesting-organization-header">Beispiel HTTP Request mit X-Requesting-Organization Header</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>POST /epa/medication/api/v1/fhir/$add-emp-entry HTTP/1.1
+Host: epa4all
+Content-Type: application/fhir+json
+X-Request-ID: bb22b14f-9c95-49fe-b889-d03e2d692bca
+x-insurantid: Z123456789
+x-useragent: CLIENTID1234567890AB/2.1.12-45
+X-Requesting-Organization: eyJyZXNvdXJjZVR5cGUiOiJPcmdhbml6YXRpb24iLCJpZCI6IkV4YW1wbGVNaW5pbWFsT3JnYW5pemF0aW9uSGVhZGVyIiwibWV0YSI6eyJwcm9maWxlIjpbImh0dHBzOi8vZ2VtYXRpay5kZS9maGlyL3RpL1N0cnVjdHVyZURlZmluaXRpb24vdGktb3JnYW5pemF0aW9uIl19LCJpZGVudGlmaWVyIjpbeyJzeXN0ZW0iOiJodHRwczovL2dlbWF0aWsuZGUvZmhpci9zaWQvdGVsZW1hdGlrLWlkIiwidmFsdWUiOiI5LTIuNTguMDAwMDAwODkifSx7InN5c3RlbSI6Imh0dHBzOi8vZmhpci5rYnYuZGUvTmFtaW5nU3lzdGVtL0tCVl9OU19CYXNlX0JTTlIiLCJ2YWx1ZSI6IjcyMTExMTEwMCJ9XSwidHlwZSI6W3siY29kaW5nIjpbeyJjb2RlIjoiMS4yLjI3Ni4wLjc2LjQuNTAiLCJzeXN0ZW0iOiJodHRwczovL2dlbWF0aWsuZGUvZmhpci9kaXJlY3RvcnkvQ29kZVN5c3RlbS9Pcmdhbml6YXRpb25Qcm9mZXNzaW9uT0lEIiwiZGlzcGxheSI6IkJldHJpZWJzc3TDpHR0ZSBBcnp0In1dfV0sImFkZHJlc3MiOlt7ImxpbmUiOlsiRnJpZWRyaWNoc3RyLiAxMzYiXSwidGV4dCI6IkZyaWVkcmljaHN0ci4gMTM2LCBcbjEwMTE3IEJlcmxpbiIsImNpdHkiOiJCZXJsaW4iLCJkaXN0cmljdCI6Ik1pdHRlIiwic3RhdGUiOiJCZXJsaW4iLCJwb3N0YWxDb2RlIjoiMTAxMTciLCJjb3VudHJ5IjoiREUifV0sImNvbnRhY3QiOlt7InRlbGVjb20iOlt7InN5c3RlbSI6InBob25lIiwidmFsdWUiOiIwMzAxMjM0NTY3In0seyJzeXN0ZW0iOiJmYXgiLCJ2YWx1ZSI6IjAzMDEyMzQ1Njc4OSJ9LHsic3lzdGVtIjoiZW1haWwiLCJ2YWx1ZSI6ImhhdXNhcnp0cHJheGlzQGV4YW1wbGUuY29tIn1dfV0sIm5hbWUiOiJEaWUgSGF1c2FyenRwcmF4aXMifQ==
+
+</code></pre></div></div>
+
+<h3 id="erstellen-und-verwenden-eines-änderungseintrags-provenance">Erstellen und Verwenden eines Änderungseintrags (Provenance)</h3>
+
+<p>Änderungseinträge im FHIR Data Service des ePA-Aktenkontos werden mit der Ressource <em>Provenance</em> dokumentiert. Sie erfassen, welche Änderungen an Ressourcen durchgeführt wurden, welche Versionen dieser Ressourcen dadurch entstanden sind, sowie wer für diese Änderung verantwortlich war und wann diese fachlich durchgeführt und technisch dokumentiert wurde.</p>
+
+<p>Für diese Änderungseinträge muss das Profil <em>EPAActivityProvenance</em> verwendet werden. Dieses Profil legt verbindlich fest,</p>
+<ul>
+  <li>welche Angaben zu den betroffenen Ressourcen (<em>target</em>) zu machen sind,</li>
+  <li>wie der verantwortliche Akteur (<em>agent</em>) als Leistungserbringer:in, Institution oder System referenziert wird,</li>
+  <li>und wie die Art der Aktivität (<em>activity</em>) sowie die zeitlichen Angaben (<em>occurred</em>, <em>recorded</em>) anzugeben sind.</li>
+</ul>
+
+<p>Ein Änderungseintrag dient dabei nicht nur als technisches Audit, sondern als fachlich relevanter Nachweis im Kontext des jeweiligen FHIR Data Service. Jede betroffene Ressourceninstanz wird versioniert referenziert, sodass der genaue Zustand der jeweiligen FHIR-Instanzen zum Zeitpunkt der Änderung eindeutig nachvollzogen werden kann.</p>
+
+<p>Die <em>Provenance</em>-Instanzen werden ausschließlich vom jeweiligen FHIR Data Service selbst erstellt. Eine Erstellung oder Bearbeitung dieser Änderungseinträge durch externe Systeme oder Clients ist nicht vorgesehen. Die Provenance entsteht typischerweise im Rahmen von Operationen, die fachliche Änderungen an Ressourceninstanzen bewirken. Es wird nicht für jede einzelne Ressourceninstanz automatisch ein Änderungseintrag erstellt. Die jeweilige Geschäftslogik des FHIR Data Service definiert, für welche fachlich relevanten Änderungen ein Änderungseintrag erzeugt wird. Beispielsweise kann eine zusammengehörige Gruppe von Instanzen, die gemeinsam einen Verschreibungs- unad Abgdabedatensatz bilden, in einem einzigen Änderungseintrag dokumentiert werden.</p>
+
+<requirement conformance="SHALL" key="IG-EPA26606M0X" title="Verwendung des Profils EPAActivityProvenance für Änderungseinträge" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS für Änderungseinträge das Profil <i>EPAActivityProvenance</i> verwenden.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA16549D0W" title="Verwendung versionierter Referenzen im Änderungseintrag" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS im Änderungseintrag (<i>Provenance.target</i>) ausschließlich versionierte Referenzen (<i>ResourceType/id/_history/vid</i>) auf die durch die Änderung entstandenen oder aktualisierten Ressourceninstanz angeben.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA46070CEJ" title="Setzen der fachlichen und technischen Zeitangaben" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS im Änderungseintrag sowohl den fachlichen Zeitpunkt der Änderung (<i>Provenance.occurred</i>) als auch den technischen Erfassungszeitpunkt (<i>Provenance.recorded</i>) angeben.
+</requirement>
+
+<p><i>Hinweis:</i> In FHIR Data Services der ePA enthalten <i>Provenance.occurred</i> und <i>Provenance.recorded</i> bei der oben genannten Befüllung denselben Zeitpunkt.</p>
+
+<requirement conformance="SHALL" key="IG-EPA08517MXA" title="Angabe der Art der Änderung im Änderungseintrag" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS im Änderungseintrag (<i>Provenance.activity</i>) die Art der Änderung angeben. Zulässig sind nur Werte aus dem ValueSet <i>EPAActivityProvenanceTypeVS</i>.
+</requirement>
+
+<h4 id="ermittlung-des-verantwortlichen-akteurs-agent">Ermittlung des verantwortlichen Akteurs (Agent)</h4>
+
+<p>Der verantwortliche Akteur wird im Änderungseintrag durch das Element <i>Provenance.agent.who</i> angegeben. Dabei gilt folgende Unterscheidung:</p>
+
+<p><strong>Bei Aufrufen durch Leistungserbringerinstitutionen:</strong></p>
+
+<p>Es ist die im Header <em>X-Requesting-Organization</em> übermittelte <em>Organization</em>-Ressource zu verwenden. Für die Referenzierung in <em>agent.who</em> gilt:</p>
+<ul>
+  <li>Es ist eine Referenz auf die übermittelte <em>Organization</em>-Instanz zu verwenden, sofern diese im FHIR Data Service gespeichert ist.</li>
+  <li>Zusätzlich sind der Identifier (Telematik-ID) sowie der Anzeigename (display) aus der übermittelten Organization in <em>agent.who</em> einzutragen.</li>
+</ul>
+
+<requirement conformance="SHALL" key="IG-EPA18191M31" title="Übernahme des verantwortlichen Akteurs aus dem X-Requesting-Organization Header" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS bei Aufrufen den verantwortlichen Akteur im Änderungseintrag (<i>Provenance.agent.who</i>) aus dem im Header <i>X-Requesting-Organization</i> übermittelten <i>Organization</i>-Ressource referenzieren und den Identifier (<i>Provenance.agent.who.identifier</i>) sowie den Anzeigenamen (<i>Provenance.agent.who.display</i>) angeben.
+</requirement>
+
+<div class="gem-ig-example" data-title="Änderungseintrag durch Leistungserbringerinstitution (JSON)">
+    <pre class="json" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-json" style="white-space: pre; text-wrap: nowrap;">{
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance">resourceType</a>" : "Provenance",
+  "<a href="http://hl7.org/fhir/R4/resource.html#Provenance.id">id</a>" : "fdfc2842-bfff-436f-ab13-74785d0188c0",
+  "<a href="http://hl7.org/fhir/R4/resource.html#Provenance.meta">meta</a>" : {
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.versionId">versionId</a>" : "1",
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.lastUpdated">lastUpdated</a>" : "2025-06-02T11:15:00+01:00",
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>" : [
+      <a href="StructureDefinition-epa-activity-provenance.html" style="color: Maroon">&#x1F517;</a> "https://gematik.de/fhir/epa/StructureDefinition/epa-activity-provenance|1.3.0"
+    ]
+  },
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.target">target</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.reference">reference</a>" : "MedicationStatement/29d46448-b585-4501-9660-a1236436560f/_history/2"
+    }
+  ],
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.occurred_x_">occurredDateTime</a>" : "2025-06-02T11:15:00+01:00",
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.recorded">recorded</a>" : "2025-06-02T11:15:00+01:00",
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.activity">activity</a>" : {
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>" : [
+      {
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>" : "http://terminology.hl7.org/CodeSystem/v3-DataOperation",
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a>" : "Update",
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a>" : "revise"
+      }
+    ]
+  },
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent">agent</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.type">type</a>" : {
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>" : [
+          {
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>" : "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a>" : "author"
+          }
+        ]
+      },
+      "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.who">who</a>" : {
+        <a href="Organization-e66d6c66-96e0-4725-b48c-73702ee63cdf.html" style="color: Maroon">&#x1F517;</a> "<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.reference">reference</a>" : "Organization/e66d6c66-96e0-4725-b48c-73702ee63cdf",
+        "<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.identifier">identifier</a>" : {
+          "<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.system">system</a>" : "https://gematik.de/fhir/sid/telematik-id",
+          "<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.value">value</a>" : "9-2.58.00000040"
+        },
+        "<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.display">display</a>" : "gematik Praxis"
+      }
+    }
+  ]
+}</code></pre>
+
+</div>
+<div class="gem-ig-example" data-title="Änderungseintrag durch Leistungserbringerinstitution (XML)">
+    <pre class="xml" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-xml" style="white-space: pre; text-wrap: nowrap;">
+&lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance">Provenance</a> xmlns=&quot;http://hl7.org/fhir&quot;&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#Provenance.id">id</a> <a href="http://hl7.org/fhir/R4/datatypes.html#id">value</a>=&quot;fdfc2842-bfff-436f-ab13-74785d0188c0&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#Provenance.meta">meta</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.versionId">versionId</a> <a href="http://hl7.org/fhir/R4/datatypes.html#id">value</a>=&quot;1&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.lastUpdated">lastUpdated</a> <a href="http://hl7.org/fhir/R4/datatypes.html#instant">value</a>=&quot;2025-06-02T11:15:00+01:00&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>
+             <a href="http://hl7.org/fhir/R4/datatypes.html#canonical">value</a>=&quot;https://gematik.de/fhir/epa/StructureDefinition/epa-activity-provenance|1.3.0&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/resource.html#Provenance.meta">meta</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.target">target</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.reference">reference</a>
+               <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;MedicationStatement/29d46448-b585-4501-9660-a1236436560f/_history/2&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.target">target</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.occurred_x_">occurredDateTime</a> <a href="http://hl7.org/fhir/R4/datatypes.html#dateTime">value</a>=&quot;2025-06-02T11:15:00+01:00&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.recorded">recorded</a> <a href="http://hl7.org/fhir/R4/datatypes.html#instant">value</a>=&quot;2025-06-02T11:15:00+01:00&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.activity">activity</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a> <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;http://terminology.hl7.org/CodeSystem/v3-DataOperation&quot;/&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;Update&quot;/&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;revise&quot;/&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.activity">activity</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent">agent</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.type">type</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>
+                <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;http://terminology.hl7.org/CodeSystem/provenance-participant-type&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;author&quot;/&gt;
+      &lt;/<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.type">type</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.who">who</a>&gt;<a href="Organization-e66d6c66-96e0-4725-b48c-73702ee63cdf.html" style="color: Maroon">&#x1F517;</a> 
+      &lt;<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.reference">reference</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;Organization/e66d6c66-96e0-4725-b48c-73702ee63cdf&quot;/&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.identifier">identifier</a>&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.system">system</a> <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;https://gematik.de/fhir/sid/telematik-id&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.value">value</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;9-2.58.00000040&quot;/&gt;
+      &lt;/<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.identifier">identifier</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.display">display</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;gematik Praxis&quot;/&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.who">who</a>&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent">agent</a>&gt;
+&lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance">Provenance</a>&gt;</code></pre>
+
+</div>
+
+<p><strong>Bei Änderungen, die der FHIR Data Service selbst durchführt:</strong></p>
+
+<p>Es ist ein eindeutiger Identifier des jeweiligen ePA FHIR Data Service anzugeben, z. B. ein Identifier nach dem Profil EPAFHIRDataServiceIdentifier. Auch in diesem Fall ist zusätzlich ein <i>display</i> anzugeben, der den Dienstnamen beschreibt (z. B. “ePA Medication Service”).</p>
+
+<requirement conformance="SHALL" key="IG-EPA12473JRM" title="Identifikation des FHIR Data Service als verantwortlicher Akteur" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS bei selbstständig ausgelösten Änderungen sich selbst als verantwortlichen Akteur im Änderungseintrag (<i>Provenance.agent.who</i>) mit einem eindeutigen Identifier gemäß dem Profil <i>IdentifierEPAFHIRDataService</i> angeben.
+</requirement>
+
+<div class="gem-ig-example" data-title="Änderungseintrag durch den ePA Medication Service (JSON)">
+    <pre class="json" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-json" style="white-space: pre; text-wrap: nowrap;">{
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance">resourceType</a>" : "Provenance",
+  "<a href="http://hl7.org/fhir/R4/resource.html#Provenance.id">id</a>" : "c7b6dcfc-d535-4f8f-9d86-841693f788d1",
+  "<a href="http://hl7.org/fhir/R4/resource.html#Provenance.meta">meta</a>" : {
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.versionId">versionId</a>" : "1",
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.lastUpdated">lastUpdated</a>" : "2025-06-02T11:15:00+01:00",
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>" : [
+      <a href="StructureDefinition-epa-activity-provenance.html" style="color: Maroon">&#x1F517;</a> "https://gematik.de/fhir/epa/StructureDefinition/epa-activity-provenance|1.3.0"
+    ]
+  },
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.target">target</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.reference">reference</a>" : "MedicationStatement/29d46448-b585-4501-9660-a1236436560f/_history/1"
+    }
+  ],
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.occurred_x_">occurredDateTime</a>" : "2025-06-02T11:15:00+01:00",
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.recorded">recorded</a>" : "2025-06-02T11:15:00+01:00",
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.activity">activity</a>" : {
+    "<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>" : [
+      {
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>" : "http://terminology.hl7.org/CodeSystem/v3-DataOperation",
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a>" : "CREATE",
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a>" : "create"
+      }
+    ]
+  },
+  "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent">agent</a>" : [
+    {
+      "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.type">type</a>" : {
+        "<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>" : [
+          {
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>" : "http://terminology.hl7.org/CodeSystem/provenance-participant-type",
+            "<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a>" : "author"
+          }
+        ]
+      },
+      "<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.who">who</a>" : {
+        "<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.identifier">identifier</a>" : {
+          "<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.system">system</a>" : "https://gematik.de/fhir/sid/epa-fhir-data-service",
+          "<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.value">value</a>" : "MEDICATIONSVC"
+        },
+        "<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.display">display</a>" : "ePA Medication Service"
+      }
+    }
+  ]
+}</code></pre>
+
+</div>
+<div class="gem-ig-example" data-title="Änderungseintrag durch den ePA Medication Service (XML)">
+    <pre class="xml" data-fhir="generated" style="white-space: pre; text-wrap: nowrap; width: auto;"><code class="language-xml" style="white-space: pre; text-wrap: nowrap;">
+&lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance">Provenance</a> xmlns=&quot;http://hl7.org/fhir&quot;&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#Provenance.id">id</a> <a href="http://hl7.org/fhir/R4/datatypes.html#id">value</a>=&quot;c7b6dcfc-d535-4f8f-9d86-841693f788d1&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/resource.html#Provenance.meta">meta</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.versionId">versionId</a> <a href="http://hl7.org/fhir/R4/datatypes.html#id">value</a>=&quot;1&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.lastUpdated">lastUpdated</a> <a href="http://hl7.org/fhir/R4/datatypes.html#instant">value</a>=&quot;2025-06-02T11:15:00+01:00&quot;/&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Meta#Meta.profile">profile</a>
+             <a href="http://hl7.org/fhir/R4/datatypes.html#canonical">value</a>=&quot;https://gematik.de/fhir/epa/StructureDefinition/epa-activity-provenance|1.3.0&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/resource.html#Provenance.meta">meta</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.target">target</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.reference">reference</a>
+               <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;MedicationStatement/29d46448-b585-4501-9660-a1236436560f/_history/1&quot;/&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.target">target</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.occurred_x_">occurredDateTime</a> <a href="http://hl7.org/fhir/R4/datatypes.html#dateTime">value</a>=&quot;2025-06-02T11:15:00+01:00&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.recorded">recorded</a> <a href="http://hl7.org/fhir/R4/datatypes.html#instant">value</a>=&quot;2025-06-02T11:15:00+01:00&quot;/&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.activity">activity</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a> <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;http://terminology.hl7.org/CodeSystem/v3-DataOperation&quot;/&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;CREATE&quot;/&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.display">display</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;create&quot;/&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.activity">activity</a>&gt;
+  &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent">agent</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.type">type</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.system">system</a>
+                <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;http://terminology.hl7.org/CodeSystem/provenance-participant-type&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Coding#Coding.code">code</a> <a href="http://hl7.org/fhir/R4/datatypes.html#code">value</a>=&quot;author&quot;/&gt;
+      &lt;/<a href="http://hl7.org/fhir/R4/datatypes.html#CodeableConcept#CodeableConcept.coding">coding</a>&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.type">type</a>&gt;
+    &lt;<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.who">who</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.identifier">identifier</a>&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.system">system</a> <a href="http://hl7.org/fhir/R4/datatypes.html#uri">value</a>=&quot;https://gematik.de/fhir/sid/epa-fhir-data-service&quot;/&gt;
+        &lt;<a href="http://hl7.org/fhir/R4/datatypes.html#Identifier#Identifier.value">value</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;MEDICATIONSVC&quot;/&gt;
+      &lt;/<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.identifier">identifier</a>&gt;
+      &lt;<a href="http://hl7.org/fhir/R4/references.html#Reference#Reference.display">display</a> <a href="http://hl7.org/fhir/R4/datatypes.html#string">value</a>=&quot;ePA Medication Service&quot;/&gt;
+    &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent.who">who</a>&gt;
+  &lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance.agent">agent</a>&gt;
+&lt;/<a href="http://hl7.org/fhir/R4/provenance.html#Provenance">Provenance</a>&gt;</code></pre>
+
+</div>
+
+<h4 id="abruf-des-änderungsverlaufs">Abruf des Änderungsverlaufs</h4>
+
+<p>Zur Auswertung und Nachverfolgung von Änderungen stellt der FHIR Data Service geeignete Zugriffsmöglichkeiten bereit. Diese ermöglichen es, den Änderungsverlauf zu einer oder mehreren Ressourcen gezielt abzufragen – beispielsweise basierend auf den <i>Provenance</i>-Instanzen, die für diese Ressourcen erstellt wurden. Eine direkte Abfrage kann z.B. über eine FHIR-Suche auf <i>Provenance</i> mit dem Suchparameter <em>target</em> oder über eine spezialisierte Operation des jeweiligen FHIR Data Service erfolgen.</p>
+
+<h4 id="ablauf-der-provenance-erstellung-bei-änderungen">Ablauf der Provenance-Erstellung bei Änderungen</h4>
+
+<p>Bei jeder fachlich relevanten Änderung an FHIR-Ressourcen wird eine <em>Provenance</em>-Instanz erzeugt, die den konkreten Zustand der betroffenen Ressourceninstanz zum Zeitpunkt der Änderung versioniert referenziert. Die <em>Provenance</em> wird dabei immer nach erfolgreicher Persistierung der geänderten Ressource (bzw. unmittelbar vor einem Löschvorgang) durch den FHIR Data Service erstellt.</p>
+
+<p><strong>Erzeugung bei Erstellung (CREATE)</strong></p>
+
+<p>Nach dem erfolgreichen Anlegen einer neuen Ressourceinstanz (z.B. <em>MedicationRequest</em>, <em>MedicationStatement</em>) wird eine <em>Provenance</em>-Instanz erzeugt, die auf die neu entstandene Version der Ressource verweist:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Provenance.target → Resource/id/_history/1</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Provenance.activity = CREATE</code></li>
+</ul>
+
+<p>Diese <em>Provenance</em>-Instanz dokumentiert die fachliche Erstellung der Ressourceninstanz durch den verantwortlichen Akteur (z.B. Leistungserbringerinstitution).</p>
+
+<p><strong>Erzeugung bei Aktualisierung (UPDATE)</strong></p>
+
+<p>Wird eine bestehende Ressourceninstanz geändert, entsteht eine neue Version. Nach erfolgreicher Aktualisierung wird eine <em>Provenance</em>-Instanz erzeugt, die auf die neu erzeugte Version verweist:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Provenance.target → Resource/id/_history/n</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Provenance.activity = UPDATE</code></li>
+</ul>
+
+<p>Damit ist nachvollziehbar, welche Änderungen an einer bestehenden Ressourceninstanz vorgenommen wurden und welcher konkrete Zustand dadurch entstanden ist.</p>
+
+<p><strong>Erzeugung bei Löschung (DELETE)</strong></p>
+
+<p>Beim Löschen einer Ressource wird eine <em>Provenance</em>-Instanz erstellt, bevor der Löschvorgang ausgeführt wird, um die letzte gültige Version der Ressourceninstanz zu referenzieren:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Provenance.target → Resource/id/_history/n</code> (letzte Version vor Löschung)</li>
+  <li><code class="language-plaintext highlighter-rouge">Provenance.activity = DELETE</code></li>
+</ul>
+
+<p>So bleibt der letzte bekannte Zustand der Ressourceninstanz nachvollziehbar.</p>
+
+<p><strong>Beispiel: Versionierung und Nachvollziehbarkeit</strong></p>
+
+<p>Durch dieses Vorgehen entsteht eine lückenlose Kette von <em>Provenance</em>-Einträgen:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Provenance(CREATE)</code> → Version 1</li>
+  <li><code class="language-plaintext highlighter-rouge">Provenance(UPDATE)</code> → Version 2</li>
+  <li><code class="language-plaintext highlighter-rouge">Provenance(UPDATE)</code> → Version 3</li>
+  <li><code class="language-plaintext highlighter-rouge">Provenance(DELETE)</code> → Version 3</li>
+</ul>
+
+<h3 id="fhir-spezifische-anforderungen">FHIR-spezifische Anforderungen</h3>
+
+<requirement conformance="SHALL" key="IG-EPA09567GLR" title="Bevorzugte Verarbeitung der Literal-Referenz gegenüber der logischen Referenz im Reference-Element" version="1">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS im Element Reference bei gleichzeitiger Angabe einer literal reference (<i>References.reference</i>) und einer logischen Referenz (<i>References.identifier</i>) die literal reference bevorzugt auswerten. Die Verarbeitung der logischen Referenz erfolgt nur, wenn keine literal reference vorhanden ist.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA70045U8J" title="Formatierung von Literal-Referenzen für interne Ressourcen" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Audit-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-MHD-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Patient-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS interne Literal-Referenzen in allen Elementen vom Typ <i>Reference</i> ausschließlich in Form relativer URLs bereitstellen. Eine relative URL besteht aus der Kombination des Ressourcentyps und der Resource-ID im Format <i>[ResourceType]/[ResourceID]</i>.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-TI28940QKS" title="Hostname in Bundle.entry.fullUrl für die ePA" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Audit-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-MHD-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Patient-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service des ePA-Aktensystems MUSS sicherstellen, dass der Host der absoluten URL im Feld <i>Bundle.entry.fullUrl</i> stets <b>epa4all</b> ist. Andere Hostnamen sind unzulässig.
+</requirement>
+
+<p><strong>Beispiel</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http://epa4all/epa/audit/api/v1/fhir/AuditEvent/ea01ccbc-aa5d-4c34-8292-d95678d52c98
+</code></pre></div></div>
+
+<requirement actor="EPA-Medication-Service" conformance="SHALL" key="IG-EPA30155FTA" title="Practitioner und Organization Referenzen mit Anzeigetext" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS sicherstellen, dass bei der Erstellung von Referenzen zu einer <i>Practitioner</i>- oder <i>Organization</i>-Resourceninstanz die <i>Reference.display</i> Eigenschaft mit der Information aus <i>Practitioner.name.text</i> bzw. <i>Organization.name</i> der referenzierten <i>Practitioner</i>- bzw. <i>Organization</i>-Instanz gefüllt wird.
+</requirement>
+
+<requirement conformance="SHALL" key="IG-EPA87184BD2" title="PractitionerRole Referenzen mit Anzeigetext" version="0">
+    <meta lockversion="true" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+  Der FHIR Data Service MUSS sicherstellen, dass bei der Erstellung von Referenzen zu einer <i>PractitionerRole</i>-Resourceninstanz die <i>Reference.display</i>-Eigenschaft, falls in der referenzierten <i>PractitionerRole</i>-Instanz
+    <ul>
+        <li>das Element <i>PractitionerRole.practitioner</i> gesetzt ist, aber nicht das Element <i>PractitionerRole.organization</i>, mit der Information aus <i>Practitioner.name.text</i> der unter <i>practitioner</i> referenzierten Instanz gefüllt wird,</li>
+        <li>das Element <i>PractitionerRole.organization</i> gesetzt ist, aber nicht das Element <i>practitioner</i>, mit der Information aus <i>Organization.name</i> der unter <i>PractitionerRole.organization</i> referenzierten Instanz gefüllt wird,</li>
+        <li>sowohl das Element <i>organization</i> als auch das Element <i>practitioner</i> gesetzt ist, mit der Konkatination befüllt wird aus
+            <ol>
+                <li>der Information aus <i>Practitioner.name.text</i> der unter <i>practitioner</i> referenzierten Instanz</li>
+                <li>dem von Leerzeichen umgebenen Trennzeichen "/"</li>
+                <li>der Information aus <i>Organization.name</i> der unter <i>organization</i> referenzierten Instanz</li>
+            </ol>
+        </li>
+    </ul>
+</requirement>
+
+<p>Ein Beispiel für den Display-Wert für den Fall, dass sowohl eine <i>Practitioner</i>- als auch eine <i>Organization</i>-Instanz in der <i>PractitionerRole</i> referenziert ist, wäre “Dr. Erika Mustermann / Gemeinschaftspraxis Mustermann”.</p>
+
+<requirement actor="EPA-Medication-Service, EPA-Patient-Service" conformance="SHALL" key="IG-EPA68177EZH" title="Ausschließliche Must-Support-Elementübernahme beim Schreiben" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Patient-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Der FHIR Data Service MUSS bei schreibenden Operationen ausschließlich die als <i>Must Support</i> gekennzeichneten FHIR-Elemente berücksichtigen und in neu erzeugte FHIR-Instanzen dauerhaft speichern.
+</requirement>
+
+<p>Dies bedeutet, dass bei FHIR Operationen nur mit <i>Must Support</i> gekennzeichnete FHIR-Elemente aus den Eingabedaten in neu erzeugte FHIR-Instanzen übernommen und gespeichert werden dürfen. Dies schränkt jedoch nicht die Persistierung von Elementen ein, die innerhalb von Geschäftlogiken gefüllt werden.</p>
+
+<h4 id="persistieren-der-profilversion-in-fhir">Persistieren der Profilversion in FHIR</h4>
+
+<requirement conformance="SHALL" key="IG-EPA74597GNF" title="Speichern der Profilversion" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-Audit-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Medication-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-MHD-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    <actor name="EPA-Patient-Service">
+        <testProcedure id="Produkttest" />
+    </actor>
+    Beim Erzeugen von FHIR-Ressourcen im FHIR Data Service MUSS dieser jede zu speichernde Ressource gegen das dazugehörige aktuelle Profil validieren. Die Information, gegen welches Profil in welcher Version geprüft wurde, MUSS der FHIR Data Service in der jeweiligen Ressource in <i>Meta.profile</i> speichern.
+</requirement>
+
+<p><i>Hinweis:</i> Validierungsgrundlage bei Erhalt und anschließender Persistierung der FHIR-Ressource ist das aktuell gültige FHIR Package der zugehörigen Spezifikation beziehungsweise des Implementation Guide.</p>
+
+<requirement conformance="SHALL NOT" key="IG-EPA76010ZUP" title="Implementierung nicht-spezifizierter FHIR-Funktionen" version="0">
+    <meta lockversion="false" />
+    <actor name="EPA-PS">
+        <testProcedure id="Konformitätsbestätigung" />
+    </actor>
+    Das Primärsystem DARF Funktionalitäten oder Implementierungsvorgaben der [FHIR-Spezifikation] NICHT implementieren, welche nicht durch die FHIR Implementation Guides [gemIG_TI_Common], [gemIG_ePA_Basic], [gemIG_ePA_Medication] sowie [gemIG_ePA_MHD] vorgegeben sind.
+</requirement>
+
+
+
+
+</div>
+        </div>  <!-- /inner-wrapper -->
+      </div>  <!-- /row -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-content -->
+
+  <script type="text/javascript" src="assets/js/jquery.js"> </script>     <!-- note keep space here, otherwise it will be transformed to empty tag -> fails -->
+  <script type="text/javascript" src="assets/js/jquery-ui.min.js"> </script>
+
+  <script type="text/javascript" src="assets/js/window-hash.js"> </script>
+  <a name="bottom"> </a>
+  <div id="segment-footer" igtool="footer" class="segment">  <!-- segment-footer -->
+    <div class="container">  <!-- container -->
+
+      <div style="background-color:var(--footer-nav-bg-color)">
+        <table style="width:100%">
+          <tbody>
+            <tr>
+              <td style="text-align:left">&#xA0;
+
+                <a href="index.html">&lt;vorherige</a>
+
+              </td>
+              <td style="text-align:center">
+                <a href="#top">oben</a>
+              </td>
+              <td style="text-align:right">&#xA0;
+
+                <a href="privacy-security.html">nächste&gt;</a>
+
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="inner-wrapper">
+        <p>
+          IG &#169; 2025+ <a style="color:var(--footer-hyperlink-text-color)" href="https://www.gematik.de">gematik GmbH</a>.  Paket de.gematik.epa#1.3.1 basierend auf <a style="color: var(--footer-hyperlink-text-color)" href="http://hl7.org/fhir/R4/">FHIR 4.0.1</a>. Generiert <span title="Wed, Mar 25, 2026 10:10+0000">2026-03-25</span>
+          <br/>
+          <span style="color: var(--footer-highlight-text-color)">
+                      Links: <a style="color: var(--footer-hyperlink-text-color)" href="toc.html">Table of Contents</a> |
+                 <a style="color: var(--footer-hyperlink-text-color)" href="qa.html">QA Report</a>
+                 
+                
+          </span>
+        </p>
+      </div>  <!-- /inner-wrapper -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-footer -->
+  
+  <div id="segment-post-footer" class="segment hidden">  <!-- segment-post-footer -->
+    <div class="container">  <!-- container -->
+    </div>  <!-- /container -->
+  </div>  <!-- /segment-post-footer -->
+
+  <!-- JS and analytics only. -->
+  <!-- Bootstrap core JavaScript
+  ================================================== -->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script type="text/javascript" src="assets/js/bootstrap.min.js"> </script>
+  <script type="text/javascript" src="assets/js/respond.min.js"> </script>
+  <script type="text/javascript" src="assets/js/anchor.min.js"> </script>
+  <script type="text/javascript" src="assets/js/clipboard.min.js"> </script>
+  <script type="text/javascript" src="assets/js/clipboard-btn.js"> </script>
+  <script type="text/javascript" src="assets/js/anchor-hover.js"> </script>
+  <!-- Analytics Below
+  ================================================== -->
+  </body>
+</html>
+

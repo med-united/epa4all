@@ -1,0 +1,249 @@
+{
+  "resourceType" : "Bundle",
+  "id" : "31a277f5-6ed9-4ee2-a864-4abc26b5de5b",
+  "type" : "history",
+  "total" : 3,
+  "entry" : [{
+    "fullUrl" : "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403",
+    "request" : {
+      "method" : "DELETE",
+      "url" : "MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403"
+    },
+    "response" : {
+      "status" : "200 OK",
+      "lastModified" : "2026-08-22T15:00:00.000Z"
+    }
+  },
+  {
+    "fullUrl" : "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403",
+    "resource" : {
+      "resourceType" : "MedicationRequest",
+      "id" : "1959b8cd-58d2-4961-aa10-74d7e68896403",
+      "meta" : {
+        "versionId" : "2",
+        "lastUpdated" : "2026-08-22T14:50:10.000Z",
+        "profile" : ["https://gematik.de/fhir/epa-medication/StructureDefinition/emp-medication-request|1.3.0"]
+      },
+      "extension" : [{
+        "url" : "https://gematik.de/fhir/epa-medication/StructureDefinition/context-extension",
+        "valueCode" : "EMP"
+      },
+      {
+        "url" : "https://gematik.de/fhir/epa-medication/StructureDefinition/reason-patient-instruction-extension",
+        "valueString" : "akuten Behandlung von Migräneanfällen mit und ohne Aura"
+      },
+      {
+        "url" : "https://gematik.de/fhir/epa-medication/StructureDefinition/patient-note-extension",
+        "valueAnnotation" : {
+          "text" : "Bitte schützen Sie das Arzneimittel vor hohen Temperaturen und direkter Sonneneinstrahlung."
+        }
+      },
+      {
+        "url" : "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.effectiveDosePeriod",
+        "valuePeriod" : {
+          "start" : "2026-08-22",
+          "end" : "2026-08-25"
+        }
+      },
+      {
+        "url" : "https://gematik.de/fhir/epa-medication/StructureDefinition/emp-origin-medication-extension",
+        "valueReference" : {
+          "reference" : "Medication/9cbf1803-e125-40d3-ad68-1e155f71e252"
+        }
+      },
+      {
+        "url" : "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.renderedDosageInstruction",
+        "valueMarkdown" : "1-0-0-0 Stück"
+      },
+      {
+        "extension" : [{
+          "url" : "algorithmVersion",
+          "valueString" : "1.0.1"
+        },
+        {
+          "url" : "language",
+          "valueCode" : "de-DE"
+        }],
+        "url" : "http://ig.fhir.de/igs/medication/StructureDefinition/GeneratedDosageInstructionsMeta"
+      },
+      {
+        "url" : "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.renderedDosageInstruction",
+        "valueMarkdown" : "1-0-2-0 Stück"
+      }],
+      "status" : "active",
+      "intent" : "plan",
+      "medicationReference" : {
+        "reference" : "Medication/9cbf1803-e125-40d3-ad68-1e155f71e252"
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "http://fhir.de/sid/gkv/kvid-10",
+          "value" : "X110411319"
+        }
+      },
+      "authoredOn" : "2026-08-22",
+      "note" : [{
+        "text" : "Hinweis für den LE"
+      }],
+      "dosageInstruction" : [{
+        "timing" : {
+          "repeat" : {
+            "frequency" : 1,
+            "period" : 1,
+            "periodUnit" : "d",
+            "when" : ["MORN"]
+          }
+        },
+        "doseAndRate" : [{
+          "doseQuantity" : {
+            "value" : 1,
+            "unit" : "Stück",
+            "system" : "https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_BMP_DOSIEREINHEIT",
+            "code" : "1"
+          }
+        }]
+      },
+      {
+        "timing" : {
+          "repeat" : {
+            "frequency" : 1,
+            "period" : 1,
+            "periodUnit" : "d",
+            "when" : ["MORN"]
+          }
+        },
+        "doseAndRate" : [{
+          "doseQuantity" : {
+            "value" : 1,
+            "unit" : "Stück",
+            "system" : "http://unitsofmeasure.org",
+            "code" : "1"
+          }
+        }]
+      },
+      {
+        "timing" : {
+          "repeat" : {
+            "frequency" : 1,
+            "period" : 1,
+            "periodUnit" : "d",
+            "when" : ["EVE"]
+          }
+        },
+        "doseAndRate" : [{
+          "doseQuantity" : {
+            "value" : 2,
+            "unit" : "Stück",
+            "system" : "http://unitsofmeasure.org",
+            "code" : "1"
+          }
+        }]
+      }]
+    },
+    "request" : {
+      "method" : "PUT",
+      "url" : "MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403"
+    },
+    "response" : {
+      "status" : "200 OK",
+      "location" : "MedicationDispense/1959b8cd-58d2-4961-aa10-74d7e68896403/_history/2",
+      "lastModified" : "2026-08-22T14:50:10.000Z"
+    }
+  },
+  {
+    "fullUrl" : "http://epa4all/epa/medication/api/v1/fhir/MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403",
+    "resource" : {
+      "resourceType" : "MedicationRequest",
+      "id" : "1959b8cd-58d2-4961-aa10-74d7e68896403",
+      "meta" : {
+        "versionId" : "1",
+        "lastUpdated" : "2026-08-22T14:43:33.244Z",
+        "profile" : ["https://gematik.de/fhir/epa-medication/StructureDefinition/emp-medication-request|1.3.0"]
+      },
+      "extension" : [{
+        "url" : "https://gematik.de/fhir/epa-medication/StructureDefinition/context-extension",
+        "valueCode" : "EMP"
+      },
+      {
+        "url" : "https://gematik.de/fhir/epa-medication/StructureDefinition/reason-patient-instruction-extension",
+        "valueString" : "akuten Behandlung von Migräneanfällen mit und ohne Aura"
+      },
+      {
+        "url" : "https://gematik.de/fhir/epa-medication/StructureDefinition/patient-note-extension",
+        "valueAnnotation" : {
+          "text" : "Bitte schützen Sie das Arzneimittel vor hohen Temperaturen und direkter Sonneneinstrahlung."
+        }
+      },
+      {
+        "url" : "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.effectiveDosePeriod",
+        "valuePeriod" : {
+          "start" : "2026-08-22",
+          "end" : "2026-08-25"
+        }
+      },
+      {
+        "url" : "https://gematik.de/fhir/epa-medication/StructureDefinition/emp-origin-medication-extension",
+        "valueReference" : {
+          "reference" : "Medication/9cbf1803-e125-40d3-ad68-1e155f71e252"
+        }
+      },
+      {
+        "url" : "http://hl7.org/fhir/5.0/StructureDefinition/extension-MedicationRequest.renderedDosageInstruction",
+        "valueMarkdown" : "1-0-0-0 Stück"
+      },
+      {
+        "extension" : [{
+          "url" : "algorithmVersion",
+          "valueString" : "1.0.1"
+        },
+        {
+          "url" : "language",
+          "valueCode" : "de-DE"
+        }],
+        "url" : "http://ig.fhir.de/igs/medication/StructureDefinition/GeneratedDosageInstructionsMeta"
+      }],
+      "status" : "active",
+      "intent" : "plan",
+      "medicationReference" : {
+        "reference" : "Medication/9cbf1803-e125-40d3-ad68-1e155f71e252"
+      },
+      "subject" : {
+        "identifier" : {
+          "system" : "http://fhir.de/sid/gkv/kvid-10",
+          "value" : "X110411319"
+        }
+      },
+      "authoredOn" : "2026-08-22",
+      "note" : [{
+        "text" : "Hinweis für den LE"
+      }],
+      "dosageInstruction" : [{
+        "timing" : {
+          "repeat" : {
+            "frequency" : 1,
+            "period" : 1,
+            "periodUnit" : "d",
+            "when" : ["MORN"]
+          }
+        },
+        "doseAndRate" : [{
+          "doseQuantity" : {
+            "value" : 1,
+            "unit" : "Stück",
+            "system" : "https://fhir.kbv.de/CodeSystem/KBV_CS_SFHIR_BMP_DOSIEREINHEIT",
+            "code" : "1"
+          }
+        }]
+      }]
+    },
+    "request" : {
+      "method" : "POST",
+      "url" : "MedicationRequest"
+    },
+    "response" : {
+      "status" : "201 Created",
+      "location" : "MedicationRequest/1959b8cd-58d2-4961-aa10-74d7e68896403/_history/1",
+      "lastModified" : "2026-08-22T14:43:33.244Z"
+    }
+  }]
+}

@@ -1,0 +1,18 @@
+{
+  "resourceType" : "OperationOutcome",
+  "id" : "3e5635b7-5546-4b2b-8509-a138652985e7",
+  "meta" : {
+    "profile" : ["https://gematik.de/fhir/ti/StructureDefinition/operation-outcome|1.1.1"]
+  },
+  "issue" : [{
+    "severity" : "error",
+    "code" : "invalid",
+    "details" : {
+      "coding" : [{
+        "system" : "https://gematik.de/fhir/epa/CodeSystem/epa-operation-outcome-details-codes",
+        "code" : "SVC_ORG_HEADER_PROFILE_MISMATCH",
+        "display" : "Profile mismatch in header Organization"
+      }]
+    }
+  }]
+}

@@ -1,0 +1,84 @@
+{
+  "resourceType" : "Bundle",
+  "id" : "example-patient-history-bundle",
+  "type" : "history",
+  "total" : 2,
+  "link" : [{
+    "relation" : "self",
+    "url" : "/epa/patient/api/v1/fhir/Patient/_history"
+  }],
+  "entry" : [{
+    "fullUrl" : "http://epa4all/epa/patient/api/v1/fhir/Patient/e6442a99-521b-482c-b62b-b0f809d4e951",
+    "resource" : {
+      "resourceType" : "Patient",
+      "id" : "e6442a99-521b-482c-b62b-b0f809d4e951",
+      "meta" : {
+        "versionId" : "2",
+        "lastUpdated" : "2026-01-19T14:37:12+01:00",
+        "profile" : ["https://gematik.de/fhir/epa/StructureDefinition/epa-patient|1.3.0"]
+      },
+      "identifier" : [{
+        "system" : "http://fhir.de/sid/gkv/kvid-10",
+        "value" : "G995030566"
+      }],
+      "name" : [{
+        "use" : "official",
+        "family" : "Mustermann",
+        "given" : ["Erika"]
+      },
+      {
+        "use" : "maiden",
+        "family" : "Gabler",
+        "_family" : {
+          "extension" : [{
+            "url" : "http://hl7.org/fhir/StructureDefinition/humanname-own-name",
+            "valueString" : "Gabler"
+          }]
+        }
+      }],
+      "gender" : "female",
+      "birthDate" : "1964-08-12"
+    },
+    "request" : {
+      "method" : "PUT",
+      "url" : "Patient/e6442a99-521b-482c-b62b-b0f809d4e951"
+    },
+    "response" : {
+      "status" : "200 OK",
+      "location" : "Patient/e6442a99-521b-482c-b62b-b0f809d4e951/_history/2",
+      "lastModified" : "2025-10-10T15:00:00.000Z"
+    }
+  },
+  {
+    "fullUrl" : "http://epa4all/epa/patient/api/v1/fhir/Patient/e6442a99-521b-482c-b62b-b0f809d4e951",
+    "resource" : {
+      "resourceType" : "Patient",
+      "id" : "e6442a99-521b-482c-b62b-b0f809d4e951",
+      "meta" : {
+        "versionId" : "1",
+        "lastUpdated" : "2025-12-06T10:00:14+01:00",
+        "profile" : ["https://gematik.de/fhir/epa/StructureDefinition/epa-patient|1.3.0"]
+      },
+      "identifier" : [{
+        "system" : "http://fhir.de/sid/gkv/kvid-10",
+        "value" : "G995030566"
+      }],
+      "name" : [{
+        "use" : "official",
+        "family" : "Gabler",
+        "given" : ["Erika"]
+      }],
+      "gender" : "female",
+      "birthDate" : "1964-08-12"
+    },
+    "request" : {
+      "method" : "POST",
+      "url" : "Patient"
+    },
+    "response" : {
+      "status" : "201 Created",
+      "location" : "Patient/e6442a99-521b-482c-b62b-b0f809d4e951/_history/1",
+      "lastModified" : "2025-08-22T14:43:33.244Z"
+    }
+  }]
+}

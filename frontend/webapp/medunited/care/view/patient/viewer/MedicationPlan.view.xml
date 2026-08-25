@@ -1,0 +1,223 @@
+<mvc:View xmlns:core="sap.ui.core" xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:uxap="sap.uxap" xmlns:f="sap.ui.layout.form" xmlns:layout="sap.ui.layout"
+	controllerName="medunited.care.controller.patient.viewer.MedicationPlan" height="100%" displayBlock="true">
+	<uxap:ObjectPageLayout id="empObjectPage" showTitleInHeaderContent="true" upperCaseAnchorBar="false" busy="{emp>/busy}" busyIndicatorDelay="0">
+		<uxap:headerTitle>
+			<uxap:ObjectPageDynamicHeaderTitle>
+				<uxap:expandedHeading>
+					<Title text="{i18n>empTitle}" wrapping="true" />
+				</uxap:expandedHeading>
+				<uxap:snappedHeading>
+					<HBox>
+						<core:Icon src="sap-icon://pharmacy" class="sapUiSmallMarginEnd" />
+						<Title text="{i18n>empTitle} – {path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Vorname'} {path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Nachname'}" />
+					</HBox>
+				</uxap:snappedHeading>
+				<uxap:expandedContent>
+					<Text text="{path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Vorname'} {path: 'vsdm:UC_PersoenlicheVersichertendatenXML/vsdm:Versicherter/vsdm:Person/vsdm:Nachname'} · KVNR {emp>/patient/kvnr}" />
+				</uxap:expandedContent>
+				<uxap:actions>
+					<Button id="btnAddEntry" text="{i18n>empBtnAddEntry}" type="Emphasized" icon="sap-icon://add" press="onAddEntry" />
+					<Button text="{i18n>empBtnRefresh}" icon="sap-icon://refresh" press="onRefresh" />
+					<Button icon="sap-icon://print" tooltip="{i18n>empBtnPrint}" press="onPrint" />
+					<Button icon="sap-icon://full-screen" type="Transparent" press="onFullScreen" tooltip="Enter Full Screen Mode" visible="{= ${Layout>/actionButtonsInfo/endColumn/fullScreen} !== null }" />
+					<Button icon="sap-icon://exit-full-screen" type="Transparent" press="onExitFullScreen" tooltip="Exit Full Screen Mode" visible="{= ${Layout>/actionButtonsInfo/endColumn/exitFullScreen} !== null }" />
+					<Button icon="sap-icon://decline" type="Transparent" press="onClose" tooltip="Close column" visible="{= ${Layout>/actionButtonsInfo/endColumn/closeColumn} !== null }" />
+				</uxap:actions>
+			</uxap:ObjectPageDynamicHeaderTitle>
+		</uxap:headerTitle>
+		<uxap:headerContent>
+			<layout:HorizontalLayout allowWrapping="true">
+				<layout:VerticalLayout class="sapUiLargeMarginEnd">
+					<Label text="{i18n>empLabelActiveEntries}" />
+					<ObjectNumber number="{emp>/counts/active}" unit="{i18n>empUnitEntries}" emphasized="true" />
+				</layout:VerticalLayout>
+				<layout:VerticalLayout class="sapUiLargeMarginEnd">
+					<Label text="{i18n>empLabelOnHoldEntries}" />
+					<ObjectNumber number="{emp>/counts/onHold}" unit="{i18n>empUnitEntries}" state="Warning" />
+				</layout:VerticalLayout>
+				<layout:VerticalLayout class="sapUiLargeMarginEnd">
+					<Label text="{i18n>empLabelChronology}" />
+					<ObjectStatus text="{path: 'emp>/chronology/recorded', formatter: '.formatDateTime'}" icon="sap-icon://history" visible="{= !!${emp>/chronology/id}}" />
+					<ObjectStatus text="{i18n>empNoChronology}" state="None" visible="{= !${emp>/chronology/id}}" />
+					<Text text="{emp>/chronology/agent}" />
+				</layout:VerticalLayout>
+				<layout:VerticalLayout>
+					<Label text="{i18n>empLabelUnlinkedEml}" />
+					<ObjectNumber number="{emp>/counts/unlinkedEml}" unit="{i18n>empUnitEntries}" state="{= ${emp>/counts/unlinkedEml} > 0 ? 'Information' : 'None'}" />
+				</layout:VerticalLayout>
+			</layout:HorizontalLayout>
+		</uxap:headerContent>
+		<uxap:sections>
+			<uxap:ObjectPageSection id="entriesSection" title="{i18n>empSectionEntries}" titleUppercase="false">
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="{i18n>empSectionEntries}" showTitle="false">
+						<uxap:blocks>
+							<Table id="entriesTable" items="{emp>/entries}" mode="SingleSelectMaster" selectionChange="onSelectEntry" sticky="ColumnHeaders" noDataText="{i18n>empNoEntries}" alternateRowColors="true">
+								<headerToolbar>
+									<OverflowToolbar>
+										<Title text="{i18n>empSectionEntries} ({= ${emp>/entries}.length})" />
+										<ToolbarSpacer />
+										<Button text="{i18n>empBtnEdit}" icon="sap-icon://edit" press="onEditEntry" enabled="{= !!${emp>/selected}}" />
+										<Button text="{i18n>empBtnLinkEml}" icon="sap-icon://chain-link" type="Emphasized" press="onLinkEml" enabled="{= !!${emp>/selected} &amp;&amp; !${emp>/selected/statement}}" />
+										<Button text="{i18n>empBtnUnlinkEml}" icon="sap-icon://broken-link" press="onUnlinkEml" enabled="{= !!${emp>/selected} &amp;&amp; !!${emp>/selected/statement}}" />
+										<Button text="{i18n>empBtnPause}" icon="sap-icon://pause" press="onPauseEntry" enabled="{= !!${emp>/selected} &amp;&amp; ${emp>/selected/status} === 'active'}" />
+										<Button text="{i18n>empBtnResume}" icon="sap-icon://play" press="onResumeEntry" enabled="{= !!${emp>/selected} &amp;&amp; ${emp>/selected/status} === 'on-hold'}" />
+										<Button text="{i18n>empBtnEnd}" icon="sap-icon://stop" press="onEndEntry" enabled="{= !!${emp>/selected} &amp;&amp; ${emp>/selected/status} !== 'completed'}" />
+									</OverflowToolbar>
+								</headerToolbar>
+								<columns>
+									<Column width="26%"><Text text="{i18n>empColMedication}" /></Column>
+									<Column width="12%"><Text text="{i18n>empColDosage}" /></Column>
+									<Column width="12%" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>empColPeriod}" /></Column>
+									<Column width="14%" minScreenWidth="Tablet" demandPopin="true"><Text text="{i18n>empColReason}" /></Column>
+									<Column width="9%"><Text text="{i18n>empColStatus}" /></Column>
+									<Column width="12%"><Text text="{i18n>empColProcess}" /></Column>
+									<Column width="15%" minScreenWidth="Desktop" demandPopin="true"><Text text="{i18n>empColPrescriptionDispense}" /></Column>
+								</columns>
+								<items>
+									<ColumnListItem vAlign="Middle">
+										<cells>
+											<ObjectIdentifier title="{emp>medication/name}" text="{emp>medication/details}" />
+											<Text text="{emp>dosageText}" />
+											<Text text="{path: 'emp>period/start', formatter: '.formatDate'}{= ${emp>period/end} ? ' – ' : ''}{path: 'emp>period/end', formatter: '.formatDate'}" />
+											<ObjectIdentifier title="{emp>reason}" text="{emp>icd}" />
+											<ObjectStatus text="{path: 'emp>status', formatter: '.formatStatusText'}" state="{path: 'emp>status', formatter: '.formatStatusState'}" />
+											<ObjectStatus text="{emp>process/text}" state="{emp>process/state}" icon="{emp>process/icon}" />
+											<VBox>
+												<Text text="{emp>prescription/prescriptionId}" visible="{= !!${emp>prescription}}" />
+												<Text text="{i18n>empDispensedOn} {path: 'emp>dispense/whenHandedOver', formatter: '.formatDate'} · {emp>dispense/pharmacy}" visible="{= !!${emp>dispense}}" />
+											</VBox>
+										</cells>
+									</ColumnListItem>
+								</items>
+							</Table>
+						</uxap:blocks>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+
+			<uxap:ObjectPageSection id="detailSection" title="{i18n>empSectionDetail}" titleUppercase="false" visible="{= !!${emp>/selected}}">
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="{i18n>empSubSectionPlan}">
+						<uxap:blocks>
+							<f:SimpleForm editable="false" layout="ResponsiveGridLayout" labelSpanXL="4" labelSpanL="4" labelSpanM="4" columnsXL="2" columnsL="2">
+								<f:content>
+									<core:Title text="{i18n>empSubSectionPlan}" />
+									<Label text="{i18n>empColMedication}" />
+									<Text text="{emp>/selected/medication/name}" />
+									<Label text="{i18n>empLabelPzn}" />
+									<Text text="{emp>/selected/medication/pzn}" />
+									<Label text="{i18n>empLabelForm}" />
+									<Text text="{emp>/selected/medication/form}" />
+									<Label text="{i18n>empLabelIngredient}" />
+									<Text text="{emp>/selected/medication/ingredient}" />
+									<Label text="{i18n>empLabelOriginMedication}" />
+									<Text text="{emp>/selected/originMedication/name}" />
+									<Label text="{i18n>empColDosage}" />
+									<Text text="{emp>/selected/dosageText}" />
+									<Label text="{i18n>empColPeriod}" />
+									<Text text="{path: 'emp>/selected/period/start', formatter: '.formatDate'}{= ${emp>/selected/period/end} ? ' – ' : ''}{path: 'emp>/selected/period/end', formatter: '.formatDate'}" />
+									<Label text="{i18n>empColReason}" />
+									<Text text="{emp>/selected/reason} {emp>/selected/icd}" />
+									<Label text="{i18n>empLabelPatientNote}" />
+									<Text text="{emp>/selected/patientNote}" />
+									<Label text="{i18n>empLabelNote}" />
+									<Text text="{emp>/selected/note}" />
+									<core:Title text="{i18n>empSubSectionTechnical}" />
+									<Label text="{i18n>empLabelEmpIdentifier}" />
+									<Text text="{emp>/selected/empIdentifier}" />
+									<Label text="MedicationRequest" />
+									<Text text="{emp>/selected/id} (v{emp>/selected/versionId})" />
+									<Label text="{i18n>empLabelRequester}" />
+									<Text text="{emp>/selected/requester}" />
+									<Label text="{i18n>empLabelAuthoredOn}" />
+									<Text text="{path: 'emp>/selected/authoredOn', formatter: '.formatDate'}" />
+									<Label text="{i18n>empLabelLinkedStatement}" />
+									<Text text="{emp>/selected/statement/id}" />
+								</f:content>
+							</f:SimpleForm>
+						</uxap:blocks>
+					</uxap:ObjectPageSubSection>
+					<uxap:ObjectPageSubSection title="{i18n>empSubSectionPrescription}" visible="{= !!${emp>/selected/prescription}}">
+						<uxap:blocks>
+							<f:SimpleForm editable="false" layout="ResponsiveGridLayout" labelSpanXL="4" labelSpanL="4" labelSpanM="4" columnsXL="2" columnsL="2">
+								<f:content>
+									<core:Title text="{i18n>empSubSectionPrescription}" />
+									<Label text="{i18n>empLabelPrescriptionId}" />
+									<Text text="{emp>/selected/prescription/prescriptionId}" />
+									<Label text="{i18n>empLabelAuthoredOn}" />
+									<Text text="{path: 'emp>/selected/prescription/authoredOn', formatter: '.formatDate'}" />
+									<Label text="{i18n>empLabelPractitioner}" />
+									<Text text="{emp>/selected/prescription/requester}" />
+									<Label text="{i18n>empColMedication}" />
+									<Text text="{emp>/selected/prescription/medicationName}" />
+									<Label text="{i18n>empColStatus}" />
+									<ObjectStatus text="{emp>/selected/prescription/status} / {i18n>empLabelStatementStatus} {emp>/selected/statement/status}" />
+									<core:Title text="{i18n>empSubSectionDispense}" />
+									<Label text="{i18n>empLabelPharmacy}" />
+									<Text text="{emp>/selected/dispense/pharmacy}" />
+									<Label text="{i18n>empLabelWhenHandedOver}" />
+									<Text text="{path: 'emp>/selected/dispense/whenHandedOver', formatter: '.formatDate'}" />
+									<Label text="{i18n>empLabelDispensedMedication}" />
+									<Text text="{emp>/selected/dispense/medicationName}" />
+									<Label text="{i18n>empLabelSubstitution}" />
+									<ObjectStatus text="{= ${emp>/selected/dispense/substituted} ? ${i18n>yes} : ${i18n>no}}" state="{= ${emp>/selected/dispense/substituted} ? 'Warning' : 'None'}" visible="{= !!${emp>/selected/dispense}}" />
+								</f:content>
+							</f:SimpleForm>
+						</uxap:blocks>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+
+			<uxap:ObjectPageSection id="emlSection" title="{i18n>empSectionEml}" titleUppercase="false">
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="{i18n>empSectionEml}" showTitle="false">
+						<uxap:blocks>
+							<Table items="{emp>/eml}" noDataText="{i18n>empNoEml}" alternateRowColors="true">
+								<headerToolbar>
+									<OverflowToolbar>
+										<Title text="{i18n>empSectionEml} ({= ${emp>/eml}.length})" />
+										<ToolbarSpacer />
+										<Text text="{i18n>empEmlHint}" />
+									</OverflowToolbar>
+								</headerToolbar>
+								<columns>
+									<Column width="30%"><Text text="{i18n>empColMedication}" /></Column>
+									<Column width="14%"><Text text="{i18n>empColDosage}" /></Column>
+									<Column width="12%"><Text text="{i18n>empColSince}" /></Column>
+									<Column width="12%"><Text text="{i18n>empColSource}" /></Column>
+									<Column width="12%"><Text text="{i18n>empColStatus}" /></Column>
+									<Column width="20%"><Text text="{i18n>empColEmpLink}" /></Column>
+								</columns>
+								<items>
+									<ColumnListItem vAlign="Middle">
+										<cells>
+											<ObjectIdentifier title="{emp>medication/name}" text="{emp>medication/details}" />
+											<Text text="{emp>dosageText}" />
+											<Text text="{path: 'emp>start', formatter: '.formatDate'}" />
+											<ObjectStatus text="{emp>source}" state="{= ${emp>source} === 'Nachtrag' ? 'Information' : 'None'}" />
+											<Text text="{emp>status}" />
+											<ObjectStatus text="{= ${emp>linked} ? ${i18n>empLinked} + (${emp>linkedEntryName} ? ': ' + ${emp>linkedEntryName} : '') : ${i18n>empNotLinked}}" state="{= ${emp>linked} ? 'Success' : 'None'}" icon="{= ${emp>linked} ? 'sap-icon://chain-link' : 'sap-icon://broken-link'}" />
+										</cells>
+									</ColumnListItem>
+								</items>
+							</Table>
+						</uxap:blocks>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+
+			<uxap:ObjectPageSection id="logSection" title="{i18n>empSectionLog}" titleUppercase="false">
+				<uxap:subSections>
+					<uxap:ObjectPageSubSection title="{i18n>empSectionLog}" showTitle="false">
+						<uxap:blocks>
+							<List items="{emp>/log}" noDataText="{i18n>empNoLog}">
+								<StandardListItem title="{path: 'emp>recorded', formatter: '.formatDateTime'} · {emp>agent}" description="{emp>id} · {emp>targets} {i18n>empUnitEntries}" icon="sap-icon://history" iconDensityAware="false" highlight="{= ${emp>current} ? 'Success' : 'None'}" />
+							</List>
+						</uxap:blocks>
+					</uxap:ObjectPageSubSection>
+				</uxap:subSections>
+			</uxap:ObjectPageSection>
+		</uxap:sections>
+	</uxap:ObjectPageLayout>
+</mvc:View>
