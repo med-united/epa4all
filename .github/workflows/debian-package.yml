@@ -61,7 +61,15 @@ jobs:
           MODE="release"
           VERSION="${GITHUB_REF_NAME}"
         fi
-        DEB_VERSION="$(echo "$VERSION" | tr '-' '.')-1"
+        # Debian upstream_version must start with a digit - true for any real
+        # date tag (2026.05.07-1) but not for the ad-hoc "manual-<sha>" form,
+        # which needs a leading digit prefixed on. "0~" also sorts before any
+        # real release version, appropriate for a non-release build.
+        if [ "$MODE" = "manual" ]; then
+          DEB_VERSION="0~$(echo "$VERSION" | tr '-' '.')-1"
+        else
+          DEB_VERSION="$(echo "$VERSION" | tr '-' '.')-1"
+        fi
         echo "Mode: ${MODE} | Version: ${VERSION} | Debian version: ${DEB_VERSION}"
         echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
         echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
