@@ -199,16 +199,24 @@ jobs:
       # No --delete is used, so this is safe either way: anything not
       # matched by the filters is simply left alone, both locally and (on
       # the upload step) on the server.
+      # The remote path is deliberately just "user@host:" with nothing after
+      # the colon, not the absolute directory again: the restricted deploy
+      # key's authorized_keys entry forces `rrsync /srv/www/vhosts/...`,
+      # which already chdirs into that directory - repeating the absolute
+      # path here makes rrsync append it a second time underneath itself
+      # (".../packages.service-health.de/srv/www/vhosts/packages.service-health.de",
+      # "No such file or directory"). IdentitiesOnly=yes forces this specific
+      # key rather than falling back to any other key ssh would try.
       run: |
         set -euo pipefail
         mkdir -p apt
-        rsync -az -e "ssh -i ~/.ssh/id_deploy" \
+        rsync -az -e "ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes" \
           --include='conf/' --include='conf/**' \
           --include='db/' --include='db/**' \
           --include='dists/' --include='dists/**' \
           --include='pool/' --include='pool/main/' --include='pool/main/e/' --include='pool/main/e/**' \
           --exclude='*' \
-          "${{ vars.PACKAGES_SSH_USER || 'ec2-user' }}@packages.service-health.de:/srv/www/vhosts/packages.service-health.de/" \
+          "${{ vars.PACKAGES_SSH_USER || 'ec2-user' }}@packages.service-health.de:" \
           apt/
 
     - name: Include the .deb in both distributions
@@ -229,13 +237,16 @@ jobs:
       # conf/db/dists/pool/main/e/ paths this job actually touched get
       # uploaded, everything else on the server (kim-relay's pool entries,
       # jammy's untouched dists, etc.) is left exactly as it was.
+      # Same bare "user@host:" remote path as the download step, same reason
+      # (rrsync already chdirs into the restricted directory; repeating the
+      # absolute path doubles it).
       run: |
         set -euo pipefail
-        rsync -az -e "ssh -i ~/.ssh/id_deploy" \
+        rsync -az -e "ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes" \
           --include='conf/' --include='conf/**' \
           --include='db/' --include='db/**' \
           --include='dists/' --include='dists/**' \
           --include='pool/' --include='pool/main/' --include='pool/main/e/' --include='pool/main/e/**' \
           --exclude='*' \
           apt/ \
-          "${{ vars.PACKAGES_SSH_USER || 'ec2-user' }}@packages.service-health.de:/srv/www/vhosts/packages.service-health.de/"
+          "${{ vars.PACKAGES_SSH_USER || 'ec2-user' }}@packages.service-health.de:"
