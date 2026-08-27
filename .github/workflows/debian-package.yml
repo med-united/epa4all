@@ -172,12 +172,26 @@ jobs:
         ssh-keyscan -H packages.service-health.de >> ~/.ssh/known_hosts
 
     - name: Import GPG signing key
+      # reprepro signs via gpgme internally, not a gpg CLI invocation we
+      # control, so pinentry-mode loopback alone isn't enough - nothing
+      # actually feeds it the passphrase, it just changes *how* a prompt
+      # would happen, and there's no terminal for that prompt either way
+      # ("gpgme gave error GPGME:1: General error" is what that looks like).
+      # Instead, pre-cache the passphrase in gpg-agent with
+      # gpg-preset-passphrase so any later signing operation - regardless of
+      # who invokes gpg - finds it already unlocked and never prompts at all.
+      env:
+        GPG_PASSPHRASE: ${{ secrets.PACKAGES_GPG_PASSPHRASE }}
       run: |
         set -euo pipefail
         echo "${{ secrets.PACKAGES_GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import
         echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+        echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
         echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
         gpgconf --reload gpg-agent
+        KEYGRIP="$(gpg --with-colons --with-keygrip --list-secret-keys packages@service-health.de | awk -F: '$1=="grp"{print $10; exit}')"
+        PRESET_BIN="$(find /usr/lib* -iname gpg-preset-passphrase 2>/dev/null | head -1)"
+        "$PRESET_BIN" --preset --passphrase "$GPG_PASSPHRASE" "$KEYGRIP"
 
     - name: Download current repo state from the package server
       # The package server has no reprepro installed - it only serves the
@@ -220,26 +234,14 @@ jobs:
           "${{ vars.PACKAGES_SSH_USER || 'ec2-user' }}@packages.service-health.de:" \
           apt/
 
-    - name: Debug - show what actually got synced down
-      # Temporary diagnostic: reprepro claims "Cannot find definition of
-      # distribution 'trixie'" despite conf/distributions on the server
-      # having it, and the rsync step above reports success. Confirm what's
-      # actually on disk before guessing further.
-      run: |
-        find apt -maxdepth 3
-        echo "--- conf/distributions content, if present ---"
-        cat apt/conf/distributions 2>&1 || true
-
     - name: Include the .deb in both distributions
-      env:
-        GPG_PASSPHRASE: ${{ secrets.PACKAGES_GPG_PASSPHRASE }}
       run: |
         set -euo pipefail
         export GPG_TTY=$(tty || true)
         DEB="$(ls epa4all_*_all.deb)"
         for codename in trixie noble; do
           reprepro -V --basedir apt \
-            includedeb "$codename" "$DEB" <<< "$GPG_PASSPHRASE"
+            includedeb "$codename" "$DEB"
         done
 
     - name: Upload the updated repo state back to the package server
