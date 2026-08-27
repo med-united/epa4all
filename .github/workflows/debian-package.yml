@@ -88,7 +88,13 @@ jobs:
     - name: Stamp debian/changelog with the release version
       run: |
         set -euo pipefail
+        # --force-bad-version: the committed debian/changelog carries a
+        # 0.0.0-1 placeholder, and manual-mode's "0~..." versions are
+        # deliberately lower than that (see the version-resolution step) so
+        # they always sort before real releases - dch's own "new version is
+        # lower" sanity check would otherwise reject exactly that on purpose.
         dch --newversion "${{ steps.ver.outputs.deb_version }}" \
+            --force-bad-version \
             --distribution stable \
             --urgency medium \
             "Release ${{ steps.ver.outputs.version }}"
