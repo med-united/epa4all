@@ -220,6 +220,16 @@ jobs:
           "${{ vars.PACKAGES_SSH_USER || 'ec2-user' }}@packages.service-health.de:" \
           apt/
 
+    - name: Debug - show what actually got synced down
+      # Temporary diagnostic: reprepro claims "Cannot find definition of
+      # distribution 'trixie'" despite conf/distributions on the server
+      # having it, and the rsync step above reports success. Confirm what's
+      # actually on disk before guessing further.
+      run: |
+        find apt -maxdepth 3
+        echo "--- conf/distributions content, if present ---"
+        cat apt/conf/distributions 2>&1 || true
+
     - name: Include the .deb in both distributions
       env:
         GPG_PASSPHRASE: ${{ secrets.PACKAGES_GPG_PASSPHRASE }}
