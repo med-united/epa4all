@@ -83,7 +83,12 @@ jobs:
         cache: maven
 
     - name: Install packaging tools
-      run: sudo apt-get update && sudo apt-get install -y debhelper devscripts fakeroot
+      # build-essential and maven satisfy debian/control's Build-Depends,
+      # which dpkg-buildpackage checks literally before building - even
+      # though debian/rules itself uses the Maven wrapper (./mvnw), not a
+      # system-installed maven, dpkg-checkbuilddeps doesn't know that and
+      # aborts if the declared Build-Depends aren't actually installed.
+      run: sudo apt-get update && sudo apt-get install -y debhelper devscripts fakeroot build-essential maven
 
     - name: Stamp debian/changelog with the release version
       run: |
