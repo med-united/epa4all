@@ -112,11 +112,17 @@ jobs:
 
     - name: Locate build output
       id: artifact
+      # dpkg-buildpackage places the .deb in the parent of the checkout
+      # (standard convention), but actions/upload-artifact@v4 rejects any
+      # path containing ".." - move it into the workspace first so both
+      # upload steps below can reference a clean, workspace-relative path.
       run: |
         set -euo pipefail
         DEB="$(ls ../epa4all_*_all.deb)"
-        echo "path=${DEB}" >> "$GITHUB_OUTPUT"
-        echo "name=$(basename "$DEB")" >> "$GITHUB_OUTPUT"
+        mv "$DEB" .
+        NAME="$(basename "$DEB")"
+        echo "path=${NAME}" >> "$GITHUB_OUTPUT"
+        echo "name=${NAME}" >> "$GITHUB_OUTPUT"
 
     - name: Upload .deb as workflow artifact
       uses: actions/upload-artifact@v4
