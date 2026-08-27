@@ -6,7 +6,7 @@ rest-server/target/quarkus-app/quarkus-run.jar         opt/epa4all/
 rest-server/src/main/resources/application.properties  opt/epa4all/config/
 rest-server/src/main/resources/prometheus.yaml         opt/epa4all/
 rest-server/src/main/resources/jcr/*                   opt/epa4all/jcr/
-rest-server/config/konnektoren/8588/user.properties    opt/epa4all/config/konnektoren/8588/
+rest-server/config/konnektoren/8588/user.properties    etc/epa4all/konnektoren/8588/
 api-xds/src/main/resources/ig-schema/*                 opt/epa4all/ig-schema/
 rest-server/frontend/*                                 opt/epa4all/frontend/
 rest-server/prometheus/prometheus.jks                  opt/epa4all/prometheus/

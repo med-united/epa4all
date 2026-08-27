@@ -5,9 +5,19 @@ case "$1" in
   configure)
     adduser --system --group --no-create-home epa4all
 
-    mkdir -p /opt/epa4all/{app,promtail,lib/boot,lib/main,certs,webdav,frontend,config,quarkus,prometheus,secret,tls,ig-schema,jcr,config/konnektoren/8588}
+    mkdir -p /opt/epa4all/{app,promtail,lib/boot,lib/main,certs,webdav,frontend,config,quarkus,prometheus,secret,tls,ig-schema,jcr}
     chown -R epa4all:epa4all /opt/epa4all
     chmod -R g+rwX /opt/epa4all
+
+    # /etc/epa4all/konnektoren holds real per-site Konnektor credentials
+    # (e.g. a client certificate password) as a conffile so it survives
+    # upgrades. dpkg installs it as root:root 0644 (world-readable) by
+    # default, which exposes that credential more than the equivalent
+    # /opt/epa4all content above - restrict it to the epa4all user only.
+    if [ -d /etc/epa4all ]; then
+        chown -R epa4all:epa4all /etc/epa4all
+        chmod -R u+rwX,go-rwx /etc/epa4all
+    fi
 
     for cert in /opt/epa4all/certs/*.pem; do
         alias="$(basename "$cert" .pem)"
