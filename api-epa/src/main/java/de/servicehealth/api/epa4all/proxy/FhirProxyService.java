@@ -95,7 +95,11 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
             .post(forwardRequest, FhirResponse.class);
 
         Response.ResponseBuilder builder = Response.status(response.getStatus()).entity(response.getPayload());
-        response.getHeaders().forEach(p -> builder.header(p.getKey(), p.getValue()));
+        response.getHeaders().forEach(p -> {
+            if (!isFramingHeader(p.getKey())) {
+                builder.header(p.getKey(), p.getValue());
+            }
+        });
         builder.type(ui5 ? APPLICATION_JSON_PATCH_JSON_TYPE : APPLICATION_JSON_TYPE);
         return builder.build();
     }

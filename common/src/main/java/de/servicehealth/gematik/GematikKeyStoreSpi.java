@@ -1,11 +1,15 @@
 package de.servicehealth.gematik;
 
-import de.gematik.pki.gemlibpki.tsl.TslValidator;
+import org.apache.xml.security.algorithms.JCEMapper;
+import org.apache.xml.security.signature.XMLSignature;
+import org.apache.xml.security.utils.Constants;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.XMLConstants;
@@ -87,7 +91,7 @@ public class GematikKeyStoreSpi extends KeyStoreSpi {
         try {
             byte[] tsl = fetchTsl();
             X509Certificate signer = loadSigningCertificate();
-            if (TslValidator.checkSignature(tsl, signer)) {
+            if (verifyTslSignature(tsl, signer)) {
                 certificates.putAll(extractCertificates(tsl));
                 creationDate = new Date();
                 log.info("Loaded {} trusted Gematik CA certificates for environment {}", certificates.size(), environment);
@@ -98,6 +102,69 @@ public class GematikKeyStoreSpi extends KeyStoreSpi {
             throw e;
         } catch (Exception e) {
             throw new IOException("Failed to load Gematik TSL for environment " + environment + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Verifies the TSL's XAdES signature and that its signing certificate was issued by the
+     * pinned Gematik TSL-Signer-CA.
+     * <p>
+     * gemLibPki's {@code TslValidator.checkSignature} runs a full PKIX path build that cannot
+     * succeed here: the Gematik TSL-Signer-CA is an intermediate (issued by the TI root CA) and
+     * the TSL signature's {@code KeyInfo} carries only the signer certificate, so the path can
+     * never reach a self-signed anchor. We therefore verify directly: the signer must be issued
+     * by the pinned CA (our trust anchor) and the XML signature must be cryptographically valid.
+     * BouncyCastle is required for the Brainpool ECDSA curves used across the TI.
+     */
+    private boolean verifyTslSignature(byte[] tsl, X509Certificate pinnedIssuerCa) {
+        String previousProviderId = JCEMapper.getProviderId();
+        try {
+            org.apache.xml.security.Init.init();
+            JCEMapper.setProviderId(BouncyCastleProvider.PROVIDER_NAME);
+
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(tsl));
+            registerIdAttributes(doc.getDocumentElement());
+
+            NodeList sigNodes = doc.getElementsByTagNameNS(Constants.SignatureSpecNS, "Signature");
+            if (sigNodes.getLength() == 0) {
+                log.warn("TSL for environment {} carries no XML signature", environment);
+                return false;
+            }
+            XMLSignature signature = new XMLSignature((Element) sigNodes.item(0), "");
+            X509Certificate tslSigner = signature.getKeyInfo().getX509Certificate();
+            if (tslSigner == null) {
+                log.warn("TSL signature for environment {} carries no signing certificate", environment);
+                return false;
+            }
+            tslSigner.checkValidity();
+            tslSigner.verify(pinnedIssuerCa.getPublicKey(), BouncyCastleProvider.PROVIDER_NAME);
+            return signature.checkSignatureValue(tslSigner.getPublicKey());
+        } catch (Exception e) {
+            log.warn("TSL signature verification failed for environment {}: {}", environment, e.getMessage());
+            return false;
+        } finally {
+            if (previousProviderId != null) {
+                JCEMapper.setProviderId(previousProviderId);
+            }
+        }
+    }
+
+    /** Registers {@code Id}/{@code ID}/{@code id} attributes as XML IDs so XAdES same-document
+     *  references (e.g. {@code #SignedProperties-...}) resolve during signature validation. */
+    private static void registerIdAttributes(Node node) {
+        if (node.getNodeType() == Node.ELEMENT_NODE) {
+            Element element = (Element) node;
+            for (String attr : new String[]{"Id", "ID", "id"}) {
+                if (element.hasAttribute(attr)) {
+                    element.setIdAttribute(attr, true);
+                }
+            }
+        }
+        NodeList children = node.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            registerIdAttributes(children.item(i));
         }
     }
 
@@ -144,11 +211,13 @@ public class GematikKeyStoreSpi extends KeyStoreSpi {
         Document doc = db.parse(new ByteArrayInputStream(tsl));
 
         XPath xpath = XPathFactory.newInstance().newXPath();
-        // Mirror gk.sh: every X509Certificate (TSL namespace) whose grand-grand-parent
-        // (ServiceInformation) carries an extension element with text "oid_sak_aut".
+        // Trust every CA certificate listed in the TSL (TSL namespace). The narrower
+        // oid_sak_aut filter omitted the Komponenten-CAs (e.g. GEM.KOMP-CA8) that issue the
+        // TLS server certificates of TI components such as the ePA Aktensystem, so VAU/HTTPS
+        // handshakes to epa-as-*.prod.epa4all.de failed PKIX path building. The TSL is itself
+        // the authoritative TI trust list, so all its entries are valid trust anchors.
         String expr = "//*[local-name()='X509Certificate'"
-            + " and namespace-uri()='" + TSL_NS + "'"
-            + " and count(../../../*/*/*[text() = '" + OID_SAK_AUT + "']) > 0]";
+            + " and namespace-uri()='" + TSL_NS + "']";
         NodeList nodes;
         try {
             nodes = (NodeList) xpath.evaluate(expr, doc, XPathConstants.NODESET);
@@ -169,7 +238,7 @@ public class GematikKeyStoreSpi extends KeyStoreSpi {
             out.put(alias, cert);
         }
         if (out.isEmpty()) {
-            throw new IOException("TSL for environment " + environment + " contained no oid_sak_aut CA certificates");
+            throw new IOException("TSL for environment " + environment + " contained no CA certificates");
         }
         return out;
     }
