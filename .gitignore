@@ -52,6 +52,9 @@ nb-configuration.xml
 # OSX
 .DS_Store
 
+# Mise
+mise.local.toml
+
 # patch
 *.orig
 *.rej
