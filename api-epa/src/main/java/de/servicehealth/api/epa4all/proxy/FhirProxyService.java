@@ -80,9 +80,12 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
         String q = query == null || query.isEmpty() ? "" : "?" + query;
         log.info(String.format("Fhir Forwarding %s%s", fhirPath, q));
 
+        boolean xml = isXmlRequested(headers == null ? null : headers.getHeaderString(ACCEPT), query);
         List<Pair<String, String>> acceptHeaders = List.of(
             Pair.of(ACCEPT_ENCODING, "gzip"),
-            Pair.of(ACCEPT, "application/fhir+json;q=1.0, application/json+fhir;q=0.9")
+            Pair.of(ACCEPT, xml
+                ? "application/fhir+xml;q=1.0, application/xml+fhir;q=0.9"
+                : "application/fhir+json;q=1.0, application/json+fhir;q=0.9")
         );
         List<Pair<String, String>> contentHeaders = buildContentHeaders(body);
         List<Pair<String, String>> additionalHeaders = extractAdditionalHeaders(headers);
@@ -96,8 +99,33 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
 
         Response.ResponseBuilder builder = Response.status(response.getStatus()).entity(response.getPayload());
         response.getHeaders().forEach(p -> builder.header(p.getKey(), p.getValue()));
-        builder.type(ui5 ? APPLICATION_JSON_PATCH_JSON_TYPE : APPLICATION_JSON_TYPE);
+        String backendContentType = response.getHeaders().stream()
+            .filter(p -> CONTENT_TYPE.equalsIgnoreCase(p.getKey()))
+            .map(Pair::getValue)
+            .findFirst()
+            .orElse(null);
+        if (ui5) {
+            builder.type(APPLICATION_JSON_PATCH_JSON_TYPE);
+        } else if (xml && backendContentType != null) {
+            builder.type(backendContentType);
+        } else {
+            builder.type(APPLICATION_JSON_TYPE);
+        }
         return builder.build();
+    }
+
+    // _format overrides Accept, see https://hl7.org/fhir/http.html#mime-type
+    static boolean isXmlRequested(String acceptHeader, String query) {
+        if (query != null) {
+            for (String param : query.split("&")) {
+                String[] kv = param.split("=", 2);
+                if (kv.length == 2 && kv[0].equalsIgnoreCase("_format")) {
+                    // the query arrives percent-decoded via UriInfo.getQuery()
+                    return kv[1].contains("application/fhir+xml");
+                }
+            }
+        }
+        return acceptHeader != null && acceptHeader.contains("application/fhir+xml");
     }
 
     private static final Set<String> FORWARDED_HEADERS = Set.of(

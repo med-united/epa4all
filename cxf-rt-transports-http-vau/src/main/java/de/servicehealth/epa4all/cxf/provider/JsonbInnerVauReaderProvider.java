@@ -15,7 +15,7 @@ import static de.servicehealth.vau.VauClient.VAU_STATUS;
 
 public class JsonbInnerVauReaderProvider extends AbstractJsonbReader {
 
-    private static final Set<String> MEDIA_TYPES = Set.of("pdf", "json", "text", "html", "xhtml");
+    private static final Set<String> MEDIA_TYPES = Set.of("pdf", "json", "text", "html", "xhtml", "xml");
 
     @Override
     public boolean isReadable(Class type, Type genericType, Annotation[] annotations, MediaType mediaType) {
