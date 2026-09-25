@@ -105,6 +105,10 @@ public class GematikKeyStoreSpi extends KeyStoreSpi {
         String url = configValue(OVERRIDE_TSL_URL_PROP + "." + environment.name(), environment.getTslUrl());
         log.debug("Downloading Gematik TSL from {}", url);
         try (HttpClient client = HttpClient.newBuilder()
+            // Pin HTTP/1.1: the TSL URL is plaintext HTTP, so the default HTTP_2
+            // triggers an h2c upgrade that some middleboxes answer by closing the
+            // connection without a status line ("header parser received no bytes").
+            .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(HTTP_TIMEOUT)
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build()) {
