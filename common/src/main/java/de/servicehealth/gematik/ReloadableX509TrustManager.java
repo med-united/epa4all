@@ -15,6 +15,9 @@ import java.security.cert.CertPathBuilderException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -144,7 +147,7 @@ public final class ReloadableX509TrustManager extends X509ExtendedTrustManager i
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
         try {
-            delegate.get().checkServerTrusted(chain, authType);
+            delegate.get().checkServerTrusted(withIssuerChain(chain), authType);
         } catch (CertificateException ex) {
             maybeTriggerReload(ex);
             throw ex;
@@ -154,7 +157,7 @@ public final class ReloadableX509TrustManager extends X509ExtendedTrustManager i
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
         try {
-            delegate.get().checkServerTrusted(chain, authType, socket);
+            delegate.get().checkServerTrusted(withIssuerChain(chain), authType, socket);
         } catch (CertificateException ex) {
             maybeTriggerReload(ex);
             throw ex;
@@ -164,11 +167,54 @@ public final class ReloadableX509TrustManager extends X509ExtendedTrustManager i
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
         try {
-            delegate.get().checkServerTrusted(chain, authType, engine);
+            delegate.get().checkServerTrusted(withIssuerChain(chain), authType, engine);
         } catch (CertificateException ex) {
             maybeTriggerReload(ex);
             throw ex;
         }
+    }
+
+    /**
+     * Completes a peer chain whose issuer certificates are missing, using our own trust
+     * anchors. TI components (e.g. the ePA Aktensystem) commonly send only their leaf
+     * certificate, and the matching Komponenten-CA from the TSL is an intermediate, not a
+     * root. With BouncyCastle registered as the highest-priority provider (see IdpClient),
+     * JSSE's PKIX path building resolves to BC's CertPathBuilder, which locates issuers only
+     * in the presented chain — never among the trust anchors — so leaf-only chains fail with
+     * "No issuer certificate for certificate in certification path found". Appending the
+     * verified issuer(s) from the anchor set keeps validation semantics intact (the delegate
+     * still performs full PKIX checks) while making path building succeed.
+     */
+    private X509Certificate[] withIssuerChain(X509Certificate[] chain) {
+        if (chain == null || chain.length == 0) {
+            return chain;
+        }
+        List<X509Certificate> extended = new ArrayList<>(Arrays.asList(chain));
+        X509Certificate last = extended.get(extended.size() - 1);
+        X509Certificate[] anchors = delegate.get().getAcceptedIssuers();
+        for (int depth = 0; depth < 6; depth++) {
+            if (last.getSubjectX500Principal().equals(last.getIssuerX500Principal())) {
+                break;
+            }
+            X509Certificate issuer = null;
+            for (X509Certificate anchor : anchors) {
+                if (anchor.getSubjectX500Principal().equals(last.getIssuerX500Principal())) {
+                    try {
+                        last.verify(anchor.getPublicKey());
+                        issuer = anchor;
+                        break;
+                    } catch (Exception ignored) {
+                        // same subject DN but different key (CA re-key) — keep looking
+                    }
+                }
+            }
+            if (issuer == null || extended.contains(issuer)) {
+                break;
+            }
+            extended.add(issuer);
+            last = issuer;
+        }
+        return extended.toArray(new X509Certificate[0]);
     }
 
     private void maybeTriggerReload(CertificateException ex) {

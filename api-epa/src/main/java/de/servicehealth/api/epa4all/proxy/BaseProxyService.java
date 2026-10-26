@@ -94,4 +94,16 @@ public abstract class BaseProxyService {
             );
         }
     }
+
+    // Framing / hop-by-hop response headers must NOT be forwarded from the upstream ePA
+    // aktensystem: it returns Content-Length AND Transfer-Encoding together (a protocol
+    // violation) and strict fronting proxies (nginx) reject that with 502. The JAX-RS
+    // container recomputes framing for the actual payload it sends.
+    private static final Set<String> FRAMING_HEADERS = Set.of(
+        "transfer-encoding", "content-length", "connection", "keep-alive"
+    );
+
+    protected static boolean isFramingHeader(String name) {
+        return name != null && FRAMING_HEADERS.contains(name.toLowerCase());
+    }
 }
