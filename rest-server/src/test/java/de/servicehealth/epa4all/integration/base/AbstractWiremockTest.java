@@ -71,7 +71,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
-import static com.github.tomakehurst.wiremock.common.ResourceUtil.getResource;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static de.servicehealth.epa4all.common.TestUtils.WIREMOCK;
 import static de.servicehealth.epa4all.common.TestUtils.deleteFiles;
@@ -161,8 +160,9 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     public static void beforeAll() throws Exception {
         tempDir = Files.createTempDirectory(UUID.randomUUID().toString());
 
-        // todo: generate wiremock cert with SAN
-        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
+        // The wiremock servers present wiremock/tls/wiremock-server.p12 (CN=localhost, SAN
+        // localhost/127.0.0.1), so hostname verification stays enabled for every client,
+        // including the CXF URLConnection conduit which has no way to skip the CN check.
         System.setProperty("javax.xml.accessExternalDTD", "all");
         System.setProperty(
             "javax.xml.transform.TransformerFactory",
@@ -206,14 +206,18 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
     }
 
     private static WireMockConfiguration buildGeneralConfiguration(int port) {
-        // wiremock bundled keystore
-        URL resource = getResource(WireMockConfiguration.class, "keystore");
+        // Own server keystore instead of wiremock's bundled one: the bundled cert (CN "Tom
+        // Akehurst", no SAN) fails hostname verification against https://localhost. The cert is
+        // trusted via common-test's test-truststore.p12 (alias wiremock-localhost) and exported
+        // as wiremock/tls/wiremock-server.crt for the CI cacerts import.
+        URL resource = AbstractWiremockTest.class.getClassLoader().getResource("wiremock/tls/wiremock-server.p12");
         return options()
             .httpsPort(port)
             .httpDisabled(true)
             .gzipDisabled(false)
             .needClientAuth(false)
-            .keystorePath(resource.toString())
+            .keystoreType("PKCS12")
+            .keystorePath(resource.getPath())
             .keystorePassword("password");
     }
 
