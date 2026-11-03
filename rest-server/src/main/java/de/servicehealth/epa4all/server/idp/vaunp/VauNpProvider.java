@@ -3,6 +3,7 @@ package de.servicehealth.epa4all.server.idp.vaunp;
 import com.fasterxml.jackson.databind.JsonNode;
 import de.health.service.cetp.IKonnektorClient;
 import de.health.service.cetp.config.KonnektorDefaultConfig;
+import de.health.service.cetp.domain.fault.CetpFault;
 import de.health.service.cetp.konnektorconfig.KonnektorsConfigs;
 import de.health.service.config.api.UserRuntimeConfig;
 import de.servicehealth.api.epa4all.EpaAPI;
@@ -229,8 +230,15 @@ public class VauNpProvider extends StartableService {
             String clientId = idpConfig.getClientId();
             String userAgent = epaMultiService.getEpaConfig().getEpaUserAgent();
             String smcbHandle = konnektorClient.getSmcbHandle(runtimeConfig);
-            KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
             String uuid = vauClient.getUuid();
+            String pinStatus = konnektorClient.getSmcbPinStatus(runtimeConfig, smcbHandle);
+            if (!"VERIFIED".equals(pinStatus)) {
+                String msg = "SMC-B PIN status is %s, skipping VAU session reload, vauClient=%s";
+                log.warn(msg.formatted(pinStatus, uuid));
+                vauClient.setException(new CetpFault("Zugriffsbedingungen nicht erfüllt: SMC-B PIN status is " + pinStatus));
+                return;
+            }
+            KonnektorWorkplaceInfo info = getKonnektorWorkplaceInfo(konnektorWorkplace);
             Map<LogField, String> mdcMap = Map.of(
                 BACKEND, backend,
                 SMCB_HANDLE, smcbHandle,

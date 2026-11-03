@@ -374,6 +374,10 @@ public abstract class AbstractWiremockTest extends AbstractWebdavIT {
         konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/CertificateService")).withRequestBody(containing("C.AUT"))
             .willReturn(aResponse().withStatus(200).withBody(soapSmcbCertificateEnvelop)).build());
 
+        byte[] soapGetPinStatusEnvelop = getTextFixture("GetPinStatusResponse.xml");
+        konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/CardService")).withRequestBody(containing("GetPinStatus"))
+            .willReturn(aResponse().withStatus(200).withBody(soapGetPinStatusEnvelop)).build());
+
         byte[] soapExternalAuthenticateEnvelop = getTextFixture("ExternalAuthenticateResponse.xml");
         konnektorWmServer.addStubMapping(post(urlEqualTo("/konnektor/ws/AuthSignatureService"))
             .willReturn(aResponse().withStatus(200).withBody(soapExternalAuthenticateEnvelop)).build());
