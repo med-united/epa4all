@@ -1,5 +1,7 @@
 package de.servicehealth.epa4all.server.cetp;
 
+import de.gematik.ws.conn.cardservice.v8.GetPinStatus;
+import de.gematik.ws.conn.cardservice.v8.GetPinStatusResponse;
 import de.gematik.ws.conn.cardservice.v8.VerifyPin;
 import de.gematik.ws.conn.cardservicecommon.v2.CardTypeType;
 import de.gematik.ws.conn.cardterminalservice.v1.EjectCard;
@@ -171,6 +173,21 @@ public class KonnektorClient implements IKonnektorClient {
                 .findAny()
                 .map(Card::getCardHandle)
                 .orElseThrow(() -> new CetpFault(String.format("Could not get SMC-B card for ICCSN: %s", iccsn)));
+        }
+    }
+
+    @Override
+    public String getSmcbPinStatus(UserRuntimeConfig userRuntimeConfig, String smcbHandle) throws CetpFault {
+        IKonnektorAPI servicePorts = multiKonnektorService.getServicePorts(userRuntimeConfig.getUserConfigurations());
+        GetPinStatus getPinStatus = new GetPinStatus();
+        getPinStatus.setContext(servicePorts.getContextType());
+        getPinStatus.setCardHandle(smcbHandle);
+        getPinStatus.setPinTyp("PIN.SMC");
+        try {
+            GetPinStatusResponse response = servicePorts.getCardService().getPinStatus(getPinStatus);
+            return response.getPinStatus().value();
+        } catch (de.gematik.ws.conn.cardservice.wsdl.v8_1.FaultMessage e) {
+            throw new CetpFault(e.getMessage());
         }
     }
 

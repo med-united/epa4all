@@ -1,0 +1,12 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Header/>
+    <SOAP-ENV:Body>
+        <ns2:GetPinStatusResponse xmlns:ns2="http://ws.gematik.de/conn/CardService/v8.1" xmlns:ns3="http://ws.gematik.de/conn/ConnectorCommon/v5.0">
+            <ns3:Status>
+                <ns3:Result>OK</ns3:Result>
+            </ns3:Status>
+            <ns2:PinStatus>VERIFIED</ns2:PinStatus>
+            <ns2:LeftTries>3</ns2:LeftTries>
+        </ns2:GetPinStatusResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
