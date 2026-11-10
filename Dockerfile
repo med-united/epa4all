@@ -1,8 +1,8 @@
-FROM azul/zulu-openjdk-alpine:21-jre-headless-latest
+FROM azul/zulu-openjdk-alpine:21.0.13.0.3-jre-headless
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
-RUN apk add --no-cache curl bash tini ca-certificates libc6-compat tcpdump less iproute2-ss logger sudo nano socat \
+RUN apk add --no-cache bash tini ca-certificates libc6-compat socat \
     && mkdir /opt/epa4all \
     && mkdir /opt/epa4all/app \
     && mkdir /opt/epa4all/promtail \
@@ -25,8 +25,6 @@ RUN apk add --no-cache curl bash tini ca-certificates libc6-compat tcpdump less 
     && chmod -R "g+rwX" /opt/epa4all \
     && echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/default-jvm/lib/security/java.security
 
-RUN ls -la /usr/local/bin
-
 WORKDIR /usr/local/bin
 
 ARG TARGETPLATFORM
@@ -35,8 +33,9 @@ RUN case "${TARGETPLATFORM}" in \
     linux/arm64) ARCH='arm64' ;; \
     *) echo "Unsupported platform ${TARGETPLATFORM}"; exit 1 ;; \
     esac && \
-    curl -O -L "https://github.com/grafana/loki/releases/download/v3.2.0/promtail-linux-${ARCH}.zip" \
+    wget -q "https://github.com/grafana/loki/releases/download/v3.6.11/promtail-linux-${ARCH}.zip" \
     && unzip "promtail-linux-${ARCH}.zip" \
+    && rm "promtail-linux-${ARCH}.zip" \
     && mv promtail-linux-${ARCH} /usr/local/bin/promtail \
     && chmod a+x /usr/local/bin/promtail
 
@@ -69,14 +68,6 @@ RUN for cert in /opt/epa4all/certs/*.pem; do \
 done
 
 WORKDIR /opt/epa4all
-
-RUN ls -la /opt/epa4all
-RUN ls -la /opt/epa4all/app
-RUN ls -la /opt/epa4all/lib
-RUN ls -la /opt/epa4all/lib/boot
-RUN ls -la /opt/epa4all/lib/main
-RUN ls -la /opt/epa4all/quarkus
-RUN ls -la /usr/bin/java
 
 USER 1001
 
