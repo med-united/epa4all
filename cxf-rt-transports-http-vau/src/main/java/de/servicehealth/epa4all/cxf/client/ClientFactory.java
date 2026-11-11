@@ -70,6 +70,12 @@ public class ClientFactory extends StartableService {
         // initConduit() (our Gematik trust manager: all TSL CAs + leaf-only TI chain completion).
         // Scoped to this bus's CXF clients, so the IDP client and others are unaffected.
         globalBus.setProperty("force.urlconnection.http.conduit", true);
+        // Since CXF 4.1 the JAX-RS ProviderFactory registers JsrJsonbProvider/JsrJsonpProvider as
+        // default providers. Readers are sorted by @Consumes specificity before the custom/default
+        // status, so the annotated JsrJsonbProvider would win over our Jsonb*ReaderProvider classes
+        // (declared for any media type) and drop their handling (vau-np/access_token property names,
+        // VAU error headers, FhirResponse). Keep the pre-4.1 behaviour: only our providers handle JSON.
+        globalBus.setProperty("skip.jakarta.json.providers.registration", true);
         globalBus.setProperty("bus.jmx.usePlatformMBeanServer", TRUE);
         globalBus.setProperty("bus.jmx.enabled", TRUE);
 

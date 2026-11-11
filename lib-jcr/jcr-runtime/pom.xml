@@ -12,8 +12,8 @@
     <artifactId>jcr-runtime</artifactId>
 
     <properties>
-        <jackrabbit.version>2.22.2</jackrabbit.version>
-        <tika.version>2.4.1</tika.version>
+        <jackrabbit.version>2.22.5</jackrabbit.version>
+        <tika.version>3.3.3</tika.version>
     </properties>
 
     <dependencies>
@@ -53,7 +53,7 @@
         <dependency>
             <groupId>org.jugs.webdav</groupId>
             <artifactId>webdav-jaxrs</artifactId>
-            <version>3.1</version>
+            <version>3.3.1</version>
         </dependency>
         <dependency>
             <groupId>xalan</groupId>
@@ -68,7 +68,7 @@
         <dependency>
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
-            <version>12.5</version>
+            <version>12.10</version>
         </dependency>
 
         <dependency>
@@ -104,6 +104,13 @@
             <version>1.6.0</version>
         </dependency>
 
+        <!-- jackrabbit-core declares tika-core 2.4.1 directly, which would win over the version
+             coming with tika-parsers-standard-package (CVE-2025-66516, CVE-2025-54988). -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers-standard-package</artifactId>
@@ -130,13 +137,13 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>5.2.0</version>
+            <version>5.5.1</version>
         </dependency>
 
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.40</version>
+            <version>1.18.48</version>
         </dependency>
 
     </dependencies>
