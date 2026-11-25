@@ -83,9 +83,7 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
         boolean xml = isXmlRequested(headers == null ? null : headers.getHeaderString(ACCEPT), query);
         List<Pair<String, String>> acceptHeaders = List.of(
             Pair.of(ACCEPT_ENCODING, "gzip"),
-            Pair.of(ACCEPT, xml
-                ? "application/fhir+xml;q=1.0, application/xml+fhir;q=0.9"
-                : "application/fhir+json;q=1.0, application/json+fhir;q=0.9")
+            Pair.of(ACCEPT, xml ? "application/fhir+xml" : "application/fhir+json")
         );
         List<Pair<String, String>> contentHeaders = buildContentHeaders(body);
         List<Pair<String, String>> additionalHeaders = extractAdditionalHeaders(headers);

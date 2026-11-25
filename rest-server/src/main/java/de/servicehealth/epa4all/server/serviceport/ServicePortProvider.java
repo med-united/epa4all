@@ -244,70 +244,79 @@ public class ServicePortProvider extends StartableService {
         Invocation invocation = builder.buildGet();
 
         try (InputStream inputStream = invocation.invoke(InputStream.class)) {
-            Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
-            Node serviceInformationNode = getNodeWithTag(document.getDocumentElement(), "ServiceInformation");
-
-            if (serviceInformationNode == null) {
-                throw new IllegalArgumentException("Could not find single 'ServiceInformation'-tag");
-            }
-
-            NodeList serviceNodeList = serviceInformationNode.getChildNodes();
-
-            Map<String, String> endpointMap = new HashMap<>();
-            for (int i = 0, n = serviceNodeList.getLength(); i < n; ++i) {
-                Node node = serviceNodeList.item(i);
-
-                if (node.getNodeType() != 1) {
-                    // ignore formatting related text nodes
-                    continue;
-                }
-
-                if (!node.hasAttributes() || node.getAttributes().getNamedItem("Name") == null) {
-                    break;
-                }
-
-                // TODO move needed servicePorts to config
-                switch (node.getAttributes().getNamedItem("Name").getTextContent()) {
-                    case "AuthSignatureService": {
-                        endpointMap.put("authSignatureServiceEndpointAddress", getEndpoint(node, userConfigurations));
-                        break;
-                    }
-                    case "CardService": {
-                        endpointMap.put("cardServiceEndpointAddress", getEndpoint(node, userConfigurations));
-                        break;
-                    }
-                    case "CardTerminalService": {
-                        endpointMap.put("cardTerminalServiceEndpointAddress", getEndpoint(node, userConfigurations));
-                        break;
-                    }
-                    case "EventService": {
-                        endpointMap.put("eventServiceEndpointAddress", getEndpoint(node, userConfigurations));
-                        break;
-                    }
-                    case "CertificateService": {
-                        endpointMap.put("certificateServiceEndpointAddress", getEndpoint(node, userConfigurations));
-                        break;
-                    }
-                    case "VSDService": {
-                        endpointMap.put("vsdServiceEndpointAddress", getEndpoint(node, userConfigurations));
-                    }
-                }
-            }
-            konnektorsEndpoints.put(connectorBaseURL, endpointMap);
-
+            konnektorsEndpoints.put(connectorBaseURL, parseEndpoints(inputStream, connectorBaseURL));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private String getEndpoint(Node serviceNode, IUserConfigurations userConfig) {
+    static Map<String, String> parseEndpoints(InputStream inputStream, String connectorBaseURL) throws Exception {
+        Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
+        Node serviceInformationNode = getNodeWithTag(document.getDocumentElement(), "ServiceInformation");
+
+        if (serviceInformationNode == null) {
+            throw new IllegalArgumentException("Could not find single 'ServiceInformation'-tag");
+        }
+
+        NodeList serviceNodeList = serviceInformationNode.getChildNodes();
+
+        Map<String, String> endpointMap = new HashMap<>();
+        for (int i = 0, n = serviceNodeList.getLength(); i < n; ++i) {
+            Node node = serviceNodeList.item(i);
+
+            if (node.getNodeType() != 1) {
+                // ignore formatting related text nodes
+                continue;
+            }
+
+            if (!node.hasAttributes() || node.getAttributes().getNamedItem("Name") == null) {
+                break;
+            }
+
+            // TODO move needed servicePorts to config
+            switch (node.getAttributes().getNamedItem("Name").getTextContent()) {
+                case "AuthSignatureService": {
+                    endpointMap.put("authSignatureServiceEndpointAddress", getEndpoint(node, AuthSignatureService.SERVICE.getNamespaceURI(), connectorBaseURL));
+                    break;
+                }
+                case "CardService": {
+                    endpointMap.put("cardServiceEndpointAddress", getEndpoint(node, CardService.SERVICE.getNamespaceURI(), connectorBaseURL));
+                    break;
+                }
+                case "CardTerminalService": {
+                    endpointMap.put("cardTerminalServiceEndpointAddress", getEndpoint(node, CardTerminalService.SERVICE.getNamespaceURI(), connectorBaseURL));
+                    break;
+                }
+                case "EventService": {
+                    endpointMap.put("eventServiceEndpointAddress", getEndpoint(node, EventService.SERVICE.getNamespaceURI(), connectorBaseURL));
+                    break;
+                }
+                case "CertificateService": {
+                    endpointMap.put("certificateServiceEndpointAddress", getEndpoint(node, CertificateService.SERVICE.getNamespaceURI(), connectorBaseURL));
+                    break;
+                }
+                case "VSDService": {
+                    endpointMap.put("vsdServiceEndpointAddress", getEndpoint(node, VSDService.SERVICE.getNamespaceURI(), connectorBaseURL));
+                }
+            }
+        }
+        return endpointMap;
+    }
+
+    /**
+     * A Konnektor may expose several versions of a service, each with its own endpoint
+     * (e.g. "/cardservice" for 8.1.x and "/cardservice/v8.2" for 8.2.x). The endpoint must match
+     * the WSDL version the client stubs were generated from, otherwise the Konnektor rejects
+     * the request with a schema error ("Syntaxfehler").
+     */
+    private static String getEndpoint(Node serviceNode, String wsdlNamespace, String connectorBaseURL) {
         Node versionsNode = getNodeWithTag(serviceNode, "Versions");
 
         if (versionsNode == null) {
             throw new IllegalArgumentException("No version tags found");
         }
         NodeList versionNodes = versionsNode.getChildNodes();
-        String location = "";
+        String firstLocation = null;
         for (int i = 0, n = versionNodes.getLength(); i < n; ++i) {
             Node versionNode = versionNodes.item(i);
             Node endpointNode = getNodeWithTag(versionNode, "EndpointTLS");
@@ -317,16 +326,26 @@ public class ServicePortProvider extends StartableService {
                 continue;
             }
 
-            location = endpointNode.getAttributes().getNamedItem("Location").getTextContent();
-            if (!location.startsWith(userConfig.getConnectorBaseURL())) {
-                log.warn("Invalid service node. Maybe location: " + location + " does not start with: " + userConfig.getConnectorBaseURL());
+            String location = endpointNode.getAttributes().getNamedItem("Location").getTextContent();
+            if (!location.startsWith(connectorBaseURL)) {
+                log.warn("Invalid service node. Maybe location: " + location + " does not start with: " + connectorBaseURL);
             }
-            return location;
+            Node namespaceAttr = versionNode.getAttributes() == null ? null : versionNode.getAttributes().getNamedItem("TargetNamespace");
+            if (namespaceAttr != null && wsdlNamespace.equals(namespaceAttr.getTextContent())) {
+                return location;
+            }
+            if (firstLocation == null) {
+                firstLocation = location;
+            }
         }
-        throw new IllegalArgumentException("Invalid service node. Maybe location: " + location + " does not start with: " + userConfig.getConnectorBaseURL());
+        if (firstLocation != null) {
+            log.warn("No service version with TargetNamespace " + wsdlNamespace + " found, falling back to " + firstLocation);
+            return firstLocation;
+        }
+        throw new IllegalArgumentException("Invalid service node. No EndpointTLS location found for " + wsdlNamespace);
     }
 
-    private Node getNodeWithTag(Node node, String tagName) {
+    private static Node getNodeWithTag(Node node, String tagName) {
         NodeList nodeList = node.getChildNodes();
 
         for (int i = 0, n = nodeList.getLength(); i < n; ++i) {
