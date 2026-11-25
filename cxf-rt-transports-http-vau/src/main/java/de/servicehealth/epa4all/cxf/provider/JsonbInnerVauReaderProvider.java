@@ -12,6 +12,7 @@ import java.util.Set;
 
 import static de.servicehealth.vau.VauClient.VAU_ERROR;
 import static de.servicehealth.vau.VauClient.VAU_STATUS;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 
 public class JsonbInnerVauReaderProvider extends AbstractJsonbReader {
 
@@ -30,7 +31,8 @@ public class JsonbInnerVauReaderProvider extends AbstractJsonbReader {
             return entityStream.readAllBytes();
         }
         String error = (String) vauErrorList.getFirst();
-        throw new VauException(error, parseVauStatus(httpHeaders));
+        Object contentType = httpHeaders.getFirst(CONTENT_TYPE);
+        throw new VauException(error, parseVauStatus(httpHeaders), contentType == null ? null : contentType.toString());
     }
 
     @SuppressWarnings("rawtypes")
