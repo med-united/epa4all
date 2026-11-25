@@ -1,9 +1,11 @@
 #!/bin/sh
 
-if [ -x /usr/local/bin/promtail ]; then
-  /usr/local/bin/promtail -config.file=/opt/epa4all/promtail/promtail.yaml -config.expand-env=true &
+if [ "${GRAFANA_LOGGING_ENABLED:-false}" = "true" ]; then
+  if [ -x /usr/local/bin/promtail ]; then
+    /usr/local/bin/promtail -config.file=/opt/epa4all/promtail/promtail.yaml -config.expand-env=true &
+  fi
+  socat -u TCP-LISTEN:4560,fork OPEN:/opt/epa4all/promtail/epa4all.log,creat,append &
 fi
-socat -u TCP-LISTEN:4560,fork OPEN:/opt/epa4all/promtail/epa4all.log,creat,append &
 export QUARKUS_CONFIG_LOCATIONS=config/application.properties
 if [ -d /etc/epa4all ]; then
   export EPA4ALL_KONNEKTOR_CONFIG_DIR=/etc/epa4all/konnektoren

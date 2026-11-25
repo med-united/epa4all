@@ -87,7 +87,7 @@ public class IdpClient extends StartableService {
     public void doStart() throws Exception {
         BrainpoolCurves.init();
         if (this instanceof TSSIdpClient && !featureConfig.isTssEnabled()) {
-            log.warn("TSS feature is disabled");
+            log.info("TSS feature is disabled");
             return;
         }
         retrieveDiscoveryDocument(new DiscoveryDocFile<>(configDirectory, getFileName()));
