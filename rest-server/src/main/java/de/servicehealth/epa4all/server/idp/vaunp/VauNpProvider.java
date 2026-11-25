@@ -36,11 +36,12 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -136,13 +137,13 @@ public class VauNpProvider extends StartableService {
     }
 
     public JsonNode reload(Set<String> backendsToReload) throws Exception {
-        List<JsonNode> reloading = new ArrayList<>();
-        Set<VauErrors> vauErrors = new HashSet<>();
+        List<JsonNode> reloading = Collections.synchronizedList(new ArrayList<>());
+        Set<VauErrors> vauErrors = ConcurrentHashMap.newKeySet();
         AtomicBoolean reloadHappened = new AtomicBoolean(false);
-        Set<JsonNode> statuses = new HashSet<>();
-        epaMultiService.getEpaBackendMap().entrySet().stream()
+        Set<JsonNode> statuses = ConcurrentHashMap.newKeySet();
+        List<Future<?>> backendFutures = epaMultiService.getEpaBackendMap().entrySet().stream()
             .filter(e -> backendsToReload.isEmpty() || backendsToReload.stream().anyMatch(t -> e.getKey().startsWith(t)))
-            .forEach(e -> {
+            .<Future<?>>map(e -> managedExecutor.submit(() -> {
                 String backend = e.getKey();
                 if (reloadMap.get(backend).tryAcquire()) {
                     try {
@@ -198,7 +199,11 @@ public class VauNpProvider extends StartableService {
                 } else {
                     reloading.add(createObjectNode(Map.of(backend, "Reload is in progress, try later")));
                 }
-            });
+            }))
+            .toList();
+        for (Future<?> backendFuture : backendFutures) {
+            backendFuture.get();
+        }
 
         vauErrors.forEach(ve -> {
             try {

@@ -27,6 +27,10 @@ public class SystemPropertyService {
         // Always allowed for JCR processing
         System.setProperty("disableCheckForReferencesInContentException", "true");
 
+        // webdav-jaxrs brings EclipseLink MOXy as a second JAXB implementation; without a pin the
+        // first one on the classpath wins, which differs between dev mode and the packaged jar
+        setPropertyVerbose("jakarta.xml.bind.JAXBContextFactory", "org.glassfish.jaxb.runtime.v2.JAXBContextFactory");
+
         String dtdAccess = ConfigProvider.getConfig().getValue("access.external.dtd", String.class).toLowerCase();
         setPropertyVerbose("javax.xml.accessExternalDTD", normalize(dtdAccess));
     }
