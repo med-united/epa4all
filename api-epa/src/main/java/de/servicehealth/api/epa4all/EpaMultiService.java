@@ -198,7 +198,7 @@ public class EpaMultiService extends StartableService {
             } catch (BadRequestException e) {
                 throw new BadRequestException("[%s] Check ePA failed: 400 BadRequest".formatted(insurantId));
             } catch (NotFoundException e) {
-                return false;
+                // no record on this backend, it may be on another one
             }
         }
         return false;

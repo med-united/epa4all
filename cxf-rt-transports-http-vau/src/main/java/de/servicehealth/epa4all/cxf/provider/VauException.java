@@ -17,14 +17,20 @@ public class VauException extends Exception {
 
     private final JsonNode jsonNode;
     private final int status;
+    private final String contentType;
 
     public VauException(String message) {
         this(message, DEFAULT_ERROR_STATUS);
     }
 
     public VauException(String message, int status) {
+        this(message, status, null);
+    }
+
+    public VauException(String message, int status, String contentType) {
         super(message);
         jsonNode = extractJsonNode(message);
         this.status = status;
+        this.contentType = contentType;
     }
 }

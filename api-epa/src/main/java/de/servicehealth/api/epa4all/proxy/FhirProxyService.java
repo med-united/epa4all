@@ -85,7 +85,9 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
             Pair.of(ACCEPT_ENCODING, "gzip"),
             Pair.of(ACCEPT, xml ? "application/fhir+xml" : "application/fhir+json")
         );
-        List<Pair<String, String>> contentHeaders = buildContentHeaders(body);
+        List<Pair<String, String>> contentHeaders = buildContentHeaders(
+            body, headers == null ? null : headers.getHeaderString(CONTENT_TYPE)
+        );
         List<Pair<String, String>> additionalHeaders = extractAdditionalHeaders(headers);
         ForwardRequest forwardRequest = new ForwardRequest(isGet, acceptHeaders, contentHeaders, additionalHeaders, body);
         epaMXBeanRegistry.registerRequest(backend);
@@ -108,7 +110,7 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
             .orElse(null);
         if (ui5) {
             builder.type(APPLICATION_JSON_PATCH_JSON_TYPE);
-        } else if (xml && backendContentType != null) {
+        } else if (backendContentType != null) {
             builder.type(backendContentType);
         } else {
             builder.type(APPLICATION_JSON_TYPE);
@@ -146,13 +148,13 @@ public class FhirProxyService extends BaseProxyService implements IFhirProxy {
         return result;
     }
 
-    @Override
-    protected List<Pair<String, String>> buildContentHeaders(byte[] body) {
+    // The body is passed through unchanged, so it must keep the media type the caller declared
+    static List<Pair<String, String>> buildContentHeaders(byte[] body, String contentType) {
         if (body == null || body.length == 0) {
             return List.of();
         } else {
             return List.of(
-                Pair.of(CONTENT_TYPE, "application/fhir+json; charset=utf-8"),
+                Pair.of(CONTENT_TYPE, contentType == null ? "application/fhir+json" : contentType),
                 Pair.of(CONTENT_LENGTH, String.valueOf(body.length))
             );
         }

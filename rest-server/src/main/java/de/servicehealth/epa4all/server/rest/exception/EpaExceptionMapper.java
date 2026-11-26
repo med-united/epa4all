@@ -73,6 +73,14 @@ public class EpaExceptionMapper implements ExceptionMapper<Exception> {
     public Response toResponse(Exception exception) {
         log.error("Client EXCEPTION", getOriginalCause(exception));
 
+        // A backend error is passed on as received, in the format the backend chose (JSON or XML)
+        if (getOriginalCause(exception) instanceof VauException vauException && vauException.getContentType() != null) {
+            return Response.status(vauException.getStatus())
+                .entity(vauException.getMessage())
+                .type(vauException.getContentType())
+                .build();
+        }
+
         ErrorStatus errorStatus = switch (exception) {
             case AuthenticationFailedException authEx -> new ErrorStatus(authEx.getMessage(), UNAUTHORIZED);
             case EpaNotFoundException epaEx -> new ErrorStatus(epaEx.getMessage(), NOT_FOUND);
