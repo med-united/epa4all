@@ -62,7 +62,7 @@ a Konnektor, so connection errors in the log at this point are expected.
 | `/opt/epa4all/config/application.properties` | Application configuration |
 | `/opt/epa4all/tls/` | Server keystore and truststore (`keystore.p12`, `truststore.p12`) |
 | `/opt/epa4all/certs/` | TI certificates, imported into the system Java truststore by `postinst` |
-| `/opt/epa4all/logs/quarkus.log` | Rotating application log (10 MB, 2 backups) |
+| `/opt/epa4all/logs/quarkus.log` | Rotating application log (10 MB, 2 backups per day). Rotated files older than `LOG_RETENTION_DAYS` (default: 30) are deleted |
 | `/lib/systemd/system/epa4all.service` | systemd unit, enabled and started on install |
 
 The package also creates the system user and group `epa4all` (no home
@@ -78,7 +78,7 @@ existing aliases rather than failing.
 | 8090/tcp | HTTP API and frontend (`http://<host>:8090/frontend/`) |
 | 8443/tcp | HTTPS with mutual TLS — a client certificate is required under the default `mTLS-docker` profile |
 | 20001/tcp | Prometheus JMX exporter metrics |
-| 4560/tcp (localhost) | Internal log socket, written to `/opt/epa4all/promtail/epa4all.log` |
+| 4560/tcp (localhost) | Internal log socket, written to `/opt/epa4all/promtail/epa4all.log`. Only with `GRAFANA_LOGGING_ENABLED=true` (default: off) |
 
 ## Configuring the Konnektor
 
